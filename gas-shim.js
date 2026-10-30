@@ -208,6 +208,7 @@
       if (!data.session) throw new Error("Đã tạo tài khoản nhưng Supabase đang bật “Confirm email”. Quản lý cần tắt mục này.");
     }
     await loadMe(); if (!ME) throw new Error("Tài khoản chưa liên kết với người dùng Sổ Kho.");
+    try { localStorage.setItem("sokho_last_ten", ME.ten); } catch (e) {}
     const r = auth(a, null, { QL: "Quản lý", XEM: "Chỉ xem" });
     return Object.assign(r, { tk: "sb" });
   }

@@ -922,7 +922,7 @@ async function showLogin(msg){
   $("appView").hidden=true;$("loginView").hidden=false;
   $("lgErr").hidden=!msg;$("lgErr").textContent=msg||"";
   try{const names=await api("getUserNames");
-    $("lgTen").innerHTML='<option value="">— Chọn tên —</option>'+names.map(n=>`<option>${esc(n)}</option>`).join("");}
+    $("lgTen").innerHTML='<option value="">— Chọn tên —</option>'+names.map(n=>`<option>${esc(n)}</option>`).join("");try{const l=localStorage.getItem("sokho_last_ten");if(l&&names.includes(l))$("lgTen").value=l}catch(e){}}
   catch(e){$("lgErr").hidden=false;$("lgErr").textContent=e.message}
 }
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();
