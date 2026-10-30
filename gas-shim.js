@@ -179,7 +179,7 @@
   }
   async function run(fn, args) {
     await ready;
-    if (fn === "getUserNames") { const { data, error } = await sb.rpc("ds_dang_nhap"); if (error) throw error; return (data || []).map(u => u.ten); }
+    if (fn === "getUserNames") { const { data, error } = await sb.rpc("ds_dang_nhap"); if (error) throw error; const TT = ["Nguyễn Ô Ghel", "Phan Thị Cẩm Tiên", "Châu Trần Yến Nhi", "KT Kho"], k = n => { const i = TT.indexOf(n); return i < 0 ? 99 : i; }; return (data || []).map(u => u.ten).sort((a, b) => k(a) - k(b) || a.localeCompare(b, "vi")); }
     if (fn === "login") return login(args[0]);
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
     for (let lan = 0; lan < 2; lan++) {
