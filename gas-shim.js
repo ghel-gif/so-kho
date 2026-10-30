@@ -184,7 +184,7 @@
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
     for (let lan = 0; lan < 2; lan++) {
       await sync();
-      if (!DB.sheets.VatTu || !DB.sheets.Phieu) throw new Error("Đã đăng nhập đúng, nhưng Supabase CHƯA CÓ DỮ LIỆU Sổ Kho. Quản lý cần chạy 4 file nap_du_lieu_1 → 4.sql trong SQL Editor.");
+      if (!DB.sheets.VatTu || !DB.sheets.Phieu) { if (ME && ME.vai_tro === "Quản lý") napDuLieu(); throw new Error("Đã đăng nhập đúng, nhưng Supabase CHƯA CÓ DỮ LIỆU Sổ Kho." + (ME && ME.vai_tro === "Quản lý" ? " Bấm nút “Chọn file dữ liệu” ở giữa màn hình." : " Nhờ Quản lý nạp dữ liệu.")); }
       SRV.__reset(); DB.dirty = {}; DB.backup = {};
       let res;
       try {
@@ -212,6 +212,40 @@
     try { localStorage.setItem("sokho_last_ten", ME.ten); } catch (e) {}
     const r = auth(a, null, { QL: "Quản lý", XEM: "Chỉ xem" });
     return Object.assign(r, { tk: "sb" });
+  }
+
+
+  /* ---------- nạp dữ liệu lần đầu từ file xuất của Sổ Kho cũ (chỉ Quản lý, khi Supabase còn trống) ---------- */
+  function napDuLieu() {
+    if (document.getElementById("napBox")) return;
+    const d = document.createElement("div"); d.id = "napBox";
+    d.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(10,20,30,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit";
+    d.innerHTML = `<div style="background:#fff;color:#16233f;max-width:440px;width:100%;border-radius:16px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+      <h2 style="margin:0 0 8px;font-size:19px">Nạp dữ liệu Sổ Kho</h2>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.5">Supabase chưa có dữ liệu. Bấm nút dưới, chọn file <b>sokho_du_lieu.json</b> (file Claude gửi trong khung chat, đã tải về máy).</p>
+      <label style="display:block;background:#1f6fb8;color:#fff;text-align:center;padding:12px;border-radius:10px;font-weight:600;cursor:pointer">Chọn file dữ liệu<input type="file" accept=".json,application/json" style="display:none" id="napFile"></label>
+      <p id="napMsg" style="margin:12px 0 0;font-size:14px"></p></div>`;
+    document.body.appendChild(d);
+    d.querySelector("#napFile").onchange = async e => {
+      const f = e.target.files[0], msg = d.querySelector("#napMsg"); if (!f) return;
+      try {
+        msg.textContent = "Đang đọc file…";
+        const o = JSON.parse(await f.text());
+        if (!o.VatTu || !o.Phieu) throw new Error("File không đúng (không có trang VatTu / Phieu).");
+        const { data: vs } = await sb.from("sheet_ver").select("sheet,ver"); const V = {}; (vs || []).forEach(x => V[x.sheet] = +x.ver);
+        const names = Object.keys(o); let i = 0;
+        for (const n of names) {
+          let rows = o[n]; if (n === "NguoiDung") rows = rows.map(r => [r[0], ""].concat(r.slice(1)));
+          rows = rows.map(r => { r = [...r]; while (r.length && r[r.length - 1] === "") r.pop(); return r; });
+          msg.textContent = `Đang nạp ${n} (${rows.length} dòng) · ${++i}/${names.length}…`;
+          const { error } = await sb.rpc("ghi_nhieu", { p: [{ sheet: n, base_ver: V[n] || 0, replace: true, rows: rows.map((r, k) => [k, r]) }] });
+          if (error) throw new Error(n + ": " + error.message);
+        }
+        msg.textContent = "Xong! Đang mở Sổ Kho…";
+        try { localStorage.removeItem(CACHE_K); } catch (x) {}
+        setTimeout(() => location.reload(), 800);
+      } catch (x) { msg.style.color = "#b42318"; msg.textContent = "Lỗi: " + (x.message || x); }
+    };
   }
 
   /* ---------- google.script.run / history / url ---------- */
