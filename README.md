@@ -3,10 +3,10 @@
 Phần mềm theo dõi nhập / xuất / kiểm kê / tồn kho (kg) của Công ty CP BVTV Asata Hoa Kỳ,
 chạy song song với Sổ Kho cũ trên Google Sheet.
 
-- Giao diện: `index.html`, `app.js` (web tĩnh, chạy trên GitHub Pages)
-- Dữ liệu: Supabase (Postgres), khoá công khai trong `config.js`; dữ liệu được bảo vệ bằng đăng nhập + RLS
-- `sql/02_dang_nhap_quyen.sql`: đăng nhập, phân quyền, hàm lưu phiếu (`luu_phieu`), huỷ phiếu, QC lô
-- `sql/tao_tu_google_sheet.py`: tạo file SQL chép dữ liệu từ bản xuất JSON của Sổ Kho cũ
+- Giao diện: `index.html` = giao diện Sổ Kho cũ (giữ nguyên menu, cách nhập), làm mịn thêm bằng `web.css`
+- `server.gs` = mã máy chủ Sổ Kho cũ, chạy trong trình duyệt nhờ `gas-shim.js` (giả lập Google Sheet trên dữ liệu Supabase)
+- Dữ liệu: bảng `sheet_rows` giữ đúng cấu trúc từng trang của Google Sheet; ghi qua hàm `ghi_nhieu` (có kiểm tra 2 người sửa cùng lúc)
+- Đăng nhập: tài khoản Supabase (tên + mật khẩu), bảng `nguoi_dung`
+- `sql/`: các bước tạo cơ sở dữ liệu; `sql/tao_sheet_rows.py` tạo file nạp dữ liệu từ bản xuất JSON của Sổ Kho cũ
 
-Đợt 1: đăng nhập, tồn kho, tồn theo lô, phiếu nhập / xuất / kiểm kê, lịch sử, huỷ phiếu, QC lô.
-Đợt sau: lệnh SX, đóng gói, xuất nội bộ, báo cáo, in phiếu.
+Chưa có ở bản web (cần Google Drive / email): tải ảnh, hồ sơ lô (COA), xuất file Excel phiếu xuất lên Drive, gửi email cảnh báo, sao lưu đêm.
