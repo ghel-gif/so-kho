@@ -184,6 +184,7 @@
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
     for (let lan = 0; lan < 2; lan++) {
       await sync();
+      if (!DB.sheets.VatTu || !DB.sheets.Phieu) throw new Error("Đã đăng nhập đúng, nhưng Supabase CHƯA CÓ DỮ LIỆU Sổ Kho. Quản lý cần chạy 4 file nap_du_lieu_1 → 4.sql trong SQL Editor.");
       SRV.__reset(); DB.dirty = {}; DB.backup = {};
       let res;
       try {
