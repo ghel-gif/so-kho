@@ -468,6 +468,7 @@ body nav.side .navh{color:#fff;opacity:.85}
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center"><img id="loginLogo" src="" alt="Asata Hoa Kỳ" style="height:84px;width:auto"><h1>Sổ Kho</h1><p class="note">Công ty CP BVTV Asata Hoa Kỳ · <span class="appver"></span></p></div>
     <label>Người dùng<select id="lgTen"><option value="">Đang tải…</option></select></label>
     <label>Mật khẩu<input id="lgPin" type="password" autocomplete="current-password"></label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:-6px"><input type="checkbox" style="width:auto" onchange="document.getElementById('lgPin').type=this.checked?'text':'password'"> Hiện mật khẩu đang gõ</label>
     <p class="note" style="margin:-4px 0 0">Bản web: lần đầu đăng nhập, mật khẩu bạn nhập (ít nhất 6 ký tự) sẽ được đặt làm mật khẩu.</p>
     <div class="errbox" id="lgErr" hidden></div>
     <button class="btn primary" type="submit" id="lgBtn">Đăng nhập</button>
