@@ -152,7 +152,19 @@
   /* ---------- nạp mã máy chủ của Sổ Kho cũ ---------- */
   let SRV = null;
   async function loadServer() {
-    const code = await (await fetch("server.gs?v=" + (window.SOKHO_VER || ""), { cache: "no-cache" })).text();
+    const code = (await (await fetch("server.gs?v=" + (window.SOKHO_VER || ""), { cache: "no-cache" })).text()) + `
+/* --- thêm cho bản web: ảnh nhập kho lưu ở Supabase Storage --- */
+function webThemAnh(a, id, fname, fid) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  const m = moves_().find(x => x.id === String(id));
+  if (!m || m.loai !== 'Nhập') throw new Error('Không tìm thấy phiếu nhập.');
+  shX_(AN_SH, ['ID phiếu nhập', 'Mã', 'Số lô', 'Tên file', 'Link', 'File ID', 'Người', 'Thời điểm']).appendRow([m.id, m.ma, m.lo, fname, '', fid, me.ten, new Date()]);
+  log_(me, 'Ảnh nhập kho', m.ma + (m.lo ? ' lô ' + m.lo : '') + ' · ngày ' + m.ngay, fname);
+  return (anMap_()[m.id] || []).length;
+}
+function webKiemAnh(a, fid) { auth_(a); return !!(sheet_(AN_SH) && rows_(AN_SH).some(r => str_(r[5]) === String(fid))); }
+function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === String(id)); return m ? { ma: m.ma, lo: m.lo, ngay: m.ngay, loai: m.loai } : null; }
+`;
     const names = [...code.matchAll(/^function\s+([A-Za-z0-9_$]+)\s*\(/gm)].map(m => m[1]);
     const lets = [...code.matchAll(/^let\s+([^;]+);/gm)].flatMap(m => m[1].split(",").map(s => s.split("=")[0].trim()));
     const src = code
@@ -181,6 +193,8 @@
     await ready;
     if (fn === "getUserNames") { const { data, error } = await sb.rpc("ds_dang_nhap"); if (error) throw error; const TT = ["Nguyễn Ô Ghel", "Phan Thị Cẩm Tiên", "Châu Trần Yến Nhi", "KT Kho"], k = n => { const i = TT.indexOf(n); return i < 0 ? 99 : i; }; return (data || []).map(u => u.ten).sort((a, b) => k(a) - k(b) || a.localeCompare(b, "vi")); }
     if (fn === "login") return login(args[0]);
+    if (fn === "uploadAnhNhap") return uploadAnh(...args);
+    if (fn === "getAnh") return getAnhWeb(...args);
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
     for (let lan = 0; lan < 2; lan++) {
       await sync();
@@ -246,6 +260,32 @@
         setTimeout(() => location.reload(), 800);
       } catch (x) { msg.style.color = "#b42318"; msg.textContent = "Lỗi: " + (x.message || x); }
     };
+  }
+
+
+  /* ---------- ảnh hàng / marking khi nhập kho: Supabase Storage (bucket anh-nhap) ---------- */
+  const BUCKET = "anh-nhap";
+  async function uploadAnh(a, id, name, mime, b64) {
+    if (!/^image\/(jpeg|png|webp)$/.test(String(mime || ""))) throw new Error("Chỉ nhận ảnh (JPG, PNG).");
+    const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    if (bytes.length > 8 * 1024 * 1024) throw new Error("Ảnh lớn quá 8 MB.");
+    const m = await run("webPhieuNhap", [a, id]); if (!m || m.loai !== "Nhập") throw new Error("Không tìm thấy phiếu nhập.");
+    const ext = mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg";
+    const stamp = fmt(new Date(), "yyyyMMdd-HHmmss");
+    const fname = ["Anh", m.ma, m.lo || m.ngay, stamp].join("_").replace(/[\\/:*?"<>|]/g, "-") + ext;
+    const path = String(id).replace(/[^A-Za-z0-9._-]/g, "_") + "/" + stamp + "-" + Math.random().toString(36).slice(2, 7) + ext;
+    const { error } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
+    if (error) throw new Error("Không tải ảnh lên được: " + error.message + (/bucket|not found|policy|security/i.test(error.message) ? " (Quản lý cần chạy file 08_anh_nhap_kho.sql)" : ""));
+    return run("webThemAnh", [a, id, fname, "sb:" + path]);
+  }
+  async function getAnhWeb(a, fid) {
+    fid = String(fid || "");
+    if (!fid.startsWith("sb:")) throw new Error("Ảnh này chụp từ Sổ Kho cũ, đang lưu trên Google Drive — mở ở Sổ Kho cũ để xem.");
+    if (!(await run("webKiemAnh", [a, fid]))) throw new Error("Không tìm thấy ảnh.");
+    const { data, error } = await sb.storage.from(BUCKET).download(fid.slice(3));
+    if (error) throw new Error("Không tải được ảnh: " + error.message);
+    const buf = new Uint8Array(await data.arrayBuffer()); let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    return { mime: data.type || "image/jpeg", b64: btoa(bin) };
   }
 
   /* ---------- google.script.run / history / url ---------- */
