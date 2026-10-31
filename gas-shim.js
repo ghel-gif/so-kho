@@ -224,7 +224,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
         else { if (typeof SRV[fn] !== "function" || /_$/.test(fn)) throw new Error("Không có chức năng " + fn); res = SRV[fn](...clone(args)); }
       } catch (e) { restore(); throw e; }
       try { await flush(); } catch (e) { restore(); if (/DU_LIEU_DOI/.test(e.message) && lan === 0) continue; throw new Error(/DU_LIEU_DOI/.test(e.message) ? "Có người vừa sửa dữ liệu cùng lúc, vui lòng thử lại." : e.message); }
-      return outJSON(res);
+      return linkHoSo(outJSON(res));
     }
   }
   async function login(a) {
@@ -315,21 +315,34 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   }
 
 
-  /* ---------- hồ sơ lô (COA, phiếu kết quả…): lưu vào thư mục hồ sơ lô trên Google Drive qua Sổ Kho cũ ---------- */
+  /* ---------- hồ sơ lô (COA, phiếu kết quả…): lưu cố định trên Supabase Storage (bucket ho-so), mở nhanh cho mọi người đăng nhập;
+     mỗi đêm Apps Script chép thêm 1 bản sang thư mục hồ sơ lô trên Drive ---------- */
+  const HS_BUCKET = "ho-so";
   async function uploadHoSoWeb(a, ma, lo, loai, name, mime, b64) {
-    const size = Math.floor(String(b64 || "").length * 3 / 4);
-    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, size]);
+    const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, bytes.length]);
     const ext = (String(name || "").match(/\.[A-Za-z0-9]{2,5}$/) || [mime === "application/pdf" ? ".pdf" : /word/.test(mime) ? ".docx" : ".jpg"])[0];
     const fname = k.tenFile.replace(/[\\/:*?"<>|]/g, "-") + ext;
-    const { data: ss } = await sb.auth.getSession(); const tk = ss && ss.session && ss.session.access_token;
-    let o;
-    try {
-      const r = await fetch(CFG.anhUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ viec: "hoso", tk, name: fname, mime, b64 }) });
-      o = await r.json();
-    } catch (e) { throw new Error("Không gửi được file lên Google Drive: " + (e.message || e)); }
-    if (!o || !o.fid) throw new Error("Không lưu được file lên Google Drive: " + ((o && o.err) || "lỗi không rõ"));
-    return run("webThemHoSo", [a, ma, lo, loai, fname, o.url, o.fid]);
+    const safe = x => String(x || "_").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/[^A-Za-z0-9._-]/g, "_");
+    const path = safe(ma) + "/" + safe(lo) + "/" + safe(fname.replace(/\.[^.]+$/, "")) + "-" + Math.random().toString(36).slice(2, 7) + ext.toLowerCase();
+    const { error } = await sb.storage.from(HS_BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
+    if (error) throw new Error("Không tải file lên được: " + error.message + (/bucket|not found|policy|security|mime/i.test(error.message) ? " (Quản lý cần chạy file 10_ho_so_lo.sql)" : ""));
+    return run("webThemHoSo", [a, ma, lo, loai, fname, "sbhs:" + path, ""]);
   }
+  /* link "sbhs:…" → "#sbhs:…"; khi bấm mới xin link xem tạm (5 phút) nên không bao giờ hết hạn trên màn hình */
+  function linkHoSo(v) {
+    const walk = o => { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") Object.keys(o).forEach(k => { const x = o[k]; if (k === "link" && typeof x === "string" && x.startsWith("sbhs:")) o[k] = "#" + x; else walk(x); }); };
+    walk(v); return v;
+  }
+  if (typeof document !== "undefined") document.addEventListener("click", async e => {
+    const a = e.target.closest && e.target.closest('a[href^="#sbhs:"]'); if (!a) return;
+    e.preventDefault(); e.stopPropagation();
+    const w = window.open("", "_blank");
+    try { if (w) w.document.write("<p style=\"font:15px system-ui;padding:24px\">Đang mở hồ sơ…</p>"); } catch (x) {}
+    const { data, error } = await sb.storage.from(HS_BUCKET).createSignedUrl(a.getAttribute("href").slice(6), 300);
+    if (error || !data) { if (w) w.close(); alert("Không mở được hồ sơ: " + ((error && error.message) || "")); return; }
+    if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl;
+  }, true);
 
   /* ---------- google.script.run / history / url ---------- */
   function runner(ok, fail) {
