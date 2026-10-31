@@ -180,6 +180,21 @@ function webThemHoSo(a, ma, lo, loai, fname, url, fid) {
   log_(me, 'Đính kèm ' + loai, ma + ' lô ' + (lo || '(chưa có lô)'), fname);
   return getHoSo(a, ma, lo);
 }
+function webLotInfo(a, ma, lo) {
+  auth_(a); lo = String(lo || '');
+  const items = items_(), IM = {}; items.forEach(i => IM[i.ma] = i);
+  const mv = moves_().filter(m => !m.trangThai), Q = qcMap_();
+  const hs = getHoSo(a, ma, lo), xn = (hlMap_()[lotKey_(ma, lo)] || '');
+  const nh = mv.filter(m => m.ma === ma && m.lo === lo && m.loai === 'Nhập' && m.lenh);
+  const lenh = [...new Set(nh.map(m => m.lenh))];
+  const nl = [];
+  lenh.forEach(so => mv.filter(m => m.lenh === so && m.loai === 'Xuất').forEach(m => {
+    const it = IM[m.ma] || {}; if (it.nhom !== 'Nguyên liệu' && it.nhom !== 'Bán thành phẩm') return;
+    const q = Q[lotKey_(m.ma, m.lo)];
+    nl.push({ lenh: so, ma: m.ma, ten: it.ten || '', nhom: it.nhom || '', lo: m.lo, kg: m.kg, qc: q ? q.tt : '' });
+  }));
+  return { hs, xn, nl, btp: (IM[ma] || {}).nhom === 'Bán thành phẩm' };
+}
 function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === String(id)); return m ? { ma: m.ma, lo: m.lo, ngay: m.ngay, loai: m.loai } : null; }
 `;
     const names = [...code.matchAll(/^function\s+([A-Za-z0-9_$]+)\s*\(/gm)].map(m => m[1]);

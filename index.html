@@ -838,7 +838,7 @@ body nav.side .navh{color:#fff;opacity:.85}
 <script>window.SOKHO_VER="web-1";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=web-7"></script>
-<script src="gas-shim.js?v=web-11"></script>
+<script src="gas-shim.js?v=web-13"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="web.css?v=web-12">
 <script>
@@ -2181,8 +2181,17 @@ function lotCard(ma,lo){let it=itemBy(ma),l=null;
   const qcc=l&&l.qc?(l.qc==="Đạt"?'<span class="st done">ĐẠT</span>':l.qc==="Không đạt"?'<span class="chip neg">KHÔNG ĐẠT</span>':`<span class="chip wait">${esc(l.qc).toUpperCase()}</span>`):"";
   const h=`<div class="cfm" id="lotCard"><div class="cfm-box lotc"><h2>${it?esc(it.ten):"Không tìm thấy vật tư"}</h2><p class="note" style="margin:2px 0 10px">${esc(ma)} · Lô <b>${esc(lo)}</b></p>
     <div class="kv">${row("Tồn hiện tại",l?kg(l.ton)+" kg"+(l.tyTrong?" ≈ "+kg(l.ton/l.tyTrong)+" L":""):"0 kg (lô đã hết hoặc chưa nhập kho)")}${row("QC",qcc+(l&&l.qcNgay?" "+dmy(l.qcNgay):""))}${row("Ngày SX / NSX",l&&l.nsx?dmy(l.nsx):o?dmy(o.ngayHT||o.ngay):"")}${row("Hạn sử dụng",l&&l.hsd?dmy(l.hsd)+hsdChip(l.hsd):"")}${row("Tỷ trọng",l&&l.tyTrong?ttf(l.tyTrong):"")}${o?row("Lệnh SX",esc(o.so)+" · "+esc(o.trangThai||"")):""}${o?row("Người SX",esc(o.nguoiSX||"")):""}${o?row("QC kiểm tra",esc(o.qcSX||"")):""}</div>
+    <div id="lotMore" class="note" style="margin-top:12px">Đang tải hồ sơ lô và nguyên liệu đã dùng…</div>
     <div class="actions" style="margin-top:14px">${can.phieu()?'<button class="btn" type="button" data-a="kk">Kiểm kê lô này</button>':""}${!$("tabQcBtn").hidden?'<button class="btn" type="button" data-a="qc">Mở QC lô</button>':""}${it?'<button class="btn" type="button" data-a="tk">Xem thẻ kho</button>':""}<button class="btn primary" type="button" data-a="x">Đóng</button></div></div></div>`;
   const old=$("lotCard");if(old)old.remove();document.body.insertAdjacentHTML("beforeend",h);const c=$("lotCard");
+  api("webLotInfo",S.auth,ma,lo).then(r=>{const box=$("lotMore");if(!box)return;
+    const has=t=>(r.hs||[]).filter(x=>x.loai===t),yes=(t,ok,no)=>{const l=has(t);return l.length?`<span class="st done">ĐÃ CÓ</span> `+l.map(x=>`<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.ten||x.loai)}</a>`).join(" · "):(no||'<span class="chip neg">CHƯA CÓ</span>')};
+    let html="";
+    if(r.btp){html+=`<div class="kv" style="margin-bottom:10px"><span>Phiếu kiểm hoá lý</span><b>${yes("Phiếu kiểm hoá lý")}</b><span>Phiếu kết quả hàm lượng</span><b>${r.xn==="Không kiểm"?'<span class="chip">KHÔNG KIỂM</span>':yes("Phiếu kết quả hàm lượng",0,r.xn==="Có kiểm"?'<span class="chip wait">CHỜ KẾT QUẢ</span>':'<span class="chip neg">CHƯA CÓ</span>')}</b></div>`}
+    else if((r.hs||[]).length){html+=`<div class="kv" style="margin-bottom:10px"><span>Hồ sơ lô</span><b>${r.hs.map(x=>`<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.loai)}</a>`).join(" · ")}</b></div>`}
+    if((r.nl||[]).length){html+=`<div style="font-weight:600;color:var(--ink);margin:4px 0 6px">Nguyên liệu đã dùng để sản xuất lô này</div><div class="list">`+r.nl.map(x=>`<div class="row"><div><b>${esc(x.ma)}</b> ${esc(x.ten)}<br><span class="note">Lô <b>${esc(x.lo||"(không lô)")}</b>${x.qc?" · QC "+esc(x.qc):""} · lệnh ${esc(x.lenh)}</span></div><div style="text-align:right;font-weight:600">${kg(x.kg)} kg</div></div>`).join("")+`</div>`}
+    else if(r.btp){html+=`<div class="note">Chưa có dữ liệu nguyên liệu đã dùng (lô không gắn lệnh SX trên sổ).</div>`}
+    box.className="";box.innerHTML=html||"";}).catch(e=>{const box=$("lotMore");if(box)box.textContent="Không tải được: "+e.message});
   c.onclick=e=>{if(e.target===c){c.remove();return}const bt=e.target.closest("[data-a]");if(!bt)return;const t=bt.dataset.a;c.remove();
     if(t==="kk"){setTab("kk");qrFind(lo,ma);setTimeout(()=>$("qrBox").scrollIntoView({behavior:"smooth"}),200)}
     else if(t==="qc"){setTab("qc");qcShow("duyet");$("qcFilter").value="";$("qcQ").value=lo;S.qcOpen=JSON.stringify([ma,lo]);renderQC()}
