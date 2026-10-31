@@ -224,7 +224,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
         else { if (typeof SRV[fn] !== "function" || /_$/.test(fn)) throw new Error("Không có chức năng " + fn); res = SRV[fn](...clone(args)); }
       } catch (e) { restore(); throw e; }
       try { await flush(); } catch (e) { restore(); if (/DU_LIEU_DOI/.test(e.message) && lan === 0) continue; throw new Error(/DU_LIEU_DOI/.test(e.message) ? "Có người vừa sửa dữ liệu cùng lúc, vui lòng thử lại." : e.message); }
-      return outJSON(res);
+      return linkHoSo(outJSON(res));
     }
   }
   async function login(a) {
@@ -315,20 +315,28 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   }
 
 
-  /* ---------- hồ sơ lô (COA, phiếu kết quả…): lưu vào thư mục hồ sơ lô trên Google Drive qua Sổ Kho cũ ---------- */
+  /* ---------- hồ sơ lô (COA, phiếu kết quả…): tải nhanh lên Supabase Storage (bucket ho-so); mỗi đêm Apps Script chép sang thư mục hồ sơ lô trên Drive ---------- */
+  const HS_BUCKET = "ho-so";
   async function uploadHoSoWeb(a, ma, lo, loai, name, mime, b64) {
-    const size = Math.floor(String(b64 || "").length * 3 / 4);
-    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, size]);
+    const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, bytes.length]);
     const ext = (String(name || "").match(/\.[A-Za-z0-9]{2,5}$/) || [mime === "application/pdf" ? ".pdf" : /word/.test(mime) ? ".docx" : ".jpg"])[0];
     const fname = k.tenFile.replace(/[\\/:*?"<>|]/g, "-") + ext;
-    const { data: ss } = await sb.auth.getSession(); const tk = ss && ss.session && ss.session.access_token;
-    let o;
-    try {
-      const r = await fetch(CFG.anhUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ viec: "hoso", tk, name: fname, mime, b64 }) });
-      o = await r.json();
-    } catch (e) { throw new Error("Không gửi được file lên Google Drive: " + (e.message || e)); }
-    if (!o || !o.fid) throw new Error("Không lưu được file lên Google Drive: " + ((o && o.err) || "lỗi không rõ"));
-    return run("webThemHoSo", [a, ma, lo, loai, fname, o.url, o.fid]);
+    const safe = x => String(x || "_").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/[^A-Za-z0-9._-]/g, "_");
+    const path = safe(ma) + "/" + safe(lo) + "/" + safe(fname.replace(/\.[^.]+$/, "")) + "-" + Math.random().toString(36).slice(2, 7) + ext.toLowerCase();
+    const { error } = await sb.storage.from(HS_BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
+    if (error) throw new Error("Không tải file lên được: " + error.message + (/bucket|not found|policy|security|mime/i.test(error.message) ? " (Quản lý cần chạy file 10_ho_so_lo.sql)" : ""));
+    return run("webThemHoSo", [a, ma, lo, loai, fname, "sbhs:" + path, ""]);
+  }
+  /* link hồ sơ còn trên Supabase ("sbhs:…") → đổi thành link xem tạm thời (1 giờ) trước khi trả cho giao diện */
+  async function linkHoSo(v) {
+    const found = []; const walk = o => { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") Object.keys(o).forEach(k => { const x = o[k]; if (k === "link" && typeof x === "string" && x.startsWith("sbhs:")) found.push(o); else walk(x); }); };
+    walk(v); if (!found.length) return v;
+    const paths = [...new Set(found.map(o => o.link.slice(5)))];
+    const { data } = await sb.storage.from(HS_BUCKET).createSignedUrls(paths, 3600);
+    const M = {}; (data || []).forEach(d => { if (d.signedUrl) M[d.path] = d.signedUrl; });
+    found.forEach(o => { const p = o.link.slice(5); o.link = M[p] || "#"; });
+    return v;
   }
 
   /* ---------- google.script.run / history / url ---------- */
