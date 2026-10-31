@@ -2328,8 +2328,8 @@ function printXnb(x){const d=(x.ngay||"").split("-");const tong=x.lines.reduce((
   <tr><td></td><td><b>Cộng</b></td><td></td><td></td><td class="c">kg</td><td class="r">${kg(x.lines.reduce((s,l)=>s+(+l.yc||0)*((itemBy(l.ma)||{heSo:1}).heSo||1),0))}</td><td class="r"><b>${kg(tong)}</b></td><td></td></tr></tbody></table>
   <div class="ngk">Ngày ${d[2]||"……"} tháng ${d[1]||"……"} năm ${d[0]||"……"}</div>
   <div class="sign"><div><b>Người lập phiếu</b><i>(Ký, họ tên)</i><br><br><br><br>${esc(x.nguoiLap)}</div><div><b>Người nhận hàng</b><i>(Ký, họ tên)</i></div><div><b>Thủ kho</b><i>(Ký, họ tên)</i></div><div><b>Kế toán trưởng</b><i>(Ký, họ tên)</i></div><div><b>Giám đốc</b><i>(Ký, họ tên)</i></div></div>
-  <div class="foot">In từ Sổ Kho ${APP_VER} · lập lúc ${esc(x.lap||"")}</div></div>`;
-  let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}pg.textContent="@media print{@page{size:A4 portrait;margin:12mm 12mm 10mm 15mm}}";
+  <div class="foot">Lập lúc ${esc(x.lap||"")}</div></div>`;
+  let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}pg.textContent="@media print{@page{size:A4 portrait;margin:0}html,body{margin:0!important;padding:0!important}#printArea{padding:12mm 12mm 10mm 15mm!important;box-decoration-break:clone;-webkit-box-decoration-break:clone}}";
   setTimeout(()=>{window.print();setTimeout(()=>{pg.textContent=""},1500)},150)}
 
 /* ---------- báo cáo xuất cho SX theo tháng ---------- */
