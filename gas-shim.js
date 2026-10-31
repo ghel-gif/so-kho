@@ -280,7 +280,15 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   }
   async function getAnhWeb(a, fid) {
     fid = String(fid || "");
-    if (!fid.startsWith("sb:")) { try { window.open("https://drive.google.com/file/d/" + encodeURIComponent(fid) + "/view", "_blank", "noopener"); } catch (e) {} throw new Error("Ảnh này lưu trên Google Drive (ảnh cũ hơn 3 tháng hoặc chụp từ Sổ Kho cũ) — đã mở trong tab mới. Không mở được thì cần quyền xem thư mục ảnh nhập kho trên Drive."); }
+    if (!fid.startsWith("sb:")) { // ảnh trên Google Drive (đã dời sau 90 ngày, hoặc chụp từ Sổ Kho cũ)
+      const { data: ss } = await sb.auth.getSession(); const tk = ss && ss.session && ss.session.access_token;
+      try {
+        const r = await fetch(CFG.anhUrl + "?anh=" + encodeURIComponent(fid) + "&tk=" + encodeURIComponent(tk || ""));
+        const o = await r.json(); if (o && o.b64) return { mime: o.mime || "image/jpeg", b64: o.b64 };
+        if (o && o.err) throw new Error(o.err);
+      } catch (e) { throw new Error("Ảnh này lưu trên Google Drive, chưa lấy được: " + (e.message || e)); }
+      throw new Error("Không lấy được ảnh trên Drive.");
+    }
     if (!(await run("webKiemAnh", [a, fid]))) throw new Error("Không tìm thấy ảnh.");
     const { data, error } = await sb.storage.from(BUCKET).download(fid.slice(3));
     if (error) throw new Error("Không tải được ảnh: " + error.message);
