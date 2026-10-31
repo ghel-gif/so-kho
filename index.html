@@ -2168,7 +2168,7 @@ function renderXnList(){const L=S.xnList||[];
     try{await api("cancelXNB",S.auth,x.so,r);toast("Đã huỷ phiếu "+x.so);await refresh();loadXnList()}catch(err){handleErr(err)}};
 }
 /* ---------- phiếu nhận diện BTP (A5) ---------- */
-const APP_URL="https:/"+"/script.google.com/macros/s/AKfycbxip8r5bb04zrwF8KEUhOqaE7_47fslYRhF-MkLni7iOEnk_BSK6C-B5kPLbaHwe-Qm/exec";
+const APP_URL="https:/"+"/ghel-gif.github.io/so-kho/"; /* QR thẻ nhận diện / tem trỏ về bản web */
 let qrP=null;
 function loadQR(){return qrP=qrP||new Promise((res,rej)=>{if(window.QRCode)return res(window.QRCode);const sc=document.createElement("script");
   sc.src="https:/"+"/cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";sc.onload=()=>res(window.QRCode);sc.onerror=()=>{qrP=null;rej(new Error("qr"))};document.head.appendChild(sc)})}
