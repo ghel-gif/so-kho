@@ -163,6 +163,23 @@ function webThemAnh(a, id, fname, fid) {
   return (anMap_()[m.id] || []).length;
 }
 function webKiemAnh(a, fid) { auth_(a); return !!(sheet_(AN_SH) && rows_(AN_SH).some(r => str_(r[5]) === String(fid))); }
+function webKiemHoSo(a, ma, lo, loai, mime, size) {
+  const me = auth_(a);
+  if (!me.qc) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC.');
+  const it = items_().find(i => i.ma === ma);
+  if (!hoSoOk_(it)) throw new Error('Chỉ đính kèm hồ sơ cho nguyên liệu kỹ thuật và bán thành phẩm theo lô.');
+  if ((HS_THEO_NHOM[it.nhom] || HS_LOAI).indexOf(loai) < 0) throw new Error('Loại hồ sơ "' + loai + '" không dùng cho nhóm ' + it.nhom + '.');
+  const nhan = HS_NHAN[loai] || ['pdf', 'img'];
+  if (!nhan.some(k => HS_MIME[k].test(String(mime || '')))) throw new Error(loai + ': chỉ nhận file ' + nhan.map(k => ({ pdf: 'PDF', img: 'ảnh', word: 'Word' })[k]).join(', ') + '.');
+  if (size > 15 * 1024 * 1024) throw new Error('File lớn quá 15 MB.');
+  return { tenFile: (HS_TEN[loai] || 'HS') + '_' + ma + '_' + (String(lo || '') || 'chua-co-lo') + '_' + Utilities.formatDate(new Date(), tz_(), 'yyyyMMdd-HHmm') };
+}
+function webThemHoSo(a, ma, lo, loai, fname, url, fid) {
+  const me = auth_(a); lo = String(lo || '');
+  HS_C = null; sheet_(SH.HS).appendRow([ma, lo, loai, fname, url, me.ten, new Date(), fid]);
+  log_(me, 'Đính kèm ' + loai, ma + ' lô ' + (lo || '(chưa có lô)'), fname);
+  return getHoSo(a, ma, lo);
+}
 function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === String(id)); return m ? { ma: m.ma, lo: m.lo, ngay: m.ngay, loai: m.loai } : null; }
 `;
     const names = [...code.matchAll(/^function\s+([A-Za-z0-9_$]+)\s*\(/gm)].map(m => m[1]);
@@ -195,6 +212,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     if (fn === "login") return login(args[0]);
     if (fn === "uploadAnhNhap") return uploadAnh(...args);
     if (fn === "getAnh") return getAnhWeb(...args);
+    if (fn === "uploadHoSo") return uploadHoSoWeb(...args);
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
     for (let lan = 0; lan < 2; lan++) {
       await sync();
@@ -294,6 +312,23 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     if (error) throw new Error("Không tải được ảnh: " + error.message);
     const buf = new Uint8Array(await data.arrayBuffer()); let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
     return { mime: data.type || "image/jpeg", b64: btoa(bin) };
+  }
+
+
+  /* ---------- hồ sơ lô (COA, phiếu kết quả…): lưu vào thư mục hồ sơ lô trên Google Drive qua Sổ Kho cũ ---------- */
+  async function uploadHoSoWeb(a, ma, lo, loai, name, mime, b64) {
+    const size = Math.floor(String(b64 || "").length * 3 / 4);
+    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, size]);
+    const ext = (String(name || "").match(/\.[A-Za-z0-9]{2,5}$/) || [mime === "application/pdf" ? ".pdf" : /word/.test(mime) ? ".docx" : ".jpg"])[0];
+    const fname = k.tenFile.replace(/[\\/:*?"<>|]/g, "-") + ext;
+    const { data: ss } = await sb.auth.getSession(); const tk = ss && ss.session && ss.session.access_token;
+    let o;
+    try {
+      const r = await fetch(CFG.anhUrl, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ viec: "hoso", tk, name: fname, mime, b64 }) });
+      o = await r.json();
+    } catch (e) { throw new Error("Không gửi được file lên Google Drive: " + (e.message || e)); }
+    if (!o || !o.fid) throw new Error("Không lưu được file lên Google Drive: " + ((o && o.err) || "lỗi không rõ"));
+    return run("webThemHoSo", [a, ma, lo, loai, fname, o.url, o.fid]);
   }
 
   /* ---------- google.script.run / history / url ---------- */
