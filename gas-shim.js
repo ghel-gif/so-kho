@@ -280,7 +280,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   }
   async function getAnhWeb(a, fid) {
     fid = String(fid || "");
-    if (!fid.startsWith("sb:")) throw new Error("Ảnh này chụp từ Sổ Kho cũ, đang lưu trên Google Drive — mở ở Sổ Kho cũ để xem.");
+    if (!fid.startsWith("sb:")) { try { window.open("https://drive.google.com/file/d/" + encodeURIComponent(fid) + "/view", "_blank", "noopener"); } catch (e) {} throw new Error("Ảnh này lưu trên Google Drive (ảnh cũ hơn 3 tháng hoặc chụp từ Sổ Kho cũ) — đã mở trong tab mới. Không mở được thì cần quyền xem thư mục ảnh nhập kho trên Drive."); }
     if (!(await run("webKiemAnh", [a, fid]))) throw new Error("Không tìm thấy ảnh.");
     const { data, error } = await sb.storage.from(BUCKET).download(fid.slice(3));
     if (error) throw new Error("Không tải được ảnh: " + error.message);
