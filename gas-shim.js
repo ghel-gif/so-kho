@@ -331,9 +331,27 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   }
   /* link "sbhs:…" → "#sbhs:…"; khi bấm mới xin link xem tạm (5 phút) nên không bao giờ hết hạn trên màn hình */
   function linkHoSo(v) {
-    const walk = o => { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") Object.keys(o).forEach(k => { const x = o[k]; if (k === "link" && typeof x === "string" && x.startsWith("sbhs:")) o[k] = "#" + x; else walk(x); }); };
+    const walk = o => { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === "object") Object.keys(o).forEach(k => { const x = o[k];
+      if (k === "link" && typeof x === "string" && x.startsWith("sbhs:")) o[k] = "#" + x;
+      else if (k === "link" && typeof x === "string" && /drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/.test(x)) o[k] = "#gdhs:" + x.match(/\/file\/d\/([A-Za-z0-9_-]+)/)[1];
+      else walk(x); }); };
     walk(v); return v;
   }
+  /* hồ sơ cũ nằm trên Google Drive: lấy qua Sổ Kho cũ (kiểm tra phiên đăng nhập web) → mở trong tab mới, không cần quyền Drive */
+  if (typeof document !== "undefined") document.addEventListener("click", async e => {
+    const a = e.target.closest && e.target.closest('a[href^="#gdhs:"]'); if (!a) return;
+    e.preventDefault(); e.stopPropagation();
+    const w = window.open("", "_blank");
+    try { if (w) w.document.write("<p style=\"font:15px system-ui;padding:24px\">Đang lấy hồ sơ từ Google Drive…</p>"); } catch (x) {}
+    try {
+      const { data: ss } = await sb.auth.getSession(); const tk = ss && ss.session && ss.session.access_token;
+      const r = await fetch(CFG.anhUrl + "?hs=" + encodeURIComponent(a.getAttribute("href").slice(6)) + "&tk=" + encodeURIComponent(tk || ""));
+      const o = await r.json(); if (!o || !o.b64) throw new Error((o && o.err) || "lỗi không rõ");
+      const bin = atob(o.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([u8], { type: o.mime || "application/octet-stream" }));
+      if (w) w.location.href = url; else location.href = url;
+    } catch (x) { if (w) w.close(); alert("Không mở được hồ sơ: " + (x.message || x)); }
+  }, true);
   if (typeof document !== "undefined") document.addEventListener("click", async e => {
     const a = e.target.closest && e.target.closest('a[href^="#sbhs:"]'); if (!a) return;
     e.preventDefault(); e.stopPropagation();
