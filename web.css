@@ -1,6 +1,6 @@
 /* Sổ Kho bản web — lớp giao diện làm mịn, chuyên nghiệp hơn (giữ nguyên bố cục, tên menu, cách nhập của bản cũ) */
 :root{
-  --bg:#f4f7fb; --surface:#ffffff; --ink:#16233f; --muted:#5f6f88; --line:#e2e8f0;
+  --bg:#f4f7fb; --surface:#ffffff; --ink:#0f1b33; --muted:#46546d; --line:#dfe6ef;
   --accent:#1f6fb8; --accent-ink:#fff; --accent-soft:#eaf3fc;
   --shadow-sm:0 1px 2px rgba(16,24,40,.05);
   --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
@@ -8,19 +8,21 @@
   --radius:12px;
 }
 @media (prefers-color-scheme: dark){:root{
-  --bg:#0c1420; --surface:#131e2c; --ink:#e6edf7; --muted:#9aabc2; --line:#233246;
+  --bg:#0c1420; --surface:#131e2c; --ink:#f1f5fb; --muted:#b4c2d6; --line:#2a3a50;
   --accent:#6fb1ee; --accent-ink:#08131f; --accent-soft:#16304a;
   --shadow-sm:none; --shadow:0 1px 2px rgba(0,0,0,.35); --shadow-lg:0 12px 32px -8px rgba(0,0,0,.6)}}
-body{-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+body{-webkit-font-smoothing:antialiased}
+label,.note,small{color:var(--muted)}
+label{font-weight:500}
 
 /* thanh trên */
-header{background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);box-shadow:var(--shadow-sm)}
+header{background:var(--surface);box-shadow:0 1px 0 var(--line),0 2px 6px rgba(16,24,40,.06);z-index:20}
 h1{letter-spacing:-.015em}
 .brand h1::after{content:"WEB";display:inline-block;margin-left:8px;vertical-align:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:6px;padding:1px 6px}
 
 /* menu trái */
 nav.side{gap:2px;padding:20px 14px}
-nav.side .navh{font-size:10.5px!important;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);opacity:.85;padding:14px 12px 6px!important}
+nav.side .navh{font-size:11px!important;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:14px 12px 6px!important}
 nav.side button{border-radius:9px;transition:background .12s,color .12s}
 nav.side button[aria-selected="true"]{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 22%,transparent)}
 
@@ -46,7 +48,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 .btn.primary:hover:not(:disabled){filter:brightness(1.06);border-color:var(--accent)}
 
 /* bảng */
-table th{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+table th{font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--muted)}
 table tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
 
 /* đăng nhập */
