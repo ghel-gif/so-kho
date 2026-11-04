@@ -202,28 +202,34 @@ window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thàn
 /* ---------- BM.06 ---------- */
 async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){return handleErr(e)}
   const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,done=o.trangThai==="Hoàn thành";
-  const curMay=String((D.bb&&D.bb.may)||(kh&&kh.may)||"").split(",").map(x=>x.trim()).filter(String);
+  const mayParse=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v).filter(x=>x&&(x.ten||x.ma))}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};
+  const mayL=mayParse((D.bb&&D.bb.may)||(kh&&kh.may));if(!mayL.length)mayL.push({ten:"",ma:""});
+  const rowsMay=()=>mayL.map((m,i)=>`<tr><td><input data-j="${i}" data-g="ten" value="${esc(m.ten)}" placeholder="VD: Bồn khuấy SL 3000 lít"></td><td><input data-j="${i}" data-g="ma" value="${esc(m.ma)}" placeholder="VD: BKT-01"></td><td><button class="btn small danger" type="button" data-dm="${i}">×</button></td></tr>`).join("");
   const me=(D.bb&&D.bb.me&&D.bb.me.length)?D.bb.me:[{ngay:o.ngayHT||(kh&&kh.ngay)||o.ngay,nguoi:o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", "),kg:done?o.slThucTe:""}];
   const w=document.createElement("div");w.className="cfm";
   const rowsMe=()=>me.map((m,i)=>`<tr><td><input type="date" data-i="${i}" data-f="ngay" value="${esc(m.ngay||"")}"></td><td><input data-i="${i}" data-f="nguoi" value="${esc(m.nguoi||"")}"></td><td><input type="number" step="any" data-i="${i}" data-f="kg" value="${esc(m.kg===""?"":m.kg)}"></td><td><button class="btn small danger" type="button" data-del="${i}">×</button></td></tr>`).join("");
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Biên bản sản xuất BTP · ${esc(o.so)}</h2><p class="note">${esc(sp.ten)} · lô ${esc(D.lo)} · ${done?"thực tế "+kg(o.slThucTe)+" kg":"đang SX, dự kiến "+kg(o.slDuKien)+" kg"}. Nguyên liệu tech, máy, khối lượng, hao hụt tự lấy từ lệnh và kế hoạch phối trộn.</p>
    <b>4. Bán thành phẩm từng mẻ</b><div class="dgx"><table><thead><tr><th>Ngày SX</th><th>Thực hiện</th><th>Số lượng (kg)</th><th></th></tr></thead><tbody id="bbMe">${rowsMe()}</tbody></table></div>
    <button class="btn small" type="button" id="bbAdd" style="margin-top:6px">+ Thêm mẻ</button>
-   <div class="kh-mayl"><b>3. Máy móc, thiết bị</b> <small class="note">${kh&&kh.may?"(lấy từ kế hoạch phối trộn, sửa được)":"(chọn máy đã chạy)"}</small><div class="kh-mays">${(D.may||[]).filter(m=>!m.ngung||curMay.includes(m.ma)).map(m=>`<label class="kh-chk"><input type="checkbox" class="bbMay" value="${esc(m.ma)}" ${curMay.includes(m.ma)?"checked":""}><span><b>${esc(m.ma)}</b> ${esc(m.ten)}</span></label>`).join("")||'<span class="note">Chưa có danh mục máy (Kế hoạch phối trộn → Danh mục máy).</span>'}</div>
-     <input id="bbMayX" placeholder="Máy khác: gõ tên – mã, cách nhau dấu phẩy" value="${esc(curMay.filter(x=>!(D.may||[]).some(m=>m.ma===x)).join(", "))}"></div>
+   <b>3. Máy móc, thiết bị</b>${kh&&kh.may?' <small class="note">(lấy từ kế hoạch phối trộn, sửa được)</small>':""}<div class="dgx"><table><thead><tr><th>Tên thiết bị</th><th>Mã số</th><th></th></tr></thead><tbody id="bbMayT">${rowsMay()}</tbody></table></div>
+   <div class="kh-bar" style="margin-top:6px"><button class="btn small" type="button" id="bbMayAdd">+ Thêm máy</button>${(D.may||[]).length?`<select id="bbMayPick" style="width:auto"><option value="">+ Chọn từ danh mục máy…</option>${D.may.filter(m=>!m.ngung).map(m=>`<option value="${esc(m.ma)}">${esc(m.ma)} · ${esc(m.ten)}</option>`).join("")}</select>`:""}</div>
+
    <label>Kết luận<select id="bbKL"><option value="">— chưa kết luận —</option>${D.ketLuan.map(k=>`<option${D.bb&&D.bb.ketLuan===k?" selected":""}>${esc(k)}</option>`).join("")}</select></label>
    <label>Ghi chú<input id="bbGC" value="${esc(D.bb?D.bb.ghiChu:"")}"></label>
    ${D.bb?`<p class="note">Lưu lần cuối: ${esc(D.bb.nguoi)} · ${esc(D.bb.luc)}</p>`:""}
    <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button><button class="btn" type="button" data-x="save">Lưu</button><button class="btn primary" type="button" data-x="print">Lưu & In</button></div></div>`;
   document.body.appendChild(w);
   const bind=()=>{w.querySelectorAll("#bbMe input").forEach(x=>x.oninput=()=>{me[+x.dataset.i][x.dataset.f]=x.value});w.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{me.splice(+b.dataset.del,1);$("bbMe").innerHTML=rowsMe();bind()})};bind();
+  const bindMay=()=>{w.querySelectorAll("#bbMayT input").forEach(x=>x.oninput=()=>{mayL[+x.dataset.j][x.dataset.g]=x.value});w.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{mayL.splice(+b.dataset.dm,1);if(!mayL.length)mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()})};bindMay();
+  $("bbMayAdd").onclick=()=>{mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()};
+  if($("bbMayPick"))$("bbMayPick").onchange=e=>{const m=D.may.find(x=>x.ma===e.target.value);if(m){const i=mayL.findIndex(x=>!x.ten&&!x.ma);const o={ten:m.ten,ma:m.ma};if(i>=0)mayL[i]=o;else mayL.push(o);$("bbMayT").innerHTML=rowsMay();bindMay()}e.target.value=""};
   $("bbAdd").onclick=()=>{me.push({ngay:me.length?me[me.length-1].ngay:o.ngay,nguoi:me.length?me[me.length-1].nguoi:"",kg:""});$("bbMe").innerHTML=rowsMe();bind()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();
-    const d={me,ketLuan:$("bbKL").value,ghiChu:$("bbGC").value,may:[...new Set([...w.querySelectorAll(".bbMay:checked")].map(x=>x.value).concat($("bbMayX").value.split(",").map(x=>x.trim()).filter(String)))].join(", ")};b.disabled=true;
+    const d={me,ketLuan:$("bbKL").value,ghiChu:$("bbGC").value,may:JSON.stringify(mayL.map(m=>({ten:String(m.ten||"").trim(),ma:String(m.ma||"").trim()})).filter(m=>m.ten||m.ma))};b.disabled=true;
     try{if(can.phieu())await api("webBBSave",S.auth,so,d);toast("Đã lưu biên bản "+so);if(x==="print"){bbPrint(D,d);}w.remove()}catch(e){handleErr(e);b.disabled=false}})}
 function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.tt||0,done=o.trangThai==="Hoàn thành";
-  const may=String(d.may||(kh&&kh.may)||"").split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:ma}});
+  const mayP=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v)}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};const may=mayP(d.may||(kh&&kh.may));
   const nl=(()=>{const g={};D.nl.forEach(n=>{const k=n.ma+"|"+(n.lo||"");if(g[k])g[k].kg+=n.kg;else g[k]=Object.assign({},n)});const a=Object.values(g);return a.length?a:[null]})();if(!may.length)may.push(null);const me=(d.me||[]).filter(m=>m&&(m.ngay||m.nguoi||m.kg));if(!me.length)me.push(null);
   const bd=kh&&kh.bdTT?kh.bdTT.slice(0,10):(kh?kh.ngay:o.ngay),ht=o.ngayHT||(kh&&kh.ktTT?kh.ktTT.slice(0,10):"");
   const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,hh=khKg&&tu?(khKg-tu)/khKg*100:null,L=v=>tt&&v?kg(v/tt):"";
