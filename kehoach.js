@@ -325,7 +325,9 @@ const PP={"1":"QC-HD.36","2":"QC-HD.35","3":"QC-HD.37","4":"QC-HD.38","5":"QC-HD
 /* Thông tin mẫu lưu kèm trong kq với khoá bắt đầu bằng "_" ; đánh giá từng chỉ tiêu "~mã"; phương pháp sửa tay "@mã" */
 const HD_DANG={EC:"07",EW:"08",GR:"09",ME:"10",SC:"11",SL:"12",WP:"13",WG:"14",GB:"22",AB:"23",CS:"24",DC:"25",OD:"26",FS:"27",PA:"28",RB:"29",SP:"30",SG:"31",DP:"32",SE:"33",ZC:"34"};
 const hdLM=dg=>HD_DANG[dg]?"QC-HD."+HD_DANG[dg]:"";
-const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày lấy mẫu","date"],["_lm","Lượng mẫu / tình trạng mẫu","","VD: 500 mL, chai PET kín, nguyên vẹn"],["_ntu","Thử nghiệm từ ngày","date"],["_nde","đến ngày","date"]];
+/* mẫu lỏng: mL, chai PET / PE-PA kín; mẫu rắn: g, túi màng PE / chai PET kín */
+const lmL=dg=>LIQ.includes(dg)||!dg,lmU=dg=>lmL(dg)?"mL":"g",lmBB=dg=>lmL(dg)?["Chai PET kín","Chai PE/PA kín"]:["Túi màng PE kín","Chai PET kín"];
+const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày lấy mẫu","date"],["_lm","Lượng mẫu"],["_bb","Bao bì mẫu"],["_ntu","Thử nghiệm từ ngày","date"],["_nde","đến ngày","date"]];
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=f3(D.tt);
@@ -340,7 +342,7 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
    <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis||(p?"disabled":"")}></label><label>Ngày kiểm nghiệm (ngày ra phiếu)<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${dis} placeholder="SC, EC, WP…"></label>
    <b style="display:block;margin-top:8px">Thông tin mẫu</b>
-   <div class="two">${inf(HLI[0])}${inf(HLI[1])}</div><div class="two">${inf(HLI[3])}${inf(HLI[4])}</div>${inf(HLI[2])}
+   <div class="two">${inf(HLI[0])}${inf(HLI[1])}</div><div class="two"><label>Lượng mẫu (<span id="hlU">${lmU(dg)}</span>)<input id="hl_lm" type="number" min="0" step="any" value="${esc(/^[\d.,]+$/.test(kq._lm||"")?String(kq._lm).replace(",","."):"")}" ${dis}></label><label>Bao bì mẫu<select id="hl_bb" ${dis}></select></label></div><div class="two">${inf(HLI[4])}${inf(HLI[5])}</div>
    <div class="kh-bar" style="margin:8px 0"><b>Chỉ tiêu</b><label class="kh-chk"><input type="checkbox" id="hlAll"><span>Hiện tất cả chỉ tiêu (không chỉ theo dạng)</span></label></div>
    <div class="dgx hl-tb"><table><colgroup><col style="width:34%"><col style="width:32%"><col style="width:19%"><col style="width:15%"></colgroup><thead><tr><th>Chỉ tiêu · mức yêu cầu (QC-QĐ.03)</th><th>Kết quả</th><th>Phương pháp</th><th>Đánh giá</th></tr></thead><tbody id="hlRows">${rows()}</tbody></table></div>
    <label>Kết luận<select id="hlKL" ${dis}><option value="">— chưa kết luận —</option><option value="Đạt"${p&&p.ketLuan==="Đạt"?" selected":""}>Đạt – cho phép đóng gói</option><option value="Không đạt"${p&&p.ketLuan==="Không đạt"?" selected":""}>Không đạt – xử lý theo quy trình SP không phù hợp</option></select></label>
@@ -353,7 +355,8 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
     w.querySelectorAll("#hlRows .hl-dg").forEach(x=>{kq["~"+x.dataset.g]=x.value});HLI.forEach(x=>{kq[x[0]]=$("hl"+x[0]).value.trim()})};
   const grow=()=>w.querySelectorAll("#hlRows .hl-kq").forEach(t=>{const f=()=>{t.style.height="auto";t.style.height=Math.max(38,t.scrollHeight+2)+"px"};t.oninput=f;f()});
   grow();$("hlAll").onchange=e=>{keep();all=e.target.checked;$("hlRows").innerHTML=rows();grow()};
-  $("hlDang").oninput=()=>{keep();const o=hdLM(dg);dg=$("hlDang").value.trim().toUpperCase();if(!kq._lmt||kq._lmt===o){kq._lmt=hdLM(dg);$("hl_lmt").value=kq._lmt};$("hlRows").innerHTML=rows();grow()};
+  const bbOpt=()=>{const L=lmBB(dg),cur=kq._bb&&L.includes(kq._bb)?kq._bb:L[0];$("hl_bb").innerHTML=L.map(x=>`<option${x===cur?" selected":""}>${x}</option>`).join("");$("hlU").textContent=lmU(dg)};bbOpt();
+  $("hlDang").oninput=()=>{keep();const o=hdLM(dg);dg=$("hlDang").value.trim().toUpperCase();if(!kq._lmt||kq._lmt===o){kq._lmt=hdLM(dg);$("hl_lmt").value=kq._lmt};bbOpt();$("hlRows").innerHTML=rows();grow()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   const getD=()=>{if(!ro)keep();const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
     if(!all)CT.forEach(c=>{if(!ap(c,d.dang)){delete kq[c[0]];delete kq["~"+c[0]];delete kq["@"+c[0]]}}); /* bỏ chỉ tiêu không thuộc dạng (VD: SL không có kích thước hạt) */
@@ -375,7 +378,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(it.ten)}</b></td><td colspan="2">Mã vật tư: <b>${esc(D.ma||it.ma||"")}</b></td></tr>
    <tr><td colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td><td>Dạng: <b>${esc(dg)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td colspan="2">Lấy mẫu theo: <b>${esc(v("_lmt"))}</b></td><td colspan="2">Ngày lấy mẫu: <b>${dd("_ngm")}</b></td></tr>
-   <tr><td colspan="2">Ngày thử nghiệm: <b>${ngT}</b></td><td colspan="2">Lượng / tình trạng mẫu: ${esc(v("_lm"))}</td></tr>
+   <tr><td colspan="2">Ngày thử nghiệm: <b>${ngT}</b></td><td colspan="2">Lượng mẫu: ${v("_lm")?`<b>${esc(/^[\d.,]+$/.test(v("_lm"))?v("_lm").replace(".",",")+" "+lmU(dg):v("_lm"))}</b>`:""}${v("_bb")?" – "+esc(v("_bb").charAt(0).toLowerCase()+v("_bb").slice(1)):""}</td></tr>
   </table>
   <p style="margin:8px 0 4px"><b>2. KẾT QUẢ KIỂM NGHIỆM</b> <i>(mức yêu cầu theo TCCS sản phẩm và QC-QĐ.03 – QCVN 01-188:2018/BNNPTNT)</i></p>
   ${tb(R,"Chưa ghi kết quả chỉ tiêu nào")}
