@@ -863,7 +863,7 @@ body nav.side .navh{color:#fff;opacity:.85}
 <div class="toast" id="toast" hidden></div>
 <div id="printArea"></div>
 
-<script>window.SOKHO_VER="web-2";</script>
+<script>window.SOKHO_VER="web-3";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=web-7"></script>
 <script src="gas-shim.js?v=web-14"></script>
@@ -898,7 +898,7 @@ function addMonths(ymd,n){if(!ymd||!n)return"";const p=ymd.split("-").map(Number
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
 /* ---------- báo đang xử lý + chặn bấm lặp khi gọi máy chủ ---------- */
 const RUNW=new Set(["createPackOrder","completePackOrder","packDone","savePack","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","setLock"]);
-const WR_FN=new Set(["webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
+const WR_FN=new Set(["webHLSave","webBBSave","webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
 const BUSY_TXT={login:"Đang đăng nhập…",completeOrder:"Đang hoàn thành lệnh, trừ kho…",createOrder:"Đang lập lệnh…",reopenOrder:"Đang mở lại lệnh…",saveMove:"Đang ghi phiếu…",updateMove:"Đang lưu thay đổi…",deleteMove:"Đang xoá phiếu…",saveXNB:"Đang ghi phiếu xuất…",adjustXNB:"Đang lưu điều chỉnh…",cancelXNB:"Đang huỷ phiếu…",importRows:"Đang xử lý file Excel…",uploadAnhNhap:"Đang tải ảnh lên…",uploadHoSo:"Đang tải hồ sơ lên…",transferStock:"Đang chuyển kho…",setQC:"Đang lưu QC…",backupNow:"Đang sao lưu…"};
 const BZ={n:0,r:0,fly:new Map(),t:null,t2:null};
 function busyEl(){if(!document.getElementById("busyOv")){const b=document.createElement("div");b.id="busyOv";b.setAttribute("role","status");b.setAttribute("aria-live","polite");
@@ -1631,7 +1631,7 @@ function renderOrder(){
           <div class="meta">${m.lo?"Lô "+esc(m.lo)+" · ":""}${dm!==null?"Định mức "+kg(dm)+" "+esc(m.donVi):"Ngoài công thức"}</div></div>`}).join("")||'<div class="empty">Không có phiếu xuất.</div>')+`</div>`;}
     if(can.sua())h+=`<div class="actions"><button class="btn ${S.armed==="ro"+o.so?"danger":""}" type="button" id="odReopen">${S.armed==="ro"+o.so?"Chạm lần nữa: huỷ các phiếu của lệnh và mở lại":"Mở lại lệnh để sửa"}</button></div>`;
   }
-  v.innerHTML=h;
+  v.innerHTML=h;if(window.bbBtn)bbBtn(o,v);
   if($("odLabel"))$("odLabel").onclick=$("odLabelA4").onclick=ev=>{let p=o;const a4=ev.currentTarget.id==="odLabelA4";
     if(o.trangThai==="Đang SX"&&$("htNSX")){const n=pickVal("htNSX"),q=qcVal("htQC");
       if((n||q)&&(n!==(o.nguoiSX||"")||q!==(o.qcSX||""))){p=Object.assign({},o,{nguoiSX:n,qcSX:q});
@@ -2219,7 +2219,7 @@ function lotCard(ma,lo){let it=itemBy(ma),l=null;
     else if((r.hs||[]).length){html+=`<div class="kv lhs"><span>Hồ sơ lô</span><b>${r.hs.map(x=>`<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.loai)}</a>`).join(" · ")}</b></div>`}
     if((r.nl||[]).length){html+=`<div class="lsec">Nguyên liệu đã dùng (${r.nl.length})</div><div class="nll">`+r.nl.map(x=>`<div class="nlr"><div class="nlt"><b>${esc(x.ma)}</b><span>${esc(x.ten)}</span></div><div class="nlk">${kg(x.kg)} kg</div><div class="nls">Lô <b>${esc(x.lo||"(không lô)")}</b>${x.qc?" · QC "+esc(x.qc):""}${x.lenh&&x.lenh!==lo?" · lệnh "+esc(x.lenh):""}</div></div>`).join("")+`</div>`}
     else if(r.btp){html+=`<div class="note">Chưa có dữ liệu nguyên liệu đã dùng (lô không gắn lệnh SX trên sổ).</div>`}
-    box.className="";box.innerHTML=html||"";}).catch(e=>{const box=$("lotMore");if(box)box.textContent="Không tải được: "+e.message});
+    box.className="";box.innerHTML=html||"";if(window.hlLotHook)hlLotHook(box,ma,lo,r);}).catch(e=>{const box=$("lotMore");if(box)box.textContent="Không tải được: "+e.message});
   c.onclick=e=>{if(e.target===c){c.remove();return}const bt=e.target.closest("[data-a]");if(!bt)return;const t=bt.dataset.a;c.remove();
     if(t==="kk"){setTab("kk");qrFind(lo,ma);setTimeout(()=>$("qrBox").scrollIntoView({behavior:"smooth"}),200)}
     else if(t==="qc"){setTab("qc");qcShow("duyet");$("qcFilter").value="";$("qcQ").value=lo;S.qcOpen=JSON.stringify([ma,lo]);renderQC()}
@@ -2507,7 +2507,7 @@ function attachSearch(sel){if(!sel||sel._srch)return;
 function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(id)))}
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
-<script src="kehoach.js?v=1"></script>
+<script src="kehoach.js?v=2"></script>
 </body>
 </html>
  
