@@ -22,7 +22,8 @@ function webKHGet(a) {
   auth_(a);
   const kh = khRows_().filter(r => str_(r[0])).map(khObj_).filter(x => x.tt !== 'Đã xoá');
   const g = lxGoiY_(orders_());
-  return { kh, may: mayList_(), nsx: g.nsx, qc: g.qc };
+  const vs = vsAll_().map(v => ({ so: v.so, lenh: v.lenh, kq: v.kq, may: v.tb.map(t => t.ma).filter(String) }));
+  return { kh, vs, may: mayList_(), nsx: g.nsx, qc: g.qc };
 }
 function khRow_(id) {
   const R = khRows_(), i = R.findIndex(r => str_(r[0]) === String(id || ''));
@@ -176,5 +177,52 @@ function webHLSave(a, d) {
   else if (kl === 'Đạt') sheet_(SH.HS).appendRow([it.ma, lo, loai, ten, link, me.ten, new Date(), '']);
   if (d.kq && d.kq['3']) { const t = num_(String(d.kq['3']).replace(',', '.')); if (t >= 0.3 && t <= 3) { try { setTyTrong(a, it.ma, lo, t); } catch (e) {} } }
   log_(me, 'Phiếu kiểm hoá lý BTP', it.ma + ' lô ' + lo + ' · ' + so, kl || 'chưa kết luận');
+  return so;
+}
+
+/* ===== BM.05-QC-QT.03 BIÊN BẢN VỆ SINH THIẾT BỊ KHUẤY TRỘN =====
+ * 1 phiếu / lần vệ sinh sau lệnh vừa chạy. Thiết bị lấy từ biên bản SX (BM.06) hoặc kế hoạch phối trộn của lệnh.
+ * Thiết bị (JSON): [{ma, ten, quet, nuoc, dm}] — quet/nuoc/dm: 1 = đã thực hiện, 0 = không thực hiện. */
+const VS_SH = 'VeSinhTB', VS_HEAD = ['Số phiếu', 'Lệnh vừa chạy', 'BTP vừa chạy', 'Lệnh sẽ chạy', 'BTP sẽ chạy', 'Ngày', 'Giờ', 'Thiết bị (JSON)', 'Dung môi tráng', 'Ghi chú', 'Kết quả', 'Người lập', 'Lúc', 'Trạng thái'];
+function vsObj_(r) { let tb = []; try { tb = JSON.parse(str_(r[7]) || '[]'); } catch (e) { tb = []; }
+  return { so: str_(r[0]), lenh: str_(r[1]), sp: str_(r[2]), lenhSau: str_(r[3]), spSau: str_(r[4]), ngay: str_(r[5]), gio: khHm_(r[6]), tb, dm: str_(r[8]), ghiChu: str_(r[9]), kq: str_(r[10]), nguoi: str_(r[11]), luc: khTs_(r[12]), tt: str_(r[13]) }; }
+function vsAll_() { return (sheet_(VS_SH) ? rows_(VS_SH) : []).filter(r => str_(r[0])).map(vsObj_).filter(x => x.tt !== 'Đã xoá'); }
+const khCodes_ = s => String(s || '').split(',').map(x => x.trim()).filter(String);
+const khKey_ = k => (k.bdTT || ((k.ngay || '') + ' ' + (k.bd || '00:00')));
+function lenhMay_(so, k) {
+  const r = (sheet_(BB_SH) ? rows_(BB_SH) : []).find(x => str_(x[0]) === so), M = {}; mayList_().forEach(m => M[m.ma] = m.ten);
+  if (r && str_(r[6])) { try { const a = JSON.parse(str_(r[6])); if (a && a.length) return a.filter(x => x && (x.ma || x.ten)).map(x => ({ ma: str_(x.ma), ten: str_(x.ten) || M[x.ma] || '' })); } catch (e) {} }
+  return khCodes_(k && k.may).map(ma => ({ ma, ten: M[ma] || '' }));
+}
+function webVSGet(a, lenh, so) {
+  auth_(a);
+  const V = vsAll_(), p = so ? V.find(x => x.so === so) : null; if (p) lenh = p.lenh;
+  const od = orders_().find(x => x.so === lenh); if (!od) throw new Error('Không tìm thấy lệnh ' + lenh);
+  const KH = khRows_().filter(r => str_(r[0])).map(khObj_).filter(x => x.tt !== 'Đã xoá');
+  const k = KH.find(x => x.so === lenh) || null, tb = lenhMay_(lenh, k), codes = tb.map(t => t.ma).filter(String);
+  const OD = {}; orders_().forEach(o => OD[o.so] = o);
+  const sau = KH.filter(x => x.so !== lenh && OD[x.so] && OD[x.so].trangThai !== 'Đã huỷ' && (!k || khKey_(x) > khKey_(k)) && khCodes_(x.may).some(c => codes.indexOf(c) >= 0))
+    .sort((x, y) => khKey_(x) < khKey_(y) ? -1 : 1).slice(0, 8).map(x => ({ so: x.so, maSP: OD[x.so].maSP, ngay: x.ngay, bd: x.bd }));
+  const nam = Utilities.formatDate(new Date(), tz_(), 'yyyy'); let mx = 0;
+  V.forEach(x => { const m = new RegExp('^VS-' + nam + '-(\\d+)$').exec(x.so); if (m) mx = Math.max(mx, +m[1]); });
+  return { o: od, kh: k, tb, sau, p: p || V.filter(x => x.lenh === lenh).pop() || null, soMoi: 'VS-' + nam + '-' + String(mx + 1).padStart(3, '0'), may: mayList_() };
+}
+function webVSSave(a, d) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  d = d || {};
+  const so = String(d.so || '').trim().slice(0, 40); if (!so) throw new Error('Ghi số phiếu.');
+  const od = orders_().find(x => x.so === d.lenh); if (!od) throw new Error('Không tìm thấy lệnh ' + d.lenh);
+  if (!isYmd_(d.ngay)) throw new Error('Ngày thực hiện không hợp lệ.');
+  const gio = String(d.gio || '').trim(); if (gio && !/^([01]\d|2[0-3]):[0-5]\d$/.test(gio)) throw new Error('Giờ ghi dạng HH:mm.');
+  const kq = ['Đạt', 'Không đạt'].indexOf(d.kq) >= 0 ? d.kq : '';
+  if (kq && !me.qc) throw new Error('Chỉ QC được kết luận kết quả vệ sinh.');
+  const b = v => v ? 1 : 0, tb = (d.tb || []).slice(0, 30).map(t => ({ ma: String(t.ma || '').trim().slice(0, 30), ten: String(t.ten || '').trim().slice(0, 120), quet: b(t.quet), nuoc: b(t.nuoc), dm: b(t.dm) })).filter(t => t.ma || t.ten);
+  if (!tb.length) throw new Error('Chưa có vị trí / thiết bị vệ sinh.');
+  const sau = d.lenhSau ? orders_().find(x => x.so === d.lenhSau) : null;
+  const sh = shX_(VS_SH, VS_HEAD), R = sheet_(VS_SH) ? rows_(VS_SH) : [], i = R.findIndex(r => str_(r[0]) === so && str_(r[13]) !== 'Đã xoá');
+  if (i >= 0 && str_(R[i][1]) !== od.so) throw new Error('Số phiếu ' + so + ' đã dùng cho lệnh khác.');
+  const row = [so, od.so, od.maSP, sau ? sau.so : '', sau ? sau.maSP : '', d.ngay, gio, JSON.stringify(tb), String(d.dm || '').trim().slice(0, 100), String(d.ghiChu || '').trim().slice(0, 300), kq, me.ten, new Date(), ''];
+  if (i >= 0) sh.getRange(i + 2, 1, 1, VS_HEAD.length).setValues([row]); else sh.appendRow(row);
+  log_(me, 'Biên bản vệ sinh thiết bị', od.so + ' · ' + so, kq || 'chưa kết luận');
   return so;
 }

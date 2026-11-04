@@ -24,6 +24,13 @@ function full(k){const o=S.lenh.find(x=>x.so===k.so)||{},sp=itemBy(o.maSP)||{ma:
 const canKH=()=>typeof can!=="undefined"&&can.phieu()&&S.me&&S.me.ct;
 async function load(force){if(K.data&&!force)return K.data;K.loading=K.loading||api("webKHGet",S.auth).then(d=>{if(!d.may||!d.may.length){d.may=MAY_TM.map(x=>Object.assign({},x));d.mayTM=1}K.data=d;return d}).finally(()=>K.loading=null);return K.loading}
 function rowsAll(){return (K.data.kh||[]).map(full)}
+/* máy của kế hoạch vừa chạy BTP khác mà chưa có biên bản vệ sinh BM.05 Đạt */
+const kodes=s=>String(s||"").split(",").map(x=>x.trim()).filter(String),kkey=k=>k.bdTT||((k.ngay||"")+" "+(k.bd||"00:00"));
+function vsMiss(id){const r=(K.data.kh||[]).find(x=>x.id===id);if(!r||!/^AHK\./i.test(r.so))return[];const oc=S.lenh.find(x=>x.so===r.so)||{},out=[];
+  kodes(r.may).forEach(code=>{const prev=(K.data.kh||[]).filter(p=>p.so!==r.so&&kodes(p.may).includes(code)&&kkey(p)<kkey(r)&&(S.lenh.find(x=>x.so===p.so)||{}).trangThai!=="Đã huỷ").sort((a,b)=>kkey(a)<kkey(b)?1:-1)[0];
+    if(!prev)return;const op=S.lenh.find(x=>x.so===prev.so)||{};if(!op.maSP||op.maSP===oc.maSP)return;
+    if(!(K.data.vs||[]).some(v=>v.lenh===prev.so&&v.kq==="Đạt"&&v.may.includes(code)))out.push({code,so:prev.so,maSP:op.maSP})});return out}
+window.khReload=()=>{if(K.data)load(true).then(()=>{if(document.getElementById("khBox")&&!document.getElementById("tab-khpt").hidden)khRender()}).catch(()=>{})};
 
 /* ---------- khung chính ---------- */
 window.khRender=async function(){const box=$("khBox");if(!box)return;
@@ -61,13 +68,15 @@ function dayBlock(d,L){const chua=L.filter(r=>!r.bdTT&&["Tạo mới","Sửa sau
     <td><span class="kh-uu ${UUC[r.uuTien]||""}">${esc(r.uuTien)}</span></td><td>${esc([r.pc1,r.pc2].filter(Boolean).join(", "))||"—"}<br><small class="note">QC: ${esc(r.qc)||"—"}</small></td>
     <td><span class="kh-tt ${TTC[r.tt]}">${esc(r.tt)}</span>${r.gui&&r.tt!=="Tạo mới"?`<br><small class="note">gửi ${esc(dmy(r.gui.slice(0,10)).slice(0,5))} ${esc(r.gui.slice(11))}</small>`:""}</td>
     <td class="kh-act">${actBtns(r)}</td></tr>`).join("")}</tbody></table></div></div>`}
-function actBtns(r){if(!canKH()||r.tt==="Hoàn thành"||r.tt==="Đã huỷ")return r.tt==="Hoàn thành"?`<button class="btn small" type="button" data-lenh="${esc(r.so)}">Xem lệnh</button>`:"";
-  if(r.tt==="Xong phối trộn")return `<button class="btn small primary" type="button" data-lenh="${esc(r.so)}">Hoàn thành lệnh</button>`;
+function actBtns(r){const vs=/^AHK\./i.test(r.so)&&(r.tt==="Hoàn thành"||r.tt==="Xong phối trộn")?`<button class="btn small" type="button" data-vsl="${esc(r.so)}" title="Biên bản vệ sinh thiết bị (BM.05)">Vệ sinh</button>`:"";
+  if(!canKH()||r.tt==="Hoàn thành"||r.tt==="Đã huỷ")return r.tt==="Hoàn thành"?`<button class="btn small" type="button" data-lenh="${esc(r.so)}">Xem lệnh</button>`+vs:"";
+  if(r.tt==="Xong phối trộn")return `<button class="btn small primary" type="button" data-lenh="${esc(r.so)}">Hoàn thành lệnh</button>`+vs;
   if(r.tt==="Đang SX")return `<button class="btn small primary" type="button" data-act="kt" data-k="${esc(r.id)}">Kết thúc</button>`;
   return `<button class="btn small" type="button" data-act="bd" data-k="${esc(r.id)}">Bắt đầu</button>`}
 function bindRows(v){
   v.querySelectorAll("tr[data-id]").forEach(tr=>tr.onclick=e=>{if(e.target.closest("button"))return;const r=rowsAll().find(x=>x.id===tr.dataset.id);if(r)khForm(r)});
-  v.querySelectorAll("[data-act]").forEach(b=>b.onclick=async e=>{e.stopPropagation();b.disabled=true;try{await api("webKHAct",S.auth,b.dataset.k,b.dataset.act);toast(b.dataset.act==="bd"?"Đã ghi giờ bắt đầu":"Đã ghi giờ kết thúc phối trộn");await load(true);khRender()}catch(x){handleErr(x);b.disabled=false}});
+  v.querySelectorAll("[data-act]").forEach(b=>b.onclick=async e=>{e.stopPropagation();if(b.dataset.act==="bd"&&!b.dataset.ok){const miss=vsMiss(b.dataset.k);if(miss.length&&window.vsWarn)return vsWarn(miss,()=>{b.dataset.ok="1";b.click()})}b.disabled=true;try{await api("webKHAct",S.auth,b.dataset.k,b.dataset.act);toast(b.dataset.act==="bd"?"Đã ghi giờ bắt đầu":"Đã ghi giờ kết thúc phối trộn");await load(true);khRender()}catch(x){handleErr(x);b.disabled=false}});
+  v.querySelectorAll("[data-vsl]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(window.vsDlg)vsDlg(b.dataset.vsl)});
   v.querySelectorAll("[data-lenh]").forEach(b=>b.onclick=e=>{e.stopPropagation();setTab("lsx");setTimeout(()=>openOrder(b.dataset.lenh),50)});
   v.querySelectorAll("[data-gui]").forEach(b=>b.onclick=()=>guiNgay(b.dataset.gui,b));
   v.querySelectorAll("[data-zalo]").forEach(b=>b.onclick=()=>copyZalo(b.dataset.zalo));
@@ -221,9 +230,9 @@ function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true}
 const isAHK=s=>/^AHK\./i.test(String(s||"").trim());
 window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm"||!isAHK(o.so))return;
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
-  d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button><button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button>`;
+  d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button><button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button><button class="btn" type="button" data-vs>Vệ sinh thiết bị (BM.05)</button>`;
   const h2=v.querySelector("h2");(h2?h2.nextSibling:v.firstChild)?v.insertBefore(d,h2?h2.nextSibling:v.firstChild):v.appendChild(d);
-  d.querySelector("[data-bb]").onclick=()=>bbDlg(o.so);d.querySelector("[data-hl]").onclick=()=>hlForm(o.maSP,o.so)};
+  d.querySelector("[data-bb]").onclick=()=>bbDlg(o.so);d.querySelector("[data-hl]").onclick=()=>hlForm(o.maSP,o.so);d.querySelector("[data-vs]").onclick=()=>vsDlg(o.so)};
 
 /* ---------- BM.06 ---------- */
 /* Thời gian theo kế hoạch: lấy ngày + giờ của kế hoạch phối trộn; chưa có kế hoạch → giờ hành chính 07:30–16:30. */
@@ -394,10 +403,64 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    <div>- Phiếu kiểm soát chất lượng nội bộ theo ISO 9001:2015, làm căn cứ cho phép chuyển công đoạn. Phòng thử nghiệm của công ty chưa được công nhận ISO/IEC 17025; phiếu không thay thế kết quả của tổ chức thử nghiệm được chỉ định / công nhận.</div>
    <div>- Phương pháp thử theo các hướng dẫn nội bộ QC-HD hiện hành; thiết bị đo được kiểm tra, hiệu chuẩn theo kế hoạch của công ty.</div></div>`)}
 
+/* ---------- BM.05-QC-QT.03 Biên bản vệ sinh thiết bị khuấy trộn ---------- */
+async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
+  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=(D.may&&D.may.length?D.may:MAY_TM);
+  const tenOf=ma=>{const m=DM.find(x=>x.ma===ma);return m?m.ten:""};
+  const now=new Date(),hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+  const tb=p?p.tb.map(t=>Object.assign({},t)):D.tb.map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:1,nuoc:1,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:1,nuoc:0,dm:0}]);
+  if(!tb.length)tb.push({ma:"",ten:"",quet:1,nuoc:1,dm:0});
+  const ck=(i,f)=>`<input type="checkbox" data-i="${i}" data-f="${f}" ${tb[i][f]?"checked":""} ${dis}>`;
+  const rows=()=>tb.map((t,i)=>`<tr><td><input data-i="${i}" data-f="ten" value="${esc(t.ten)}" ${dis}></td><td><input data-i="${i}" data-f="ma" value="${esc(t.ma)}" ${dis} style="width:90px"></td><td class="c">${ck(i,"quet")}</td><td class="c">${ck(i,"nuoc")}</td><td class="c">${ck(i,"dm")}</td><td>${canW?`<button class="btn small danger" type="button" data-del="${i}">×</button>`:""}</td></tr>`).join("");
+  const sau=D.sau||[],ls=p?p.lenhSau:(sau[0]?sau[0].so:"");
+  const w=document.createElement("div");w.className="cfm";
+  w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Biên bản vệ sinh thiết bị khuấy trộn${p?" · "+esc(p.so):""}</h2>
+   <p class="note">Sau lệnh <b>${esc(o.so)}</b> · ${esc(sp.ten)}. Thiết bị lấy từ biên bản SX / kế hoạch phối trộn của lệnh, sửa được.</p>
+   <div class="two"><label>Số phiếu<input id="vsSo" value="${esc(p?p.so:D.soMoi)}" ${p||!canW?"disabled":""}></label><label>BTP sẽ chạy (nếu có)<select id="vsSau" ${dis}><option value="">— không có / chưa biết —</option>${sau.map(x=>`<option value="${esc(x.so)}"${x.so===ls?" selected":""}>${esc(x.so)} · ${esc((itemBy(x.maSP)||{ten:x.maSP}).ten)} · ${esc(dmy(x.ngay))}</option>`).join("")}${ls&&!sau.some(x=>x.so===ls)?`<option value="${esc(ls)}" selected>${esc(ls)}</option>`:""}</select></label></div>
+   <div class="two"><label>Ngày thực hiện<input type="date" id="vsNgay" value="${esc(p?p.ngay:S.today)}" ${dis}></label><label>Giờ thực hiện<input type="time" id="vsGio" value="${esc(p?p.gio:hm)}" ${dis}></label></div>
+   <b style="display:block;margin-top:8px">Thao tác thực hiện</b> <small class="note">(đánh dấu = đã thực hiện; bỏ trống = không thực hiện)</small>
+   <div class="dgx"><table><thead><tr><th>Vị trí vệ sinh</th><th>Mã thiết bị</th><th>Quét</th><th>Tráng nước</th><th>Tráng dung môi</th><th></th></tr></thead><tbody id="vsT">${rows()}</tbody></table></div>
+   ${canW?`<div class="kh-bar" style="margin-top:6px"><select id="vsAddM"><option value="">+ Thêm thiết bị từ danh mục…</option>${DM.filter(m=>!m.ngung).map(m=>`<option value="${esc(m.ma)}">${esc(m.ma)} · ${esc(m.ten)}</option>`).join("")}</select><button class="btn small" type="button" id="vsAdd">+ Dòng trống</button></div>`:""}
+   <label>Dung môi tráng<input id="vsDM" value="${esc(p?p.dm:"")}" ${dis} placeholder="VD: nước, Solvesso 150, NMP… (khi có tráng dung môi)"></label>
+   <label>Ghi chú<input id="vsGC" value="${esc(p?p.ghiChu:"")}" ${dis}></label>
+   <label>Kết quả vệ sinh <small class="note">(QC kết luận)</small><select id="vsKQ" ${canW&&S.me.qc?"":"disabled"}><option value="">— chưa kết luận —</option>${["Đạt","Không đạt"].map(x=>`<option${p&&p.kq===x?" selected":""}>${x}</option>`).join("")}</select></label>
+   ${p?`<p class="note">Lưu lần cuối: ${esc(p.nguoi)} · ${esc(p.luc)}</p>`:""}
+   <div class="actions">${btn4(canW,!!p)}</div></div>`;
+  document.body.appendChild(w);
+  const bind=()=>{w.querySelectorAll("#vsT input").forEach(x=>{const f=x.dataset.f,i=+x.dataset.i;x.oninput=x.onchange=()=>{tb[i][f]=x.type==="checkbox"?(x.checked?1:0):x.value}});
+    w.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{tb.splice(+b.dataset.del,1);$("vsT").innerHTML=rows();bind()})};bind();
+  if(canW){$("vsAdd").onclick=()=>{tb.push({ma:"",ten:"",quet:1,nuoc:1,dm:0});$("vsT").innerHTML=rows();bind()};
+    $("vsAddM").onchange=e=>{const ma=e.target.value;if(!ma)return;tb.splice(Math.max(0,tb.length-1),0,{ma,ten:tenOf(ma),quet:1,nuoc:1,dm:0});e.target.value="";$("vsT").innerHTML=rows();bind()}}
+  w.onclick=e=>{if(e.target===w)w.remove()};
+  const getD=()=>({so:$("vsSo").value.trim(),lenh:o.so,lenhSau:$("vsSau").value,ngay:$("vsNgay").value,gio:$("vsGio").value,tb,dm:$("vsDM").value.trim(),ghiChu:$("vsGC").value.trim(),kq:$("vsKQ").value});
+  btnWire(w,{canW,saved:!!p,dirty:false},async()=>{await api("webVSSave",S.auth,getD());$("vsSo").disabled=true;if(window.khReload)window.khReload()},()=>vsPrint(D,getD()))}
+function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?((D.sau||[]).find(x=>x.so===d.lenhSau)||{so:d.lenhSau,maSP:""}):null,spS=ss?(itemBy(ss.maSP)||{ten:ss.maSP}):null;
+  const tb=(d.tb||[]).filter(t=>t.ma||t.ten),mk=v=>v?"✓":"X",may=tb.filter(t=>t.ma);
+  pr(`${PCSS}<style>.pq .vs td,.pq .vs th{padding:5px 6px}.pq .vs .c{font-size:13pt}.pq .tin .lb{background:#fafafa}</style><div class="pq">${head("BIÊN BẢN VỆ SINH<br>THIẾT BỊ KHUẤY TRỘN","Mã hiệu: BM.05-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
+  <p style="text-align:right;margin:4px 0">Số phiếu: <b>${esc(d.so)}</b></p>
+  <table class="tin"><colgroup><col style="width:19%"><col style="width:31%"><col style="width:19%"><col style="width:31%"></colgroup>
+   <tr><td class="lb">Tên máy</td><td><b>${esc(may.map(t=>t.ten).join("; "))}</b></td><td class="lb">Mã thiết bị</td><td><b>${esc(may.map(t=>t.ma).join(", "))}</b></td></tr>
+   <tr><td class="lb">Ngày thực hiện</td><td><b>${dmy(d.ngay)}</b></td><td class="lb">Thời gian thực hiện</td><td><b>${esc(d.gio||"")}</b></td></tr>
+   <tr><td class="lb">Tên BTP vừa chạy</td><td><b>${esc(sp.ten)}</b><br>Lô: ${esc(o.so)}</td><td class="lb">Tên BTP sẽ chạy (nếu có)</td><td>${ss?`<b>${esc(spS.ten)}</b><br>Lô: ${esc(ss.so)}`:""}</td></tr>
+  </table>
+  <p style="margin:10px 0 4px"><b>Thao tác thực hiện:</b></p>
+  <table class="vs"><colgroup><col style="width:7%"><col style="width:37%"><col style="width:16%"><col style="width:11%"><col style="width:12%"><col style="width:17%"></colgroup>
+   <thead><tr><th>STT</th><th>Vị trí vệ sinh</th><th>Mã thiết bị</th><th>Quét</th><th>Tráng nước</th><th>Tráng dung môi</th></tr></thead>
+   <tbody>${tb.map((t,i)=>`<tr><td class="c" style="font-size:12pt">${i+1}</td><td>${esc(t.ten)}</td><td class="c" style="font-size:12pt">${esc(t.ma)}</td><td class="c">${mk(t.quet)}</td><td class="c">${mk(t.nuoc)}</td><td class="c">${mk(t.dm)}</td></tr>`).join("")}</tbody></table>
+  <p style="margin:4px 0;font-size:11pt"><i>(Ghi chú: ✓ Đã thực hiện, X Không thực hiện)</i></p>
+  ${d.dm?`<p style="margin:4px 0"><b>Dung môi tráng:</b> ${esc(d.dm)}</p>`:""}
+  <p><b>Ghi chú:</b> ${esc(d.ghiChu||"")}</p>
+  <table style="margin-top:6px"><colgroup><col style="width:30%"><col style="width:70%"></colgroup><tr><td><b>Kết quả vệ sinh</b></td><td>${box(d.kq==="Đạt")} ĐẠT &nbsp;&nbsp;&nbsp;&nbsp; ${box(d.kq==="Không đạt")} KHÔNG ĐẠT</td></tr></table>
+  ${sign([["Nhân viên pha chế",""],["NV QC",""]])}</div>`)}
+/* Cảnh báo trước khi bắt đầu lệnh: máy vừa chạy BTP khác mà chưa có biên bản vệ sinh Đạt */
+window.vsWarn=function(miss,onGo){const w=document.createElement("div");w.className="cfm";
+  w.innerHTML=`<div class="cfm-box"><h2>Chưa có biên bản vệ sinh thiết bị</h2><p>Các máy sau vừa chạy BTP khác nhưng chưa có biên bản vệ sinh (BM.05) kết quả <b>Đạt</b>:</p><ul>${miss.map(m=>`<li><b>${esc(m.code)}</b> — sau lệnh ${esc(m.so)} (${esc((itemBy(m.maSP)||{ten:m.maSP}).ten)})</li>`).join("")}</ul>
+   <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="huy">Huỷ</button><button class="btn" type="button" data-x="go">Vẫn bắt đầu</button><button class="btn primary" type="button" data-x="vs">Lập biên bản vệ sinh</button></div></div>`;
+  document.body.appendChild(w);w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{w.remove();if(b.dataset.x==="go")onGo();else if(b.dataset.x==="vs")vsDlg(miss[0].so)})};
 /* ---------- mở phiếu từ hồ sơ lô (#hl:số phiếu) + nút lập phiếu trên thẻ lô ---------- */
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#hl:"]');if(!a)return;e.preventDefault();e.stopPropagation();const lc=document.getElementById("lotCard");if(lc)lc.remove();hlForm("","",decodeURIComponent(a.getAttribute("href").slice(4)))},true);
 window.hlLotHook=function(boxEl,ma,lo,r){if(!r||!r.btp||!S.me||!S.me.qc||!isAHK(lo))return;const has=(r.hs||[]).some(x=>x.loai==="Phiếu kiểm hoá lý");
   const b=document.createElement("button");b.type="button";b.className="btn small";b.style.margin="6px 0";b.textContent=has?"Xem / sửa phiếu hoá lý (BM.08)":"Lập phiếu hoá lý (BM.08)";
   b.onclick=()=>{const lc=document.getElementById("lotCard");if(lc)lc.remove();hlForm(ma,lo)};boxEl.insertBefore(b,boxEl.firstChild.nextSibling||null)};
-window.hlForm=hlForm;window.bbDlg=bbDlg;
+window.hlForm=hlForm;window.bbDlg=bbDlg;window.vsDlg=vsDlg;
 })();
