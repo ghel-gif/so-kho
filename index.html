@@ -686,6 +686,7 @@ body nav.side .navh{color:#fff;opacity:.85}
         <label>Số lệnh<input id="lnSo" placeholder="VD: GC-0123"></label>
         <label>Ngày ra lệnh<input id="lnNgay" type="date"></label>
       </div>
+      <div class="two"><label>Giờ bắt đầu SX <small class="note">(mặc định giờ hành chính)</small><input id="lnBd" type="time" value="07:30"></label><label>Giờ kết thúc SX<input id="lnKt" type="time" value="16:30"></label></div>
       <label>Sản phẩm (BTP / thành phẩm)<select id="lnSP"></select></label>
       <div class="two"><label><span id="lnSLLbl">Khối lượng dự kiến (kg)</span><input id="lnSL" type="number" inputmode="decimal" step="any" min="0"></label>
         <label><span id="lnTTLbl">Tỷ trọng (g/ml)</span><input id="lnTT" type="number" inputmode="decimal" step="0.001" min="0" placeholder="VD: 1,10"></label></div>
@@ -863,7 +864,7 @@ body nav.side .navh{color:#fff;opacity:.85}
 <div class="toast" id="toast" hidden></div>
 <div id="printArea"></div>
 
-<script>window.SOKHO_VER="web-4";</script>
+<script>window.SOKHO_VER="web-5";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=web-7"></script>
 <script src="gas-shim.js?v=web-14"></script>
@@ -1542,7 +1543,7 @@ function pickVal(id){const box=$(id);if(!box)return"";const v=[...box.querySelec
 function goiYFill(){const g=S.goiY||{kh:[],nsx:[],qc:[]},opt=a=>(a||[]).map(x=>`<option value="${esc(x)}"></option>`).join("");$("khDl").innerHTML=opt(g.kh);$("nsxDl").innerHTML=opt(g.nsx);$("qcDl").innerHTML=opt(g.qc)}
 function khMacDinh(sp){if(!sp)return"";const last=S.lenh.find(x=>x.maSP===sp.ma&&x.khachHang);if(last)return last.khachHang;return sp.chuHang&&sp.chuHang!=="Asata"?"":"Công ty CP BVTV Asata Hoa Kỳ"}
 $("lnSP").addEventListener("change",()=>{const sp=itemBy($("lnSP").value);if(sp&&!$("lnTT").value){const t=lastTT(sp.ma);if(t){$("lnTT").value=String(t);lnLitSync("tt")}}if(!$("lnKH").value)$("lnKH").value=khMacDinh(sp);$("lnKHLbl").textContent="Khách hàng (tên công ty)"+(sp&&sp.nhom==="Bán thành phẩm"?" *":"")});
-$("lsxNewBtn").onclick=()=>{$("lnForm").reset();goiYFill();$("lnSP").innerHTML='<option value="">— Chọn sản phẩm —</option>'+itemOpts(inScope);$("lnNgay").value=S.today;lnPreview();lsxShow("new")};
+$("lsxNewBtn").onclick=()=>{$("lnForm").reset();goiYFill();$("lnSP").innerHTML='<option value="">— Chọn sản phẩm —</option>'+itemOpts(inScope);$("lnNgay").value=S.today;$("lnBd").value="07:30";$("lnKt").value="16:30";lnPreview();lsxShow("new")};
 ["lnSP","lnSL"].forEach(id=>$(id).addEventListener("input",lnPreview));
 function bomHtml(maSP,sl,title){
   const ct=S.congThuc[maSP]||[];
@@ -1566,7 +1567,7 @@ $("lnForm").addEventListener("submit",async e=>{e.preventDefault();
    if(isLiq(sp1)&&!(t1>0)){$("lnTT").focus();return toast(sp1.ten+" là dạng lỏng: ghi tỷ trọng (g/ml).")}
    if(sp1&&sp1.nhom==="Bán thành phẩm"&&!o.khachHang){$("lnKH").focus();return toast("Ghi tên khách hàng (tên công ty) để in lên thẻ nhận diện.")}}
   $("lnSave").disabled=true;
-  try{await api("createOrder",S.auth,o);toast("Đã lập lệnh "+o.so);await refresh();$("lsxFilter").value="Đang SX";$("lsxQ").value="";lsxShow("list");renderLsx();
+  try{await api("createOrder",S.auth,o);{const bd=$("lnBd").value,kt=$("lnKt").value;if(bd||kt){try{await api("webKHSave",S.auth,{so:o.so,ngay:o.ngay,bd,kt:kt>bd?kt:"",uuTien:"Bình thường"});if(window.khReload)khReload()}catch(e){}}}toast("Đã lập lệnh "+o.so);await refresh();$("lsxFilter").value="Đang SX";$("lsxQ").value="";lsxShow("list");renderLsx();
     const sp2=itemBy(o.maSP);if(sp2&&sp2.nhom==="Bán thành phẩm")printBtpLabel(S.lenh.find(x=>x.so===o.so)||Object.assign({},o,{trangThai:"Đang SX"}))}
   catch(err){handleErr(err)}finally{$("lnSave").disabled=false}});
 
@@ -2507,7 +2508,7 @@ function attachSearch(sel){if(!sel||sel._srch)return;
 function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(id)))}
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
-<script src="kehoach.js?v=6"></script>
+<script src="kehoach.js?v=7"></script>
 </body>
 </html>
  
