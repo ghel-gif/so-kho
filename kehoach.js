@@ -306,11 +306,13 @@ const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất
   ["17","Kích thước hạt","-",["GR"],"Tỷ lệ đường kính lớn nhất/nhỏ nhất ≤ 4; ≥ 85 % hạt trong khoảng công bố"],
   ["10","Độ bụi","%",["GR"],"Sản phẩm không bụi"]];
 const ap=(c,dg)=>!c[3]||!dg||c[3].includes(dg);
+const PHU=new Set(["5d","11"]); /* chỉ tiêu phụ (theo dõi kích thước hạt) — in thành bảng riêng */
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=String(D.tt).replace(".",",");
   const w=document.createElement("div");w.className="cfm";let all=false;
-  const rows=()=>CT.filter(c=>all||ap(c,dg)).map(c=>`<tr><td>${esc(c[1])}</td><td>${esc(c[2])}</td><td class="note">${esc(c[4]||"")}</td><td><textarea class="hl-kq" rows="1" data-k="${c[0]}" ${ro?"disabled":""} placeholder="bỏ trống nếu không kiểm">${esc(kq[c[0]]||"")}</textarea></td></tr>`).join("");
+  const row1=c=>`<tr><td>${esc(c[1])}</td><td>${esc(c[2])}</td><td class="note">${esc(c[4]||"")}</td><td><textarea class="hl-kq" rows="1" data-k="${c[0]}" ${ro?"disabled":""} placeholder="bỏ trống nếu không kiểm">${esc(kq[c[0]]||"")}</textarea></td></tr>`;
+  const rows=()=>{const L=CT.filter(c=>all||ap(c,dg)),a=L.filter(c=>!PHU.has(c[0])),b=L.filter(c=>PHU.has(c[0]));return a.map(row1).join("")+(b.length?`<tr><td colspan="4" style="background:var(--accent-soft);font-weight:700">Chỉ tiêu phụ — kích thước hạt (theo dõi)</td></tr>`+b.map(row1).join(""):"")};
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Phiếu kiểm nghiệm hoá lý BTP${p?" · "+esc(p.so):""}</h2><p class="note">${esc(it.ten)} · lô <b>${esc(D.lo)}</b>${D.nsx?" · NSX "+dmy(String(D.nsx).slice(0,10)):""}</p>
    <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${ro?"disabled":""}></label><label>Ngày kiểm nghiệm<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${ro?"disabled":""}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${ro?"disabled":""} placeholder="SC, EC, WP…"></label>
@@ -330,16 +332,16 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
     if(x==="in")return hlPrint(it,D,d);
     b.disabled=true;try{await api("webHLSave",S.auth,d);toast("Đã lưu phiếu hoá lý "+d.so);if(x==="print")hlPrint(it,D,d);w.remove();try{await refresh()}catch(e){}}catch(e){handleErr(e);b.disabled=false}})}
 function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim();
-  const R=[];CT.forEach(c=>{if(c[0]==="2t")return;let val=v(c[0]);if(c[0]==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;R.push([c[1]+(c[0]==="2"&&v("2t")?", nhiệt độ đo (°C)":""),c[2],val])});
+  const R=[],P=[];CT.forEach(c=>{if(c[0]==="2t")return;let val=v(c[0]);if(c[0]==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(c[0])?P:R).push([c[1]+(c[0]==="2"&&v("2t")?", nhiệt độ đo (°C)":""),c[2],val])});
+  const tb=(L,empty)=>`<table><colgroup><col style="width:8%"><col style="width:40%"><col style="width:12%"><col style="width:40%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>Đơn vị tính</th><th>Kết quả</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td style="white-space:pre-wrap">${esc(r[2])}</td></tr>`).join(""):`<tr><td colspan="4" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
   pr(`${PCSS}<div class="pq">${head("PHIẾU KIỂM NGHIỆM<br>HÓA LÝ BÁN THÀNH PHẨM","Mã hiệu: BM.08-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
   <table style="margin-top:10px"><colgroup><col style="width:55%"><col style="width:45%"></colgroup>
    <tr><td>Tên sản phẩm: <b>${esc(it.ten)}</b></td><td>Dạng chế phẩm: <b>${esc(dg)}</b></td></tr>
    <tr><td>Số lô SX: <b>${esc(D.lo)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td>Ngày kiểm nghiệm: <b>${dmy(d.ngay)}</b></td><td>Số phiếu: <b>${esc(d.so)}</b></td></tr></table>
   <p>Căn cứ đánh giá: Theo Tiêu chuẩn cơ sở (TCCS) hiện hành của sản phẩm và QC-QĐ.03 – Quy định chất lượng bán thành phẩm (theo QCVN 01-188:2018/BNNPTNT). Chỉ thực hiện các chỉ tiêu áp dụng theo dạng chế phẩm:</p>
-  <table><colgroup><col style="width:8%"><col style="width:40%"><col style="width:12%"><col style="width:40%"></colgroup>
-   <thead><tr><th>STT</th><th>Chỉ tiêu</th><th>Đơn vị tính</th><th>Kết quả</th></tr></thead><tbody>
-   ${R.length?R.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td style="white-space:pre-wrap">${esc(r[2])}</td></tr>`).join(""):'<tr><td colspan="4" class="c"><i>Chưa ghi kết quả chỉ tiêu nào</i></td></tr>'}</tbody></table>
+  ${tb(R,"Chưa ghi kết quả chỉ tiêu nào")}
+  ${P.length?`<p style="margin:10px 0 6px"><b>Chỉ tiêu phụ — kích thước hạt</b> <i>(theo dõi)</i></p>${tb(P,"")}`:""}
   <p style="margin-top:12px"><b>Kết luận:</b>&nbsp;&nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – Xử lý theo quy trình sản phẩm không phù hợp</p>
   <p><b>Nhận xét:</b> ${esc(d.nhanXet||"")}</p>
   ${sign([["Người thực hiện",S.me.ten],["Trưởng phòng QA/QC",""]])}</div>`)}
