@@ -217,20 +217,25 @@ window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thàn
   d.querySelector("[data-bb]").onclick=()=>bbDlg(o.so);d.querySelector("[data-hl]").onclick=()=>hlForm(o.maSP,o.so)};
 
 /* ---------- BM.06 ---------- */
+/* Thời gian theo kế hoạch: lấy ngày + giờ của kế hoạch phối trộn; chưa có kế hoạch → giờ hành chính 07:30–16:30. */
+function bbKH(o,kh){const n=(kh&&kh.ngay)||o.ngay||"";return{bdN:n,bdG:(kh&&kh.bd)||"07:30",htN:n,htG:(kh&&kh.kt)||"16:30"}}
+/* Thời gian in: ô thực tế nào có thì dùng, ô nào trống thì theo kế hoạch. */
+function bbTG(t,p){t=t||{};return{bdN:t.bdN||p.bdN,bdG:t.bdG||p.bdG,htN:t.htN||p.htN,htG:t.htG||p.htG}}
 async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){return handleErr(e)}
   const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,done=o.trangThai==="Hoàn thành";
   const mayParse=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v).filter(x=>x&&(x.ten||x.ma))}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};
   const mayL=mayParse((D.bb&&D.bb.may)||(kh&&kh.may));if(!mayL.length)mayL.push({ten:"",ma:""});
   const rowsMay=()=>mayL.map((m,i)=>`<tr><td><input data-j="${i}" data-g="ten" value="${esc(m.ten)}" placeholder="VD: Bồn khuấy SL 3000 lít"></td><td><input data-j="${i}" data-g="ma" value="${esc(m.ma)}" placeholder="VD: BKT-01"></td><td><button class="btn small danger" type="button" data-dm="${i}">×</button></td></tr>`).join("");
   const GBD="07:30",GKT="16:30",sl5=(v,a,b)=>v?String(v).slice(a,b):"";
-  const tg=(D.bb&&D.bb.tg)||{bdN:sl5(kh&&kh.bdTT,0,10)||(kh&&kh.ngay)||o.ngay,bdG:sl5(kh&&kh.bdTT,11,16)||(kh&&kh.bd)||GBD,htN:o.ngayHT||sl5(kh&&kh.ktTT,0,10)||"",htG:sl5(kh&&kh.ktTT,11,16)||(kh&&kh.kt)||GKT};
-  const me=(D.bb&&D.bb.me&&D.bb.me.length)?D.bb.me:[{ngay:o.ngayHT||(kh&&kh.ngay)||o.ngay,tu:tg.bdG,den:tg.htG,nguoi:o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", "),kg:done?o.slThucTe:""}];
+  const kp=bbKH(o,kh),tg0=(D.bb&&D.bb.tg)||{},tg={bdN:tg0.bdN||sl5(kh&&kh.bdTT,0,10),bdG:tg0.bdG||sl5(kh&&kh.bdTT,11,16),htN:tg0.htN||sl5(kh&&kh.ktTT,0,10)||(done?o.ngayHT||"":""),htG:tg0.htG||sl5(kh&&kh.ktTT,11,16)},te=bbTG(tg,kp);
+  const me=(D.bb&&D.bb.me&&D.bb.me.length)?D.bb.me:[{ngay:o.ngayHT||(kh&&kh.ngay)||o.ngay,tu:te.bdG,den:te.htG,nguoi:o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", "),kg:done?o.slThucTe:""}];
   const w=document.createElement("div");w.className="cfm";
   const rowsMe=()=>me.map((m,i)=>`<tr><td><input type="date" data-i="${i}" data-f="ngay" value="${esc(m.ngay||"")}"></td><td><input type="time" data-i="${i}" data-f="tu" value="${esc(m.tu||"")}"></td><td><input type="time" data-i="${i}" data-f="den" value="${esc(m.den||"")}"></td><td><input data-i="${i}" data-f="nguoi" value="${esc(m.nguoi||"")}"></td><td><input type="number" step="any" data-i="${i}" data-f="kg" value="${esc(m.kg===""?"":m.kg)}"></td><td><button class="btn small danger" type="button" data-del="${i}">×</button></td></tr>`).join("");
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Biên bản sản xuất BTP · ${esc(o.so)}</h2><p class="note">${esc(sp.ten)} · lô ${esc(D.lo)} · ${done?"thực tế "+kg(o.slThucTe)+" kg":"đang SX, dự kiến "+kg(o.slDuKien)+" kg"}. Nguyên liệu tech, máy, khối lượng, hao hụt tự lấy từ lệnh và kế hoạch phối trộn.</p>
-   <b>1. Thời gian sản xuất</b> <small class="note">(chưa có giờ thì để giờ hành chính 07:30 – 16:30)</small>
-   <div class="two"><label>Ngày bắt đầu<input type="date" id="bbBdN" value="${esc(tg.bdN||"")}"></label><label>Giờ bắt đầu<input type="time" id="bbBdG" value="${esc(tg.bdG||"")}"></label></div>
-   <div class="two"><label>Ngày hoàn thành<input type="date" id="bbHtN" value="${esc(tg.htN||"")}"></label><label>Giờ hoàn thành<input type="time" id="bbHtG" value="${esc(tg.htG||"")}"></label></div>
+   <b>1. Thời gian sản xuất</b>
+   <p class="note" style="margin:4px 0">Theo kế hoạch${kh?"":" (chưa có kế hoạch → giờ hành chính)"}: <b>${dmy(kp.bdN)} ${esc(kp.bdG)} – ${kp.htN!==kp.bdN?dmy(kp.htN)+" ":""}${esc(kp.htG)}</b>. Có thời gian thực tế thì nhập bên dưới; để trống thì biên bản in theo kế hoạch.</p>
+   <div class="two"><label>Thực tế – ngày bắt đầu<input type="date" id="bbBdN" value="${esc(tg.bdN||"")}"></label><label>Giờ bắt đầu<input type="time" id="bbBdG" value="${esc(tg.bdG||"")}"></label></div>
+   <div class="two"><label>Thực tế – ngày hoàn thành<input type="date" id="bbHtN" value="${esc(tg.htN||"")}"></label><label>Giờ hoàn thành<input type="time" id="bbHtG" value="${esc(tg.htG||"")}"></label></div>
    <b style="display:block;margin-top:10px">3. Máy móc, thiết bị</b>${kh&&kh.may?' <small class="note">(lấy từ kế hoạch phối trộn, sửa được)</small>':""}<div class="dgx"><table><thead><tr><th>Tên thiết bị</th><th>Mã số</th><th></th></tr></thead><tbody id="bbMayT">${rowsMay()}</tbody></table></div>
    <div class="kh-bar" style="margin-top:6px"><input type="search" id="bbMayQ" placeholder="🔍 Tìm nhanh máy theo mã hoặc tên (VD: AHK-12, nghiền bi, khuấy)…" autocomplete="off"><button class="btn small" type="button" id="bbMayAdd">+ Dòng trống</button></div><div class="kh-pick" id="bbMayL"></div>
    <b style="display:block;margin-top:10px">4. Bán thành phẩm từng mẻ</b><div class="dgx"><table><thead><tr><th>Ngày SX</th><th>Từ giờ</th><th>Đến giờ</th><th>Thực hiện</th><th>Số lượng (kg)</th><th></th></tr></thead><tbody id="bbMe">${rowsMe()}</tbody></table></div>
@@ -258,7 +263,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
 function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.tt||0,done=o.trangThai==="Hoàn thành";
   const mayP=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v)}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};const may=mayP(d.may||(kh&&kh.may));
   const nl=(()=>{const g={};D.nl.forEach(n=>{const k=n.ma+"|"+(n.lo||"");if(g[k])g[k].kg+=n.kg;else g[k]=Object.assign({},n)});const a=Object.values(g);return a.length?a:[null]})();if(!may.length)may.push(null);const me=(d.me||[]).filter(m=>m&&(m.ngay||m.nguoi||m.kg));if(!me.length)me.push(null);
-  const tg=d.tg||{},bd=tg.bdN||(kh&&kh.bdTT?kh.bdTT.slice(0,10):(kh?kh.ngay:o.ngay)),ht=tg.htN||o.ngayHT||(kh&&kh.ktTT?kh.ktTT.slice(0,10):"");
+  const tg=d.tg||{},te=bbTG(tg,bbKH(o,kh)),bd=te.bdN,ht=te.htN,KHN='<br><i style="font-size:10.5pt">(theo kế hoạch)</i>';
   const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,hh=khKg&&tu?(khKg-tu)/khKg*100:null,L=v=>tt&&v?kg(v/tt)+" L":"";
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`,n=(i,a)=>a.length>1?" ("+(i+1)+")":"";
   const qc=o.qcSX||(kh&&kh.qc)||"",nv=o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", ");
@@ -266,10 +271,10 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
   pr(`${PCSS}<div class="pq">${head("BIÊN BẢN SẢN XUẤT<br>BÁN THÀNH PHẨM","Mã số: BM.06-QC-QT.03<br>Phiên bản: 02<br>Ngày hiệu lực: 02/01/2026")}
   <table style="margin-top:-1px"><colgroup><col style="width:26%"><col style="width:24%"><col style="width:25%"><col style="width:25%"></colgroup>
    ${sec("1. THÔNG TIN CHUNG")}
-   <tr><td colspan="2">Tên sản phẩm: <b>${esc(sp.ten)}</b></td><td colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td></tr>
-   <tr><td colspan="2">Ngày bắt đầu: <b>${dmy(bd)}</b>${tg.bdG?" lúc "+esc(tg.bdG):""}</td><td colspan="2">Ngày hoàn thành: <b>${dmy(ht)}</b>${ht&&tg.htG?" lúc "+esc(tg.htG):""}</td></tr>
+   <tr><td colspan="2">Tên sản phẩm: <b>${esc(sp.ten)}</b><br>Mã vật tư: <b>${esc(o.maSP||"")}</b></td><td colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td></tr>
+   <tr><td colspan="2">Ngày bắt đầu: <b>${dmy(bd)}</b>${te.bdG?" lúc "+esc(te.bdG):""}${tg.bdN||tg.bdG?"":KHN}</td><td colspan="2">Ngày hoàn thành: <b>${dmy(ht)}</b>${ht&&te.htG?" lúc "+esc(te.htG):""}${tg.htN||tg.htG?"":KHN}</td></tr>
    ${sec("2. NGUYÊN LIỆU THUỐC KỸ THUẬT SỬ DỤNG")}
-   ${nl.map((x,i)=>`<tr><td colspan="2">Tên tech${n(i,nl)}: <b>${x?esc(x.ten||x.ma):""}</b></td><td>Số lô: <b>${x?esc(x.lo||""):""}</b></td><td>Số lượng: <b>${x?kg(x.kg)+" kg":""}</b></td></tr>`).join("")}
+   ${nl.map((x,i)=>`<tr><td colspan="2">Tên tech${n(i,nl)}: <b>${x?esc(x.ten||x.ma):""}</b>${x&&x.ma?`<br>Mã vật tư: <b>${esc(x.ma)}</b>`:""}</td><td>Số lô: <b>${x?esc(x.lo||""):""}</b></td><td>Số lượng: <b>${x?kg(x.kg)+" kg":""}</b></td></tr>`).join("")}
    ${sec("3. MÁY MÓC, THIẾT BỊ DÙNG SẢN XUẤT")}
    ${may.map((m,i)=>`<tr><td colspan="2">Tên thiết bị${n(i,may)}: <b>${m?esc(m.ten):""}</b></td><td colspan="2">Mã số: <b>${m?esc(m.ma):""}</b></td></tr>`).join("")}
    ${sec('4. BÁN THÀNH PHẨM <i style="font-weight:400">(ghi nhận lại chi tiết nếu lệnh SX có nhiều mẻ)</i>')}
@@ -336,7 +341,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
   const tb=(L,empty)=>`<table><colgroup><col style="width:8%"><col style="width:40%"><col style="width:12%"><col style="width:40%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>Đơn vị tính</th><th>Kết quả</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td style="white-space:pre-wrap">${esc(r[2])}</td></tr>`).join(""):`<tr><td colspan="4" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
   pr(`${PCSS}<div class="pq">${head("PHIẾU KIỂM NGHIỆM<br>HÓA LÝ BÁN THÀNH PHẨM","Mã hiệu: BM.08-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
   <table style="margin-top:10px"><colgroup><col style="width:55%"><col style="width:45%"></colgroup>
-   <tr><td>Tên sản phẩm: <b>${esc(it.ten)}</b></td><td>Dạng chế phẩm: <b>${esc(dg)}</b></td></tr>
+   <tr><td>Tên sản phẩm: <b>${esc(it.ten)}</b><br>Mã vật tư: <b>${esc(D.ma||it.ma||"")}</b></td><td>Dạng chế phẩm: <b>${esc(dg)}</b></td></tr>
    <tr><td>Số lô SX: <b>${esc(D.lo)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td>Ngày kiểm nghiệm: <b>${dmy(d.ngay)}</b></td><td>Số phiếu: <b>${esc(d.so)}</b></td></tr></table>
   <p>Căn cứ đánh giá: Theo Tiêu chuẩn cơ sở (TCCS) hiện hành của sản phẩm và QC-QĐ.03 – Quy định chất lượng bán thành phẩm (theo QCVN 01-188:2018/BNNPTNT). Chỉ thực hiện các chỉ tiêu áp dụng theo dạng chế phẩm:</p>
