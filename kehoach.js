@@ -303,7 +303,8 @@ const CT=[["1","Ngoại quan","-",null,"Phù hợp mô tả của sản phẩm"]
   ["9.1c","Độ bền phân tán sau 0,5 h — lớp cặn","mL",["OD","SE","DC"],"≤ 0,2 mL"],
   ["15","Độ hòa tan và độ bền dung dịch","%",["SP","SG"],"Cặn trên rây 75 µm ≤ 2 %"],
   ["10","Độ bụi","%",["GR","WG"],"≤ 1 %"],
-  ["11","Kích thước hạt","-",["GR","SC","WP","WG","OD"],"Theo TCCS"]];
+  ["17","Kích thước hạt","-",["GR"],"Tỷ lệ đường kính lớn nhất/nhỏ nhất ≤ 4; ≥ 85 % hạt trong khoảng công bố"],
+  ["11","Quan sát kích thước hạt (kính hiển vi)","-",["SC","WP","WG","OD"],"Theo TCCS"]];
 const ap=(c,dg)=>!c[3]||!dg||c[3].includes(dg);
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
