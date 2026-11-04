@@ -224,7 +224,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
     try{if(can.phieu())await api("webBBSave",S.auth,so,d);toast("Đã lưu biên bản "+so);if(x==="print"){bbPrint(D,d);}w.remove()}catch(e){handleErr(e);b.disabled=false}})}
 function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.tt||0,done=o.trangThai==="Hoàn thành";
   const may=String(d.may||(kh&&kh.may)||"").split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:ma}});
-  const nl=D.nl.slice();while(nl.length<3)nl.push(null);while(may.length<5)may.push(null);const me=d.me.slice();while(me.length<7)me.push(null);
+  const nl=(()=>{const g={};D.nl.forEach(n=>{const k=n.ma+"|"+(n.lo||"");if(g[k])g[k].kg+=n.kg;else g[k]=Object.assign({},n)});const a=Object.values(g);return a.length?a:[null]})();if(!may.length)may.push(null);const me=(d.me||[]).filter(m=>m&&(m.ngay||m.nguoi||m.kg));if(!me.length)me.push(null);
   const bd=kh&&kh.bdTT?kh.bdTT.slice(0,10):(kh?kh.ngay:o.ngay),ht=o.ngayHT||(kh&&kh.ktTT?kh.ktTT.slice(0,10):"");
   const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,hh=khKg&&tu?(khKg-tu)/khKg*100:null,L=v=>tt&&v?kg(v/tt):"";
   const sec=t=>`<tr><td colspan="4" style="font-weight:700;background:#fff">${t}</td></tr>`,c="padding:3px 6px";
@@ -235,9 +235,9 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    <tr><td style="${c};width:50%" colspan="2">Tên sản phẩm: <b>${esc(sp.ten)}</b></td><td style="${c}" colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td></tr>
    <tr><td style="${c}" colspan="2">Ngày bắt đầu: ${dmy(bd)}</td><td style="${c}" colspan="2">Ngày hoàn thành: ${dmy(ht)}</td></tr>
    ${sec("2. NGUYÊN LIỆU THUỐC KỸ THUẬT SỬ DỤNG")}
-   ${nl.map((n,i)=>`<tr><td style="${c}" colspan="2">Tên tech (${i+1}): ${n?esc(n.ten||n.ma):""}</td><td style="${c}" colspan="2">Số lô: ${n?esc(n.lo||""):""}${n?` <span style="float:right">${kg(n.kg)} kg</span>`:""}</td></tr>`).join("")}
+   ${nl.map((n,i)=>`<tr><td style="${c}" colspan="2">Tên tech${nl.length>1?" ("+(i+1)+")":""}: ${n?esc(n.ten||n.ma):""}</td><td style="${c}">Số lô: ${n?esc(n.lo||""):""}</td><td style="${c}">Số lượng: ${n?kg(n.kg)+" kg":""}</td></tr>`).join("")}
    ${sec("3. MÁY MÓC, THIẾT BỊ DÙNG SẢN XUẤT")}
-   ${may.map((m,i)=>`<tr><td style="${c}" colspan="2">Tên thiết bị (${i+1}): ${m?esc(m.ten):""}</td><td style="${c}" colspan="2">Mã số: ${m?esc(m.ma):""}</td></tr>`).join("")}
+   ${may.map((m,i)=>`<tr><td style="${c}" colspan="2">Tên thiết bị${may.length>1?" ("+(i+1)+")":""}: ${m?esc(m.ten):""}</td><td style="${c}" colspan="2">Mã số: ${m?esc(m.ma):""}</td></tr>`).join("")}
    ${sec('4. BÁN THÀNH PHẨM <i style="font-weight:400">(ghi nhận lại chi tiết nếu lệnh SX có nhiều mẻ)</i>')}
    ${me.map(m=>`<tr><td style="${c};width:30%">Ngày SX: ${m&&m.ngay?dmy(m.ngay):""}</td><td style="${c}">Thực hiện: ${m?esc(m.nguoi||""):""}</td><td style="${c}" colspan="2">Số lượng: ${m&&m.kg!==""&&m.kg!=null?kg(m.kg)+" kg":""}</td></tr>`).join("")}
    ${sec("5. KẾT QUẢ")}
@@ -246,7 +246,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    <tr><td style="${c}" colspan="4">Tỷ trọng (nếu có): ${tt?String(tt).replace(".",",")+" g/ml":""}</td></tr>
    <tr><td style="${c};font-weight:700">*Kết luận:</td><td style="${c}" colspan="3">${[["Đạt - Chuyển lưu kho BTP","Dán giấy trắng"],["Đạt - Chờ phối trộn","Dán giấy vàng"],["Phối lại","Dán giấy vàng"],["Chưa đạt - Chờ xử lý","Dán giấy đỏ"]].map(k=>`<span style="display:inline-block;width:48%;margin:3px 0;text-align:center">${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></span>`).join("")}${d.ghiChu?`<div>Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
-  <table style="width:100%;margin-top:10px;text-align:center;${T13}"><tr><td><b>Nhân viên phối trộn</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>${esc(nv)}</td><td><b>Thủ kho</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br></td><td><b>Nhân viên QC</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>${esc(qc)}</td></tr></table></div>`)}
+  <table style="width:100%;margin-top:10px;text-align:center;${T13}"><tr style="vertical-align:top"><td><b>Nhân viên phối trộn</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>${esc(nv)}</td><td><b>Thủ kho</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br></td><td><b>Nhân viên QC</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>${esc(qc)}</td></tr></table></div>`)}
 
 /* ---------- BM.08 ---------- */
 const LIQ=["SL","SC","EC","OD","FS","EW","ME","SE","CS","DC"];
@@ -295,7 +295,7 @@ function hlPrint(it,D,d){const c="padding:4px 6px",dg=d.dang,v=k=>esc(d.kq[k]||"
    ${r(10,"Độ bụi (GR)","%",v("10"),"10")}${r(11,"Quan sát kích thước hạt","-",v("11"),null)}</tbody></table>
   <p style="margin:10px 0 4px"><b>Kết luận:</b> &nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – Xử lý theo quy trình sản phẩm không phù hợp</p>
   <p style="margin:4px 0"><b>Nhận xét:</b> ${esc(d.nhanXet||"")}</p>
-  <table style="width:100%;margin-top:14px;text-align:center;${T13}"><tr><td><b>Người thực hiện</b><br><br><br><br><br>${esc(S.me.ten)}</td><td><b>Trưởng phòng QA/QC</b><br><br><br><br><br></td></tr></table></div>`)}
+  <table style="width:100%;margin-top:14px;text-align:center;${T13}"><tr style="vertical-align:top"><td><b>Người thực hiện</b><br><br><br><br><br>${esc(S.me.ten)}</td><td><b>Trưởng phòng QA/QC</b><br><br><br><br><br></td></tr></table></div>`)}
 
 /* ---------- mở phiếu từ hồ sơ lô (#hl:số phiếu) + nút lập phiếu trên thẻ lô ---------- */
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#hl:"]');if(!a)return;e.preventDefault();e.stopPropagation();const lc=document.getElementById("lotCard");if(lc)lc.remove();hlForm("","",decodeURIComponent(a.getAttribute("href").slice(4)))},true);
