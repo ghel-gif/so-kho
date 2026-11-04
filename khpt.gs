@@ -149,7 +149,9 @@ function webHLGet(a, ma, lo, so) {
   const od = orders_().find(x => x.so === lo) || null;
   const nam = Utilities.formatDate(new Date(), tz_(), 'yyyy');
   let mx = 0; L.forEach(x => { const m = new RegExp('^CL-' + nam + '-(\\d+)$').exec(x.so); if (m) mx = Math.max(mx, +m[1]); });
-  return { p: p || null, ma, lo, it, nsx: nh ? (nh.nsx || nh.ngay) : (od ? (od.ngayHT || od.ngay) : ''), soMoi: 'CL-' + nam + '-' + String(mx + 1).padStart(3, '0'), tt: ttMap_()[lotKey_(ma, lo)] || (od ? od.tyTrong : 0) || 0 };
+  // mức yêu cầu TCCS (khoá '#...') lấy theo phiếu gần nhất của cùng sản phẩm
+  const muc = {}; L.filter(x => x.ma === ma).forEach(x => Object.keys(x.kq || {}).forEach(k => { if (k[0] === '#') muc[k] = x.kq[k]; }));
+  return { muc, p: p || null, ma, lo, it, nsx: nh ? (nh.nsx || nh.ngay) : (od ? (od.ngayHT || od.ngay) : ''), soMoi: 'CL-' + nam + '-' + String(mx + 1).padStart(3, '0'), tt: ttMap_()[lotKey_(ma, lo)] || (od ? od.tyTrong : 0) || 0 };
 }
 function webHLSave(a, d) {
   const me = auth_(a);

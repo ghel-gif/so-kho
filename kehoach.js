@@ -299,7 +299,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    [mã, tên, ĐVT, dạng áp dụng (null = mọi dạng), yêu cầu] */
 const LIQ=["SL","SC","EC","OD","FS","EW","ME","SE","CS","DC","ES"];
 const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất thường, không tạp chất lạ, không mùi bất thường"],
-  ["2","pH (theo TCCS)","-",null,"Theo TCCS"],["2t","Nhiệt độ đo pH","°C",null,""],
+  ["2","pH","-",null,"Theo TCCS"],["2t","Nhiệt độ đo pH","°C",null,""],
   ["3","Tỷ trọng (đối với dạng lỏng)","g/mL",LIQ,"Theo TCCS"],
   ["4","Độ bọt (sau 1 phút)","mL",["EC","EW","ME","SC","FS","OD","SE","SL","WP","WG"],"≤ 60 mL"],
   ["5","Độ mịn thử rây ướt (cặn trên rây 75 µm)","%",["SC","FS","WP","WG"],"≤ 2 %"],
@@ -331,9 +331,9 @@ const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày nhận m
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=f3(D.tt);
-  if(!p)kq._ngm=S.today;if(!kq._lmt)kq._lmt=hdLM(dg);
+  if(!p){kq._ngm=S.today;Object.assign(kq,D.muc||{})}if(!kq._lmt)kq._lmt=hdLM(dg);
   const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";
-  const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}<div class="note">${esc(c[4]||"")}</div></td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
+  const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}${k==="2t"?"":`<input class="hl-mu" data-m="${k}" value="${esc(kq["#"+k]||(/TCCS/.test(c[4]||"")?"":c[4]||""))}" ${dis} placeholder="${/TCCS/.test(c[4]||"")?"Mức TCCS, VD: 5,0 – 7,0":"Mức yêu cầu"}" title="Mức yêu cầu" style="margin-top:4px;font-size:12.5px;padding:5px 8px">`}</td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
     <td>${k==="2t"?"":`<input class="hl-pp" style="font-size:13px;padding-left:6px;padding-right:4px" data-p="${k}" value="${esc(kq["@"+k]||PP[k]||"")}" ${dis} placeholder="PP thử">`}</td>
     <td>${k==="2t"?"":ph?'<span class="note">Theo dõi</span>':`<select class="hl-dg" data-g="${k}" ${dis}><option value="">—</option>${["Đạt","Không đạt"].map(x=>`<option${kq["~"+k]===x?" selected":""}>${x}</option>`).join("")}</select>`}</td></tr>`};
   const rows=()=>{const L=CT.filter(c=>all||ap(c,dg)),a=L.filter(c=>!PHU.has(c[0])),b=L.filter(c=>PHU.has(c[0]));return a.map(row1).join("")+(b.length?`<tr><td colspan="4" style="background:var(--accent-soft);font-weight:700">Chỉ tiêu phụ — kích thước hạt (theo dõi, không dùng để kết luận)</td></tr>`+b.map(row1).join(""):"")};
@@ -352,21 +352,21 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   document.body.appendChild(w);
   const keep=()=>{w.querySelectorAll("#hlRows .hl-kq").forEach(x=>{kq[x.dataset.k]=x.value});
     w.querySelectorAll("#hlRows .hl-pp").forEach(x=>{const k=x.dataset.p,v=x.value.trim();kq["@"+k]=v&&v!==(PP[k]||"")?v:(v?"":"-")});
-    w.querySelectorAll("#hlRows .hl-dg").forEach(x=>{kq["~"+x.dataset.g]=x.value});HLI.forEach(x=>{kq[x[0]]=$("hl"+x[0]).value.trim()})};
+    w.querySelectorAll("#hlRows .hl-mu").forEach(x=>{const k=x.dataset.m,c=CT.find(y=>y[0]===k),v=x.value.trim();kq["#"+k]=v&&v!==(c[4]||"")?v:""});w.querySelectorAll("#hlRows .hl-dg").forEach(x=>{kq["~"+x.dataset.g]=x.value});HLI.forEach(x=>{kq[x[0]]=$("hl"+x[0]).value.trim()})};
   const grow=()=>w.querySelectorAll("#hlRows .hl-kq").forEach(t=>{const f=()=>{t.style.height="auto";t.style.height=Math.max(38,t.scrollHeight+2)+"px"};t.oninput=f;f()});
   grow();$("hlAll").onchange=e=>{keep();all=e.target.checked;$("hlRows").innerHTML=rows();grow()};
   const bbOpt=()=>{const L=lmBB(dg),cur=kq._bb&&L.includes(kq._bb)?kq._bb:L[0];$("hl_bb").innerHTML=L.map(x=>`<option${x===cur?" selected":""}>${x}</option>`).join("");$("hlU").textContent=lmU(dg)};bbOpt();
   $("hlDang").oninput=()=>{keep();const o=hdLM(dg);dg=$("hlDang").value.trim().toUpperCase();if(!kq._lmt||kq._lmt===o){kq._lmt=hdLM(dg);$("hl_lmt").value=kq._lmt};bbOpt();$("hlRows").innerHTML=rows();grow()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   const getD=()=>{if(!ro)keep();const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
-    if(!all)CT.forEach(c=>{if(!ap(c,d.dang)){delete kq[c[0]];delete kq["~"+c[0]];delete kq["@"+c[0]]}}); /* bỏ chỉ tiêu không thuộc dạng (VD: SL không có kích thước hạt) */
+    if(!all)CT.forEach(c=>{if(!ap(c,d.dang)){delete kq[c[0]];delete kq["~"+c[0]];delete kq["@"+c[0]];delete kq["#"+c[0]]}}); /* bỏ chỉ tiêu không thuộc dạng (VD: SL không có kích thước hạt) */
     return d};
   btnWire(w,{canW:!ro,saved:!!p,dirty:false},async()=>{const d=getD(),kd=CT.filter(c=>String(kq[c[0]]||"").trim()&&kq["~"+c[0]]==="Không đạt").map(c=>c[1]);
     if(d.ketLuan==="Đạt"&&kd.length&&!confirm("Có chỉ tiêu đánh giá Không đạt ("+kd.join("; ")+") nhưng kết luận Đạt. Vẫn lưu?"))return false;
     await api("webHLSave",S.auth,d);$("hlSo").disabled=true;Promise.resolve().then(refresh).catch(()=>{})},()=>hlPrint(it,D,getD()))}
 function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim(),dd=k=>v(k)?dmy(v(k)):"";
   const pp=k=>{const m=v("@"+k);return m==="-"?"":(m||PP[k]||"")};
-  const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=k==="3"?f3(v(k)):v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
+  const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=k==="3"?f3(v(k)):v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],v("#"+k)||c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
   const tb=(L,empty)=>`<table class="kq"><colgroup><col style="width:5%"><col style="width:22%"><col style="width:6%"><col style="width:23%"><col style="width:24%"><col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>ĐVT</th><th>Mức yêu cầu</th><th>Kết quả</th><th>Phương pháp thử</th><th>Đánh giá</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td class="sm">${esc(r[2])}</td><td style="white-space:pre-wrap">${esc(r[3])}</td><td class="c">${esc(r[4])}</td><td class="c">${esc(r[5])}</td></tr>`).join(""):`<tr><td colspan="7" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`;
   pr(`${PCSS}<style>.pq{font-size:11.5pt;line-height:1.28}.pq p{margin:5px 0}.pq td,.pq th{padding:4px 7px}.pq .kq td,.pq .kq th{font-size:10.5pt;padding:3px 4px;line-height:1.25}.pq .sg .nm{height:15mm}.pq .sg{margin-top:8px}.pq .kq .sm{font-size:9.5pt}.pq .ft{font-size:9.5pt;font-style:italic;line-height:1.35;margin-top:10px;border-top:1px solid #000;padding-top:4px}.pq .ft div{margin:1px 0}</style>
@@ -384,7 +384,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
   <p style="margin:8px 0 2px"><b>3. KẾT LUẬN:</b>&nbsp;&nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – xử lý theo quy trình sản phẩm không phù hợp</p>
   <p style="margin:4px 0"><b>Nhận xét:</b> ${esc(d.nhanXet||"")}</p>
   <p style="text-align:right;margin:8px 0 0;font-style:italic">${(()=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.ngay||"");return m?`Tây Ninh, ngày ${m[3]} tháng ${m[2]} năm ${m[1]}`:"Tây Ninh, ngày ...... tháng ...... năm .........."})()}</p>
-  <table class="sg"><tr><td><b>Người kiểm nghiệm</b><br><i>(Ký và ghi rõ họ tên)</i></td><td><b>Trưởng phòng QA/QC</b><br><i>(Phê duyệt – ký và ghi rõ họ tên)</i></td></tr><tr><td class="nm">${esc(d.nguoi||S.me.ten)}</td><td class="nm"></td></tr></table>
+  <table class="sg"><tr><td><b>Người kiểm nghiệm</b><br><i>(Ký tên)</i></td><td><b>Trưởng phòng QA/QC</b><br><i>(Phê duyệt – ký và ghi rõ họ tên)</i></td></tr><tr><td class="nm"></td><td class="nm"></td></tr></table>
   <div class="ft"><div>- Kết quả chỉ có giá trị đối với mẫu thử của lô nêu trên. Không trích sao một phần phiếu khi chưa có sự đồng ý của phòng QA/QC.</div>
    <div>- Phiếu kiểm soát chất lượng nội bộ theo ISO 9001:2015, làm căn cứ cho phép chuyển công đoạn. Phòng thử nghiệm của công ty chưa được công nhận ISO/IEC 17025; phiếu không thay thế kết quả của tổ chức thử nghiệm được chỉ định / công nhận.</div>
    <div>- Phương pháp thử theo các hướng dẫn nội bộ QC-HD hiện hành; thiết bị đo được kiểm tra, hiệu chuẩn theo kế hoạch của công ty.</div></div>`)}
