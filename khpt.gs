@@ -165,6 +165,15 @@ function webHLSave(a, d) {
   const kl = PHL_KL.indexOf(d.ketLuan) >= 0 ? d.ketLuan : '';
   const kq = {}; Object.keys(d.kq || {}).forEach(k => { const v = String(d.kq[k] == null ? '' : d.kq[k]).trim().slice(0, 500); if (v) kq[String(k).slice(0, 10)] = v; });
   const sh = shX_(PHL_SH, PHL_HEAD), R = phlRows_();
+  // đổi số phiếu: phiếu cũ (soCu) mang số mới, cập nhật luôn liên kết trong hồ sơ lô
+  const cu = String(d.soCu || '').trim();
+  if (cu && cu !== so) {
+    if (R.some(r => str_(r[0]) === so && str_(r[10]) !== 'Đã xoá')) throw new Error('Số phiếu ' + so + ' đã có. Chọn số khác.');
+    const k = R.findIndex(r => str_(r[0]) === cu && str_(r[10]) !== 'Đã xoá');
+    if (k >= 0) { sh.getRange(k + 2, 1).setValue(so); R[k][0] = so;
+      const H0 = sheet_(SH.HS) ? rows_(SH.HS) : [], j0 = H0.findIndex(r => str_(r[4]) === '#hl:' + cu);
+      if (j0 >= 0) { sheet_(SH.HS).getRange(j0 + 2, 5).setValue('#hl:' + so); HS_C = null; } }
+  }
   const i = R.findIndex(r => str_(r[0]) === so && str_(r[10]) !== 'Đã xoá');
   if (i >= 0 && (str_(R[i][1]) !== it.ma || str_(R[i][2]) !== lo)) throw new Error('Số phiếu ' + so + ' đã dùng cho lô khác.');
   const row = [so, it.ma, lo, d.ngay, String(d.dang || '').slice(0, 20), JSON.stringify(kq), kl, String(d.nhanXet || '').trim().slice(0, 500), me.ten, new Date(), ''];

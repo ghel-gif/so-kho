@@ -344,14 +344,14 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=f3(D.tt);
   if(!p){kq._ngm=S.today;Object.assign(kq,D.muc||{})}if(!kq._lmt)kq._lmt=hdLM(dg);
-  const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";
+  const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";let hlCu=p?p.so:"";
   const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}${k==="2t"?"":`<input class="hl-mu" data-m="${k}" value="${esc(kq["#"+k]||(/TCCS/.test(c[4]||"")?"":c[4]||""))}" ${dis} placeholder="${/TCCS/.test(c[4]||"")?"Mức TCCS, VD: 5,0 – 7,0":"Mức yêu cầu"}" title="Mức yêu cầu" style="margin-top:4px;font-size:12.5px;padding:5px 8px">`}</td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
     <td>${k==="2t"?"":`<input class="hl-pp" style="font-size:13px;padding-left:6px;padding-right:4px" data-p="${k}" value="${esc(kq["@"+k]||PP[k]||"")}" ${dis} placeholder="PP thử">`}</td>
     <td>${k==="2t"?"":ph?'<span class="note">Theo dõi</span>':GN.has(k)?'<span class="note">Ghi nhận</span>':`<select class="hl-dg" data-g="${k}" ${dis}><option value="">—</option>${["Đạt","Không đạt"].map(x=>`<option${kq["~"+k]===x?" selected":""}>${x}</option>`).join("")}</select>`}</td></tr>`};
   const rows=()=>{const L=CT.filter(c=>all||ap(c,dg)),a=L.filter(c=>!PHU.has(c[0])),b=L.filter(c=>PHU.has(c[0]));return a.map(row1).join("")+(b.length?`<tr><td colspan="4" style="background:var(--accent-soft);font-weight:700">Chỉ tiêu phụ — kích thước hạt (theo dõi, không dùng để kết luận)</td></tr>`+b.map(row1).join(""):"")};
   const inf=x=>`<label>${x[1]}<input id="hl${x[0]}" ${x[2]?`type="${x[2]}"`:""} value="${esc(kq[x[0]]||"")}" ${dis} placeholder="${esc(x[3]||"")}"></label>`;
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Phiếu kiểm nghiệm hoá lý BTP${p?" · "+esc(p.so):""}</h2><p class="note">${esc(it.ten)} · mã ${esc(D.ma)} · lô <b>${esc(D.lo)}</b>${D.nsx?" · NSX "+dmy(String(D.nsx).slice(0,10)):""}</p>
-   <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis||(p?"disabled":"")}></label><label>Ngày ra phiếu<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
+   <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis}></label><label>Ngày ra phiếu<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${dis} placeholder="SC, EC, WP…"></label>
    <b style="display:block;margin-top:8px">Thông tin mẫu</b>
    <div class="two">${inf(HLI[0])}${inf(HLI[1])}</div><div class="two"><label>Lượng mẫu (<span id="hlU">${lmU(dg)}</span>)<input id="hl_lm" type="number" min="0" step="any" value="${esc(/^[\d.,]+$/.test(kq._lm||"")?String(kq._lm).replace(",","."):"")}" ${dis}></label><label>Bao bì mẫu<select id="hl_bb" ${dis}></select></label></div>
@@ -370,12 +370,12 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   const bbOpt=()=>{const L=lmBB(dg),cur=kq._bb&&L.includes(kq._bb)?kq._bb:L[0];$("hl_bb").innerHTML=L.map(x=>`<option${x===cur?" selected":""}>${x}</option>`).join("");$("hlU").textContent=lmU(dg)};bbOpt();
   $("hlDang").oninput=()=>{keep();const o=hdLM(dg);dg=$("hlDang").value.trim().toUpperCase();if(!kq._lmt||kq._lmt===o){kq._lmt=hdLM(dg);$("hl_lmt").value=kq._lmt};bbOpt();$("hlRows").innerHTML=rows();grow()};
   w.onclick=e=>{if(e.target===w)w.remove()};
-  const getD=()=>{if(!ro)keep();const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
+  const getD=()=>{if(!ro)keep();const d={so:$("hlSo").value.trim(),soCu:hlCu,ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
     if(!all)CT.forEach(c=>{if(!ap(c,d.dang)){delete kq[c[0]];delete kq["~"+c[0]];delete kq["@"+c[0]];delete kq["#"+c[0]]}}); /* bỏ chỉ tiêu không thuộc dạng (VD: SL không có kích thước hạt) */
     return d};
   btnWire(w,{canW:!ro,saved:!!p,dirty:false},async()=>{const d=getD(),kd=CT.filter(c=>String(kq[c[0]]||"").trim()&&kq["~"+c[0]]==="Không đạt").map(c=>c[1]);
     if(d.ketLuan==="Đạt"&&kd.length&&!confirm("Có chỉ tiêu đánh giá Không đạt ("+kd.join("; ")+") nhưng kết luận Đạt. Vẫn lưu?"))return false;
-    await api("webHLSave",S.auth,d);$("hlSo").disabled=true;Promise.resolve().then(refresh).catch(()=>{})},()=>hlPrint(it,D,getD()))}
+    await api("webHLSave",S.auth,d);hlCu=d.so;Promise.resolve().then(refresh).catch(()=>{})},()=>hlPrint(it,D,getD()))}
 function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim(),dd=k=>v(k)?dmy(v(k)):"";
   const pp=k=>{const m=v("@"+k);return m==="-"?"":(m||PP[k]||"")};
   const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=k==="3"?f3(v(k)):v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],v("#"+k)||c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":GN.has(k)?"Ghi nhận":v("~"+k)])});
