@@ -380,7 +380,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    <tr><td class="lb">Dạng chế phẩm</td><td><b>${esc(dg)}</b></td><td class="lb">Lấy mẫu theo</td><td><b>${esc(v("_lmt"))}</b></td></tr>
    <tr><td class="lb">Ngày nhận mẫu</td><td><b>${dd("_ngm")}</b></td><td class="lb">Lượng mẫu</td><td>${v("_lm")?`<b>${esc(/^[\d.,]+$/.test(v("_lm"))?v("_lm").replace(".",",")+" "+lmU(dg):v("_lm"))}</b>`:""}${v("_bb")?" – "+esc(v("_bb").charAt(0).toLowerCase()+v("_bb").slice(1)):""}</td></tr>
   </table>
-  <p style="margin:8px 0 4px"><b>2. KẾT QUẢ KIỂM NGHIỆM</b> <i>(mức yêu cầu theo TCCS sản phẩm và QC-QĐ.03 – QCVN 01-188:2018/BNNPTNT)</i></p>
+  <p style="margin:8px 0 2px"><b>2. KẾT QUẢ KIỂM NGHIỆM</b></p><p style="margin:0 0 4px;font-size:10.5pt"><i>Căn cứ mức yêu cầu: Tiêu chuẩn cơ sở (TCCS) của sản phẩm; QC-QĐ.03 – Quy định chất lượng bán thành phẩm; QCVN 01-188:2018/BNNPTNT – Quy chuẩn kỹ thuật quốc gia về chất lượng thuốc bảo vệ thực vật.</i></p>
   ${tb(R,"Chưa ghi kết quả chỉ tiêu nào")}
   ${P.length?`<p style="margin:8px 0 4px"><b>Chỉ tiêu phụ — kích thước hạt</b> <i>(theo dõi, không dùng để kết luận)</i></p>${tb(P,"")}`:""}
   <p style="margin:8px 0 2px"><b>3. KẾT LUẬN:</b>&nbsp;&nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – xử lý theo quy trình sản phẩm không phù hợp</p>
