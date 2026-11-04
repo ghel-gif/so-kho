@@ -217,7 +217,9 @@ function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true}
     if(x==="in"){if(st.canW&&st.dirty)return toast("Có thay đổi chưa lưu — bấm Cập nhật trước khi in.");return print()}
     b.disabled=true;try{const ok=await save();if(ok!==false){st.saved=true;st.dirty=false;toast(x==="upd"?"Đã cập nhật":"Đã lưu")}}catch(e){handleErr(e)}btnState(w,st)})}
 /* ---------- nút trong chi tiết lệnh SX ---------- */
-window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm")return;
+/* BM.06 / BM.08 chỉ dùng cho lô sản xuất mã AHK.… */
+const isAHK=s=>/^AHK\./i.test(String(s||"").trim());
+window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm"||!isAHK(o.so))return;
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
   d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button><button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button>`;
   const h2=v.querySelector("h2");(h2?h2.nextSibling:v.firstChild)?v.insertBefore(d,h2?h2.nextSibling:v.firstChild):v.appendChild(d);
@@ -394,7 +396,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
 
 /* ---------- mở phiếu từ hồ sơ lô (#hl:số phiếu) + nút lập phiếu trên thẻ lô ---------- */
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#hl:"]');if(!a)return;e.preventDefault();e.stopPropagation();const lc=document.getElementById("lotCard");if(lc)lc.remove();hlForm("","",decodeURIComponent(a.getAttribute("href").slice(4)))},true);
-window.hlLotHook=function(boxEl,ma,lo,r){if(!r||!r.btp||!S.me||!S.me.qc)return;const has=(r.hs||[]).some(x=>x.loai==="Phiếu kiểm hoá lý");
+window.hlLotHook=function(boxEl,ma,lo,r){if(!r||!r.btp||!S.me||!S.me.qc||!isAHK(lo))return;const has=(r.hs||[]).some(x=>x.loai==="Phiếu kiểm hoá lý");
   const b=document.createElement("button");b.type="button";b.className="btn small";b.style.margin="6px 0";b.textContent=has?"Xem / sửa phiếu hoá lý (BM.08)":"Lập phiếu hoá lý (BM.08)";
   b.onclick=()=>{const lc=document.getElementById("lotCard");if(lc)lc.remove();hlForm(ma,lo)};boxEl.insertBefore(b,boxEl.firstChild.nextSibling||null)};
 window.hlForm=hlForm;window.bbDlg=bbDlg;
