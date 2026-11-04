@@ -518,6 +518,7 @@ body nav.side .navh{color:#fff;opacity:.85}
     <button role="tab" data-tab="nhap" aria-selected="false" class="needPhieu">Phiếu nhập vật tư</button>
     <button role="tab" data-tab="xnb" aria-selected="false" id="tabXnbBtn">Phiếu xuất vật tư</button>
     <div class="navh" role="presentation">Sản xuất</div>
+    <button role="tab" data-tab="khpt" aria-selected="false" id="tabKhBtn">Kế hoạch phối trộn</button>
     <button role="tab" data-tab="lsx" aria-selected="false" id="tabLsxBtn">Lệnh SX BTP<span class="cnt" id="navLsxCnt" hidden></span></button>
     <button role="tab" data-tab="dgl" aria-selected="false" class="needPhieu">Lệnh đóng gói TP</button>
     <div class="navh" role="presentation">Kiểm soát</div>
@@ -665,6 +666,7 @@ body nav.side .navh{color:#fff;opacity:.85}
 
   <section id="tab-dgl" hidden><div id="dglBox" class="lines" style="gap:14px"></div></section>
 
+<section id="tab-khpt" hidden><div id="khBox" class="lines" style="gap:14px"></div></section>
 <section id="tab-lsx" hidden>
     <div id="lsxListView" class="lines" style="gap:14px">
       <div class="tools">
@@ -861,12 +863,12 @@ body nav.side .navh{color:#fff;opacity:.85}
 <div class="toast" id="toast" hidden></div>
 <div id="printArea"></div>
 
-<script>window.SOKHO_VER="web-1";</script>
+<script>window.SOKHO_VER="web-2";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=web-7"></script>
-<script src="gas-shim.js?v=web-13"></script>
+<script src="gas-shim.js?v=web-14"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="web.css?v=web-14">
+<link rel="stylesheet" href="web.css?v=web-15">
 <script>
 document.querySelector(".brand img").src="data:image/png;base64,"+"iVBORw0KGgoAAAANSUhEUgAAAJEAAABgCAMAAAAqyGCtAAAAYFBMVEUAAACNukErL3IgInMzSySVxUQjWRoqLm8qLnCMukAwSSMwSCNkZANojTaby0UaLRyMuUFRcC6WtEhdXV0AAP+Mtj17tjyh2UyLuD6Ktz___wB__38mPCAAWFgA_wBVqlXyWIp0AAAAIHRSTlMA+_QQ8_0UWaCsmmED_WRJZPwXAwEhBh6rUwEC_wIBA9rWafYAAAdJSURBVHja7VrpeqM6DBUxiwEndSBkbZP3f8sryTaLMUk6M8X9cfXNtNhAOZGOjmQTgLdN4f+TLpMk0Q3cIbrdT3BEOFmWlbrUXXxILUCHcJIk0zrR5Sm6hx5wBI3xIkAZuio6oIYcdNYZYMiyS5mVcIvtoSbJ0D34gwEhomNUQOpOgBiOLhEQYouM6HYlQASpazQfNiwF8Uh0J7dQnpVNx+kWmUbXa4NeKUutd7osL1n8oF1Bk5UJUxsI0jFqzBTlmbHkQly6wAXVIKKhMjKtiT50lGUXiKvYCsoeUcka0NyucVnUJdZYIVEB4mY+148BEQOKSqIxjZLsgoFrYgOaINJJqbDGRUdkiY3Zj31aZA4ZRDujRSW2stEjZhoR2J61bkiC7lf4FValRpeOCuC3IMqPx+YKv8cQEfwu+x_Rr0eUK6XCiBRbnq8MJ+yjdtqerKoCeZ7XvlXVcIznEd56fsqr1DOaqHJvbi1ACvK0Iic8YXZOPqzSeh0vKUgrP4LI81zNcq1eK_ly_OzqZfbTMV64HiL1CpFaEVEfDbWEKDf8WVEyK6K2C03YR0TstZjdp39VL_qoDpz+WUBBJzhEBNf4MF8X0oworq6l9vfqpZZ+9Mqkjq1BpCzvI3W2KIqjyFgf1SlE60p69Va4GtJTH8VpkVArjfLcANf5zke5V2RWtNath9BD5YCIwhbNSUOVUKduyLy0joWoSsMKWcXidj72RaN6HjG9omS_n1TORy2lYBsDkf_cAVFtc3BlLcr9x45qSgwBINo4stwaH1EUlex726vno+vdI_1fmRDf3i0CeGjgt7EG0YMk3BeGNVD1Xsg7FOzGoGAfdUcmWf1vBEAUcrMR76U+M4hegpbdwCPVlvTGCFlW_QtEB9iQiTdTn2NGu_v2hQz76GJ2++eZOH6OEIfp+ADhcQiRf7Ulj1WcKyPSt2OPiN+IXOC4pJLCkaK1Z1thRYzty522v4VBJMxth55RPrW4MVJc9HWWlc3t3iPStIHcINplAeC_j59TjCdgGNshsCsY0ezu0dUwrlzXW_OAjraLr4+r5RGGrezoE4cFAIkq+SEbWZiZQtqh8E7jWNiRJBOW5mZGeBHA5LZ7xOrUNE1HRw_20d1IklJhASg2g0n6vHIYFy5I1oQ_hNHFmyKU+k2j9bkk07rjzv+mrkghZtUjIADeM4rpM_DsZCxniApvPKn6F63LwQjXbuSUEwnCUGZGmEwQpo+UBUVDEsnl6DQS2kPg3T0idvpxyhKGcR5QwT69dA0G8aJpXncwF4ADFJYvhrFi8D_OixZPiHGKFea6gox5ZEgtp4go9TnJR3Dw6IyIoB_SK7+QAAiXuSNE+ECXPQd3TeHiMsk1vqp1vpqmvn2T1uNJ2Ec9Qn6rBR8zARDu81kfDbyh3Dq4bJImMnj1RI+ETUxztxynPuzcy72RZfuUnXY+u5mTLwBfU25uUPImRJkMDdVHJBbTu+VkTZSEESW9g3hi95GGiD1CNOiRebBcRCS+vEQdRS1nXocRTScSb51kP6Tso+FU2KJyMQIrUz0iezdPFu5uOa765VuIkgQL8lgAxEBY99kLo9UwQiRhYLZDQagt6QYNGap+DUnyFqJsNxWA1hKhcE4Bqz9y4qP+9FQy7bF0p+XIRSFeBxEl_hLA55HwiDHnkRgpfBHiUc7PeNNHKABTiRR+ro3Lmmx97hJjhjsKH3Cv1wBZ2BCRPwUzSIwBPY9lnau_rfZc2l0TiwOalmJ6h0tMjpuUfalNU9gu2H4_m6rzgGbPexT3o9fs5Ttmd6u82rOlM9tv04B5tY0_6pc4kAq3pocUo9aSu0QaCDHpJu3INJ7m7Ff_N_mLBu_xCImUpj+8J5HDaabXFmEIEUH6y7VkK15s8wVSn_hDC4Agoh2kr5dJB0E1D0wcxdfBFkGw_fjh+ULW0+tsm36m+G+7gCh7f5_kEJwoxPOF7IevRcjmLbnpcxtElGTNG_skwrQbwrRlhsSO3rZ5Wl7Iai9oKAb8nbU0XUC0+3i1T0LlgaSw2PCC2va3WMsK0h8sLQWIJRpRq5ZNY4a+cYm2TYNarl5z2zwX4UhT2wSrO8ogijgKqHiyh+XzmhD1qR_0UZKdYNgoFSFrERE6AxERNPKUsPVGcHWVC_eZVu08R5RhqsH2c58tIAIYNkpFETB6LD4YIXxJdhOHqbBdiOnXQveZVs1_HCEiqf7cI6X2wZ4Am9vqxU69ixod2GUTRY1KMVDv+4TX81aNmE2FDgutpdRTbofdL7nIM5yC+3osEYbZ1A3wiiB0Wx7sQzj7qcrvyU1BROVL3S7YR8hi+kHuEXaOWia56KNwq8YKyYV3myzZ23uAQgSr++Ie1kJ_jfKIdX8P2RIgv7ld1iUuHc9U3ENU+5nWVwruYBftjbD94RZ_nZdPnvsEkf4pRBUck+z7lpwf_2znNvBi5rT7rp3g574cQd+E+Pi+1fy1n5_oJHOo0j+0n_m2xn_i9F+bReVJ3wAAAABJRU5ErkJggg==".replace(/_/g,"/");
 const $=id=>document.getElementById(id);
@@ -896,7 +898,7 @@ function addMonths(ymd,n){if(!ymd||!n)return"";const p=ymd.split("-").map(Number
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
 /* ---------- báo đang xử lý + chặn bấm lặp khi gọi máy chủ ---------- */
 const RUNW=new Set(["createPackOrder","completePackOrder","packDone","savePack","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","setLock"]);
-const WR_FN=new Set(["createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
+const WR_FN=new Set(["webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
 const BUSY_TXT={login:"Đang đăng nhập…",completeOrder:"Đang hoàn thành lệnh, trừ kho…",createOrder:"Đang lập lệnh…",reopenOrder:"Đang mở lại lệnh…",saveMove:"Đang ghi phiếu…",updateMove:"Đang lưu thay đổi…",deleteMove:"Đang xoá phiếu…",saveXNB:"Đang ghi phiếu xuất…",adjustXNB:"Đang lưu điều chỉnh…",cancelXNB:"Đang huỷ phiếu…",importRows:"Đang xử lý file Excel…",uploadAnhNhap:"Đang tải ảnh lên…",uploadHoSo:"Đang tải hồ sơ lên…",transferStock:"Đang chuyển kho…",setQC:"Đang lưu QC…",backupNow:"Đang sao lưu…"};
 const BZ={n:0,r:0,fly:new Map(),t:null,t2:null};
 function busyEl(){if(!document.getElementById("busyOv")){const b=document.createElement("div");b.id="busyOv";b.setAttribute("role","status");b.setAttribute("aria-live","polite");
@@ -1000,11 +1002,11 @@ function applyData(d){
   Object.assign(S,{me:d.me,items:d.items,bal:d.bal,lots:d.lots||{},nhom:d.nhom,nhomQC:d.nhomQC||[],congThuc:d.congThuc||{},lenh:d.lenh||[],today:d.today,khoaSo:d.khoaSo||"",chuHang:d.chuHang||[],hoSo:d.hoSo||{},ncc:d.ncc||[],nccMa:d.nccMa||{},goiY:d.goiY||{kh:[],nsx:[],qc:[]},qpCho:d.qpCho||0,diaChi:d.diaChi||"",moi:d.moi||[]});
   $("chuList").innerHTML=S.chuHang.map(c=>`<option value="${esc(c)}">`).join("");
 }
-async function refresh(){try{S.tk={};await loadData();loadDash();render();bellUpdate();if(PHIEU_TAB[S.tab])loadRec();if(S.tab==="ls")loadHistory()}catch(e){handleErr(e)}}
+async function refresh(){try{S.tk={};await loadData();loadDash();render();bellUpdate();if(PHIEU_TAB[S.tab])loadRec();if(S.tab==="ls")loadHistory();if(S.tab==="khpt"&&window.khReload){khReload();khRender()}}catch(e){handleErr(e)}}
 function handleErr(e){if(/đăng nhập|PIN/.test(e.message)){store.set(null);snapClear();showLogin(e.message)}else toast(e.message)}
 
 /* ---------- tabs ---------- */
-const NAV_ICON={nhap:"M12 3v11M7.5 9.5 12 14l4.5-4.5M4 16v4h16v-4",dg:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",dgl:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",kk:"M9 3h6v3H9zM8 5H5v16h14V5h-3M9 14l2 2 4-4",home:"M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",ton:"M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10",phieu:"M9 3h6v3H9zM8 5H5v16h14V5h-3M12 10v7M8.5 13.5h7",xnb:"M21 8l-9-5-9 5v8l9 5 3-1.7M3 8l9 5 9-5M12 13v8M16 16h6M19.5 13.5 22 16l-2.5 2.5",lsx:"M9 3h6M10 3v6l-5.5 9.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3M7.5 15h9",ls:"M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2",vt:"M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01",qc:"M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-5",bc:"M4 20V11M10 20V5M16 20v-8M21 20H3"};
+const NAV_ICON={khpt:"M4 5h16v15H4zM4 9h16M8 3v4M16 3v4M8 13h3M8 16h6",nhap:"M12 3v11M7.5 9.5 12 14l4.5-4.5M4 16v4h16v-4",dg:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",dgl:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",kk:"M9 3h6v3H9zM8 5H5v16h14V5h-3M9 14l2 2 4-4",home:"M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",ton:"M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10",phieu:"M9 3h6v3H9zM8 5H5v16h14V5h-3M12 10v7M8.5 13.5h7",xnb:"M21 8l-9-5-9 5v8l9 5 3-1.7M3 8l9 5 9-5M12 13v8M16 16h6M19.5 13.5 22 16l-2.5 2.5",lsx:"M9 3h6M10 3v6l-5.5 9.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3M7.5 15h9",ls:"M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2",vt:"M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01",qc:"M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-5",bc:"M4 20V11M10 20V5M16 20v-8M21 20H3"};
 document.querySelectorAll("nav.side button[data-tab]").forEach(b=>{const p=NAV_ICON[b.dataset.tab];if(!p||b.querySelector("svg"))return;const cnt=b.querySelector(".cnt");const t=document.createElement("span");t.className="lbl";
   [...b.childNodes].forEach(n=>{if(n!==cnt&&!(n.classList&&n.classList.contains("hint")))t.appendChild(n)});b.prepend(t);b.insertAdjacentHTML("afterbegin",`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${p}"/></svg>`)});
 const PHIEU_TAB={nhap:["Nhập","Phiếu nhập vật tư","mua"],dg:["Đóng gói","Lệnh đóng gói thành phẩm: trừ BTP lấy ra đóng gói","donggoi"],kk:["Kiểm kê","Kiểm kê kho","kiemke"]};
@@ -1050,7 +1052,7 @@ function setTab(t,back){if(t==="phieu")t="nhap";if(!back&&S.tab&&t!==S.tab){S.na
   if(pt){const was=S.mvType;S.mvType=pt[0];$("mvTitle").textContent=pt[1];document.querySelectorAll('#tab-phieu .seg button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.t===pt[0]));
     if(was!==pt[0]){$("mvLotOut").dataset.ma="";$("mvQty").value=""}if($("impKind")&&$("impKind").value!==pt[2]){$("impKind").value=pt[2];$("impKind").dispatchEvent(new Event("change"))}}
   $("qrBox").hidden=t!=="kk";if(t==="kk")qrInit();if(pt)setTimeout(loadRec,0);
-  ["home","ton","phieu","xnb","lsx","dgl","ls","vt","qc","bc"].forEach(k=>$("tab-"+k).hidden=k!==sec);window.scrollTo(0,0);pgHead(t);render();if(t==="ls")loadHistory();if(t==="bc")bcShow(S.bcView);if(t==="xnb")xnShow(S.xnView);if(t==="dgl")renderDgl()}
+  ["home","ton","phieu","xnb","khpt","lsx","dgl","ls","vt","qc","bc"].forEach(k=>$("tab-"+k).hidden=k!==sec);window.scrollTo(0,0);pgHead(t);render();if(t==="ls")loadHistory();if(t==="bc")bcShow(S.bcView);if(t==="xnb")xnShow(S.xnView);if(t==="dgl")renderDgl();if(t==="khpt"&&window.khRender)khRender()}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 $("backBtn").onclick=goBack;try{if(GH){GH.replace({t:"home"},{},"");GH.setChangeHandler(e=>{const t=(e&&e.state&&e.state.t)||"home";if(t===S.tab)return;if(S.navStack[S.navStack.length-1]===t)S.navStack.pop();setTab(t,1)})}}catch(e){}
 $("reloadBtn").onclick=refresh;
@@ -2505,6 +2507,7 @@ function attachSearch(sel){if(!sel||sel._srch)return;
 function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(id)))}
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
+<script src="kehoach.js?v=1"></script>
 </body>
 </html>
  

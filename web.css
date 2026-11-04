@@ -60,3 +60,31 @@ main table tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 55%
 
 /* cuộn mảnh */
 *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
+
+/* ===== Kế hoạch phối trộn ===== */
+nav.side button[data-tab="khpt"]{--tc:#f5b14c}
+.kh-tools{flex-wrap:wrap;gap:10px}.kh-seg{flex-wrap:wrap}.kh-seg button,.kh-seg2 button{border:0;background:none;padding:8px 12px;font:600 13px var(--font);color:var(--muted);cursor:pointer}
+.kh-seg button[aria-pressed="true"],.kh-seg2 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.kh-seg2{margin:6px 0 10px}.kh-inl{display:flex;align-items:center;gap:6px;font-weight:500}.kh-inl input{width:auto}
+.kh-day{margin-bottom:16px}.kh-dh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 2px}.kh-dh b{font-size:16px}.kh-dact{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.kh-tb td{vertical-align:top}.kh-tb tr[data-id]{cursor:pointer}.kh-tb tr[data-id]:hover td{background:var(--accent-soft)}.kh-tb .n{text-align:right}.kh-dim td{opacity:.6}
+.kh-act{white-space:nowrap}
+.kh-tt,.kh-uu{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--line);color:var(--ink);white-space:nowrap}
+.kh-moi{background:#e0e7ff;color:#3730a3}.kh-sua{background:#fde68a;color:#7c4a03}.kh-gui{background:#dbeafe;color:#1d4ed8}.kh-run{background:#dcfce7;color:#166534}.kh-xong{background:#fce7f3;color:#9d174d}.kh-ht{background:#e5e7eb;color:#374151}.kh-huy{background:#f3f4f6;color:#6b7280}
+.kh-gap{background:#fee2e2;color:#b91c1c}.kh-cao{background:#ffedd5;color:#c2410c}.kh-thap{background:#f3f4f6;color:#6b7280}
+@media (prefers-color-scheme: dark){.kh-moi{background:#312e81;color:#c7d2fe}.kh-sua{background:#713f12;color:#fde68a}.kh-gui{background:#1e3a8a;color:#bfdbfe}.kh-run{background:#14532d;color:#bbf7d0}.kh-xong{background:#831843;color:#fbcfe8}.kh-ht,.kh-huy,.kh-thap{background:#374151;color:#e5e7eb}.kh-gap{background:#7f1d1d;color:#fecaca}.kh-cao{background:#7c2d12;color:#fed7aa}}
+.kh-kb{display:grid;grid-template-columns:repeat(5,minmax(175px,1fr));gap:10px;overflow-x:auto;padding-bottom:6px}
+.kh-kcol{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;min-height:120px}.kh-kh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.kh-card{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--bg);cursor:pointer;font-size:13.5px;display:grid;gap:2px}.kh-card:hover{border-color:var(--accent)}.kh-c1{display:flex;justify-content:space-between;gap:6px}
+.kh-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.kh-cw{font-weight:700;font-size:12px;color:var(--muted);text-align:center;padding:4px}
+.kh-cd{min-height:92px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px;cursor:pointer;overflow:hidden}.kh-cd0{background:none;border:0;cursor:default}.kh-cd:hover{border-color:var(--accent)}
+.kh-cdn{font-weight:700;font-size:12px}.kh-today{border:2px solid var(--accent)}.kh-ev{font-size:11.5px;border-radius:5px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kh-dlg{max-width:680px!important;max-height:92vh;overflow-y:auto;border-top-color:var(--accent)!important}.kh-dlg label{display:block;margin-top:8px}.kh-dlg .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kh-mayl{margin-top:10px}.kh-mayl .lb{font-weight:500;color:var(--muted)}.kh-mays{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 10px;margin:6px 0}
+.kh-chk{display:flex!important;align-items:flex-start;gap:6px;margin:0!important;font-weight:400;color:var(--ink)!important}.kh-chk input{width:auto;margin-top:3px}
+.kh-dlg .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+@media (max-width:600px){.kh-dlg .two{grid-template-columns:1fr}.kh-cd{min-height:64px}.kh-ev{font-size:10px}.kh-dact{margin-left:0}}
+.kh-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.kh-bar input[type=search]{flex:1;min-width:200px}.kh-bar input[type=date],.kh-bar input[type=month]{width:auto}
+.kh-seg button{white-space:nowrap}
+@media (max-width:600px){.kh-seg{width:100%}.kh-seg button{flex:1 0 auto;padding:8px 10px}.kh-bar .kh-inl{flex:1}.kh-bar .kh-inl input{flex:1;min-width:0}}
+.kh-tb td{white-space:normal;min-width:70px}.kh-tb td:first-child{min-width:0}.kh-tb td.kh-act{white-space:nowrap}.kh-tb td:nth-child(3){min-width:180px}

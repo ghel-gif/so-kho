@@ -152,7 +152,7 @@
   /* ---------- nạp mã máy chủ của Sổ Kho cũ ---------- */
   let SRV = null;
   async function loadServer() {
-    const code = (await (await fetch("server.gs?v=" + (window.SOKHO_VER || ""), { cache: "no-cache" })).text()) + `
+    const code = (await (await fetch("server.gs?v=" + (window.SOKHO_VER || ""), { cache: "no-cache" })).text()) + "\n" + (await (await fetch("khpt.gs?v=" + (window.SOKHO_VER || ""), { cache: "no-cache" })).text()) + `
 /* --- thêm cho bản web: ảnh nhập kho lưu ở Supabase Storage --- */
 function webThemAnh(a, id, fname, fid) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
