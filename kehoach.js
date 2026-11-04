@@ -209,6 +209,13 @@ const head=(title,meta)=>`<table class="hd"><tr><td class="lg"><img src="${LOGO(
 const box=c=>`<span style="font-size:14pt;vertical-align:-1px">${c?"☑":"☐"}</span>`;
 const sign=L=>`<table class="sg"><tr>${L.map(x=>`<td><b>${x[0]}</b><br><i>(Ký và ghi rõ họ tên)</i></td>`).join("")}</tr><tr>${L.map(x=>`<td class="nm">${esc(x[1]||"")}</td>`).join("")}</tr></table>`;
 
+/* Nút chung cho BM.06 / BM.08: Đóng · Lưu (phiếu mới) · Cập nhật (phiếu đã lưu) · In (chỉ in bản đã lưu) */
+const btn4=(canW,saved)=>`<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${canW?`<button class="btn" type="button" data-x="save"${saved?" disabled":""}>Lưu</button><button class="btn" type="button" data-x="upd"${saved?"":" disabled"}>Cập nhật</button>`:""}<button class="btn primary" type="button" data-x="in"${canW&&!saved?" disabled":""}>In</button>`;
+function btnState(w,st){const q=x=>w.querySelector('[data-x="'+x+'"]');if(q("save"))q("save").disabled=st.saved;if(q("upd"))q("upd").disabled=!st.saved;if(q("in"))q("in").disabled=st.canW&&!st.saved}
+function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true});w.addEventListener("change",()=>{st.dirty=true});
+  w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();
+    if(x==="in"){if(st.canW&&st.dirty)return toast("Có thay đổi chưa lưu — bấm Cập nhật trước khi in.");return print()}
+    b.disabled=true;try{const ok=await save();if(ok!==false){st.saved=true;st.dirty=false;toast(x==="upd"?"Đã cập nhật":"Đã lưu")}}catch(e){handleErr(e)}btnState(w,st)})}
 /* ---------- nút trong chi tiết lệnh SX ---------- */
 window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm")return;
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
@@ -245,7 +252,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
    <label>Kết luận<select id="bbKL"><option value="">— chưa kết luận —</option>${D.ketLuan.map(k=>`<option${D.bb&&D.bb.ketLuan===k?" selected":""}>${esc(k)}</option>`).join("")}</select></label>
    <label>Ghi chú<input id="bbGC" value="${esc(D.bb?D.bb.ghiChu:"")}"></label>
    ${D.bb?`<p class="note">Lưu lần cuối: ${esc(D.bb.nguoi)} · ${esc(D.bb.luc)}</p>`:""}
-   <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button><button class="btn" type="button" data-x="save">Lưu</button><button class="btn primary" type="button" data-x="print">Lưu & In</button></div></div>`;
+   <div class="actions">${btn4(can.phieu(),!!D.bb)}</div></div>`;
   document.body.appendChild(w);
   const bind=()=>{w.querySelectorAll("#bbMe input").forEach(x=>x.oninput=()=>{me[+x.dataset.i][x.dataset.f]=x.value});w.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{me.splice(+b.dataset.del,1);$("bbMe").innerHTML=rowsMe();bind()})};bind();
   const bindMay=()=>{w.querySelectorAll("#bbMayT input").forEach(x=>x.oninput=()=>{mayL[+x.dataset.j][x.dataset.g]=x.value});w.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{mayL.splice(+b.dataset.dm,1);if(!mayL.length)mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()})};bindMay();
@@ -257,9 +264,8 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
   $("bbMayQ").oninput=pick;pick();
   $("bbAdd").onclick=()=>{me.push({ngay:me.length?me[me.length-1].ngay:o.ngay,tu:"07:30",den:"16:30",nguoi:me.length?me[me.length-1].nguoi:"",kg:""});$("bbMe").innerHTML=rowsMe();bind()};
   w.onclick=e=>{if(e.target===w)w.remove()};
-  w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();
-    const d={me,tg:{bdN:$("bbBdN").value,bdG:$("bbBdG").value,htN:$("bbHtN").value,htG:$("bbHtG").value},ketLuan:$("bbKL").value,ghiChu:$("bbGC").value,may:JSON.stringify(mayL.map(m=>({ten:String(m.ten||"").trim(),ma:String(m.ma||"").trim()})).filter(m=>m.ten||m.ma))};b.disabled=true;
-    try{if(can.phieu())await api("webBBSave",S.auth,so,d);toast("Đã lưu biên bản "+so);if(x==="print"){bbPrint(D,d);}w.remove()}catch(e){handleErr(e);b.disabled=false}})}
+  const getD=()=>({me,tg:{bdN:$("bbBdN").value,bdG:$("bbBdG").value,htN:$("bbHtN").value,htG:$("bbHtG").value},ketLuan:$("bbKL").value,ghiChu:$("bbGC").value,may:JSON.stringify(mayL.map(m=>({ten:String(m.ten||"").trim(),ma:String(m.ma||"").trim()})).filter(m=>m.ten||m.ma))});
+  btnWire(w,{canW:can.phieu(),saved:!!D.bb,dirty:false},()=>api("webBBSave",S.auth,so,getD()),()=>bbPrint(D,getD()))}
 function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.tt||0,done=o.trangThai==="Hoàn thành";
   const mayP=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v)}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};const may=mayP(d.may||(kh&&kh.may));
   const nl=(()=>{const g={};D.nl.forEach(n=>{const k=n.ma+"|"+(n.lo||"");if(g[k])g[k].kg+=n.kg;else g[k]=Object.assign({},n)});const a=Object.values(g);return a.length?a:[null]})();if(!may.length)may.push(null);const me=(d.me||[]).filter(m=>m&&(m.ngay||m.nguoi||m.kg));if(!me.length)me.push(null);
@@ -282,7 +288,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    ${sec("5. KẾT QUẢ")}
    <tr><td>*Khối lượng theo KH:</td><td class="r"><b>${kg(khKg)}</b> kg</td><td>Thể tích: <b>${L(khKg)}</b></td><td rowspan="2" class="c">Hao hụt (%)<br><b style="font-size:14pt">${hh===null?"":nf.format(Math.round(hh*100)/100)}</b></td></tr>
    <tr><td>*Khối lượng thu được:</td><td class="r"><b>${tu?kg(tu):""}</b> kg</td><td>Thể tích: <b>${L(tu)}</b></td></tr>
-   <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?String(tt).replace(".",","):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
+   <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
    <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl"><tr>${KL.slice(0,2).map(k=>`<td>${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td>${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
   ${sign([["Nhân viên phối trộn",nv],["Thủ kho",""],["Nhân viên QC",qc]])}</div>`)}
@@ -310,6 +316,8 @@ const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất
   ["9.1c","Độ bền phân tán sau 0,5 h — lớp cặn","mL",["OD","SE"],"≤ 0,2 mL"],
   ["17","Kích thước hạt","-",["GR"],"Tỷ lệ đường kính lớn nhất/nhỏ nhất ≤ 4; ≥ 85 % hạt trong khoảng công bố"],
   ["10","Độ bụi","%",["GR"],"Sản phẩm không bụi"]];
+/* tỷ trọng: mặc định 3 số lẻ, dấu phẩy thập phân */
+const f3=x=>{const t=String(x==null?"":x).trim();if(!/^\d+([.,]\d+)?$/.test(t))return t;return Number(t.replace(",",".")).toFixed(3).replace(".",",")};
 const ap=(c,dg)=>!c[3]||!dg||c[3].includes(dg);
 const PHU=new Set(["5d","11"]); /* chỉ tiêu phụ (theo dõi kích thước hạt) — in thành bảng riêng */
 /* Phương pháp thử mặc định = hướng dẫn nội bộ trong 8-HƯỚNG DẪN/QC - Hướng dẫn (sửa được trên phiếu) */
@@ -320,7 +328,7 @@ const hdLM=dg=>HD_DANG[dg]?"QC-HD."+HD_DANG[dg]:"";
 const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày lấy mẫu","date"],["_vt","Vị trí lấy mẫu","","VD: bồn AHK-42, đầu – giữa – cuối"],["_lm","Lượng mẫu / tình trạng mẫu","","VD: 500 mL, chai PET kín, nguyên vẹn"],["_ntu","Thử nghiệm từ ngày","date"],["_nde","đến ngày","date"]];
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
-  if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=String(D.tt).replace(".",",");
+  if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=f3(D.tt);
   if(!p){const t=S.today;kq._ngm=t;kq._ntu=t;kq._nde=t}if(!kq._lmt)kq._lmt=hdLM(dg);
   const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";
   const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}<div class="note">${esc(c[4]||"")}</div></td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
@@ -329,7 +337,7 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   const rows=()=>{const L=CT.filter(c=>all||ap(c,dg)),a=L.filter(c=>!PHU.has(c[0])),b=L.filter(c=>PHU.has(c[0]));return a.map(row1).join("")+(b.length?`<tr><td colspan="4" style="background:var(--accent-soft);font-weight:700">Chỉ tiêu phụ — kích thước hạt (theo dõi, không dùng để kết luận)</td></tr>`+b.map(row1).join(""):"")};
   const inf=x=>`<label>${x[1]}<input id="hl${x[0]}" ${x[2]?`type="${x[2]}"`:""} value="${esc(kq[x[0]]||"")}" ${dis} placeholder="${esc(x[3]||"")}"></label>`;
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Phiếu kiểm nghiệm hoá lý BTP${p?" · "+esc(p.so):""}</h2><p class="note">${esc(it.ten)} · mã ${esc(D.ma)} · lô <b>${esc(D.lo)}</b>${D.nsx?" · NSX "+dmy(String(D.nsx).slice(0,10)):""}</p>
-   <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis}></label><label>Ngày kiểm nghiệm (ngày ra phiếu)<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
+   <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis||(p?"disabled":"")}></label><label>Ngày kiểm nghiệm (ngày ra phiếu)<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${dis} placeholder="SC, EC, WP…"></label>
    <b style="display:block;margin-top:8px">Thông tin mẫu</b>
    <div class="two">${inf(HLI[0])}${inf(HLI[1])}</div><div class="two">${inf(HLI[2])}${inf(HLI[3])}</div><div class="two">${inf(HLI[4])}${inf(HLI[5])}</div>
@@ -338,7 +346,7 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
    <label>Kết luận<select id="hlKL" ${dis}><option value="">— chưa kết luận —</option><option value="Đạt"${p&&p.ketLuan==="Đạt"?" selected":""}>Đạt – cho phép đóng gói</option><option value="Không đạt"${p&&p.ketLuan==="Không đạt"?" selected":""}>Không đạt – xử lý theo quy trình SP không phù hợp</option></select></label>
    <label>Nhận xét<input id="hlNX" value="${esc(p?p.nhanXet:"")}" ${dis}></label>
    <p class="note">Phiếu <b>Đạt</b> tự vào hồ sơ lô (Phiếu kiểm hoá lý: ĐÃ CÓ). Tỷ trọng ghi ở đây cũng cập nhật vào lô. Chỉ tiêu bỏ trống (không kiểm) sẽ không in.${p?" Lưu lần cuối: "+esc(p.nguoi)+" · "+esc(p.luc):""}</p>
-   <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${ro?(p?'<button class="btn primary" type="button" data-x="in">In</button>':""):'<button class="btn" type="button" data-x="save">Lưu</button><button class="btn primary" type="button" data-x="print">Lưu & In</button>'}</div></div>`;
+   <div class="actions">${ro&&!p?'<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>':btn4(!ro,!!p)}</div></div>`;
   document.body.appendChild(w);
   const keep=()=>{w.querySelectorAll("#hlRows .hl-kq").forEach(x=>{kq[x.dataset.k]=x.value});
     w.querySelectorAll("#hlRows .hl-pp").forEach(x=>{const k=x.dataset.p,v=x.value.trim();kq["@"+k]=v&&v!==(PP[k]||"")?v:(v?"":"-")});
@@ -347,16 +355,15 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   grow();$("hlAll").onchange=e=>{keep();all=e.target.checked;$("hlRows").innerHTML=rows();grow()};
   $("hlDang").oninput=()=>{keep();const o=hdLM(dg);dg=$("hlDang").value.trim().toUpperCase();if(!kq._lmt||kq._lmt===o){kq._lmt=hdLM(dg);$("hl_lmt").value=kq._lmt};$("hlRows").innerHTML=rows();grow()};
   w.onclick=e=>{if(e.target===w)w.remove()};
-  w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();if(!ro)keep();
-    const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
+  const getD=()=>{if(!ro)keep();const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
     if(!all)CT.forEach(c=>{if(!ap(c,d.dang)){delete kq[c[0]];delete kq["~"+c[0]];delete kq["@"+c[0]]}}); /* bỏ chỉ tiêu không thuộc dạng (VD: SL không có kích thước hạt) */
-    if(x==="in")return hlPrint(it,D,d);
-    const kd=CT.filter(c=>String(kq[c[0]]||"").trim()&&kq["~"+c[0]]==="Không đạt").map(c=>c[1]);
-    if(d.ketLuan==="Đạt"&&kd.length&&!confirm("Có chỉ tiêu đánh giá Không đạt ("+kd.join("; ")+") nhưng kết luận Đạt. Vẫn lưu?"))return;
-    b.disabled=true;try{await api("webHLSave",S.auth,d);toast("Đã lưu phiếu hoá lý "+d.so);if(x==="print")hlPrint(it,D,d);w.remove();try{await refresh()}catch(e){}}catch(e){handleErr(e);b.disabled=false}})}
+    return d};
+  btnWire(w,{canW:!ro,saved:!!p,dirty:false},async()=>{const d=getD(),kd=CT.filter(c=>String(kq[c[0]]||"").trim()&&kq["~"+c[0]]==="Không đạt").map(c=>c[1]);
+    if(d.ketLuan==="Đạt"&&kd.length&&!confirm("Có chỉ tiêu đánh giá Không đạt ("+kd.join("; ")+") nhưng kết luận Đạt. Vẫn lưu?"))return false;
+    await api("webHLSave",S.auth,d);$("hlSo").disabled=true;Promise.resolve().then(refresh).catch(()=>{})},()=>hlPrint(it,D,getD()))}
 function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim(),dd=k=>v(k)?dmy(v(k)):"";
   const pp=k=>{const m=v("@"+k);return m==="-"?"":(m||PP[k]||"")};
-  const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
+  const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=k==="3"?f3(v(k)):v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
   const tb=(L,empty)=>`<table class="kq"><colgroup><col style="width:5%"><col style="width:22%"><col style="width:6%"><col style="width:23%"><col style="width:24%"><col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>ĐVT</th><th>Mức yêu cầu</th><th>Kết quả</th><th>Phương pháp thử</th><th>Đánh giá</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td class="sm">${esc(r[2])}</td><td style="white-space:pre-wrap">${esc(r[3])}</td><td class="c">${esc(r[4])}</td><td class="c">${esc(r[5])}</td></tr>`).join(""):`<tr><td colspan="7" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
   const tu=dd("_ntu"),den=dd("_nde"),ngT=tu&&den&&tu!==den?tu+" – "+den:(tu||den||dmy(d.ngay));
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`;
