@@ -370,14 +370,15 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
   const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=k==="3"?f3(v(k)):v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],v("#"+k)||c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":GN.has(k)?"Ghi nhận":v("~"+k)])});
   const tb=(L,empty)=>`<table class="kq"><colgroup><col style="width:5%"><col style="width:22%"><col style="width:6%"><col style="width:23%"><col style="width:24%"><col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>ĐVT</th><th>Mức yêu cầu</th><th>Kết quả</th><th>Phương pháp thử</th><th>Đánh giá</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td class="sm">${esc(r[2])}</td><td class="c" style="white-space:pre-wrap">${esc(r[3])}</td><td class="c">${esc(r[4])}</td><td class="c">${esc(r[5])}</td></tr>`).join(""):`<tr><td colspan="7" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`;
-  pr(`${PCSS}<style>.pq{font-size:11.5pt;line-height:1.28}.pq p{margin:5px 0}.pq td,.pq th{padding:4px 7px}.pq .kq td,.pq .kq th{font-size:10.5pt;padding:3px 4px;line-height:1.25}.pq .sg .nm{height:15mm}.pq .sg{margin-top:8px}.pq .kq .sm{font-size:9.5pt}.pq .ft{font-size:9.5pt;font-style:italic;line-height:1.35;margin-top:10px;border-top:1px solid #000;padding-top:4px}.pq .ft div{margin:1px 0}</style>
+  pr(`${PCSS}<style>.pq{font-size:11.5pt;line-height:1.28}.pq p{margin:5px 0}.pq td,.pq th{padding:4px 7px}.pq .kq td,.pq .kq th{font-size:10.5pt;padding:3px 4px;line-height:1.25}.pq .sg .nm{height:15mm}.pq .sg{margin-top:8px}.pq .kq .sm{font-size:9.5pt}.pq .tin .lb{background:#fafafa;white-space:nowrap}.pq .ft{font-size:9.5pt;font-style:italic;line-height:1.35;margin-top:10px;border-top:1px solid #000;padding-top:4px}.pq .ft div{margin:1px 0}</style>
   <div class="pq">${head("PHIẾU KIỂM NGHIỆM<br>HÓA LÝ BÁN THÀNH PHẨM","Mã hiệu: BM.08-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
   <p style="text-align:right;margin:4px 0">Số phiếu: <b>${esc(d.so)}</b></p>
-  <table><colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>
+  <table class="tin"><colgroup><col style="width:17%"><col style="width:35%"><col style="width:16%"><col style="width:32%"></colgroup>
    ${sec("1. THÔNG TIN MẪU")}
-   <tr><td colspan="2">Tên sản phẩm: <b>${esc(it.ten)}</b></td><td colspan="2">Mã vật tư: <b>${esc(D.ma||it.ma||"")}</b></td></tr>
-   <tr><td colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td><td>Dạng: <b>${esc(dg)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
-   <tr><td>Lấy mẫu theo: <b>${esc(v("_lmt"))}</b></td><td>Nhận mẫu: <b>${dd("_ngm")}</b></td><td colspan="2">Lượng mẫu: ${v("_lm")?`<b>${esc(/^[\d.,]+$/.test(v("_lm"))?v("_lm").replace(".",",")+" "+lmU(dg):v("_lm"))}</b>`:""}${v("_bb")?" – "+esc(v("_bb").charAt(0).toLowerCase()+v("_bb").slice(1)):""}</td></tr>
+   <tr><td class="lb">Tên sản phẩm</td><td><b>${esc(it.ten)}</b></td><td class="lb">Mã vật tư</td><td><b>${esc(D.ma||it.ma||"")}</b></td></tr>
+   <tr><td class="lb">Số lô SX</td><td><b>${esc(D.lo)}</b></td><td class="lb">Ngày SX</td><td><b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
+   <tr><td class="lb">Dạng chế phẩm</td><td><b>${esc(dg)}</b></td><td class="lb">Lấy mẫu theo</td><td><b>${esc(v("_lmt"))}</b></td></tr>
+   <tr><td class="lb">Ngày nhận mẫu</td><td><b>${dd("_ngm")}</b></td><td class="lb">Lượng mẫu</td><td>${v("_lm")?`<b>${esc(/^[\d.,]+$/.test(v("_lm"))?v("_lm").replace(".",",")+" "+lmU(dg):v("_lm"))}</b>`:""}${v("_bb")?" – "+esc(v("_bb").charAt(0).toLowerCase()+v("_bb").slice(1)):""}</td></tr>
   </table>
   <p style="margin:8px 0 4px"><b>2. KẾT QUẢ KIỂM NGHIỆM</b> <i>(mức yêu cầu theo TCCS sản phẩm và QC-QĐ.03 – QCVN 01-188:2018/BNNPTNT)</i></p>
   ${tb(R,"Chưa ghi kết quả chỉ tiêu nào")}
