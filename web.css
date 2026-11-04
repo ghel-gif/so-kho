@@ -88,3 +88,4 @@ nav.side button[data-tab="khpt"]{--tc:#f5b14c}
 .kh-seg button{white-space:nowrap}
 @media (max-width:600px){.kh-seg{width:100%}.kh-seg button{flex:1 0 auto;padding:8px 10px}.kh-bar .kh-inl{flex:1}.kh-bar .kh-inl input{flex:1;min-width:0}}
 .kh-tb td{white-space:normal;min-width:70px}.kh-tb td:first-child{min-width:0}.kh-tb td.kh-act{white-space:nowrap}.kh-tb td:nth-child(3){min-width:180px}
+@media print{#busyOv,#busyBar,.cfm,#lotCard,#khDlg{display:none!important}}
