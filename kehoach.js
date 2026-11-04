@@ -1,3 +1,6 @@
+/* In sau khi vòng xoay "Đang lưu" đã tắt hẳn (tránh treo vòng xoay phía sau hộp thoại in) */
+window.khPrintNow=function(pg){let n=0;const go=()=>{const ov=document.getElementById("busyOv");if(ov&&ov.classList.contains("on")&&n++<40)return setTimeout(go,150);
+  try{window.print()}catch(e){toast("Không mở được hộp thoại in: "+e.message)}setTimeout(()=>{if(pg)pg.textContent=""},1500)};setTimeout(go,200)};
 /* Sổ Kho bản web — KẾ HOẠCH PHỐI TRỘN
  * Kế hoạch gắn với lệnh SX BTP: ngày phối trộn, máy, giờ, ưu tiên, người phối chế, QC.
  * Xem: Theo ngày · Hôm nay · Ngày mai · Kanban · Lịch · Giờ máy · Danh mục máy. Gửi kế hoạch → xưởng xem + copy dán Zalo + in. */
@@ -83,7 +86,7 @@ function inNgay(d){const L=ngayRows(d);
   ${L.map((r,i)=>`<tr><td>${i+1}</td><td>${r.bd||""}–${r.kt||""}</td><td>${esc(mayTen(r.may))}</td><td>${esc(r.sp.ten||r.sp.ma)}</td><td>${esc(r.so)}</td><td style="text-align:right">${kg(r.sl)}</td><td>${esc(r.uuTien)}</td><td>${esc([r.pc1,r.pc2].filter(Boolean).join(", "))}</td><td>${esc(r.qc)}</td><td>${r.bdTT?esc(r.bdTT.slice(11)):""}</td><td>${r.ktTT?esc(r.ktTT.slice(11)):""}</td><td>${esc(r.ghiChu)}</td></tr>`).join("")}</tbody></table>
   <div style="display:flex;justify-content:space-around;margin-top:14px;text-align:center"><div><b>Người lập</b><br><br><br></div><div><b>Tổ trưởng SX</b><br><br><br></div><div><b>QC</b><br><br><br></div></div></div>`;
   let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}pg.textContent="@media print{@page{size:A4 landscape;margin:8mm}html,body,#printArea{margin:0!important;padding:0!important}}";
-  setTimeout(()=>{window.print();setTimeout(()=>{pg.textContent=""},1500)},300)}
+  khPrintNow(pg)}
 
 /* ---------- Kanban ---------- */
 function vKanban(){const v=$("khView"),from=addD(S.today,-14),R=rowsAll().filter(r=>r.ngay>=from&&r.tt!=="Đã huỷ");
@@ -185,7 +188,7 @@ const T13='font:13px/1.35 "Times New Roman",Times,serif;color:#000';
 const dangOf=sp=>{const m=/\d\s*(?:%\s*W\/[WV]\s*)?(WP|WG|WDG|SC|EC|SL|OD|FS|EW|ME|SE|CS|GR|SP|DF|SG|DC)\b/i.exec((sp&&sp.ten)||"");return m?m[1].toUpperCase():""};
 const pr=(html,land)=>{$("printArea").innerHTML=html;let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}
   pg.textContent="@media print{@page{size:A4 "+(land?"landscape":"portrait")+";margin:10mm}html,body,#printArea{margin:0!important;padding:0!important}#printArea table{border-collapse:collapse}#printArea td,#printArea th{color:#000!important}}";
-  setTimeout(()=>{window.print();setTimeout(()=>{pg.textContent=""},1500)},350)};
+  khPrintNow(pg)};
 const head=(title,meta)=>`<table style="width:100%;border-collapse:collapse;${T13}" border="1" cellpadding="4"><tr><td style="width:24%;text-align:center"><img src="${LOGO()}" style="height:16mm"></td><td style="text-align:center;font-size:19px;font-weight:700">${title}</td><td style="width:27%;font-size:12.5px;line-height:1.5">${meta}</td></tr></table>`;
 const box=c=>c?"☑":"☐";
 
