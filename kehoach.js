@@ -300,7 +300,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
 const LIQ=["SL","SC","EC","OD","FS","EW","ME","SE","CS","DC","ES"];
 const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất thường, không tạp chất lạ, không mùi bất thường"],
   ["2","pH","-",null,"Theo TCCS"],["2t","Nhiệt độ đo pH","°C",null,""],
-  ["3","Tỷ trọng (đối với dạng lỏng)","g/mL",LIQ,"Không quy định – ghi nhận"],
+  ["3","Tỷ trọng (đối với dạng lỏng)","g/mL",LIQ,"Theo TCCS"],
   ["4","Độ bọt (sau 1 phút)","mL",["EC","EW","ME","SC","FS","OD","SE","SL","WP","WG"],"≤ 60 mL"],
   ["5","Độ mịn thử rây ướt (cặn trên rây 75 µm)","%",["SC","FS","WP","WG"],"≤ 2 %"],
   ["5d","Phân bố kích thước hạt (D90 / D50)","µm",["SC","FS","WP","WG"],"SC, FS: D90 ≤ 2,5 µm; D50 ≤ 2 µm · WP, WG: D90 ≤ 5 µm; D50 ≤ 2,5 µm (hoạt chất dễ phân huỷ / nóng chảy thấp: D90 ≤ 10 µm; D50 ≤ 5 µm)"],
@@ -320,7 +320,7 @@ const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất
 const f3=x=>{const t=String(x==null?"":x).trim();if(!/^\d+([.,]\d+)?$/.test(t))return t;return Number(t.replace(",",".")).toFixed(3).replace(".",",")};
 const ap=(c,dg)=>!c[3]||!dg||c[3].includes(dg);
 const PHU=new Set(["5d","11"]);
-const GN=new Set(["3"]); /* chỉ tiêu chỉ ghi nhận (TCCS không quy định) — không đánh giá Đạt/Không đạt */ /* chỉ tiêu phụ (theo dõi kích thước hạt) — in thành bảng riêng */
+const GN=new Set([]); /* chỉ tiêu chỉ ghi nhận (TCCS không quy định) — không đánh giá Đạt/Không đạt */ /* chỉ tiêu phụ (theo dõi kích thước hạt) — in thành bảng riêng */
 /* Phương pháp thử mặc định = hướng dẫn nội bộ trong 8-HƯỚNG DẪN/QC - Hướng dẫn (sửa được trên phiếu) */
 const PP={"1":"QC-HD.36","2":"QC-HD.35","3":"QC-HD.37","4":"QC-HD.38","5":"QC-HD.39","6":"QC-HD.40","7":"QC-HD.41","7.1":"QC-HD.41","7.2":"QC-HD.41","8":"QC-HD.42","9":"QC-HD.43","9.1k":"QC-HD.44","9.1c":"QC-HD.44","11":"QC-HD.45","12":"QC-HD.46"};
 /* Thông tin mẫu lưu kèm trong kq với khoá bắt đầu bằng "_" ; đánh giá từng chỉ tiêu "~mã"; phương pháp sửa tay "@mã" */
