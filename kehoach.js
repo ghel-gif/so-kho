@@ -283,28 +283,28 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
   ${sign([["Nhân viên phối trộn",nv],["Thủ kho",""],["Nhân viên QC",qc]])}</div>`)}
 
 /* ---------- BM.08 ---------- */
-/* Chỉ tiêu theo QCVN 01-188:2018/BNNPTNT (Bảng 4) + pH, tỷ trọng theo TCCS. [mã, tên, ĐVT, dạng áp dụng (null = mọi dạng), mức yêu cầu QCVN] */
+/* Chỉ tiêu BTP theo QC-QĐ.03 "Quy định chất lượng bán thành phẩm" (cốt lõi QCVN 01-188:2018/BNNPTNT) + mẫu BM.08.
+   Không gồm độ bền bảo quản (theo dõi ở sổ BM.10) và hàm lượng (phiếu kết quả hàm lượng riêng).
+   [mã, tên, ĐVT, dạng áp dụng (null = mọi dạng), yêu cầu] */
 const LIQ=["SL","SC","EC","OD","FS","EW","ME","SE","CS","DC","ES"];
-const CT=[["1","Ngoại quan","-",null,"Phù hợp mô tả của sản phẩm"],
+const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất thường, không tạp chất lạ, không mùi bất thường; trạng thái phù hợp dạng thuốc (QC-HD.36)"],
   ["2","pH (theo TCCS)","-",null,"Theo TCCS"],["2t","Nhiệt độ đo pH","°C",null,""],
   ["3","Tỷ trọng (đối với dạng lỏng)","g/mL",LIQ,"Theo TCCS"],
-  ["4","Độ bọt (sau 1 phút)","mL",["EC","SC","SL","OD","FS","EW","ME","SE","CS","DC","ES","WP","WG","SP","SG"],"≤ 60 mL"],
-  ["5","Độ mịn thử rây ướt (cặn trên rây 75 µm)","%",["SC","OD","FS","SE","CS","DC","WP","WG"],"≤ 2 %"],
-  ["6","Độ thấm ướt","s",["WP","WG","SP"],"Thấm ướt hoàn toàn trong 1 phút"],
-  ["12","Tỷ suất lơ lửng","%",["SC","FS","CS","WP","WG"],"≥ 60 %"],
-  ["13","Độ tự phân tán","%",["SC","CS"],"≥ 60 %"],
-  ["14","Độ phân tán (WG)","%",["WG"],"≥ 60 %"],
-  ["7","Độ bền nhũ tương, ban đầu","-",["EC","EW","ME","ES"],"Nhũ tương đồng nhất"],
-  ["7.1","Độ bền nhũ tương sau 0,5 h — lớp kem","mL",["EC","EW","ME","ES"],"≤ 2 mL"],
-  ["7.2","Độ bền nhũ tương sau 2 h — lớp kem","mL",["EC","EW","ME","ES"],"≤ 4 mL"],
-  ["8","Độ bền pha loãng","-",["SL"],"Đồng nhất, không lắng cặn sau 24 h (cặn ≤ 2 %)"],
-  ["9","Độ bền phân tán, ban đầu","-",["OD","SE","DC"],"Phân tán đồng nhất"],
-  ["9.1k","Độ bền phân tán sau 0,5 h — lớp kem","mL",["OD","SE","DC"],"≤ 2 mL"],
-  ["9.1c","Độ bền phân tán sau 0,5 h — lớp cặn","mL",["OD","SE","DC"],"≤ 0,2 mL"],
-  ["15","Độ hòa tan và độ bền dung dịch","%",["SP","SG"],"Cặn trên rây 75 µm ≤ 2 %"],
-  ["10","Độ bụi","%",["GR","WG"],"≤ 1 %"],
+  ["4","Độ bọt (sau 1 phút)","mL",["EC","EW","ME","SC","FS","OD","SE","SL","WP","WG"],"≤ 60 mL"],
+  ["5","Độ mịn thử rây ướt (cặn trên rây 75 µm)","%",["SC","FS","WP","WG"],"≤ 2 %"],
+  ["5d","Phân bố kích thước hạt (D90 / D50)","µm",["SC","FS","WP","WG"],"SC, FS: D90 ≤ 2,5 µm; D50 ≤ 2 µm · WP, WG: D90 ≤ 5 µm; D50 ≤ 2,5 µm (hoạt chất dễ phân huỷ / nóng chảy thấp: D90 ≤ 10 µm; D50 ≤ 5 µm)"],
+  ["11","Quan sát kích thước hạt (kính hiển vi)","-",["SC","FS","WP","WG","OD"],"Theo QC-HD.45: dạng hạt, mức kết tụ, khoảng kích thước quan sát"],
+  ["6","Độ thấm ướt","s",["WP","WG"],"Thấm ướt hoàn toàn trong 1 phút"],
+  ["12","Tỷ suất lơ lửng","%",["SC","FS","WP","WG"],"≥ 60 %"],
+  ["7","Độ bền nhũ tương — độ tự nhũ ban đầu","-",["EC","EW","ME"],"Hoàn toàn"],
+  ["7.1","Độ bền nhũ tương sau 0,5 h — lớp kem","mL",["EC","EW","ME"],"≤ 2 mL"],
+  ["7.2","Độ bền nhũ tương sau 2 h — lớp kem (khi nghi ngờ)","mL",["EC","EW","ME"],"≤ 4 mL"],
+  ["8","Độ bền pha loãng (sau 18 h)","-",["SL"],"Đồng nhất, trong suốt hoặc trắng sữa, không lắng cặn"],
+  ["9","Độ bền phân tán — độ phân tán ban đầu","-",["OD","SE"],"Hoàn toàn"],
+  ["9.1k","Độ bền phân tán sau 0,5 h — lớp kem / lớp dầu","mL",["OD","SE"],"≤ 2 mL"],
+  ["9.1c","Độ bền phân tán sau 0,5 h — lớp cặn","mL",["OD","SE"],"≤ 0,2 mL"],
   ["17","Kích thước hạt","-",["GR"],"Tỷ lệ đường kính lớn nhất/nhỏ nhất ≤ 4; ≥ 85 % hạt trong khoảng công bố"],
-  ["11","Quan sát kích thước hạt (kính hiển vi)","-",["SC","WP","WG","OD"],"Theo TCCS"]];
+  ["10","Độ bụi","%",["GR"],"Sản phẩm không bụi"]];
 const ap=(c,dg)=>!c[3]||!dg||c[3].includes(dg);
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
@@ -315,7 +315,7 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
    <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${ro?"disabled":""}></label><label>Ngày kiểm nghiệm<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${ro?"disabled":""}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${ro?"disabled":""} placeholder="SC, EC, WP…"></label>
    <div class="kh-bar" style="margin:8px 0"><b>Chỉ tiêu</b><label class="kh-chk"><input type="checkbox" id="hlAll"><span>Hiện tất cả chỉ tiêu (không chỉ theo dạng)</span></label></div>
-   <div class="dgx hl-tb"><table><colgroup><col style="width:32%"><col style="width:8%"><col style="width:20%"><col style="width:40%"></colgroup><thead><tr><th>Chỉ tiêu (QCVN 01-188)</th><th>ĐVT</th><th>Yêu cầu</th><th>Kết quả</th></tr></thead><tbody id="hlRows">${rows()}</tbody></table></div>
+   <div class="dgx hl-tb"><table><colgroup><col style="width:32%"><col style="width:8%"><col style="width:20%"><col style="width:40%"></colgroup><thead><tr><th>Chỉ tiêu (QC-QĐ.03)</th><th>ĐVT</th><th>Yêu cầu</th><th>Kết quả</th></tr></thead><tbody id="hlRows">${rows()}</tbody></table></div>
    <label>Kết luận<select id="hlKL" ${ro?"disabled":""}><option value="">— chưa kết luận —</option><option value="Đạt"${p&&p.ketLuan==="Đạt"?" selected":""}>Đạt – cho phép đóng gói</option><option value="Không đạt"${p&&p.ketLuan==="Không đạt"?" selected":""}>Không đạt – xử lý theo quy trình SP không phù hợp</option></select></label>
    <label>Nhận xét<input id="hlNX" value="${esc(p?p.nhanXet:"")}" ${ro?"disabled":""}></label>
    <p class="note">Phiếu <b>Đạt</b> tự vào hồ sơ lô (Phiếu kiểm hoá lý: ĐÃ CÓ), không cần chụp tải lên nữa. Tỷ trọng ghi ở đây cũng cập nhật vào lô. Chỉ tiêu bỏ trống (không kiểm) sẽ không in lên phiếu.${p?" Lưu lần cuối: "+esc(p.nguoi)+" · "+esc(p.luc):""}</p>
@@ -336,7 +336,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    <tr><td>Tên sản phẩm: <b>${esc(it.ten)}</b></td><td>Dạng chế phẩm: <b>${esc(dg)}</b></td></tr>
    <tr><td>Số lô SX: <b>${esc(D.lo)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td>Ngày kiểm nghiệm: <b>${dmy(d.ngay)}</b></td><td>Số phiếu: <b>${esc(d.so)}</b></td></tr></table>
-  <p>Căn cứ đánh giá: Theo Tiêu chuẩn cơ sở (TCCS) hiện hành của sản phẩm và QCVN 01-188:2018/BNNPTNT. Chỉ thực hiện các chỉ tiêu áp dụng theo dạng chế phẩm:</p>
+  <p>Căn cứ đánh giá: Theo Tiêu chuẩn cơ sở (TCCS) hiện hành của sản phẩm và QC-QĐ.03 – Quy định chất lượng bán thành phẩm (theo QCVN 01-188:2018/BNNPTNT). Chỉ thực hiện các chỉ tiêu áp dụng theo dạng chế phẩm:</p>
   <table><colgroup><col style="width:8%"><col style="width:40%"><col style="width:12%"><col style="width:40%"></colgroup>
    <thead><tr><th>STT</th><th>Chỉ tiêu</th><th>Đơn vị tính</th><th>Kết quả</th></tr></thead><tbody>
    ${R.length?R.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td style="white-space:pre-wrap">${esc(r[2])}</td></tr>`).join(""):'<tr><td colspan="4" class="c"><i>Chưa ghi kết quả chỉ tiêu nào</i></td></tr>'}</tbody></table>
