@@ -102,8 +102,8 @@ function webMaySave(a, list) {
 
 /* ================= BIÊN BẢN SẢN XUẤT BTP (BM.06-QC-QT.03) =================
  * Trang BienBanSX: Số lệnh | Mẻ (JSON [{ngay, nguoi, kg}]) | Kết luận | Ghi chú | Người cập nhật | Lúc cập nhật */
-const BB_SH = 'BienBanSX', BB_HEAD = ['Số lệnh', 'Mẻ (JSON)', 'Kết luận', 'Ghi chú', 'Người cập nhật', 'Lúc cập nhật'];
-const BB_KL = ['Đạt – Chuyển bồn kho BTP', 'Đạt – Chờ phối trộn', 'Phối lại', 'Chưa đạt – Chờ xử lý'];
+const BB_SH = 'BienBanSX', BB_HEAD = ['Số lệnh', 'Mẻ (JSON)', 'Kết luận', 'Ghi chú', 'Người cập nhật', 'Lúc cập nhật', 'Máy'];
+const BB_KL = ['Đạt - Chuyển lưu kho BTP', 'Đạt - Chờ phối trộn', 'Phối lại', 'Chưa đạt - Chờ xử lý'];
 function webBBGet(a, so) {
   needCT_(auth_(a));
   const od = orders_().find(x => x.so === so); if (!od) throw new Error('Không tìm thấy lệnh ' + so);
@@ -116,7 +116,7 @@ function webBBGet(a, so) {
   let me = []; try { me = r ? JSON.parse(str_(r[1]) || '[]') : []; } catch (e) { me = []; }
   const q = qcMap_()[lotKey_(od.maSP, lo)] || null, tt = ttMap_()[lotKey_(od.maSP, lo)] || od.tyTrong || 0;
   return { o: od, lo, nsx: nh ? nh.nsx : '', nl, kh: k, may: mayList_(), qc: q, tt,
-    bb: r ? { me, ketLuan: str_(r[2]), ghiChu: str_(r[3]), nguoi: str_(r[4]), luc: khTs_(r[5]) } : null, ketLuan: BB_KL };
+    bb: r ? { me, ketLuan: str_(r[2]), ghiChu: str_(r[3]), nguoi: str_(r[4]), luc: khTs_(r[5]), may: str_(r[6]) } : null, ketLuan: BB_KL };
 }
 function webBBSave(a, so, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
@@ -124,8 +124,8 @@ function webBBSave(a, so, d) {
   const mes = (d.me || []).map(m => ({ ngay: isYmd_(m.ngay) ? m.ngay : '', nguoi: String(m.nguoi || '').trim().slice(0, 120), kg: num_(m.kg) || 0 })).filter(m => m.ngay || m.nguoi || m.kg).slice(0, 30);
   const kl = BB_KL.indexOf(d.ketLuan) >= 0 ? d.ketLuan : '';
   const sh = shX_(BB_SH, BB_HEAD), R = rows_(BB_SH), i = R.findIndex(x => str_(x[0]) === so);
-  const row = [so, JSON.stringify(mes), kl, String(d.ghiChu || '').trim().slice(0, 300), me.ten, new Date()];
-  if (i >= 0) sh.getRange(i + 2, 1, 1, 6).setValues([row]); else sh.appendRow(row);
+  const row = [so, JSON.stringify(mes), kl, String(d.ghiChu || '').trim().slice(0, 300), me.ten, new Date(), String(d.may || '').trim().slice(0, 300)];
+  if (i >= 0) sh.getRange(i + 2, 1, 1, 7).setValues([row]); else sh.appendRow(row);
   log_(me, 'Biên bản SX BTP', so, mes.length + ' mẻ · ' + (kl || 'chưa kết luận'));
   return true;
 }

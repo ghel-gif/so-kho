@@ -202,12 +202,15 @@ window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thàn
 /* ---------- BM.06 ---------- */
 async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){return handleErr(e)}
   const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,done=o.trangThai==="Hoàn thành";
+  const curMay=String((D.bb&&D.bb.may)||(kh&&kh.may)||"").split(",").map(x=>x.trim()).filter(String);
   const me=(D.bb&&D.bb.me&&D.bb.me.length)?D.bb.me:[{ngay:o.ngayHT||(kh&&kh.ngay)||o.ngay,nguoi:o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", "),kg:done?o.slThucTe:""}];
   const w=document.createElement("div");w.className="cfm";
   const rowsMe=()=>me.map((m,i)=>`<tr><td><input type="date" data-i="${i}" data-f="ngay" value="${esc(m.ngay||"")}"></td><td><input data-i="${i}" data-f="nguoi" value="${esc(m.nguoi||"")}"></td><td><input type="number" step="any" data-i="${i}" data-f="kg" value="${esc(m.kg===""?"":m.kg)}"></td><td><button class="btn small danger" type="button" data-del="${i}">×</button></td></tr>`).join("");
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Biên bản sản xuất BTP · ${esc(o.so)}</h2><p class="note">${esc(sp.ten)} · lô ${esc(D.lo)} · ${done?"thực tế "+kg(o.slThucTe)+" kg":"đang SX, dự kiến "+kg(o.slDuKien)+" kg"}. Nguyên liệu tech, máy, khối lượng, hao hụt tự lấy từ lệnh và kế hoạch phối trộn.</p>
    <b>4. Bán thành phẩm từng mẻ</b><div class="dgx"><table><thead><tr><th>Ngày SX</th><th>Thực hiện</th><th>Số lượng (kg)</th><th></th></tr></thead><tbody id="bbMe">${rowsMe()}</tbody></table></div>
    <button class="btn small" type="button" id="bbAdd" style="margin-top:6px">+ Thêm mẻ</button>
+   <div class="kh-mayl"><b>3. Máy móc, thiết bị</b> <small class="note">${kh&&kh.may?"(lấy từ kế hoạch phối trộn, sửa được)":"(chọn máy đã chạy)"}</small><div class="kh-mays">${(D.may||[]).filter(m=>!m.ngung||curMay.includes(m.ma)).map(m=>`<label class="kh-chk"><input type="checkbox" class="bbMay" value="${esc(m.ma)}" ${curMay.includes(m.ma)?"checked":""}><span><b>${esc(m.ma)}</b> ${esc(m.ten)}</span></label>`).join("")||'<span class="note">Chưa có danh mục máy (Kế hoạch phối trộn → Danh mục máy).</span>'}</div>
+     <input id="bbMayX" placeholder="Máy khác: gõ tên – mã, cách nhau dấu phẩy" value="${esc(curMay.filter(x=>!(D.may||[]).some(m=>m.ma===x)).join(", "))}"></div>
    <label>Kết luận<select id="bbKL"><option value="">— chưa kết luận —</option>${D.ketLuan.map(k=>`<option${D.bb&&D.bb.ketLuan===k?" selected":""}>${esc(k)}</option>`).join("")}</select></label>
    <label>Ghi chú<input id="bbGC" value="${esc(D.bb?D.bb.ghiChu:"")}"></label>
    ${D.bb?`<p class="note">Lưu lần cuối: ${esc(D.bb.nguoi)} · ${esc(D.bb.luc)}</p>`:""}
@@ -217,10 +220,10 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
   $("bbAdd").onclick=()=>{me.push({ngay:me.length?me[me.length-1].ngay:o.ngay,nguoi:me.length?me[me.length-1].nguoi:"",kg:""});$("bbMe").innerHTML=rowsMe();bind()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();
-    const d={me,ketLuan:$("bbKL").value,ghiChu:$("bbGC").value};b.disabled=true;
+    const d={me,ketLuan:$("bbKL").value,ghiChu:$("bbGC").value,may:[...new Set([...w.querySelectorAll(".bbMay:checked")].map(x=>x.value).concat($("bbMayX").value.split(",").map(x=>x.trim()).filter(String)))].join(", ")};b.disabled=true;
     try{if(can.phieu())await api("webBBSave",S.auth,so,d);toast("Đã lưu biên bản "+so);if(x==="print"){bbPrint(D,d);}w.remove()}catch(e){handleErr(e);b.disabled=false}})}
 function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.tt||0,done=o.trangThai==="Hoàn thành";
-  const may=(kh&&kh.may?kh.may.split(",").map(x=>x.trim()).filter(String):[]).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:ma}});
+  const may=String(d.may||(kh&&kh.may)||"").split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:ma}});
   const nl=D.nl.slice();while(nl.length<3)nl.push(null);while(may.length<5)may.push(null);const me=d.me.slice();while(me.length<7)me.push(null);
   const bd=kh&&kh.bdTT?kh.bdTT.slice(0,10):(kh?kh.ngay:o.ngay),ht=o.ngayHT||(kh&&kh.ktTT?kh.ktTT.slice(0,10):"");
   const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,hh=khKg&&tu?(khKg-tu)/khKg*100:null,L=v=>tt&&v?kg(v/tt):"";
@@ -231,7 +234,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    ${sec("1. THÔNG TIN CHUNG")}
    <tr><td style="${c};width:50%" colspan="2">Tên sản phẩm: <b>${esc(sp.ten)}</b></td><td style="${c}" colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td></tr>
    <tr><td style="${c}" colspan="2">Ngày bắt đầu: ${dmy(bd)}</td><td style="${c}" colspan="2">Ngày hoàn thành: ${dmy(ht)}</td></tr>
-   ${sec("2. NGUYÊN LIỆU THUỘC KỸ THUẬT SỬ DỤNG")}
+   ${sec("2. NGUYÊN LIỆU THUỐC KỸ THUẬT SỬ DỤNG")}
    ${nl.map((n,i)=>`<tr><td style="${c}" colspan="2">Tên tech (${i+1}): ${n?esc(n.ten||n.ma):""}</td><td style="${c}" colspan="2">Số lô: ${n?esc(n.lo||""):""}${n?` <span style="float:right">${kg(n.kg)} kg</span>`:""}</td></tr>`).join("")}
    ${sec("3. MÁY MÓC, THIẾT BỊ DÙNG SẢN XUẤT")}
    ${may.map((m,i)=>`<tr><td style="${c}" colspan="2">Tên thiết bị (${i+1}): ${m?esc(m.ten):""}</td><td style="${c}" colspan="2">Mã số: ${m?esc(m.ma):""}</td></tr>`).join("")}
@@ -241,7 +244,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    <tr><td style="${c}">*Khối lượng theo KH: <b>${kg(khKg)}</b> kg</td><td style="${c}">Thể tích: ${L(khKg)}${L(khKg)?" L":""}</td><td style="${c}" colspan="2" rowspan="2">Hao hụt (%): <b>${hh===null?"":nf.format(Math.round(hh*100)/100)}</b></td></tr>
    <tr><td style="${c}">*Khối lượng thu được: <b>${tu?kg(tu):""}</b> kg</td><td style="${c}">Thể tích: ${L(tu)}${L(tu)?" L":""}</td></tr>
    <tr><td style="${c}" colspan="4">Tỷ trọng (nếu có): ${tt?String(tt).replace(".",",")+" g/ml":""}</td></tr>
-   <tr><td style="${c};font-weight:700">*Kết luận:</td><td style="${c}" colspan="3">${["Đạt – Chuyển bồn kho BTP","Đạt – Chờ phối trộn","Phối lại","Chưa đạt – Chờ xử lý"].map(k=>`<span style="display:inline-block;width:48%;margin:2px 0">${box(d.ketLuan===k)} ${k}</span>`).join("")}${d.ghiChu?`<div>Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
+   <tr><td style="${c};font-weight:700">*Kết luận:</td><td style="${c}" colspan="3">${[["Đạt - Chuyển lưu kho BTP","Dán giấy trắng"],["Đạt - Chờ phối trộn","Dán giấy vàng"],["Phối lại","Dán giấy vàng"],["Chưa đạt - Chờ xử lý","Dán giấy đỏ"]].map(k=>`<span style="display:inline-block;width:48%;margin:3px 0;text-align:center">${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></span>`).join("")}${d.ghiChu?`<div>Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
   <table style="width:100%;margin-top:10px;text-align:center;${T13}"><tr><td><b>Nhân viên phối trộn</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>${esc(nv)}</td><td><b>Thủ kho</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br></td><td><b>Nhân viên QC</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>${esc(qc)}</td></tr></table></div>`)}
 
