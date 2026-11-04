@@ -384,7 +384,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
   <p style="margin:8px 0 2px"><b>3. KẾT LUẬN:</b>&nbsp;&nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – xử lý theo quy trình sản phẩm không phù hợp</p>
   <p style="margin:4px 0"><b>Nhận xét:</b> ${esc(d.nhanXet||"")}</p>
   <p style="text-align:right;margin:8px 0 0;font-style:italic">${(()=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.ngay||"");return m?`Tây Ninh, ngày ${m[3]} tháng ${m[2]} năm ${m[1]}`:"Tây Ninh, ngày ...... tháng ...... năm .........."})()}</p>
-  <table class="sg"><tr><td><b>Người kiểm nghiệm</b><br><i>(Ký tên)</i></td><td><b>Trưởng phòng QA/QC</b><br><i>(Phê duyệt – ký và ghi rõ họ tên)</i></td></tr><tr><td class="nm"></td><td class="nm"></td></tr></table>
+  <table class="sg"><tr><td><b>Người kiểm nghiệm</b><br><i>(Ký và ghi rõ họ tên)</i></td><td><b>Trưởng phòng QA/QC</b><br><i>(Phê duyệt – ký và ghi rõ họ tên)</i></td></tr><tr><td class="nm"></td><td class="nm"></td></tr></table>
   <div class="ft"><div>- Kết quả chỉ có giá trị đối với mẫu thử của lô nêu trên. Không trích sao một phần phiếu khi chưa có sự đồng ý của phòng QA/QC.</div>
    <div>- Phiếu kiểm soát chất lượng nội bộ theo ISO 9001:2015, làm căn cứ cho phép chuyển công đoạn. Phòng thử nghiệm của công ty chưa được công nhận ISO/IEC 17025; phiếu không thay thế kết quả của tổ chức thử nghiệm được chỉ định / công nhận.</div>
    <div>- Phương pháp thử theo các hướng dẫn nội bộ QC-HD hiện hành; thiết bị đo được kiểm tra, hiệu chuẩn theo kế hoạch của công ty.</div></div>`)}
