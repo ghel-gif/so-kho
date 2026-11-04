@@ -160,7 +160,7 @@ function webHLSave(a, d) {
   if (!isYmd_(d.ngay)) throw new Error('Ngày kiểm nghiệm không hợp lệ.');
   const so = String(d.so || '').trim().slice(0, 40); if (!so) throw new Error('Ghi số phiếu.');
   const kl = PHL_KL.indexOf(d.ketLuan) >= 0 ? d.ketLuan : '';
-  const kq = {}; Object.keys(d.kq || {}).forEach(k => { const v = String(d.kq[k] == null ? '' : d.kq[k]).trim().slice(0, 120); if (v) kq[String(k).slice(0, 10)] = v; });
+  const kq = {}; Object.keys(d.kq || {}).forEach(k => { const v = String(d.kq[k] == null ? '' : d.kq[k]).trim().slice(0, 500); if (v) kq[String(k).slice(0, 10)] = v; });
   const sh = shX_(PHL_SH, PHL_HEAD), R = phlRows_();
   const i = R.findIndex(r => str_(r[0]) === so && str_(r[10]) !== 'Đã xoá');
   if (i >= 0 && (str_(R[i][1]) !== it.ma || str_(R[i][2]) !== lo)) throw new Error('Số phiếu ' + so + ' đã dùng cho lô khác.');

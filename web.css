@@ -92,3 +92,4 @@ nav.side button[data-tab="khpt"]{--tc:#f5b14c}
 .kh-pick{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}.kh-pk{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:4px 10px;font:13px var(--font);cursor:pointer}.kh-pk:hover{border-color:var(--accent);background:var(--accent-soft)}
 #bbMayQ{flex:1;min-width:220px}
 #bbMe input[data-f="nguoi"]{min-width:170px}#bbMe input[data-f="kg"]{min-width:90px}#bbMe input[type=time],#bbMe input[type=date]{min-width:110px}
+.hl-tb table{table-layout:fixed;min-width:640px}.hl-tb td{white-space:normal;vertical-align:top}.hl-kq{width:100%;min-height:38px;resize:vertical;font:inherit;line-height:1.35;padding:7px 9px;overflow:hidden}

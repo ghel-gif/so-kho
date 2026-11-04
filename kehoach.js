@@ -302,7 +302,6 @@ const CT=[["1","Ngoại quan","-",null,"Phù hợp mô tả của sản phẩm"]
   ["9.1k","Độ bền phân tán sau 0,5 h — lớp kem","mL",["OD","SE","DC"],"≤ 2 mL"],
   ["9.1c","Độ bền phân tán sau 0,5 h — lớp cặn","mL",["OD","SE","DC"],"≤ 0,2 mL"],
   ["15","Độ hòa tan và độ bền dung dịch","%",["SP","SG"],"Cặn trên rây 75 µm ≤ 2 %"],
-  ["16","Tách lớp (bảo quản 0 °C, 7 ngày)","mL",["EC","SL","EW","ME","DC","ES"],"≤ 0,3 mL"],
   ["10","Độ bụi","%",["GR","WG"],"≤ 1 %"],
   ["11","Kích thước hạt","-",["GR","SC","WP","WG","OD"],"Theo TCCS"]];
 const ap=(c,dg)=>!c[3]||!dg||c[3].includes(dg);
@@ -310,20 +309,20 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=String(D.tt).replace(".",",");
   const w=document.createElement("div");w.className="cfm";let all=false;
-  const rows=()=>CT.filter(c=>all||ap(c,dg)).map(c=>`<tr><td>${esc(c[1])}</td><td>${esc(c[2])}</td><td class="note">${esc(c[4]||"")}</td><td><input data-k="${c[0]}" value="${esc(kq[c[0]]||"")}" ${ro?"disabled":""} placeholder="bỏ trống nếu không kiểm"></td></tr>`).join("");
+  const rows=()=>CT.filter(c=>all||ap(c,dg)).map(c=>`<tr><td>${esc(c[1])}</td><td>${esc(c[2])}</td><td class="note">${esc(c[4]||"")}</td><td><textarea class="hl-kq" rows="1" data-k="${c[0]}" ${ro?"disabled":""} placeholder="bỏ trống nếu không kiểm">${esc(kq[c[0]]||"")}</textarea></td></tr>`).join("");
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Phiếu kiểm nghiệm hoá lý BTP${p?" · "+esc(p.so):""}</h2><p class="note">${esc(it.ten)} · lô <b>${esc(D.lo)}</b>${D.nsx?" · NSX "+dmy(String(D.nsx).slice(0,10)):""}</p>
    <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${ro?"disabled":""}></label><label>Ngày kiểm nghiệm<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${ro?"disabled":""}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${ro?"disabled":""} placeholder="SC, EC, WP…"></label>
    <div class="kh-bar" style="margin:8px 0"><b>Chỉ tiêu</b><label class="kh-chk"><input type="checkbox" id="hlAll"><span>Hiện tất cả chỉ tiêu (không chỉ theo dạng)</span></label></div>
-   <div class="dgx"><table><thead><tr><th>Chỉ tiêu (QCVN 01-188)</th><th>ĐVT</th><th>Yêu cầu</th><th>Kết quả</th></tr></thead><tbody id="hlRows">${rows()}</tbody></table></div>
+   <div class="dgx hl-tb"><table><colgroup><col style="width:32%"><col style="width:8%"><col style="width:20%"><col style="width:40%"></colgroup><thead><tr><th>Chỉ tiêu (QCVN 01-188)</th><th>ĐVT</th><th>Yêu cầu</th><th>Kết quả</th></tr></thead><tbody id="hlRows">${rows()}</tbody></table></div>
    <label>Kết luận<select id="hlKL" ${ro?"disabled":""}><option value="">— chưa kết luận —</option><option value="Đạt"${p&&p.ketLuan==="Đạt"?" selected":""}>Đạt – cho phép đóng gói</option><option value="Không đạt"${p&&p.ketLuan==="Không đạt"?" selected":""}>Không đạt – xử lý theo quy trình SP không phù hợp</option></select></label>
    <label>Nhận xét<input id="hlNX" value="${esc(p?p.nhanXet:"")}" ${ro?"disabled":""}></label>
    <p class="note">Phiếu <b>Đạt</b> tự vào hồ sơ lô (Phiếu kiểm hoá lý: ĐÃ CÓ), không cần chụp tải lên nữa. Tỷ trọng ghi ở đây cũng cập nhật vào lô. Chỉ tiêu bỏ trống (không kiểm) sẽ không in lên phiếu.${p?" Lưu lần cuối: "+esc(p.nguoi)+" · "+esc(p.luc):""}</p>
    <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${ro?(p?'<button class="btn primary" type="button" data-x="in">In</button>':""):'<button class="btn" type="button" data-x="save">Lưu</button><button class="btn primary" type="button" data-x="print">Lưu & In</button>'}</div></div>`;
   document.body.appendChild(w);
-  const keep=()=>w.querySelectorAll("#hlRows input").forEach(x=>{kq[x.dataset.k]=x.value});
-  $("hlAll").onchange=e=>{keep();all=e.target.checked;$("hlRows").innerHTML=rows()};
-  $("hlDang").oninput=()=>{keep();dg=$("hlDang").value.trim().toUpperCase();$("hlRows").innerHTML=rows()};
+  const keep=()=>w.querySelectorAll("#hlRows .hl-kq").forEach(x=>{kq[x.dataset.k]=x.value});const grow=()=>w.querySelectorAll("#hlRows .hl-kq").forEach(t=>{const f=()=>{t.style.height="auto";t.style.height=Math.max(38,t.scrollHeight+2)+"px"};t.oninput=f;f()});
+  grow();$("hlAll").onchange=e=>{keep();all=e.target.checked;$("hlRows").innerHTML=rows();grow()};
+  $("hlDang").oninput=()=>{keep();dg=$("hlDang").value.trim().toUpperCase();$("hlRows").innerHTML=rows();grow()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();keep();
     const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim()};
@@ -337,9 +336,9 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    <tr><td>Số lô SX: <b>${esc(D.lo)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td>Ngày kiểm nghiệm: <b>${dmy(d.ngay)}</b></td><td>Số phiếu: <b>${esc(d.so)}</b></td></tr></table>
   <p>Căn cứ đánh giá: Theo Tiêu chuẩn cơ sở (TCCS) hiện hành của sản phẩm và QCVN 01-188:2018/BNNPTNT. Chỉ thực hiện các chỉ tiêu áp dụng theo dạng chế phẩm:</p>
-  <table><colgroup><col style="width:9%"><col style="width:46%"><col style="width:14%"><col style="width:31%"></colgroup>
+  <table><colgroup><col style="width:8%"><col style="width:40%"><col style="width:12%"><col style="width:40%"></colgroup>
    <thead><tr><th>STT</th><th>Chỉ tiêu</th><th>Đơn vị tính</th><th>Kết quả</th></tr></thead><tbody>
-   ${R.length?R.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join(""):'<tr><td colspan="4" class="c"><i>Chưa ghi kết quả chỉ tiêu nào</i></td></tr>'}</tbody></table>
+   ${R.length?R.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td style="white-space:pre-wrap">${esc(r[2])}</td></tr>`).join(""):'<tr><td colspan="4" class="c"><i>Chưa ghi kết quả chỉ tiêu nào</i></td></tr>'}</tbody></table>
   <p style="margin-top:12px"><b>Kết luận:</b>&nbsp;&nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – Xử lý theo quy trình sản phẩm không phù hợp</p>
   <p><b>Nhận xét:</b> ${esc(d.nhanXet||"")}</p>
   ${sign([["Người thực hiện",S.me.ten],["Trưởng phòng QA/QC",""]])}</div>`)}
