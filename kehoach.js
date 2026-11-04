@@ -327,11 +327,11 @@ const HD_DANG={EC:"07",EW:"08",GR:"09",ME:"10",SC:"11",SL:"12",WP:"13",WG:"14",G
 const hdLM=dg=>HD_DANG[dg]?"QC-HD."+HD_DANG[dg]:"";
 /* mẫu lỏng: mL, chai PET / PE-PA kín; mẫu rắn: g, túi màng PE / chai PET kín */
 const lmL=dg=>LIQ.includes(dg)||!dg,lmU=dg=>lmL(dg)?"mL":"g",lmBB=dg=>lmL(dg)?["Chai PET kín","Chai PE/PA kín"]:["Túi màng PE kín","Chai PET kín"];
-const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày lấy mẫu","date"],["_lm","Lượng mẫu"],["_bb","Bao bì mẫu"],["_ntu","Thử nghiệm từ ngày","date"],["_nde","đến ngày","date"]];
+const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày nhận mẫu","date"],["_lm","Lượng mẫu"],["_bb","Bao bì mẫu"]];
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=f3(D.tt);
-  if(!p){const t=S.today;kq._ngm=t;kq._ntu=t;kq._nde=t}if(!kq._lmt)kq._lmt=hdLM(dg);
+  if(!p)kq._ngm=S.today;if(!kq._lmt)kq._lmt=hdLM(dg);
   const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";
   const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}<div class="note">${esc(c[4]||"")}</div></td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
     <td>${k==="2t"?"":`<input class="hl-pp" style="font-size:13px;padding-left:6px;padding-right:4px" data-p="${k}" value="${esc(kq["@"+k]||PP[k]||"")}" ${dis} placeholder="PP thử">`}</td>
@@ -339,10 +339,10 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
   const rows=()=>{const L=CT.filter(c=>all||ap(c,dg)),a=L.filter(c=>!PHU.has(c[0])),b=L.filter(c=>PHU.has(c[0]));return a.map(row1).join("")+(b.length?`<tr><td colspan="4" style="background:var(--accent-soft);font-weight:700">Chỉ tiêu phụ — kích thước hạt (theo dõi, không dùng để kết luận)</td></tr>`+b.map(row1).join(""):"")};
   const inf=x=>`<label>${x[1]}<input id="hl${x[0]}" ${x[2]?`type="${x[2]}"`:""} value="${esc(kq[x[0]]||"")}" ${dis} placeholder="${esc(x[3]||"")}"></label>`;
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Phiếu kiểm nghiệm hoá lý BTP${p?" · "+esc(p.so):""}</h2><p class="note">${esc(it.ten)} · mã ${esc(D.ma)} · lô <b>${esc(D.lo)}</b>${D.nsx?" · NSX "+dmy(String(D.nsx).slice(0,10)):""}</p>
-   <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis||(p?"disabled":"")}></label><label>Ngày kiểm nghiệm (ngày ra phiếu)<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
+   <div class="two"><label>Số phiếu<input id="hlSo" value="${esc(p?p.so:D.soMoi)}" ${dis||(p?"disabled":"")}></label><label>Ngày ra phiếu<input id="hlNgay" type="date" value="${esc(p?p.ngay:S.today)}" ${dis}></label></div>
    <label>Dạng chế phẩm<input id="hlDang" value="${esc(dg)}" ${dis} placeholder="SC, EC, WP…"></label>
    <b style="display:block;margin-top:8px">Thông tin mẫu</b>
-   <div class="two">${inf(HLI[0])}${inf(HLI[1])}</div><div class="two"><label>Lượng mẫu (<span id="hlU">${lmU(dg)}</span>)<input id="hl_lm" type="number" min="0" step="any" value="${esc(/^[\d.,]+$/.test(kq._lm||"")?String(kq._lm).replace(",","."):"")}" ${dis}></label><label>Bao bì mẫu<select id="hl_bb" ${dis}></select></label></div><div class="two">${inf(HLI[4])}${inf(HLI[5])}</div>
+   <div class="two">${inf(HLI[0])}${inf(HLI[1])}</div><div class="two"><label>Lượng mẫu (<span id="hlU">${lmU(dg)}</span>)<input id="hl_lm" type="number" min="0" step="any" value="${esc(/^[\d.,]+$/.test(kq._lm||"")?String(kq._lm).replace(",","."):"")}" ${dis}></label><label>Bao bì mẫu<select id="hl_bb" ${dis}></select></label></div>
    <div class="kh-bar" style="margin:8px 0"><b>Chỉ tiêu</b><label class="kh-chk"><input type="checkbox" id="hlAll"><span>Hiện tất cả chỉ tiêu (không chỉ theo dạng)</span></label></div>
    <div class="dgx hl-tb"><table><colgroup><col style="width:34%"><col style="width:32%"><col style="width:19%"><col style="width:15%"></colgroup><thead><tr><th>Chỉ tiêu · mức yêu cầu (QC-QĐ.03)</th><th>Kết quả</th><th>Phương pháp</th><th>Đánh giá</th></tr></thead><tbody id="hlRows">${rows()}</tbody></table></div>
    <label>Kết luận<select id="hlKL" ${dis}><option value="">— chưa kết luận —</option><option value="Đạt"${p&&p.ketLuan==="Đạt"?" selected":""}>Đạt – cho phép đóng gói</option><option value="Không đạt"${p&&p.ketLuan==="Không đạt"?" selected":""}>Không đạt – xử lý theo quy trình SP không phù hợp</option></select></label>
@@ -368,7 +368,6 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
   const pp=k=>{const m=v("@"+k);return m==="-"?"":(m||PP[k]||"")};
   const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=k==="3"?f3(v(k)):v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
   const tb=(L,empty)=>`<table class="kq"><colgroup><col style="width:5%"><col style="width:22%"><col style="width:6%"><col style="width:23%"><col style="width:24%"><col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>ĐVT</th><th>Mức yêu cầu</th><th>Kết quả</th><th>Phương pháp thử</th><th>Đánh giá</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td class="sm">${esc(r[2])}</td><td style="white-space:pre-wrap">${esc(r[3])}</td><td class="c">${esc(r[4])}</td><td class="c">${esc(r[5])}</td></tr>`).join(""):`<tr><td colspan="7" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
-  const tu=dd("_ntu"),den=dd("_nde"),ngT=tu&&den&&tu!==den?tu+" – "+den:(tu||den||dmy(d.ngay));
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`;
   pr(`${PCSS}<style>.pq{font-size:11.5pt;line-height:1.28}.pq p{margin:5px 0}.pq td,.pq th{padding:4px 7px}.pq .kq td,.pq .kq th{font-size:10.5pt;padding:3px 4px;line-height:1.25}.pq .sg .nm{height:15mm}.pq .sg{margin-top:8px}.pq .kq .sm{font-size:9.5pt}.pq .ft{font-size:9.5pt;font-style:italic;line-height:1.35;margin-top:10px;border-top:1px solid #000;padding-top:4px}.pq .ft div{margin:1px 0}</style>
   <div class="pq">${head("PHIẾU KIỂM NGHIỆM<br>HÓA LÝ BÁN THÀNH PHẨM","Mã hiệu: BM.08-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
@@ -377,15 +376,15 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    ${sec("1. THÔNG TIN MẪU")}
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(it.ten)}</b></td><td colspan="2">Mã vật tư: <b>${esc(D.ma||it.ma||"")}</b></td></tr>
    <tr><td colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td><td>Dạng: <b>${esc(dg)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
-   <tr><td colspan="2">Lấy mẫu theo: <b>${esc(v("_lmt"))}</b></td><td colspan="2">Ngày lấy mẫu: <b>${dd("_ngm")}</b></td></tr>
-   <tr><td colspan="2">Ngày thử nghiệm: <b>${ngT}</b></td><td colspan="2">Lượng mẫu: ${v("_lm")?`<b>${esc(/^[\d.,]+$/.test(v("_lm"))?v("_lm").replace(".",",")+" "+lmU(dg):v("_lm"))}</b>`:""}${v("_bb")?" – "+esc(v("_bb").charAt(0).toLowerCase()+v("_bb").slice(1)):""}</td></tr>
+   <tr><td>Lấy mẫu theo: <b>${esc(v("_lmt"))}</b></td><td>Nhận mẫu: <b>${dd("_ngm")}</b></td><td colspan="2">Lượng mẫu: ${v("_lm")?`<b>${esc(/^[\d.,]+$/.test(v("_lm"))?v("_lm").replace(".",",")+" "+lmU(dg):v("_lm"))}</b>`:""}${v("_bb")?" – "+esc(v("_bb").charAt(0).toLowerCase()+v("_bb").slice(1)):""}</td></tr>
   </table>
   <p style="margin:8px 0 4px"><b>2. KẾT QUẢ KIỂM NGHIỆM</b> <i>(mức yêu cầu theo TCCS sản phẩm và QC-QĐ.03 – QCVN 01-188:2018/BNNPTNT)</i></p>
   ${tb(R,"Chưa ghi kết quả chỉ tiêu nào")}
   ${P.length?`<p style="margin:8px 0 4px"><b>Chỉ tiêu phụ — kích thước hạt</b> <i>(theo dõi, không dùng để kết luận)</i></p>${tb(P,"")}`:""}
   <p style="margin:8px 0 2px"><b>3. KẾT LUẬN:</b>&nbsp;&nbsp; ${box(d.ketLuan==="Đạt")} Đạt – cho phép đóng gói &nbsp;&nbsp;&nbsp; ${box(d.ketLuan==="Không đạt")} Không đạt – xử lý theo quy trình sản phẩm không phù hợp</p>
   <p style="margin:4px 0"><b>Nhận xét:</b> ${esc(d.nhanXet||"")}</p>
-  <table class="sg"><tr><td><b>Người kiểm nghiệm</b><br><i>(Ký và ghi rõ họ tên)</i></td><td><b>Trưởng phòng QA/QC</b><br><i>(Phê duyệt – ký và ghi rõ họ tên)</i></td></tr><tr><td class="nm">${esc(d.nguoi||S.me.ten)}</td><td class="nm"></td></tr><tr><td>Ngày: ${dmy(d.ngay)}</td><td>Ngày: ....../....../..........</td></tr></table>
+  <p style="text-align:right;margin:8px 0 0;font-style:italic">${(()=>{const m=/^(\d{4})-(\d{2})-(\d{2})/.exec(d.ngay||"");return m?`Tây Ninh, ngày ${m[3]} tháng ${m[2]} năm ${m[1]}`:"Tây Ninh, ngày ...... tháng ...... năm .........."})()}</p>
+  <table class="sg"><tr><td><b>Người kiểm nghiệm</b><br><i>(Ký và ghi rõ họ tên)</i></td><td><b>Trưởng phòng QA/QC</b><br><i>(Phê duyệt – ký và ghi rõ họ tên)</i></td></tr><tr><td class="nm">${esc(d.nguoi||S.me.ten)}</td><td class="nm"></td></tr></table>
   <div class="ft"><div>- Kết quả chỉ có giá trị đối với mẫu thử của lô nêu trên. Không trích sao một phần phiếu khi chưa có sự đồng ý của phòng QA/QC.</div>
    <div>- Phiếu kiểm soát chất lượng nội bộ theo ISO 9001:2015, làm căn cứ cho phép chuyển công đoạn. Phòng thử nghiệm của công ty chưa được công nhận ISO/IEC 17025; phiếu không thay thế kết quả của tổ chức thử nghiệm được chỉ định / công nhận.</div>
    <div>- Phương pháp thử theo các hướng dẫn nội bộ QC-HD hiện hành; thiết bị đo được kiểm tra, hiệu chuẩn theo kế hoạch của công ty.</div></div>`)}
