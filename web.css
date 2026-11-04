@@ -93,3 +93,29 @@ nav.side button[data-tab="khpt"]{--tc:#f5b14c}
 #bbMayQ{flex:1;min-width:220px}
 #bbMe input[data-f="nguoi"]{min-width:170px}#bbMe input[data-f="kg"]{min-width:90px}#bbMe input[type=time],#bbMe input[type=date]{min-width:110px}
 .hl-tb table{table-layout:fixed;min-width:640px}.hl-tb td{white-space:normal;vertical-align:top}.hl-kq{width:100%;min-height:38px;resize:vertical;font:inherit;line-height:1.35;padding:7px 9px;overflow:hidden}
+
+/* ===== Giao diện sáng: ô có màu, đường kẻ rõ hơn (chế độ tối giữ nguyên bên dưới) ===== */
+:root{--line:#c3d0e0}
+.stat{border-width:1px 1px 1px 5px}
+.summary .stat:nth-child(1){background:#e7f0fc;border-color:#bcd3f2 #bcd3f2 #bcd3f2 #2f6fd0}
+.summary .stat:nth-child(2){background:#e4f5ee;border-color:#b9e0cf #b9e0cf #b9e0cf #14897c}
+.summary .stat:nth-child(3){background:#fdf2dc;border-color:#f0d9a6 #f0d9a6 #f0d9a6 #d48a00}
+.summary .stat:nth-child(4){background:#f3e9fb;border-color:#dcc6ee #dcc6ee #dcc6ee #8a4fc4}
+.list .row:nth-child(even){background:#eaf1fa}
+.list .row.click:hover{background:#e3eefb}
+.grp{background:#dce9f8;color:#123a66;border-left:4px solid #2f6fd0}
+.card,.box,.hcard,.list{border-color:#c3d0e0}
+th{background:#e3ecf7}
+tbody tr:nth-child(even) td{background:#f5f8fc}
+input:not([type=checkbox]):not([type=radio]),select,textarea{background:#f9fbfe;border-color:#bccadb}
+.kh-card{background:#f2f7fd}
+@media (prefers-color-scheme: dark){
+  :root{--line:#2f4258}
+  .stat,.summary .stat:nth-child(n){background:var(--surface);border-color:var(--line);border-width:1px}
+  .list .row:nth-child(even){background:transparent}.list .row.click:hover{background:rgba(255,255,255,.04)}
+  .grp{background:color-mix(in srgb,var(--water) 10%,var(--surface));color:var(--water);border-left:0}
+  .card,.box,.hcard,.list{border-color:var(--line)}
+  th{background:transparent}tbody tr:nth-child(even) td{background:transparent}
+  input:not([type=checkbox]):not([type=radio]),select,textarea{background:var(--surface);border-color:var(--line)}
+  .kh-card{background:var(--bg)}
+}
