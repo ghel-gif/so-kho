@@ -197,7 +197,7 @@ const pr=(html,land)=>{$("printArea").innerHTML=html;let pg=document.getElementB
 const PCSS=`<style>
 .pq{font:12.5pt/1.4 "Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pq table{width:100%;border-collapse:collapse;table-layout:fixed}.pq td,.pq th{border:1px solid #000;padding:5px 8px;vertical-align:middle;color:#000;word-wrap:break-word}
-.pq .hd td{padding:4px 8px}.pq .hd .lg{width:23%;text-align:center}.pq .hd .lg img{height:17mm}.pq .hd .tt{text-align:center;font-size:17pt;font-weight:700;line-height:1.3}
+.pq .hd td{padding:4px 8px}.pq .hd .lg{width:23%;text-align:center}.pq .hd .lg img{height:22mm;max-width:100%;object-fit:contain}.pq .hd .tt{text-align:center;font-size:17pt;font-weight:700;line-height:1.3}
 .pq .hd .mt{width:28%;font-size:11.5pt;line-height:1.55}
 .pq .sec td{background:#f0f0f0;font-weight:700;padding:4px 8px}.pq .lb{color:#000}.pq b{font-weight:700}
 .pq .gap{height:10px}.pq th{background:#f0f0f0;text-align:center;font-weight:700}.pq .c{text-align:center}.pq .r{text-align:right}
@@ -315,11 +315,13 @@ const PHU=new Set(["5d","11"]); /* chỉ tiêu phụ (theo dõi kích thước h
 /* Phương pháp thử mặc định = hướng dẫn nội bộ trong 8-HƯỚNG DẪN/QC - Hướng dẫn (sửa được trên phiếu) */
 const PP={"1":"QC-HD.36","2":"QC-HD.35","3":"QC-HD.37","4":"QC-HD.38","5":"QC-HD.39","6":"QC-HD.40","7":"QC-HD.41","7.1":"QC-HD.41","7.2":"QC-HD.41","8":"QC-HD.42","9":"QC-HD.43","9.1k":"QC-HD.44","9.1c":"QC-HD.44","11":"QC-HD.45","12":"QC-HD.46"};
 /* Thông tin mẫu lưu kèm trong kq với khoá bắt đầu bằng "_" ; đánh giá từng chỉ tiêu "~mã"; phương pháp sửa tay "@mã" */
-const HLI=[["_nlm","Người lấy mẫu"],["_ngm","Ngày lấy mẫu","date"],["_vt","Vị trí lấy mẫu","","VD: bồn AHK-42, đầu – giữa – cuối"],["_lm","Lượng mẫu / tình trạng mẫu","","VD: 500 mL, chai PET kín, nguyên vẹn"],["_ntu","Thử nghiệm từ ngày","date"],["_nde","đến ngày","date"],["_dk","Điều kiện phòng thử","","VD: 27 °C, 65 %RH"],["_hl","Phiếu hàm lượng hoạt chất (bên ngoài)","","VD: 2977/CL/26-8818 – SPCC"]];
+const HD_DANG={EC:"07",EW:"08",GR:"09",ME:"10",SC:"11",SL:"12",WP:"13",WG:"14",GB:"22",AB:"23",CS:"24",DC:"25",OD:"26",FS:"27",PA:"28",RB:"29",SP:"30",SG:"31",DP:"32",SE:"33",ZC:"34"};
+const hdLM=dg=>HD_DANG[dg]?"QC-HD."+HD_DANG[dg]:"";
+const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày lấy mẫu","date"],["_vt","Vị trí lấy mẫu","","VD: bồn AHK-42, đầu – giữa – cuối"],["_lm","Lượng mẫu / tình trạng mẫu","","VD: 500 mL, chai PET kín, nguyên vẹn"],["_ntu","Thử nghiệm từ ngày","date"],["_nde","đến ngày","date"],["_dk","Điều kiện phòng thử","","VD: 27 °C, 65 %RH"],["_hl","Phiếu hàm lượng hoạt chất (bên ngoài)","","VD: 2977/CL/26-8818 – SPCC"]];
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangOf(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=String(D.tt).replace(".",",");
-  if(!p){const t=S.today;kq._nlm=S.me.ten;kq._ngm=t;kq._ntu=t;kq._nde=t}
+  if(!p){const t=S.today;kq._ngm=t;kq._ntu=t;kq._nde=t}if(!kq._lmt)kq._lmt=hdLM(dg);
   const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";
   const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}<div class="note">${esc(c[4]||"")}</div></td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
     <td>${k==="2t"?"":`<input class="hl-pp" style="font-size:13px;padding-left:6px;padding-right:4px" data-p="${k}" value="${esc(kq["@"+k]||PP[k]||"")}" ${dis} placeholder="PP thử">`}</td>
@@ -343,28 +345,29 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
     w.querySelectorAll("#hlRows .hl-dg").forEach(x=>{kq["~"+x.dataset.g]=x.value});HLI.forEach(x=>{kq[x[0]]=$("hl"+x[0]).value.trim()})};
   const grow=()=>w.querySelectorAll("#hlRows .hl-kq").forEach(t=>{const f=()=>{t.style.height="auto";t.style.height=Math.max(38,t.scrollHeight+2)+"px"};t.oninput=f;f()});
   grow();$("hlAll").onchange=e=>{keep();all=e.target.checked;$("hlRows").innerHTML=rows();grow()};
-  $("hlDang").oninput=()=>{keep();dg=$("hlDang").value.trim().toUpperCase();$("hlRows").innerHTML=rows();grow()};
+  $("hlDang").oninput=()=>{keep();const o=hdLM(dg);dg=$("hlDang").value.trim().toUpperCase();if(!kq._lmt||kq._lmt===o){kq._lmt=hdLM(dg);$("hl_lmt").value=kq._lmt};$("hlRows").innerHTML=rows();grow()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();if(!ro)keep();
     const d={so:$("hlSo").value.trim(),ma:D.ma,lo:D.lo,ngay:$("hlNgay").value,dang:$("hlDang").value.trim().toUpperCase(),kq,ketLuan:$("hlKL").value,nhanXet:$("hlNX").value.trim(),nguoi:p?p.nguoi:S.me.ten};
+    if(!all)CT.forEach(c=>{if(!ap(c,d.dang)){delete kq[c[0]];delete kq["~"+c[0]];delete kq["@"+c[0]]}}); /* bỏ chỉ tiêu không thuộc dạng (VD: SL không có kích thước hạt) */
     if(x==="in")return hlPrint(it,D,d);
     const kd=CT.filter(c=>String(kq[c[0]]||"").trim()&&kq["~"+c[0]]==="Không đạt").map(c=>c[1]);
     if(d.ketLuan==="Đạt"&&kd.length&&!confirm("Có chỉ tiêu đánh giá Không đạt ("+kd.join("; ")+") nhưng kết luận Đạt. Vẫn lưu?"))return;
     b.disabled=true;try{await api("webHLSave",S.auth,d);toast("Đã lưu phiếu hoá lý "+d.so);if(x==="print")hlPrint(it,D,d);w.remove();try{await refresh()}catch(e){}}catch(e){handleErr(e);b.disabled=false}})}
 function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim(),dd=k=>v(k)?dmy(v(k)):"";
   const pp=k=>{const m=v("@"+k);return m==="-"?"":(m||PP[k]||"")};
-  const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=v(k);if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
+  const R=[],P=[];CT.forEach(c=>{const k=c[0];if(k==="2t")return;let val=v(k);if(val&&!ap(c,dg)&&!v("~"+k)&&PHU.has(k))return;if(k==="2"&&val&&v("2t"))val+=" (ở "+v("2t")+" °C)";if(!val)return;(PHU.has(k)?P:R).push([c[1],c[2],c[4]||"",val,pp(k),PHU.has(k)?"Theo dõi":v("~"+k)])});
   const tb=(L,empty)=>`<table class="kq"><colgroup><col style="width:5%"><col style="width:22%"><col style="width:6%"><col style="width:23%"><col style="width:24%"><col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th>STT</th><th>Chỉ tiêu</th><th>ĐVT</th><th>Mức yêu cầu</th><th>Kết quả</th><th>Phương pháp thử</th><th>Đánh giá</th></tr></thead><tbody>${L.length?L.map((r,i)=>`<tr><td class="c">${i+1}</td><td>${esc(r[0])}</td><td class="c">${esc(r[1])}</td><td class="sm">${esc(r[2])}</td><td style="white-space:pre-wrap">${esc(r[3])}</td><td class="c">${esc(r[4])}</td><td class="c">${esc(r[5])}</td></tr>`).join(""):`<tr><td colspan="7" class="c"><i>${empty}</i></td></tr>`}</tbody></table>`;
   const tu=dd("_ntu"),den=dd("_nde"),ngT=tu&&den&&tu!==den?tu+" – "+den:(tu||den||dmy(d.ngay));
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`;
-  pr(`${PCSS}<style>.pq{font-size:11.5pt;line-height:1.28}.pq p{margin:5px 0}.pq td,.pq th{padding:4px 7px}.pq .hd .lg img{height:15mm}.pq .kq td,.pq .kq th{font-size:10.5pt;padding:3px 4px;line-height:1.25}.pq .sg .nm{height:15mm}.pq .sg{margin-top:8px}.pq .kq .sm{font-size:9.5pt}.pq .ft{font-size:9.5pt;font-style:italic;line-height:1.35;margin-top:10px;border-top:1px solid #000;padding-top:4px}.pq .ft div{margin:1px 0}</style>
+  pr(`${PCSS}<style>.pq{font-size:11.5pt;line-height:1.28}.pq p{margin:5px 0}.pq td,.pq th{padding:4px 7px}.pq .kq td,.pq .kq th{font-size:10.5pt;padding:3px 4px;line-height:1.25}.pq .sg .nm{height:15mm}.pq .sg{margin-top:8px}.pq .kq .sm{font-size:9.5pt}.pq .ft{font-size:9.5pt;font-style:italic;line-height:1.35;margin-top:10px;border-top:1px solid #000;padding-top:4px}.pq .ft div{margin:1px 0}</style>
   <div class="pq">${head("PHIẾU KIỂM NGHIỆM<br>HÓA LÝ BÁN THÀNH PHẨM","Mã hiệu: BM.08-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
   <p style="text-align:right;margin:4px 0">Số phiếu: <b>${esc(d.so)}</b></p>
   <table><colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>
    ${sec("1. THÔNG TIN MẪU")}
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(it.ten)}</b></td><td colspan="2">Mã vật tư: <b>${esc(D.ma||it.ma||"")}</b></td></tr>
    <tr><td colspan="2">Số lô SX: <b>${esc(D.lo)}</b></td><td>Dạng: <b>${esc(dg)}</b></td><td>Ngày SX: <b>${D.nsx?dmy(String(D.nsx).slice(0,10)):""}</b></td></tr>
-   <tr><td colspan="2">Người lấy mẫu: <b>${esc(v("_nlm"))}</b></td><td colspan="2">Ngày lấy mẫu: <b>${dd("_ngm")}</b></td></tr>
+   <tr><td colspan="2">Lấy mẫu theo: <b>${esc(v("_lmt"))}</b></td><td colspan="2">Ngày lấy mẫu: <b>${dd("_ngm")}</b></td></tr>
    ${v("_vt")||v("_lm")?`<tr><td colspan="2">Vị trí lấy mẫu: ${esc(v("_vt"))}</td><td colspan="2">Lượng / tình trạng mẫu: ${esc(v("_lm"))}</td></tr>`:""}
    <tr><td colspan="2">Ngày thử nghiệm: <b>${ngT}</b></td><td colspan="2">Điều kiện phòng thử: ${esc(v("_dk"))}</td></tr>
   </table>
