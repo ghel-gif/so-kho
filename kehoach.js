@@ -302,7 +302,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
    <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl"><tr>${KL.slice(0,2).map(k=>`<td>${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td>${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
-  ${sign([["Nhân viên phối trộn",nv],["Thủ kho",""],["Nhân viên QC",qc]])}</div>`)}
+  ${sign([["Nhân viên phối trộn",""],["Thủ kho",""],["Nhân viên QC",""]])}</div>`)}
 
 /* ---------- BM.08 ---------- */
 /* Chỉ tiêu BTP theo QC-QĐ.03 "Quy định chất lượng bán thành phẩm" (cốt lõi QCVN 01-188:2018/BNNPTNT) + mẫu BM.08.
