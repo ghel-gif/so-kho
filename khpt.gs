@@ -235,3 +235,46 @@ function webVSSave(a, d) {
   log_(me, 'Biên bản vệ sinh thiết bị', od.so + ' · ' + so, kq || 'chưa kết luận');
   return so;
 }
+
+/* ===== BIỂU MẪU ĐÓNG GÓI (QC-QT.04): BM.04/BM.06 kiểm tra quá trình, BM.05 thông tin đóng gói, BM.07 vệ sinh thiết bị đóng gói =====
+ * 1 dòng / phiếu. Dữ liệu chi tiết lưu JSON. BM.02 (kế hoạch kiểm tra hằng ngày) và BM.08 (báo cáo chất lượng TP) lập tự động từ lệnh đóng gói + các phiếu này. */
+const DGF_SH = 'BieuMauDG', DGF_HEAD = ['ID', 'Loại', 'Số lệnh', 'Ngày', 'Dữ liệu (JSON)', 'Kết luận', 'Người lập', 'Lúc', 'Trạng thái'], DGF_LOAI = ['BM04', 'BM05', 'BM06', 'BM07'];
+function dgfAll_() { return (sheet_(DGF_SH) ? rows_(DGF_SH) : []).filter(r => str_(r[0]) && str_(r[8]) !== 'Đã xoá').map(r => { let d = {}; try { d = JSON.parse(str_(r[4]) || '{}'); } catch (e) {}
+  return { id: str_(r[0]), loai: str_(r[1]), so: str_(r[2]), ngay: str_(r[3]), d, kl: str_(r[5]), nguoi: str_(r[6]), luc: khTs_(r[7]) }; }); }
+function webDGFGet(a, so) {
+  needCT_(auth_(a));
+  const od = orders_().find(x => x.so === so); if (!od) throw new Error('Không tìm thấy lệnh ' + so);
+  const P = ldgMap_()[so] || {}, q = qcRows_().find(x => x.qc === P.qc) || null, TT = ttMap_(), mv = moves_();
+  const btp = (P.btp || []).map(b => { const nh = mv.find(m => m.ma === b.ma && m.lo === b.lo && m.loai === 'Nhập' && !m.trangThai), it = items_().find(i => i.ma === b.ma) || {};
+    return { ma: b.ma, ten: it.ten || '', lo: b.lo, kg: b.kg, nsx: nh ? (nh.nsx || nh.ngay) : '', tt: TT[lotKey_(b.ma, b.lo)] || 0 }; });
+  // lệnh đóng gói trước / sau (gợi ý BTP vừa chạy, sẽ chạy cho BM.07)
+  const all = orders_().filter(x => x.trangThai !== 'Đã huỷ' && /^TP\./.test(x.maSP || '')).sort((x, y) => (x.ngay + x.so < y.ngay + y.so ? -1 : 1)), i = all.findIndex(x => x.so === so);
+  return { o: od, P, q, btp, forms: dgfAll_().filter(x => x.so === so), may: mayList_(), truoc: i > 0 ? all[i - 1].so : '', sau: i >= 0 && i < all.length - 1 ? all[i + 1].so : '' };
+}
+function webDGFAll(a, tu, den) {
+  needCT_(auth_(a));
+  return dgfAll_().filter(x => (!tu || x.ngay >= tu) && (!den || x.ngay <= den)).map(x => ({ id: x.id, loai: x.loai, so: x.so, ngay: x.ngay, kl: x.kl, may: (x.d && (x.d.mayTen || x.d.may)) || '', maMay: (x.d && x.d.maMay) || '' }));
+}
+function webDGFSave(a, d) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  d = d || {};
+  if (DGF_LOAI.indexOf(d.loai) < 0) throw new Error('Loại biểu mẫu không hợp lệ.');
+  const od = orders_().find(x => x.so === d.so); if (!od) throw new Error('Không tìm thấy lệnh ' + d.so);
+  if (!isYmd_(d.ngay)) throw new Error('Ngày không hợp lệ.');
+  const kl = ['Đạt', 'Không đạt'].indexOf(d.kl) >= 0 ? d.kl : '';
+  if (kl && (d.loai === 'BM04' || d.loai === 'BM06' || d.loai === 'BM07') && !me.qc) throw new Error('Chỉ QC được kết luận.');
+  const js = JSON.stringify(d.data || {}); if (js.length > 45000) throw new Error('Phiếu quá dài.');
+  const sh = shX_(DGF_SH, DGF_HEAD), R = sheet_(DGF_SH) ? rows_(DGF_SH) : [];
+  let id = String(d.id || ''), i = id ? R.findIndex(r => str_(r[0]) === id) : -1;
+  if (id && i < 0) throw new Error('Không tìm thấy phiếu (có thể đã bị xoá).');
+  if (!id) id = d.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+  const row = [id, d.loai, od.so, d.ngay, js, kl, me.ten, new Date(), ''];
+  if (i >= 0) sh.getRange(i + 2, 1, 1, DGF_HEAD.length).setValues([row]); else sh.appendRow(row);
+  log_(me, 'Biểu mẫu đóng gói ' + d.loai, od.so + ' · ' + id, kl || 'chưa kết luận');
+  return id;
+}
+function webDGFDel(a, id) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT]);
+  const R = sheet_(DGF_SH) ? rows_(DGF_SH) : [], i = R.findIndex(r => str_(r[0]) === id); if (i < 0) throw new Error('Không tìm thấy phiếu.');
+  sheet_(DGF_SH).getRange(i + 2, 9).setValue('Đã xoá'); log_(me, 'Xoá biểu mẫu đóng gói', id, ''); return id;
+}

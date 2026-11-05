@@ -105,8 +105,8 @@ nav.side button[data-tab="khpt"]{--tc:#f5b14c}
 .list .row.click:hover{background:#e3eefb}
 .grp{background:#dce9f8;color:#123a66;border-left:4px solid #2f6fd0}
 .card,.box,.hcard,.list{border-color:#c3d0e0}
-th{background:#e3ecf7}
-tbody tr:nth-child(even) td{background:#f5f8fc}
+th{background:#e3ecf7}#printArea .pq th{background:#f0f0f0}#printArea .pq td{background:transparent}#printArea .pq .sec td,#printArea .pq .tin .lb{background:#f0f0f0}
+.dgx tbody tr:nth-child(even) td,.kh-dlg tbody tr:nth-child(even) td{background:#f5f8fc}
 input:not([type=checkbox]):not([type=radio]),select,textarea{background:#f9fbfe;border-color:#bccadb}
 .kh-card{background:#f2f7fd}
 @media (prefers-color-scheme: dark){
@@ -115,7 +115,7 @@ input:not([type=checkbox]):not([type=radio]),select,textarea{background:#f9fbfe;
   .list .row:nth-child(even){background:transparent}.list .row.click:hover{background:rgba(255,255,255,.04)}
   .grp{background:color-mix(in srgb,var(--water) 10%,var(--surface));color:var(--water);border-left:0}
   .card,.box,.hcard,.list{border-color:var(--line)}
-  th{background:transparent}tbody tr:nth-child(even) td{background:transparent}
+  th{background:transparent}.dgx tbody tr:nth-child(even) td,.kh-dlg tbody tr:nth-child(even) td{background:transparent}
   input:not([type=checkbox]):not([type=radio]),select,textarea{background:var(--surface);border-color:var(--line)}
   .kh-card{background:var(--bg)}
 }

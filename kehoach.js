@@ -462,5 +462,5 @@ document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest
 window.hlLotHook=function(boxEl,ma,lo,r){if(!r||!r.btp||!S.me||!S.me.qc||!isAHK(lo))return;const has=(r.hs||[]).some(x=>x.loai==="Phiếu kiểm hoá lý");
   const b=document.createElement("button");b.type="button";b.className="btn small";b.style.margin="6px 0";b.textContent=has?"Xem / sửa phiếu hoá lý (BM.08)":"Lập phiếu hoá lý (BM.08)";
   b.onclick=()=>{const lc=document.getElementById("lotCard");if(lc)lc.remove();hlForm(ma,lo)};boxEl.insertBefore(b,boxEl.firstChild.nextSibling||null)};
-window.hlForm=hlForm;window.bbDlg=bbDlg;window.vsDlg=vsDlg;
+window.hlForm=hlForm;window.bbDlg=bbDlg;window.vsDlg=vsDlg;window.BMK={PCSS,head,box,sign,pr,btn4,btnWire};
 })();
