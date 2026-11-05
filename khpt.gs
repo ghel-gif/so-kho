@@ -278,3 +278,44 @@ function webDGFDel(a, id) {
   const R = sheet_(DGF_SH) ? rows_(DGF_SH) : [], i = R.findIndex(r => str_(r[0]) === id); if (i < 0) throw new Error('Không tìm thấy phiếu.');
   sheet_(DGF_SH).getRange(i + 2, 9).setValue('Đã xoá'); log_(me, 'Xoá biểu mẫu đóng gói', id, ''); return id;
 }
+
+
+/* ================= DANH MỤC QUY CÁCH ĐÓNG GÓI (QuyCachDG): thêm mã nhãn / mã quy cách mới, sửa thông số =================
+ * Cột 1–26 như cũ; thêm 27 TL thuốc chuẩn (g) · 28 Dung sai (± g) · 29 KL bao bì (g) — theo phiếu thông tin đóng gói của R&D (BM.05-QC-QT.04). */
+const QC_HEAD_ = ['Mã QC', 'Mã nhãn', 'Sản phẩm', 'Mã BTP (mặc định)', 'Quy cách', 'Lượng / đơn vị', 'ĐVT lượng', 'Loại bao bì', 'Mã chai / can / xô', 'Mô tả chai', 'Mã hộp', 'Đơn vị / hộp', 'Mã thùng', 'Đơn vị / thùng', 'Nhãn phụ', 'Tem dán chai', 'Tem chống giả', 'Tem cảnh báo / thùng', 'Đai thùng', 'Băng keo', 'Phân phối', 'Ảnh nhãn (file ID)', 'Bảng thông tin (file ID)', 'Nguồn', 'Ghi chú / cần kiểm', 'Gồm mã nhãn (cặp đôi)', 'TL thuốc chuẩn (g)', 'Dung sai (± g)', 'KL bao bì (g)'];
+const QC_KEY_ = ['qc', 'nhan', 'sp', 'btp', 'quyCach', 'luong', 'dvl', 'loai', 'chai', 'moTaChai', 'hop', 'dvHop', 'thung', 'dvThung', 'nhanPhu', 'temChai', 'tcg', 'tcb', 'dai', 'bangKeo', 'pp', 'anh', 'bang', 'nguon', 'ghiChu', 'gom', 'tl', 'ds', 'klBB'];
+const QC_NUM_ = { luong: 1, dvHop: 1, dvThung: 1, tcb: 1, tl: 1, ds: 1, klBB: 1 };
+/** o: {qc, ...trường}; o.sua = true để ghi đè mã đã có (chỉ các trường gửi lên). Trả lại danh mục mới. */
+function webQCSave(a, o) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
+  o = o || {}; const qc = String(o.qc || '').trim().slice(0, 60);
+  if (!qc) throw new Error('Nhập mã quy cách (mã QC).');
+  if (!/^[A-Za-z0-9][A-Za-z0-9 ._·+\-()]*$/.test(qc)) throw new Error('Mã quy cách chỉ gồm chữ, số, dấu - . + ·');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(QCDG_SH, QC_HEAD_), n = QC_HEAD_.length;
+    const h = sh.getRange(1, 1, 1, n).getValues()[0];
+    if (QC_HEAD_.some((t, i) => !str_(h[i]))) sh.getRange(1, 1, 1, n).setValues([QC_HEAD_.map((t, i) => str_(h[i]) || t)]);
+    const last = sh.getLastRow(), ids = last > 1 ? sh.getRange(2, 1, last - 1, 1).getValues().map(r => str_(r[0]).toUpperCase()) : [];
+    const i = ids.indexOf(qc.toUpperCase());
+    const val = k => { let v = o[k]; if (k === 'btp' && Array.isArray(v)) v = v.join(' | ');
+      if (v === undefined || v === null) return undefined; v = String(v).trim();
+      if (QC_NUM_[k]) { if (v === '') return ''; const x = num_(v.replace(',', '.')); if (!(x >= 0)) throw new Error('Số không hợp lệ ở ' + QC_HEAD_[QC_KEY_.indexOf(k)]); return x; }
+      return v.slice(0, 300); };
+    if (i < 0) {
+      if (!str_(o.sp)) throw new Error('Nhập tên sản phẩm.');
+      if (!(num_(o.luong) > 0)) throw new Error('Nhập lượng / đơn vị (VD 18).');
+      const row = QC_KEY_.map(k => k === 'qc' ? qc : (k === 'nhan' ? (val('nhan') || qc.split('·')[0]) : (val(k) === undefined ? '' : val(k))));
+      if (!row[23]) row[23] = 'Nhập tay ' + Utilities.formatDate(new Date(), tz_(), 'dd/MM/yyyy') + ' · ' + me.ten;
+      sh.getRange(last + 1, 1, 1, n).setValues([row]);
+      log_(me, 'Thêm quy cách đóng gói', qc, [row[2], row[4], row[12], row[13]].join(' · '));
+    } else {
+      if (!o.sua) throw new Error('Mã ' + qc + ' đã có trong danh mục. Chọn “Sửa” để cập nhật.');
+      const r = i + 2, cur = sh.getRange(r, 1, 1, n).getValues()[0];
+      QC_KEY_.forEach((k, j) => { if (j === 0) return; const v = val(k); if (v !== undefined) cur[j] = v; });
+      sh.getRange(r, 1, 1, n).setValues([cur]);
+      log_(me, 'Sửa quy cách đóng gói', qc, [cur[2], cur[4], cur[12], cur[13]].join(' · '));
+    }
+  } finally { lock.releaseLock(); }
+  return qcRows_();
+}

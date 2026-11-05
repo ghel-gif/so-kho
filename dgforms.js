@@ -59,7 +59,7 @@ function mayBind(P,D,idMa,idTen){const q=$(P+"Q");if(!q)return;const goi=isGoi(D
   $(P+"Clr").onclick=()=>{M.value="";T.value="";M.dispatchEvent(new Event("input",{bubbles:true}));draw()}}
 /* ---------- BM.05 Phiếu thông tin đóng gói thành phẩm ---------- */
 const BB_LOAI=["Chai có nhãn, không nắp","Chai không nhãn, không nắp","Chai có nhãn, có nắp","Gói thuốc"];
-function f05(D,p){const I=info(D),d=Object.assign({ngay:today(),maMay:"",mayTen:"",nhietDo:"",tocDo:"",seal:"",nhietEp:"",tlThuoc:isFinite(I.thuoc)?Math.round(I.thuoc*10)/10:"",ds:"",loaiBB:isGoi(I.q)?"Gói thuốc":"Chai có nhãn, không nắp",klBB:"",dvThung:I.q.dvThung||"",thungPallet:"",lop:"",thungLop:"",mangCo:"",klThung:"",bangKeo:"",ghiChu:""},p?p.d:{}),canW=can.phieu(),dis=canW?"":"disabled";
+function f05(D,p){const I=info(D),d=Object.assign({ngay:today(),maMay:"",mayTen:"",nhietDo:"",tocDo:"",seal:"",nhietEp:"",tlThuoc:+I.q.tl>0?+I.q.tl:isFinite(I.thuoc)?Math.round(I.thuoc*10)/10:"",ds:+I.q.ds>0?+I.q.ds:"",loaiBB:isGoi(I.q)?"Gói thuốc":"Chai có nhãn, không nắp",klBB:+I.q.klBB>0?+I.q.klBB:"",dvThung:I.q.dvThung||"",thungPallet:"",lop:"",thungLop:"",mangCo:"",klThung:"",bangKeo:"",ghiChu:""},p?p.d:{}),canW=can.phieu(),dis=canW?"":"disabled";
   const w=dlg(`<h2>Phiếu thông tin đóng gói thành phẩm (BM.05) · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · mã ${esc(I.maSP)} · BTP ${esc(I.b.lo||"")}${I.tt?" · tỷ trọng "+String(I.tt).replace(".",","):""}. Trọng lượng thuốc chuẩn tự tính từ định lượng ${esc(I.q.luong||"")} ${esc(I.q.dvl||"")}${I.liq?" × tỷ trọng":""}, sửa được.</p>
    <div class="two">${inp("f5Ngay","Ngày lập phiếu",d.ngay,`type="date" ${dis}`)}<span></span></div>
    <div class="two">${inp("f5MaMay","Mã thiết bị",d.maMay,dis)}${inp("f5MayTen","Tên thiết bị",d.mayTen,dis)}</div>${mayPick("f5P",dis)}
@@ -216,4 +216,50 @@ function p08(day,L,F){const K=B(),m=/^(\d{4})-(\d{2})-(\d{2})/.exec(day);
    ${L.map((r,i)=>{const o=r.o,q=r.q,it=itemBy(o.maSP)||{};return `<tr><td class="c">${i+1}</td><td>${esc(q.sp||it.ten||o.maSP)}</td><td>${esc(q.nhan||r.P.qc||"")}</td><td class="c">${o.ngayHT?dmy(o.ngayHT):""}</td><td class="c">${esc(q.luong?q.luong+" "+(q.dvl||""):"")}</td><td>${esc(q.quyCach||"")}</td><td class="r">${esc(String(o.slThucTe||""))} ${esc(it.donVi||"")}</td><td class="c">${klOf(F,o.so)}</td><td></td></tr>`}).join("")||'<tr><td colspan="9" class="c"><i>Không có lệnh hoàn thành trong ngày</i></td></tr>'}</table>
   <p style="text-align:right;margin:14px 0 0;font-style:italic">Tây Ninh, ngày ${m?m[3]:"……"} tháng ${m?m[2]:"……"} năm ${m?m[1]:"……"}</p>
   <table class="sg"><tr><td style="width:50%"></td><td><b>Nhân viên QC</b><br><i>(Ký và ghi rõ họ tên)</i></td></tr><tr><td></td><td class="nm"></td></tr></table></div>`)}
+
+/* ===== DANH MỤC QUY CÁCH ĐÓNG GÓI: thêm mã nhãn / quy cách mới, sửa thông số (Quản lý, Kế toán) ===== */
+/* Mã mới / thông số mới lấy từ phiếu thông tin đóng gói của R&D (thư mục "Lệnh đóng gói 2026") */
+const RD_QC=[
+ {qc:"FTN-D5",nhan:"FTN-D5",sp:"FENTINAT 48SC",btp:"BTP.FENT.48",quyCach:"gói 18 ml",luong:18,dvl:"ml",loai:"gói",hop:"H50G",dvHop:50,thung:"",dvThung:400,nhanPhu:"",pp:"",tl:22.2,ds:1.2,klBB:2.6,bang:"1CROJGgHDMY55LZB0yIEIgPvaL1Dk-mdm",
+  nguon:"Phiếu BM.05 R&D 05/11/2026 – 2611.Fentinat 48SC - 18ML - D5",ghiChu:"8 hộp x 50 gói / thùng; cần kiểm: mã hộp, mã thùng, nhãn phụ"},
+ {qc:"DFB150-D3M",upd:1,tl:8.5,ds:0.5,klBB:3,nguon:"Phiếu BM.05 R&D 04/11/2026 – 2611.Dofaben 150WG - 8G - D3M (Con hổ)"}];
+const QF=[["qc","Mã quy cách (mã QC) *"],["nhan","Mã nhãn"],["sp","Sản phẩm *"],["btp","Mã BTP mặc định"],["quyCach","Quy cách (VD gói 18 ml)"],["luong","Lượng / đơn vị *","n"],["dvl","ĐVT lượng","s:ml,g,L,kg"],["loai","Loại bao bì","s:gói,chai,can,xô,túi,bao,hũ"],
+ ["chai","Mã chai / can / xô"],["moTaChai","Mô tả chai"],["hop","Mã hộp"],["dvHop","Đơn vị / hộp","n"],["thung","Mã thùng"],["dvThung","Đơn vị / thùng","n"],["nhanPhu","Nhãn phụ","s:,Có,Không"],["temChai","Tem dán chai","s:,Có,Không"],
+ ["pp","Phân phối"],["tl","TL thuốc chuẩn (g)","n"],["ds","Dung sai (± g)","n"],["klBB","KL bao bì (g)","n"],["gom","Gồm mã nhãn (cặp đôi, nối bằng +)"],["nguon","Nguồn"],["ghiChu","Ghi chú / cần kiểm"]];
+const canQC=()=>["Quản lý","Kế toán"].includes(S.me&&S.me.vaiTro);
+const qcList=()=>(S.dg&&S.dg.qc)||[];
+const qcFind=c=>qcList().find(x=>x.qc.toUpperCase()===String(c||"").trim().toUpperCase());
+const rdTodo=()=>RD_QC.filter(r=>{const q=qcFind(r.qc);return r.upd?(q&&!(+q.tl>0)):!q});
+function qcDlg(q0,sua){const v=Object.assign({},q0||{});if(Array.isArray(v.btp))v.btp=v.btp.join(" | ");
+  const sps=[...new Set(qcList().map(x=>x.sp).filter(Boolean))].sort();
+  const fld=([k,l,t])=>{const val=v[k]==null?"":String(v[k]),dis=sua&&k==="qc"?"readonly":"";
+    if(t&&t.startsWith("s:")){const o=t.slice(2).split(",");if(val&&!o.includes(val))o.push(val);return `<label>${l}<select data-k="${k}">${o.map(x=>`<option value="${esc(x)}"${x===val?" selected":""}>${esc(x||"—")}</option>`).join("")}</select></label>`}
+    return `<label>${l}<input data-k="${k}" ${t==="n"?'type="number" step="any" inputmode="decimal"':""} ${k==="sp"?'list="qcSpL"':""} value="${esc(val)}" ${dis} autocomplete="off"></label>`};
+  const w=dlg(`<h2>${sua?"Sửa quy cách · "+esc(v.qc):"Thêm mã nhãn / quy cách mới"}</h2>
+   <p class="note">Lưu vào trang QuyCachDG — dùng ngay khi lập lệnh đóng gói. TL thuốc chuẩn, dung sai, KL bao bì lấy theo phiếu thông tin đóng gói của R&D, tự điền vào BM.05 / BM.04 / BM.06.</p>
+   ${sua?"":`<label>Sao chép thông số từ mã có sẵn<input id="qcCp" list="qcCpL" placeholder="VD FTN-D2" autocomplete="off"></label><datalist id="qcCpL">${qcList().map(x=>`<option value="${esc(x.qc)}">${esc(x.sp+" · "+(x.quyCach||""))}</option>`).join("")}</datalist>`}
+   <datalist id="qcSpL">${sps.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+   <div class="two">${QF.map(fld).join("")}</div><p class="note" id="qcSum"></p>
+   <div class="actions"><button class="btn" type="button" data-x>Đóng</button><button class="btn primary" type="button" id="qcOk">Lưu</button></div>`);
+  const box=w.querySelector(".cfm-box"),get=()=>{const o={};box.querySelectorAll("[data-k]").forEach(e=>o[e.dataset.k]=e.value.trim());return o};
+  const sum=()=>{const o=get(),t=num(o.tl),d=num(o.ds)||0,b=num(o.klBB)||0;$("qcSum").textContent=isFinite(t)?`Thuốc ${f2(t-d)} – ${f2(t+d)} g · nguyên ${o.loai||"đơn vị"} ${f2(t+b)} g (${f2(t+b-d)} – ${f2(t+b+d)} g)${num(o.dvHop)>0&&num(o.dvThung)>0?` · ${f2(num(o.dvThung)/num(o.dvHop))} hộp / thùng`:""}`:""};
+  box.addEventListener("input",sum);sum();
+  const sp=box.querySelector('[data-k="sp"]');sp.addEventListener("change",()=>{const b=box.querySelector('[data-k="btp"]');if(b.value)return;const q=qcList().find(x=>x.sp===sp.value&&x.btp&&x.btp.length);if(q)b.value=q.btp.join(" | ")});
+  ["luong","dvl","loai"].forEach(k=>box.querySelector(`[data-k="${k}"]`).addEventListener("change",()=>{const o=get(),e=box.querySelector('[data-k="quyCach"]');if(!e.dataset.t&&o.luong)e.value=`${o.loai||"gói"} ${o.luong} ${o.dvl||""}`.trim()}));
+  box.querySelector('[data-k="quyCach"]').addEventListener("input",e=>e.target.dataset.t=1);
+  if($("qcCp"))$("qcCp").onchange=e=>{const q=qcFind(e.target.value);if(!q)return;const keep=get();QF.forEach(([k])=>{if(["qc","nhan","nguon","ghiChu","tl","ds","klBB"].includes(k))return;const el=box.querySelector(`[data-k="${k}"]`);let x=q[k];if(Array.isArray(x))x=x.join(" | ");if(el&&!keep[k]||el&&el.tagName==="SELECT")el.value=x==null?"":String(x)});sum();toast("Đã chép thông số từ "+q.qc+" — sửa lại chỗ khác")};
+  w.querySelector("[data-x]").onclick=()=>w.remove();
+  $("qcOk").onclick=async()=>{const o=get();if(sua)o.sua=true;const b=$("qcOk");b.disabled=true;
+    try{const L=await api("webQCSave",S.auth,o);S.dg.qc=L;S.dgQ={};L.forEach(q=>S.dgQ[q.qc]=q);w.remove();toast((sua?"Đã cập nhật ":"Đã thêm ")+o.qc);if(S.dgv==="new"){if(typeof dgHits==="function")dgHits()}else if(typeof dgListRender==="function")dgListRender()}
+    catch(e){toast(e.message);b.disabled=false}}}
+window.qcDlg=qcDlg;
+/* thanh công cụ trên danh sách lệnh đóng gói */
+window.qcBar=function(box){if(!box||!canQC()||box.querySelector(".qc-bar"))return;const T=rdTodo();
+  const el=document.createElement("div");el.className="qc-bar";el.style.cssText="margin:8px 0;padding:10px 12px;border:1px solid var(--line,#d5dde8);border-radius:10px";
+  el.innerHTML=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>Danh mục quy cách</b><span class="note">${qcList().length} mã</span><input id="qcFind" list="qcFindL" placeholder="Mã cần sửa…" style="max-width:180px" autocomplete="off"><datalist id="qcFindL">${qcList().map(x=>`<option value="${esc(x.qc)}">${esc(x.sp+" · "+(x.quyCach||""))}</option>`).join("")}</datalist><button class="btn" type="button" id="qcEd">Sửa</button><button class="btn primary" type="button" id="qcAdd">＋ Mã nhãn / quy cách mới</button></div>
+  ${T.length?`<div style="margin-top:8px"><span class="note">Phiếu thông tin đóng gói R&D có mã / thông số chưa cập nhật:</span> ${T.map((r,i)=>`<button class="btn" type="button" data-rd="${i}">${r.upd?"Cập nhật TL chuẩn ":"Thêm "}${esc(r.qc)}</button>`).join(" ")}</div>`:""}`;
+  const tools=box.querySelector(".tools");(tools?tools.parentNode:box).insertBefore(el,tools?tools.nextSibling:box.firstChild);
+  $("qcAdd").onclick=()=>qcDlg({dvl:"ml",loai:"gói"},false);
+  $("qcEd").onclick=()=>{const q=qcFind($("qcFind").value);if(!q)return toast("Không thấy mã "+$("qcFind").value);qcDlg(q,true)};
+  el.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{const r=T[+b.dataset.rd];if(r.upd){const q=qcFind(r.qc);qcDlg(Object.assign({},q,{tl:r.tl,ds:r.ds,klBB:r.klBB,nguon:r.nguon}),true)}else qcDlg(r,false)})};
 })();

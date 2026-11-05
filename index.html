@@ -899,7 +899,7 @@ function addMonths(ymd,n){if(!ymd||!n)return"";const p=ymd.split("-").map(Number
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
 /* ---------- báo đang xử lý + chặn bấm lặp khi gọi máy chủ ---------- */
 const RUNW=new Set(["createPackOrder","completePackOrder","packDone","savePack","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","setLock"]);
-const WR_FN=new Set(["webDGFSave","webDGFDel","webVSSave","webHLSave","webBBSave","webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
+const WR_FN=new Set(["webQCSave","webDGFSave","webDGFDel","webVSSave","webHLSave","webBBSave","webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
 const BUSY_TXT={login:"Đang đăng nhập…",completeOrder:"Đang hoàn thành lệnh, trừ kho…",createOrder:"Đang lập lệnh…",reopenOrder:"Đang mở lại lệnh…",saveMove:"Đang ghi phiếu…",updateMove:"Đang lưu thay đổi…",deleteMove:"Đang xoá phiếu…",saveXNB:"Đang ghi phiếu xuất…",adjustXNB:"Đang lưu điều chỉnh…",cancelXNB:"Đang huỷ phiếu…",importRows:"Đang xử lý file Excel…",uploadAnhNhap:"Đang tải ảnh lên…",uploadHoSo:"Đang tải hồ sơ lên…",transferStock:"Đang chuyển kho…",setQC:"Đang lưu QC…",backupNow:"Đang sao lưu…"};
 const BZ={n:0,r:0,fly:new Map(),t:null,t2:null};
 function busyEl(){if(!document.getElementById("busyOv")){const b=document.createElement("div");b.id="busyOv";b.setAttribute("role","status");b.setAttribute("aria-live","polite");
@@ -1297,6 +1297,7 @@ function dgListRender0(){const box=$("dglBox"),f=S.dgF===undefined?"":S.dgF,qw=d
   <p class="note">Quy cách đóng gói lấy từ thư mục <b>3-NHÃN</b> (trang tính QuyCachDG: ${dgN0((S.dg.qc||[]).length)} mã nhãn). Lập lệnh chưa trừ kho; khi hoàn thành mới xuất BTP + bao bì theo số thực tế và nhập thành phẩm.</p>`;
   const s=$("dgS");s.oninput=()=>{S.dgS=s.value;const p=s.selectionStart;dgListRender();const n=$("dgS");n.focus();n.setSelectionRange(p,p)};
   $("dgF").onchange=e=>{S.dgF=e.target.value;dgListRender()};
+  if(window.qcBar)qcBar(box);
   if($("dgNewBtn"))$("dgNewBtn").onclick=()=>{S.dgN={ngayBD:S.today,ngay:"",thung:"",le:"",hl:"",find:"",btp:[],ov:{},fix:{},pick:true,st:"Đang đóng gói"};dgShow("new")};
 if($("dgDoneBtn"))$("dgDoneBtn").onclick=()=>{S.dgN={done:true,ngay:S.today,ngayBD:S.today,thung:"",le:"",hl:"",find:"",btp:[],ov:{},fix:{},pick:true};dgShow("new")};
   box.querySelectorAll(".row.click").forEach(r=>r.onclick=()=>{S.dgSo=r.dataset.so;S.dgC=null;dgShow("detail")})}
@@ -1326,7 +1327,8 @@ function dgSoMoi(ngay){const d=String(ngay||S.today).replace(/-/g,"").slice(2),p
 function dgHits(){const N=S.dgN,box=$("dgHits");if(!box)return;const qw=dgFd(N.find).split(/\s+/).filter(Boolean);
   if(!N.pick||!qw.length){box.innerHTML="";return}
   const L=S.dg.qc.filter(x=>(h=>qw.every(w=>h.includes(w)))(dgFd([x.qc,x.nhan,x.sp,x.quyCach,x.pp,x.chai,x.thung].join(" ")))).slice(0,30);
-  box.innerHTML=L.length?`<div class="list">${L.map(x=>`<div class="row click" data-qc="${esc(x.qc)}"><div class="name"><span class="code">${esc(x.qc)}</span>${esc(x.sp)} · ${esc(x.quyCach||x.loai||"")}${x.bang?"":'<span class="chip wait">CHƯA CÓ BẢNG TT</span>'}</div><div class="kg">${x.dvThung?dgN0(x.dvThung)+"<small>/thùng</small>":""}</div><div class="meta">${esc([x.chai&&("chai "+x.chai),x.hop&&("hộp "+x.hop),x.thung&&("thùng "+x.thung),x.pp].filter(Boolean).join(" · "))}</div></div>`).join("")}</div>`:'<div class="empty">Không thấy mã nhãn khớp. Kiểm tra lại mã, hoặc bổ sung vào trang QuyCachDG.</div>';
+  box.innerHTML=L.length?`<div class="list">${L.map(x=>`<div class="row click" data-qc="${esc(x.qc)}"><div class="name"><span class="code">${esc(x.qc)}</span>${esc(x.sp)} · ${esc(x.quyCach||x.loai||"")}${x.bang?"":'<span class="chip wait">CHƯA CÓ BẢNG TT</span>'}</div><div class="kg">${x.dvThung?dgN0(x.dvThung)+"<small>/thùng</small>":""}</div><div class="meta">${esc([x.chai&&("chai "+x.chai),x.hop&&("hộp "+x.hop),x.thung&&("thùng "+x.thung),x.pp].filter(Boolean).join(" · "))}</div></div>`).join("")}</div>`:`<div class="empty">Không thấy mã nhãn khớp. Kiểm tra lại mã${["Quản lý","Kế toán"].includes(S.me?.vaiTro)&&window.qcDlg?`, hoặc <button class="btn primary" type="button" id="dgQcNew">＋ Thêm mã ${esc(N.find.trim().toUpperCase())} vào danh mục</button>`:" hoặc nhờ Quản lý thêm vào danh mục quy cách."}</div>`;
+  if($("dgQcNew"))$("dgQcNew").onclick=()=>qcDlg({qc:N.find.trim().toUpperCase(),nhan:N.find.trim().toUpperCase(),dvl:"ml",loai:"gói"},false);
   box.querySelectorAll("[data-qc]").forEach(r=>r.onclick=()=>{const c=r.dataset.qc;if(N.qc!==c){N.qc=c;N.btp=[];N.ov={};N.kh=undefined}N.find=c;N.pick=false;dgNewRender()})}
 function dgOdRender0(){const box=$("dglBox"),o=S.lenh.find(x=>x.so===S.dgSo);if(!o)return dgShow("list");
   const sp=itemBy(o.maSP),P=(S.dg.lenh||{})[o.so]||{},q=S.dgQ[P.qc]||null,u=sp?.donVi||"",ht=o.trangThai==="Hoàn thành",dang=o.trangThai==="Đang SX";
@@ -2510,7 +2512,7 @@ function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
 <script src="kehoach.js?v=38"></script>
-<script src="dgforms.js?v=4"></script>
+<script src="dgforms.js?v=5"></script>
 </body>
 </html>
  

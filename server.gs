@@ -1628,7 +1628,7 @@ function qcRows_() {
     quyCach: str_(r[4]), luong: num_(r[5]), dvl: str_(r[6]), loai: str_(r[7]), chai: str_(r[8]), moTaChai: str_(r[9]),
     hop: str_(r[10]), dvHop: num_(r[11]), thung: str_(r[12]), dvThung: num_(r[13]), nhanPhu: str_(r[14]), temChai: str_(r[15]),
     tcg: str_(r[16]), tcb: num_(r[17]), dai: str_(r[18]), bangKeo: str_(r[19]), pp: str_(r[20]), anh: str_(r[21]), bang: str_(r[22]),
-    nguon: str_(r[23]), ghiChu: str_(r[24]), gom: str_(r[25])
+    nguon: str_(r[23]), ghiChu: str_(r[24]), gom: str_(r[25]), tl: num_(r[26]) || '', ds: num_(r[27]) || '', klBB: num_(r[28]) || ''
   }));
 }
 function ldgSheet_() { return shX_(LDG_SH, ['Số lệnh', 'Mã QC', 'Kế hoạch (JSON)', 'Người lập', 'Thời điểm']); }
