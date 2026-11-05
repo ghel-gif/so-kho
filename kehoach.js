@@ -354,7 +354,7 @@ const HLI=[["_lmt","Lấy mẫu theo","","VD: QC-HD.12"],["_ngm","Ngày nhận m
 async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,lo,soPhieu||"")}catch(e){return handleErr(e)}
   const it=D.it||itemBy(D.ma)||{ten:D.ma},p=D.p,ro=!S.me.qc,kq=p?Object.assign({},p.kq):{};let dg=(p&&p.dang)||dangHL(it);
   if(!p&&D.tt&&LIQ.includes(dg))kq["3"]=f3(D.tt);
-  if(!p){kq._ngm=S.today;Object.assign(kq,D.muc||{})}if(!kq._lmt)kq._lmt=hdLM(dg);
+  if(!p){kq._ngm=S.today;kq._lm="500";Object.assign(kq,D.muc||{})}if(!kq._lmt)kq._lmt=hdLM(dg);
   const w=document.createElement("div");w.className="cfm";let all=false;const dis=ro?"disabled":"";let hlCu=p?p.so:"";
   const row1=c=>{const k=c[0],ph=PHU.has(k);return `<tr><td>${esc(c[1])}${c[2]&&c[2]!=="-"?` <span class="note">(${esc(c[2])})</span>`:""}${k==="2t"?"":`<input class="hl-mu" data-m="${k}" value="${esc(kq["#"+k]||(/TCCS/.test(c[4]||"")?"":c[4]||""))}" ${dis} placeholder="${/TCCS/.test(c[4]||"")?"Mức TCCS, VD: 5,0 – 7,0":"Mức yêu cầu"}" title="Mức yêu cầu" style="margin-top:4px;font-size:12.5px;padding:5px 8px">`}</td><td><textarea class="hl-kq" rows="1" data-k="${k}" ${dis} placeholder="bỏ trống nếu không kiểm">${esc(kq[k]||"")}</textarea></td>
     <td>${k==="2t"?"":`<input class="hl-pp" style="font-size:13px;padding-left:6px;padding-right:4px" data-p="${k}" value="${esc(kq["@"+k]||PP[k]||"")}" ${dis} placeholder="PP thử">`}</td>
