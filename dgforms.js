@@ -111,7 +111,7 @@ const CR={BM04:[["Nhãn phụ, tem",[["np","Nhãn phụ: đúng chủng loại"]
 const NS={BM04:10,BM06:12},TEN={BM04:"PHIẾU KIỂM TRA QUÁ TRÌNH<br>ĐÓNG GÓI",BM06:"PHIẾU KIỂM TRA QUÁ TRÌNH<br>ĐÓNG CHAI"};
 const RL=["Đầu ca","Sau 2h tiếp theo","Sau 2h tiếp theo","Sau 2h tiếp theo"];
 function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},n=NS[loai],canW=can.phieu(),dis=canW?"":"disabled",qc=S.me&&S.me.qc;
-  const d=Object.assign({ngay:today(),ca:"",maMay:f5?f5.d.maMay:"",mayTen:f5?f5.d.mayTen:"",cach:"tong",tMin:isFinite(c5.tMin)?Math.round(c5.tMin*100)/100:"",tMax:isFinite(c5.tMax)?Math.round(c5.tMax*100)/100:"",nMin:isFinite(c5.nMin)?Math.round(c5.nMin*100)/100:"",nMax:isFinite(c5.nMax)?Math.round(c5.nMax*100)/100:"",rounds:[{gio:"07:30",c:{},v:{},e:{},kl:[]}],kph:{loi:"",sl:"",kp:"",tg:""}},p?JSON.parse(JSON.stringify(p.d)):{}),crit=CR[loai];
+  const d=Object.assign({ngay:today(),ca:"Hành chính",maMay:f5?f5.d.maMay:"",mayTen:f5?f5.d.mayTen:"",cach:"tong",tMin:isFinite(c5.tMin)?Math.round(c5.tMin*100)/100:"",tMax:isFinite(c5.tMax)?Math.round(c5.tMax*100)/100:"",nMin:isFinite(c5.nMin)?Math.round(c5.nMin*100)/100:"",nMax:isFinite(c5.nMax)?Math.round(c5.nMax*100)/100:"",rounds:[{gio:"07:30",c:{},v:{},e:{},kl:[]}],kph:{loi:"",sl:"",kp:"",tg:""}},p?JSON.parse(JSON.stringify(p.d)):{}),crit=CR[loai];
   let kl=p?p.kl:"";d.tb=tbInit(loai,d);
   d.rounds.forEach(r=>{r.e=r.e||{}});
   const sel=(r,k)=>{const R0=d.rounds[r],kd=R0.c[k]==="Không đạt";return `<select data-r="${r}" data-k="${k}" ${dis}><option value=""></option><option${R0.c[k]==="Đạt"?" selected":""}>Đạt</option><option${kd?" selected":""}>Không đạt</option></select><input data-r="${r}" data-e="${k}" value="${esc(R0.e[k]||"")}" placeholder="Lỗi / lý do" ${dis} style="margin-top:4px;font-size:12.5px;${kd?"":"display:none"}">`};
@@ -123,7 +123,7 @@ function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},n=NS[loai],c
      ${Array.from({length:n},(_,j)=>`<tr><td>Mẫu ${j+1}${loai==="BM06"?" <small class=\"note\">(vòi "+(j+1)+")</small>":""}</td>${R.map((r,i)=>{const v=num(r.kl[j]),bad=isFinite(v)&&isFinite(lo)&&isFinite(hi)&&(v<lo||v>hi);return `<td><input data-r="${i}" data-s="${j}" type="number" step="any" value="${esc(r.kl[j]??"")}" ${dis} style="width:90px${bad?";border-color:#d93025;background:#fde8e6":""}"></td>`}).join("")}</tr>`).join("")}
      </tbody></table></div>`};
   const w=dlg(`<h2>${loai==="BM04"?"Phiếu kiểm tra quá trình đóng gói (BM.04)":"Phiếu kiểm tra quá trình đóng chai (BM.06)"} · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · lô BTP ${esc(I.b.lo||"")}. Tần suất: ${n} mẫu/lần — đầu ca, định kỳ sau mỗi 2 h. ${f5?"Trọng lượng cho phép lấy từ phiếu BM.05.":"Chưa có phiếu BM.05 — nhập trọng lượng cho phép bên dưới."}</p>
-   <div class="two">${inp("fkNgay","Ngày đóng gói",d.ngay,`type="date" ${dis}`)}${inp("fkCa","Ca / ghi chú ca",d.ca,`placeholder="VD: Ca 1" ${dis}`)}</div>
+   <div class="two">${inp("fkNgay","Ngày đóng gói",d.ngay,`type="date" ${dis}`)}<label>Ca làm việc<select id="fkCa" ${dis}>${(["Hành chính","Tăng ca"].concat(d.ca&&!["Hành chính","Tăng ca"].includes(d.ca)?[d.ca]:[])).map(x=>`<option${x===d.ca?" selected":""}>${esc(x)}</option>`).join("")}</select></label></div>
    <b style="display:block;margin-top:8px">Thiết bị sử dụng</b>${tbHtml(loai,D,d.tb,dis)}
    <label>Cách cân mẫu<select id="fkCach" ${dis}><option value="tong"${d.cach!=="thuoc"?" selected":""}>Cân tổng (gồm bao bì)</option><option value="thuoc"${d.cach==="thuoc"?" selected":""}>Chỉ cân trọng lượng thuốc (đã trừ bì)</option></select></label>
    <div class="two">${inp("fkTmin","TL thuốc cho phép từ (g)",d.tMin,`type="number" step="any" ${dis}`)}${inp("fkTmax","đến (g)",d.tMax,`type="number" step="any" ${dis}`)}</div>
@@ -151,7 +151,7 @@ function pKT(I,loai,d,kl){const K=B(),R=d.rounds,n=NS[loai],th=d.cach==="thuoc",
   K.pr(`${K.PCSS}<style>.pq{font-size:10.5pt;line-height:1.25}.pq td,.pq th{padding:2px 5px}.pq .hd .lg img{height:16mm}.pq .kl8 td,.pq .kl8 th{font-size:9pt;padding:1px 2px}.pq .sg .nm{height:16mm}.pq .sg{margin-top:6px}</style><div class="pq">${K.head(TEN[loai],META(loai==="BM04"?"BM.04-QC-QT.04":"BM.06-QC-QT.04"))}
   <table style="margin-top:6px"><colgroup><col style="width:50%"><col style="width:50%"></colgroup>
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(I.tenSP)}</b></td></tr>
-   <tr><td>Ngày đóng gói: <b>${dmy(d.ngay)}</b>${d.ca?" · "+esc(d.ca):""}</td><td>Số LĐG: <b>${esc(I.o.so)}</b></td></tr>
+   <tr><td>Ngày đóng gói: <b>${dmy(d.ngay)}</b>${d.ca?" · Ca: <b>"+esc(d.ca)+"</b>":""}</td><td>Số LĐG: <b>${esc(I.o.so)}</b></td></tr>
    <tr><td>Số lô BTP: <b>${esc(I.b.lo||"")}</b></td><td>Ngày sản xuất: <b>${I.b.nsx?dmy(String(I.b.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td>Trọng lượng thuốc cho phép (g): <b>${isFinite(tlo)?f2(tlo):""}${isFinite(thi)?" – "+f2(thi):""}</b></td><td>Tổng TL (gồm bao bì) (g): <b>${isFinite(nlo)?f2(nlo):""}${isFinite(nhi)?" – "+f2(nhi):""}</b></td></tr>
    ${tbInit(loai,d).filter((t,i)=>i===0||t.ten).map(t=>`<tr><td>${esc(t.vai.replace(/ \(nếu có\)/,""))}: <b>${esc(t.ten)}</b></td><td>Mã thiết bị: <b>${esc(t.ma||(t.ten===TAY?"—":""))}</b></td></tr>`).join("")}
