@@ -2073,14 +2073,14 @@ let dashRT=null;addEventListener("resize",()=>{clearTimeout(dashRT);dashRT=setTi
 /* ---------- trang chủ ---------- */
 const TILE_COL={ton:"#0e8f95",nhap:"#2f8a57",xnb:"#d0583a",lsx:"#5a4fcf",dg:"#0f9d78",dgl:"#0f9d78",kk:"#7b5bd6",ls:"#56708f",vt:"#0a86c2",qc:"#9149bd",bc:"#1d4f91"};
 function renderTiles(){const box=$("hTiles");if(!box)return;
-  const run=(S.lenh||[]).filter(o=>o.trangThai==="Đang SX").length,wait=Object.keys(S.lots).reduce((n,ma)=>n+(needQC(itemBy(ma))?(S.lots[ma]||[]).filter(l=>l.qc==="Chờ kiểm").length:0),0);
+  const run=(S.lenh||[]).filter(o=>o.trangThai==="Đang SX"&&!dgIsTP(o)).length,wait=Object.keys(S.lots).reduce((n,ma)=>n+(needQC(itemBy(ma))?(S.lots[ma]||[]).filter(l=>l.qc==="Chờ kiểm").length:0),0);
   const sub={ton:S.items.length+" mã vật tư",nhap:"Mua hàng, nhập kho",xnb:"Rửa máy, mẫu QC, hủy…",lsx:run?run+" lệnh đang chạy":"Lập lệnh, hoàn thành",dg:"Trừ BTP đem đóng gói",dgl:"Theo mã nhãn: chai, nhãn, thùng",kk:"Cân thực tế, điều chỉnh",ls:"Phiếu đã lập",vt:"Danh mục, công thức",qc:wait?wait+" lô chờ kiểm":"Duyệt lô, COA, tỷ trọng",bc:"Xuất SX, hàng khách, khoá sổ"};
   box.innerHTML=[...document.querySelectorAll("nav.side button[data-tab]")].filter(b=>!b.hidden&&b.dataset.tab!=="home").map(b=>{const t=b.dataset.tab,lb=(b.querySelector(".lbl")||b).textContent.replace(/\s*\(\d+\)$/,"");
     return `<button type="button" class="tile" data-go="${t}" style="--tl:${TILE_COL[t]||"#2a74bc"}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${NAV_ICON[t]||""}"/></svg><b>${esc(lb)}</b><small>${esc(sub[t]||"")}</small></button>`}).join("");
   box.querySelectorAll("[data-go]").forEach(x=>x.onclick=()=>setTab(x.dataset.go))}
 /* ---------- việc nhanh trên trang chủ theo quyền / vai trò của từng người ---------- */
 function renderQuick(){const box=$("hQuick");if(!box||!S.me)return;const me=S.me,ph=can.phieu(),ct=!!me.ct,kt=["Kế toán","Kế toán kho"].includes(me.vaiTro),ql=me.vaiTro==="Quản lý";
-  const run=(S.lenh||[]).filter(o=>o.trangThai==="Đang SX").length;
+  const run=(S.lenh||[]).filter(o=>o.trangThai==="Đang SX"&&!dgIsTP(o)).length;
   const wait=Object.keys(S.lots||{}).reduce((n,ma)=>n+((S.lots[ma]||[]).filter(l=>l.ton>0&&l.qc==="Chờ kiểm").length),0);
   const btpScope=(me.nhom||[]).some(n=>["Bán thành phẩm","Thành phẩm","Bao bì"].includes(n));
   const L=[];
@@ -2104,7 +2104,7 @@ function renderHome(){if(!S.me)return;renderTiles();renderQuick();
   const neg=S.items.filter(i=>S.bal[i.ma]&&S.bal[i.ma].ton<-1e-6);
   const low=S.items.filter(i=>i.toiThieu>0&&S.bal[i.ma]&&S.bal[i.ma].ton>=0&&S.bal[i.ma].ton<i.toiThieu);
   let soon=0,wait=0;Object.keys(S.lots).forEach(ma=>(S.lots[ma]||[]).forEach(l=>{if(l.ton>0){const d=daysTo(l.hsd);if(d!==null&&d<=WARN_DAYS)soon++;if(l.qc==="Chờ kiểm")wait++}}));
-  const run=S.lenh.filter(o=>o.trangThai==="Đang SX");
+  const run=S.lenh.filter(o=>o.trangThai==="Đang SX"&&!dgIsTP(o));
   $("navLsxCnt").hidden=!run.length;$("navLsxCnt").textContent=run.length;
   const card=(t,n,cls,sub,go,f)=>`<button type="button" class="hcard" data-go="${go}" data-f="${f||""}"><span>${t}</span><b class="${cls}">${n}</b><small>${sub}</small></button>`;
   $("hCards").innerHTML=card("Mã đang tồn âm",neg.length,neg.length?"bad":"","Cần nhập bổ sung","ton","am")+
