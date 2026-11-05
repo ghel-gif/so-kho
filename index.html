@@ -1092,11 +1092,11 @@ function render(){
     const chip=(nw[it.ma]?`<span class="chip new">MỚI ${dmy(nw[it.ma]).slice(0,5)}</span>`:"")+(it.chuHang?`<span class="chip wait">HÀNG ${esc(it.chuHang.toUpperCase())}</span>`:"")+(x.ton<0?'<span class="chip neg">ÂM KHO</span>':(it.toiThieu>0&&x.ton<it.toiThieu?'<span class="chip low">DƯỚI MỨC</span>':""));
     const alt=it.donVi!=="kg"&&it.heSo>0?`<small>≈ ${kg(x.ton/it.heSo)} ${esc(it.donVi)}</small>`:"";
     let ls=(it.theoLo||fs==="hsd"||fs==="qc")?(S.lots[it.ma]||[]):[];if(fs==="hsd")ls=ls.filter(lotSoon).sort((a,b)=>String(a.hsd).localeCompare(String(b.hsd)));else if(fs==="qc")ls=ls.filter(lotWait);
-    const lotHtml=ls.length?`<div class="lots">${ls.map(l=>`<div class="lot"><span>Lô <b>${loName(l.lo)}</b> · HSD ${l.hsd?dmy(l.hsd):"?"}${hsdChip(l.hsd)}${qcChip(l)}${l.tyTrong?` · <span class="tt">TT ${ttf(l.tyTrong)}</span>`:""}</span><span>${kg(l.ton)} kg${l.tyTrong?` <small>≈ ${kg(l.ton/l.tyTrong)} L</small>`:""}</span></div>`).join("")}</div>`:"";
+    const lotHtml=ls.length?`<div class="lots">${ls.map(l=>`<div class="lot"><span>Lô <b>${loName(l.lo)}</b> · HSD ${l.hsd?dmy(l.hsd):"?"}${hsdChip(l.hsd)}${qcChip(l)}${l.tyTrong?` · <span class="tt">TT ${ttf(l.tyTrong)}</span>`:""}</span><span>${isTPi(it)?(()=>{const t=tpN(it,l.ton);return t.main+` <small>${t.thung?t.thung+" · ":""}${kg(l.ton)} kg</small>`})():`${kg(l.ton)} kg${l.tyTrong?` <small>≈ ${kg(l.ton/l.tyTrong)} L</small>`:""}`}</span></div>`).join("")}</div>`:"";
     const expChip=ls.some(l=>l.ton>0&&daysTo(l.hsd)!==null&&daysTo(l.hsd)<0)?'<span class="chip neg">CÓ LÔ QUÁ HẠN</span>':(ls.some(l=>l.ton>0&&daysTo(l.hsd)!==null&&daysTo(l.hsd)<=WARN_DAYS)?'<span class="chip low">SẮP HẾT HẠN</span>':"");
     h+=`<div class="row click ${S.tkOpen===it.ma?"tkon":""}" data-ma="${esc(it.ma)}" title="Bấm để xem thẻ kho (lịch sử nhập, xuất, kiểm kê)"><div class="name"><span class="code">${esc(it.ma)}</span>${esc(it.ten)}${chip}${expChip}</div>
-      <div class="kg">${x.kt?'<small>không theo dõi tồn</small>':kg(x.ton)+" kg"+alt}</div>
-      <div class="meta">ĐK ${kg(x.dauKy)} · <span class="in">+${kg(x.nhap)}</span> · <span class="out">−${kg(x.xuat)}</span>${x.kk?` · <span class="adj">KK ${x.kk>0?"+":"−"}${kg(Math.abs(x.kk))}</span>`:""}</div>${lotHtml}</div>`;
+      <div class="kg">${x.kt?'<small>không theo dõi tồn</small>':isTPi(it)?(()=>{const t=tpN(it,x.ton);return t.main+`<small>${t.thung?t.thung+" · ":""}${kg(x.ton)} kg</small>`})():kg(x.ton)+" kg"+alt}</div>
+      <div class="meta">${(()=>{const u=isTPi(it)?v=>kg(Math.round(v/it.heSo*1000)/1000):kg;return `ĐK ${u(x.dauKy)} · <span class="in">+${u(x.nhap)}</span> · <span class="out">−${u(x.xuat)}</span>${x.kk?` · <span class="adj">KK ${x.kk>0?"+":"−"}${u(Math.abs(x.kk))}</span>`:""}${isTPi(it)?" "+esc(it.donVi):""}`})()}</div>${lotHtml}</div>`;
     if(S.tkOpen===it.ma)h+='<div class="tkLog" id="tkLog"></div>';
   }
   $("stockList").innerHTML=h;
@@ -1108,6 +1108,13 @@ function render(){
   if(!$("lsMonth").value)$("lsMonth").value=S.today.slice(0,7);
 }
 
+/* Thành phẩm: hiện theo đơn vị (chai, gói, can…) + số thùng; kg chỉ ghi phụ */
+const isTPi=it=>!!it&&it.nhom==="Thành phẩm"&&it.donVi&&it.donVi!=="kg"&&it.heSo>0;
+const dgCodeC=s=>String(s||"").trim().toUpperCase().replace(/·/g,".").replace(/\s+/g,"").replace(/[^A-Z0-9_.+\-]/g,"");
+function tpQc(it){if(!S.dg||!S.dg.qc){if(!S.dgTry&&typeof dgLoad==="function"){S.dgTry=1;dgLoad().then(()=>{try{S._tpQ=null;if(S.tab==="home"){renderMoi();renderHome()}else render()}catch(e){}}).catch(()=>{})}return null}
+  if(!S._tpQ)S._tpQ={};if(S._tpQ[it.ma]!==undefined)return S._tpQ[it.ma];const c=String(it.ma).replace(/^TP\./,"");return S._tpQ[it.ma]=S.dg.qc.find(q=>dgCodeC(q.qc)===c)||null}
+function tpN(it,kgv,sl){const n=sl!=null&&sl!==""?+sl:Math.round(kgv/it.heSo*1000)/1000,q=tpQc(it),k=q&&+q.dvThung,t=k?Math.floor(n/k+1e-9):0,le=k?Math.round((n-t*k)*1000)/1000:0;
+  return {n,main:`${kg(n)} ${esc(it.donVi)}`,thung:k&&n?(t?`${t} thùng${le?" + "+kg(le)+" "+esc(it.donVi):""}`:`${kg(le)} ${esc(it.donVi)} lẻ (thùng ${k})`):""}}
 /* ---------- Trang chủ: hàng mới nhập ---------- */
 function moiDays(){const s=new Set((S.moi||[]).map(m=>m.ngay));if(S.today)s.add(S.today);return [...s].sort()}
 function renderMoi(){const box=$("hMoi");if(!box||!S.today)return;const ds=moiDays();if(!S.moiDay||ds.indexOf(S.moiDay)<0)S.moiDay=S.today;
@@ -1115,7 +1122,7 @@ function renderMoi(){const box=$("hMoi");if(!box||!S.today)return;const ds=moiDa
   $("hMoiDay").textContent=(S.moiDay===S.today?"Hôm nay · ":"")+dmy(S.moiDay);
   const L=(S.moi||[]).filter(m=>m.ngay===S.moiDay),tot=L.reduce((a,m)=>a+(+m.kg||0),0);
   $("hMoiSum").textContent=L.length?`${L.length} phiếu · tổng ${kg(tot)} kg`:"";
-  box.innerHTML=L.length?L.map(m=>{const it=itemBy(m.ma)||{ten:""},op=S.moiOpen===m.id;return `<div class="row click${op?" tkon":""}" data-id="${esc(m.id)}" data-ma="${esc(m.ma)}"><div class="name"><span class="code">${esc(m.ma)}</span>${esc(it.ten)}${m.lenh?`<span class="chip wait">TỪ LỆNH ${esc(m.lenh)}</span>`:""}${m.anh?`<span class="chip ok">${m.anh} ẢNH</span>`:""}</div><div class="kg"><span class="in">+${kg(m.kg)} kg</span>${m.donVi&&m.donVi!=="kg"?`<small>${kg(m.soLuong)} ${esc(m.donVi)}</small>`:""}</div><div class="meta">${m.lo?"Lô <b>"+loName(m.lo)+"</b> · ":""}${m.ncc?esc(m.ncc)+" · ":""}${esc(m.nguoiLap||"")}${m.chungTu?" · "+esc(m.chungTu):""}</div></div>${op?`<div class="tkLog" id="moiOp"><div class="tkh"><b>Ảnh hàng / marking</b><button type="button" class="btn small" data-tk="${esc(m.ma)}">Xem thẻ kho</button><button type="button" class="btn small" data-x>Đóng</button></div><div id="moiAnh" class="anhs"><span class="ldg">Đang tải ảnh<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span></div></div>`:""}`}).join(""):`<div class="empty">${S.moiDay===S.today?"Hôm nay chưa nhập vật tư nào.":"Ngày này không có phiếu nhập."}${i>0?" Bấm ‹ để xem ngày trước.":""}</div>`;
+  box.innerHTML=L.length?L.map(m=>{const it=itemBy(m.ma)||{ten:""},op=S.moiOpen===m.id;return `<div class="row click${op?" tkon":""}" data-id="${esc(m.id)}" data-ma="${esc(m.ma)}"><div class="name"><span class="code">${esc(m.ma)}</span>${esc(it.ten)}${m.lenh?`<span class="chip wait">TỪ LỆNH ${esc(m.lenh)}</span>`:""}${m.anh?`<span class="chip ok">${m.anh} ẢNH</span>`:""}</div><div class="kg">${isTPi(it)?(()=>{const t=tpN(it,+m.kg,m.donVi&&m.donVi!=="kg"?m.soLuong:null);return `<span class="in">+${t.main}</span><small>${t.thung?t.thung+" · ":""}${kg(m.kg)} kg</small>`})():`<span class="in">+${kg(m.kg)} kg</span>${m.donVi&&m.donVi!=="kg"?`<small>${kg(m.soLuong)} ${esc(m.donVi)}</small>`:""}`}</div><div class="meta">${m.lo?"Lô <b>"+loName(m.lo)+"</b> · ":""}${m.ncc?esc(m.ncc)+" · ":""}${esc(m.nguoiLap||"")}${m.chungTu?" · "+esc(m.chungTu):""}</div></div>${op?`<div class="tkLog" id="moiOp"><div class="tkh"><b>Ảnh hàng / marking</b><button type="button" class="btn small" data-tk="${esc(m.ma)}">Xem thẻ kho</button><button type="button" class="btn small" data-x>Đóng</button></div><div id="moiAnh" class="anhs"><span class="ldg">Đang tải ảnh<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span></div></div>`:""}`}).join(""):`<div class="empty">${S.moiDay===S.today?"Hôm nay chưa nhập vật tư nào.":"Ngày này không có phiếu nhập."}${i>0?" Bấm ‹ để xem ngày trước.":""}</div>`;
   box.querySelectorAll(".row[data-id]").forEach(r=>r.onclick=()=>{S.moiOpen=S.moiOpen===r.dataset.id?null:r.dataset.id;renderMoi()});
   const op=$("moiOp");if(op){op.onclick=e=>e.stopPropagation();op.querySelector("[data-x]").onclick=()=>{S.moiOpen=null;renderMoi()};
     op.querySelector("[data-tk]").onclick=e=>{const ma=e.currentTarget.dataset.tk;S.tkOpen=ma;$("q").value=ma;setTab("ton")};
@@ -1252,7 +1259,7 @@ function dgIsTP(o){const it=itemBy(o.maSP);return it?it.nhom==="Thành phẩm":/
 const dgFd=t=>String(t??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[đĐ]/g,"d").toLowerCase();
 const dgN0=v=>(+v||0).toLocaleString("vi-VN",{maximumFractionDigits:3});
 const dgCode=s=>String(s||"").trim().toUpperCase().replace(/·/g,".").replace(/\s+/g,"").replace(/[^A-Z0-9_.+\-]/g,"");
-async function dgLoad(force){if(S.dg&&!force)return S.dg;const d=await api("getDG",S.auth);S.dg=d;S.dgQ={};(d.qc||[]).forEach(q=>S.dgQ[q.qc]=q);return d}
+async function dgLoad(force){if(S.dg&&!force)return S.dg;const d=await api("getDG",S.auth);S.dg=d;S._tpQ=null;S.dgQ={};(d.qc||[]).forEach(q=>S.dgQ[q.qc]=q);return d}
 function dgShow(v){S.dgv=v;window.scrollTo(0,0);renderDgl()}
 async function renderDgl(){const box=$("dglBox");if(!box)return;
   if(!S.me||!S.me.ct){box.innerHTML='<div class="empty"><b>Tài khoản chưa được xem công thức, định mức</b>Nhờ Quản lý cấp quyền “Xem công thức” để lập lệnh đóng gói.</div>';return}
