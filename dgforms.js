@@ -84,19 +84,21 @@ const CR={BM04:[["Nhãn phụ, tem",[["np","Nhãn phụ: đúng chủng loại"]
 const NS={BM04:10,BM06:12},TEN={BM04:"PHIẾU KIỂM TRA QUÁ TRÌNH<br>ĐÓNG GÓI",BM06:"PHIẾU KIỂM TRA QUÁ TRÌNH<br>ĐÓNG CHAI"};
 const RL=["Đầu ca","Sau 2h tiếp theo","Sau 2h tiếp theo","Sau 2h tiếp theo"];
 function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},n=NS[loai],canW=can.phieu(),dis=canW?"":"disabled",qc=S.me&&S.me.qc;
-  const d=Object.assign({ngay:today(),ca:"",maMay:f5?f5.d.maMay:"",mayTen:f5?f5.d.mayTen:"",tMin:isFinite(c5.tMin)?f2(c5.tMin):"",tMax:isFinite(c5.tMax)?f2(c5.tMax):"",nMin:isFinite(c5.nMin)?Math.round(c5.nMin*100)/100:"",nMax:isFinite(c5.nMax)?Math.round(c5.nMax*100)/100:"",rounds:[{gio:"07:30",c:{},v:{},kl:[]}],kph:{loi:"",sl:"",kp:"",tg:""}},p?JSON.parse(JSON.stringify(p.d)):{}),crit=CR[loai];
+  const d=Object.assign({ngay:today(),ca:"",maMay:f5?f5.d.maMay:"",mayTen:f5?f5.d.mayTen:"",cach:"tong",tMin:isFinite(c5.tMin)?Math.round(c5.tMin*100)/100:"",tMax:isFinite(c5.tMax)?Math.round(c5.tMax*100)/100:"",nMin:isFinite(c5.nMin)?Math.round(c5.nMin*100)/100:"",nMax:isFinite(c5.nMax)?Math.round(c5.nMax*100)/100:"",rounds:[{gio:"07:30",c:{},v:{},kl:[]}],kph:{loi:"",sl:"",kp:"",tg:""}},p?JSON.parse(JSON.stringify(p.d)):{}),crit=CR[loai];
   let kl=p?p.kl:"";
   const sel=(r,k)=>`<select data-r="${r}" data-k="${k}" ${dis}><option value=""></option><option${d.rounds[r].c[k]==="Đạt"?" selected":""}>Đạt</option><option${d.rounds[r].c[k]==="Không đạt"?" selected":""}>Không đạt</option></select>`;
-  const body=()=>{const R=d.rounds,lo=num(d.nMin),hi=num(d.nMax);
+  const lim=()=>d.cach==="thuoc"?[num(d.tMin),num(d.tMax)]:[num(d.nMin),num(d.nMax)];
+  const body=()=>{const R=d.rounds,[lo,hi]=lim();
     return `<div class="dgx"><table><thead><tr><th>Tiêu chí / Danh mục</th>${R.map((r,i)=>`<th>${RL[i]||"Lần "+(i+1)}<br><input data-g="${i}" type="time" value="${esc(r.gio||"")}" ${dis} style="width:105px"></th>`).join("")}</tr></thead><tbody>
      ${crit.map(([g,items])=>`<tr><td colspan="${R.length+1}" style="background:var(--accent-soft);font-weight:700">${esc(g)}</td></tr>`+items.map(([k,t,isV])=>`<tr><td>${esc(t)}</td>${R.map((r,i)=>`<td>${isV?`<input data-r="${i}" data-v="${k}" value="${esc(r.v[k]||"")}" ${dis} style="width:80px">`:sel(i,k)}</td>`).join("")}</tr>`).join("")).join("")}
-     <tr><td colspan="${R.length+1}" style="background:var(--accent-soft);font-weight:700">Thuốc — tổng trọng lượng ${loai==="BM04"?"gói":"chai"} (gồm bao bì, g), ${n} mẫu/lần${isFinite(lo)&&isFinite(hi)?` · cho phép ${f2(lo)} – ${f2(hi)} g`:""}</td></tr>
+     <tr><td colspan="${R.length+1}" style="background:var(--accent-soft);font-weight:700">Thuốc — ${d.cach==="thuoc"?"trọng lượng thuốc (đã trừ bì, g)":"tổng trọng lượng "+(loai==="BM04"?"gói":"chai")+" (gồm bao bì, g)"}, ${n} mẫu/lần${isFinite(lo)&&isFinite(hi)?` · cho phép ${f2(lo)} – ${f2(hi)} g`:""}</td></tr>
      ${Array.from({length:n},(_,j)=>`<tr><td>Mẫu ${j+1}${loai==="BM06"?" <small class=\"note\">(vòi "+(j+1)+")</small>":""}</td>${R.map((r,i)=>{const v=num(r.kl[j]),bad=isFinite(v)&&isFinite(lo)&&isFinite(hi)&&(v<lo||v>hi);return `<td><input data-r="${i}" data-s="${j}" type="number" step="any" value="${esc(r.kl[j]??"")}" ${dis} style="width:90px${bad?";border-color:#d93025;background:#fde8e6":""}"></td>`}).join("")}</tr>`).join("")}
      </tbody></table></div>`};
   const w=dlg(`<h2>${loai==="BM04"?"Phiếu kiểm tra quá trình đóng gói (BM.04)":"Phiếu kiểm tra quá trình đóng chai (BM.06)"} · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · lô BTP ${esc(I.b.lo||"")}. Tần suất: ${n} mẫu/lần — đầu ca, định kỳ sau mỗi 2 h. ${f5?"Trọng lượng cho phép lấy từ phiếu BM.05.":"Chưa có phiếu BM.05 — nhập trọng lượng cho phép bên dưới."}</p>
    <div class="two">${inp("fkNgay","Ngày đóng gói",d.ngay,`type="date" ${dis}`)}${inp("fkCa","Ca / ghi chú ca",d.ca,`placeholder="VD: Ca 1" ${dis}`)}</div>
    <div class="two">${inp("fkMa","Mã thiết bị",d.maMay,`list="dgfMay" ${dis}`)}${inp("fkTen","Tên thiết bị",d.mayTen,dis)}</div>${mayDL(D)}
-   <div class="two">${inp("fkTmin","TL thuốc cho phép từ (g)",d.tMin,dis)}${inp("fkTmax","đến (g)",d.tMax,dis)}</div>
+   <label>Cách cân mẫu<select id="fkCach" ${dis}><option value="tong"${d.cach!=="thuoc"?" selected":""}>Cân tổng (gồm bao bì)</option><option value="thuoc"${d.cach==="thuoc"?" selected":""}>Chỉ cân trọng lượng thuốc (đã trừ bì)</option></select></label>
+   <div class="two">${inp("fkTmin","TL thuốc cho phép từ (g)",d.tMin,`type="number" step="any" ${dis}`)}${inp("fkTmax","đến (g)",d.tMax,`type="number" step="any" ${dis}`)}</div>
    <div class="two">${inp("fkNmin","Tổng TL gồm bao bì từ (g)",d.nMin,`type="number" step="any" ${dis}`)}${inp("fkNmax","đến (g)",d.nMax,`type="number" step="any" ${dis}`)}</div>
    <div id="fkT">${body()}</div>${canW?`<div class="kh-bar" style="margin-top:6px"><button class="btn small" type="button" id="fkAdd">+ Thêm lần kiểm (sau 2 h)</button><button class="btn small" type="button" id="fkDel">− Bớt lần cuối</button></div>`:""}
    <b style="display:block;margin-top:8px">Sự không phù hợp (nếu có)</b>
@@ -105,15 +107,15 @@ function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},n=NS[loai],c
    ${p?`<p class="note">Lưu lần cuối: ${esc(p.nguoi)} · ${esc(p.luc)}</p>`:""}<div class="actions">${B().btn4(canW,!!p)}</div>`);
   const bind=()=>{w.querySelectorAll("#fkT [data-k]").forEach(x=>x.onchange=()=>{d.rounds[+x.dataset.r].c[x.dataset.k]=x.value});
     w.querySelectorAll("#fkT [data-v]").forEach(x=>x.oninput=()=>{d.rounds[+x.dataset.r].v[x.dataset.v]=x.value});
-    w.querySelectorAll("#fkT [data-s]").forEach(x=>x.oninput=()=>{d.rounds[+x.dataset.r].kl[+x.dataset.s]=x.value;const v=num(x.value),lo=num(d.nMin),hi=num(d.nMax),bad=isFinite(v)&&isFinite(lo)&&isFinite(hi)&&(v<lo||v>hi);x.style.borderColor=bad?"#d93025":"";x.style.background=bad?"#fde8e6":""});
+    w.querySelectorAll("#fkT [data-s]").forEach(x=>x.oninput=()=>{d.rounds[+x.dataset.r].kl[+x.dataset.s]=x.value;const v=num(x.value),[lo,hi]=lim(),bad=isFinite(v)&&isFinite(lo)&&isFinite(hi)&&(v<lo||v>hi);x.style.borderColor=bad?"#d93025":"";x.style.background=bad?"#fde8e6":""});
     w.querySelectorAll("#fkT [data-g]").forEach(x=>x.oninput=()=>{d.rounds[+x.dataset.g].gio=x.value})};bind();
   const rer=()=>{$("fkT").innerHTML=body();bind()};
-  ["fkNmin","fkNmax"].forEach(id=>$(id).addEventListener("change",()=>{d.nMin=$("fkNmin").value;d.nMax=$("fkNmax").value;rer()}));
+  ["fkNmin","fkNmax","fkTmin","fkTmax","fkCach"].forEach(id=>$(id).addEventListener("change",()=>{d.nMin=$("fkNmin").value;d.nMax=$("fkNmax").value;d.tMin=$("fkTmin").value;d.tMax=$("fkTmax").value;d.cach=$("fkCach").value;rer()}));
   if(canW){$("fkAdd").onclick=()=>{if(d.rounds.length>=4)return toast("Tối đa 4 lần kiểm / phiếu — lập phiếu mới cho ca sau.");const l=d.rounds[d.rounds.length-1],m=/(\d+):(\d+)/.exec(l.gio||"");d.rounds.push({gio:m?String((+m[1]+2)%24).padStart(2,"0")+":"+m[2]:"",c:{},v:{},kl:[]});rer()};
     $("fkDel").onclick=()=>{if(d.rounds.length>1){d.rounds.pop();rer()}}}
-  const g=()=>Object.assign(d,{ngay:$("fkNgay").value,ca:$("fkCa").value.trim(),maMay:$("fkMa").value.trim(),mayTen:$("fkTen").value.trim(),tMin:$("fkTmin").value.trim(),tMax:$("fkTmax").value.trim(),nMin:$("fkNmin").value,nMax:$("fkNmax").value,kph:{loi:$("fkLoi").value.trim(),sl:$("fkSl").value.trim(),kp:$("fkKp").value.trim(),tg:$("fkTg").value.trim()}});
+  const g=()=>Object.assign(d,{ngay:$("fkNgay").value,ca:$("fkCa").value.trim(),maMay:$("fkMa").value.trim(),mayTen:$("fkTen").value.trim(),cach:$("fkCach").value,tMin:$("fkTmin").value.trim(),tMax:$("fkTmax").value.trim(),nMin:$("fkNmin").value,nMax:$("fkNmax").value,kph:{loi:$("fkLoi").value.trim(),sl:$("fkSl").value.trim(),kp:$("fkKp").value.trim(),tg:$("fkTg").value.trim()}});
   B().btnWire(w,{canW,saved:!!p,dirty:false},async()=>{g();kl=$("fkKL").value;p=p||{};p.d=JSON.parse(JSON.stringify(d));await save(D,loai,p,p.d,d.ngay,kl)},()=>{g();pKT(I,loai,d,$("fkKL").value)})}
-function pKT(I,loai,d,kl){const K=B(),R=d.rounds,n=NS[loai],lo=num(d.nMin),hi=num(d.nMax),cw=Math.floor(62/Math.max(R.length,1));
+function pKT(I,loai,d,kl){const K=B(),R=d.rounds,n=NS[loai],th=d.cach==="thuoc",lo=num(th?d.tMin:d.nMin),hi=num(th?d.tMax:d.nMax),tlo=num(d.tMin),thi=num(d.tMax),nlo=num(d.nMin),nhi=num(d.nMax),cw=Math.floor(62/Math.max(R.length,1));
   const rows=CR[loai].map(([g,items])=>`<tr class="sec"><td colspan="${R.length+1}">${esc(g)}</td></tr>`+items.map(([k,t,isV])=>`<tr><td>${esc(t)}</td>${R.map(r=>`<td class="c">${isV?esc(r.v[k]||""):tick(r.c[k])}</td>`).join("")}</tr>`).join("")).join("");
   const sw=Math.floor(80/n);
   const klT=`<table class="kl8"><colgroup><col style="width:20%">${Array.from({length:n},()=>`<col style="width:${sw}%">`).join("")}</colgroup><tr><th>Lần kiểm</th>${Array.from({length:n},(_,j)=>`<th>${j+1}</th>`).join("")}</tr>${R.map((r,i)=>`<tr><td>${RL[i]||"Lần "+(i+1)}${r.gio?" ("+esc(r.gio)+")":""}</td>${Array.from({length:n},(_,j)=>{const v=num(r.kl[j]),bad=isFinite(v)&&isFinite(lo)&&isFinite(hi)&&(v<lo||v>hi);return `<td class="c">${isFinite(v)?f2(v)+(bad?"*":""):""}</td>`}).join("")}</tr>`).join("")}</table>`;
@@ -122,11 +124,11 @@ function pKT(I,loai,d,kl){const K=B(),R=d.rounds,n=NS[loai],lo=num(d.nMin),hi=nu
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(I.tenSP)}</b></td></tr>
    <tr><td>Ngày đóng gói: <b>${dmy(d.ngay)}</b>${d.ca?" · "+esc(d.ca):""}</td><td>Số LĐG: <b>${esc(I.o.so)}</b></td></tr>
    <tr><td>Số lô BTP: <b>${esc(I.b.lo||"")}</b></td><td>Ngày sản xuất: <b>${I.b.nsx?dmy(String(I.b.nsx).slice(0,10)):""}</b></td></tr>
-   <tr><td>Trọng lượng thuốc cho phép (g): <b>${esc(d.tMin)}${d.tMax?" – "+esc(d.tMax):""}</b></td><td>Tổng TL (gồm bao bì) (g): <b>${isFinite(lo)?f2(lo):""}${isFinite(hi)?" – "+f2(hi):""}</b></td></tr>
+   <tr><td>Trọng lượng thuốc cho phép (g): <b>${isFinite(tlo)?f2(tlo):""}${isFinite(thi)?" – "+f2(thi):""}</b></td><td>Tổng TL (gồm bao bì) (g): <b>${isFinite(nlo)?f2(nlo):""}${isFinite(nhi)?" – "+f2(nhi):""}</b></td></tr>
    <tr><td>Tên thiết bị: <b>${esc(d.mayTen)}</b></td><td>Mã thiết bị: <b>${esc(d.maMay)}</b></td></tr>
    <tr><td>Tần suất kiểm tra: ${n} mẫu/lần — đầu ca, định kỳ sau mỗi 2 h</td><td>Đạt (☑), không đạt (☒)</td></tr></table>
   <table style="margin-top:6px"><colgroup><col style="width:38%">${R.map(()=>`<col style="width:${cw}%">`).join("")}</colgroup><tr><th>Tiêu chí / Danh mục kiểm tra</th>${R.map((r,i)=>`<th>${RL[i]||"Lần "+(i+1)}${r.gio?"<br>"+esc(r.gio):""}</th>`).join("")}</tr>${rows}</table>
-  <p style="margin:6px 0 3px"><b>Thuốc:</b> tổng trọng lượng ${loai==="BM04"?"gói":"chai"} (gồm bao bì) (g) — khối lượng từng mẫu${loai==="BM06"?" (mỗi mẫu tương ứng thứ tự 1 vòi thuốc)":""}; (*) ngoài khoảng cho phép</p>${klT}
+  <p style="margin:6px 0 3px"><b>Thuốc:</b> ${th?"trọng lượng thuốc (đã trừ bì) (g)":"tổng trọng lượng "+(loai==="BM04"?"gói":"chai")+" (gồm bao bì) (g)"} — khối lượng từng mẫu${loai==="BM06"?" (mỗi mẫu tương ứng thứ tự 1 vòi thuốc)":""}; (*) ngoài khoảng cho phép</p>${klT}
   <table style="margin-top:6px"><colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup><tr class="sec"><td colspan="4">Sự không phù hợp</td></tr><tr><td>Lỗi (nếu có): ${esc(d.kph.loi)}</td><td>Số lượng lỗi: ${esc(d.kph.sl)}</td><td>Sự khắc phục: ${esc(d.kph.kp)}</td><td>Thời gian: ${esc(d.kph.tg)}</td></tr></table>
   <p style="margin:6px 0"><b>Kết luận:</b> ${K.box(kl==="Đạt")} Đạt &nbsp;&nbsp; ${K.box(kl==="Không đạt")} Không đạt</p>
   ${K.sign([["QLSX - Xác nhận cuối ca",""],["Nhân viên vận hành",""],["Nhân viên QC",""]])}</div>`)}
