@@ -220,8 +220,8 @@ function p08(day,L,F){const K=B(),m=/^(\d{4})-(\d{2})-(\d{2})/.exec(day);
 /* ===== DANH MỤC QUY CÁCH ĐÓNG GÓI: thêm mã nhãn / quy cách mới, sửa thông số (Quản lý, Kế toán) ===== */
 /* Mã mới / thông số mới lấy từ phiếu thông tin đóng gói của R&D (thư mục "Lệnh đóng gói 2026") */
 const RD_QC=[
- {qc:"FTN-D5",nhan:"FTN-D5",sp:"FENTINAT 48SC",btp:"BTP.FENT.48",quyCach:"gói 18 ml",luong:18,dvl:"ml",loai:"gói",hop:"H50G",dvHop:50,thung:"",dvThung:400,nhanPhu:"",pp:"",tl:22.2,ds:1.2,klBB:2.6,bang:"1CROJGgHDMY55LZB0yIEIgPvaL1Dk-mdm",
-  nguon:"Phiếu BM.05 R&D 05/11/2026 – 2611.Fentinat 48SC - 18ML - D5",ghiChu:"8 hộp x 50 gói / thùng; cần kiểm: mã hộp, mã thùng, nhãn phụ"},
+ {qc:"FTN-D5",nhan:"FTN-D5",sp:"FENTINAT 48SC",btp:"BTP.FENT.48",quyCach:"gói 18 ml",luong:18,dvl:"ml",loai:"gói",hop:"H50G",dvHop:50,thung:"D-T20-1X360",dvThung:400,nhanPhu:"Không",temChai:"Không",tcg:"Asata",tcb:2,dai:"Không",bangKeo:"Asata",pp:"Công Ty TNHH BVTV Đồng Phát",tl:22.2,ds:1.2,klBB:2.6,bang:"1CROJGgHDMY55LZB0yIEIgPvaL1Dk-mdm",
+  nguon:"Bảng thông tin chi tiết FTN-D5 + phiếu BM.05 R&D 05/11/2026",ghiChu:"8 hộp x 50 gói x 18 ml = 7,2 L/thùng; tem decal dán hộp, thùng; tem cảnh báo vận chuyển 2 tem/thùng (SC)"},
  {qc:"DFB150-D3M",upd:1,tl:8.5,ds:0.5,klBB:3,nguon:"Phiếu BM.05 R&D 04/11/2026 – 2611.Dofaben 150WG - 8G - D3M (Con hổ)"}];
 const QF=[["qc","Mã quy cách (mã QC) *"],["nhan","Mã nhãn"],["sp","Sản phẩm *"],["btp","Mã BTP mặc định"],["quyCach","Quy cách (VD gói 18 ml)"],["luong","Lượng / đơn vị *","n"],["dvl","ĐVT lượng","s:ml,g,L,kg"],["loai","Loại bao bì","s:gói,chai,can,xô,túi,bao,hũ"],
  ["chai","Mã chai / can / xô"],["moTaChai","Mô tả chai"],["hop","Mã hộp"],["dvHop","Đơn vị / hộp","n"],["thung","Mã thùng"],["dvThung","Đơn vị / thùng","n"],["nhanPhu","Nhãn phụ","s:,Có,Không"],["temChai","Tem dán chai","s:,Có,Không"],
@@ -229,7 +229,7 @@ const QF=[["qc","Mã quy cách (mã QC) *"],["nhan","Mã nhãn"],["sp","Sản ph
 const canQC=()=>["Quản lý","Kế toán"].includes(S.me&&S.me.vaiTro);
 const qcList=()=>(S.dg&&S.dg.qc)||[];
 const qcFind=c=>qcList().find(x=>x.qc.toUpperCase()===String(c||"").trim().toUpperCase());
-const rdTodo=()=>RD_QC.filter(r=>{const q=qcFind(r.qc);return r.upd?(q&&!(+q.tl>0)):!q});
+const rdTodo=()=>!qcList().length?[]:RD_QC.filter(r=>{const q=qcFind(r.qc);return r.upd?(q&&!(+q.tl>0)):!q});
 function qcDlg(q0,sua){const v=Object.assign({},q0||{});if(Array.isArray(v.btp))v.btp=v.btp.join(" | ");
   const sps=[...new Set(qcList().map(x=>x.sp).filter(Boolean))].sort();
   const fld=([k,l,t])=>{const val=v[k]==null?"":String(v[k]),dis=sua&&k==="qc"?"readonly":"";
@@ -249,7 +249,7 @@ function qcDlg(q0,sua){const v=Object.assign({},q0||{});if(Array.isArray(v.btp))
   box.querySelector('[data-k="quyCach"]').addEventListener("input",e=>e.target.dataset.t=1);
   if($("qcCp"))$("qcCp").onchange=e=>{const q=qcFind(e.target.value);if(!q)return;const keep=get();QF.forEach(([k])=>{if(["qc","nhan","nguon","ghiChu","tl","ds","klBB"].includes(k))return;const el=box.querySelector(`[data-k="${k}"]`);let x=q[k];if(Array.isArray(x))x=x.join(" | ");if(el&&!keep[k]||el&&el.tagName==="SELECT")el.value=x==null?"":String(x)});sum();toast("Đã chép thông số từ "+q.qc+" — sửa lại chỗ khác")};
   w.querySelector("[data-x]").onclick=()=>w.remove();
-  $("qcOk").onclick=async()=>{const o=get();if(sua)o.sua=true;const b=$("qcOk");b.disabled=true;
+  $("qcOk").onclick=async()=>{const QK=QF.map(f=>f[0]),o=get();["tcg","tcb","dai","bangKeo","anh","bang"].forEach(k=>{if(!QK.includes(k)&&v[k]!=null&&v[k]!==""&&!sua)o[k]=v[k]});if(sua)o.sua=true;const b=$("qcOk");b.disabled=true;
     try{const L=await api("webQCSave",S.auth,o);S.dg.qc=L;S.dgQ={};L.forEach(q=>S.dgQ[q.qc]=q);w.remove();toast((sua?"Đã cập nhật ":"Đã thêm ")+o.qc);if(S.dgv==="new"){if(typeof dgHits==="function")dgHits()}else if(typeof dgListRender==="function")dgListRender()}
     catch(e){toast(e.message);b.disabled=false}}}
 window.qcDlg=qcDlg;
