@@ -210,7 +210,7 @@ const PCSS=`<style>
 .pq .hd .mt{width:28%;font-size:11.5pt;line-height:1.55}
 .pq .sec td{background:#f0f0f0;font-weight:700;padding:4px 8px}.pq .lb{color:#000}.pq b{font-weight:700}
 .pq .gap{height:10px}.pq th{background:#f0f0f0;text-align:center;font-weight:700}.pq .c{text-align:center}.pq .r{text-align:right}
-.pq .kl td{border:0;padding:3px 4px;text-align:center;width:50%}.pq .kl{margin:2px 0}
+.pq .kl td{border:0;padding:3px 4px;text-align:center;width:50%}.pq .klb td{text-align:left;padding:3px 4px 3px 8mm}.pq .klb .kx{display:inline-block;width:1.5em}.pq .klb .kd{display:inline-block;margin-left:1.5em}.pq .kl{margin:2px 0}
 .pq .sg{margin-top:12px}.pq .sg td{border:0;text-align:center;vertical-align:top;padding:0 4px}.pq .sg .nm{height:24mm;vertical-align:bottom;padding-bottom:2px}
 .pq p{margin:8px 0}
 </style>`;
@@ -300,7 +300,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    <tr><td>*Khối lượng theo KH:</td><td class="r"><b>${kg(khKg)}</b> kg</td><td>Thể tích: <b>${L(khKg)}</b></td><td rowspan="2" class="c">Hao hụt (%)<br><b style="font-size:14pt">${hh===null?"":nf.format(Math.round(hh*100)/100)}</b></td></tr>
    <tr><td>*Khối lượng thu được:</td><td class="r"><b>${tu?kg(tu):""}</b> kg</td><td>Thể tích: <b>${L(tu)}</b></td></tr>
    <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
-   <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl"><tr>${KL.slice(0,2).map(k=>`<td>${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td>${box(d.ketLuan===k[0])} <b>${k[0]}</b><br><i>(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
+   <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl klb"><tr>${KL.slice(0,2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
   ${sign([["Nhân viên phối trộn",""],["Thủ kho",""],["Nhân viên QC",""]])}</div>`)}
 
