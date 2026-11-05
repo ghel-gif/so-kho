@@ -1429,7 +1429,7 @@ h+=`<details class="card" style="padding:10px 12px;border:1px solid var(--line);
 <datalist id="dgNvl">${[...new Set(DG_NV.concat((S.goiY&&S.goiY.dg)||[]))].map(x=>`<option value="${esc(x)}"></option>`).join("")}</datalist>
 <div class="two"><label>Khách hàng / đơn vị phân phối<input id="dgKH" value="${esc(N.kh)}"></label><label>Ghi chú<input id="dgNote" value="${esc(N.note||"")}" placeholder="Không bắt buộc"></label></div>
 <div id="dgPlan"></div>
-<div class="actions"><button class="btn primary" type="button" id="dgSave">Lưu</button>${N.edit?'<button class="btn" type="button" id="dgPrint2">In lệnh đóng gói</button>':""}</div>`}
+<div class="actions"><button class="btn primary" type="button" id="dgSave">Lưu</button>${N.edit?'<button class="btn" type="button" id="dgPrint2">In lệnh đóng gói</button>':""}${N.edit&&can.sua()?'<span style="flex:1"></span><button class="btn danger" type="button" id="dgHuy">Huỷ lệnh</button>':""}</div>`}
 box.innerHTML=`<div class="card" style="display:flex;flex-direction:column;gap:12px">${h}</div>`;
 $("dgBack").onclick=()=>{S.dgN=null;dgShow("list")};
 if(!N.edit){const fi=$("dgFind");fi.oninput=()=>{N.find=fi.value;N.pick=true;dgHits()};fi.onfocus=()=>{if(N.find){N.pick=true;dgHits()}};dgHits();if(!q){fi.focus();return}}
@@ -1445,7 +1445,7 @@ $("dgBtp").addEventListener("change",e=>{const r=e.target.closest("[data-bi]"),f
 $("dgBtp").addEventListener("input",e=>{const f=e.target.dataset.f;if(f==="tt"||f==="cuoi"){N.btp[+e.target.closest("[data-bi]").dataset.bi][f]=e.target.value;dgCalc()}});
 $("dgBtp").addEventListener("click",e=>{const t=e.target;if(t.id==="dgAddBtp"){const b0=N.btp[0]||{};N.btp.push({ma:b0.ma,lo:undefined,tt:""});$("dgBtp").innerHTML=dgBtpHtml(dgQe());dgCalc()}else if(t.dataset&&t.dataset.rm){N.btp.splice(+t.dataset.rm,1);$("dgBtp").innerHTML=dgBtpHtml(dgQe());dgCalc()}});
 $("dgPlan").addEventListener("input",e=>{const ma=e.target.dataset.ma;if(ma)N.ov[ma]=e.target.value});
-$("dgSave").onclick=dgSave;if($("dgPrint2"))$("dgPrint2").onclick=()=>{const o=S.lenh.find(x=>x.so===N.edit),P=(S.dg.lenh||{})[N.edit]||{};if(o)dgPrint(o,P,S.dgQ[P.qc]||null)};
+$("dgSave").onclick=dgSave;if($("dgHuy"))$("dgHuy").onclick=async()=>{const so=N.edit;if(!await askConfirm(["Huỷ lệnh đóng gói "+so+"? Lệnh chưa hoàn thành nên chưa trừ kho, huỷ không ảnh hưởng tồn."]))return;try{await api("cancelOrder",S.auth,so);toast("Đã huỷ lệnh "+so);S.dgN=null;await refresh();dgShow("list")}catch(e){handleErr(e)}};if($("dgPrint2"))$("dgPrint2").onclick=()=>{const o=S.lenh.find(x=>x.so===N.edit),P=(S.dg.lenh||{})[N.edit]||{};if(o)dgPrint(o,P,S.dgQ[P.qc]||null)};
 dgCalc()}
 function dgCalc(){const N=S.dgN,q=dgQe();if(!q||!$("dgSum"))return;const per=+q.dvThung||0,th=Math.max(0,parseInt(N.thung)||0),le=Math.max(0,+N.le||0),hl=Math.max(0,parseInt(N.hl)||0),L=+(N.qs&&N.qs.spThung)||0;
 const dv=L?th*L+le:th*per+hl*(+q.dvHop||0)+le,nThung=per?th+(le>0||hl>0?1:0):0;N.dv=dv;N.nThung=nThung;
