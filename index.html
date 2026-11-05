@@ -2128,7 +2128,8 @@ function renderHome(){if(!S.me)return;renderTiles();renderQuick();
   $("hTodo").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>b.dataset.go==="ton"?goTon(b.dataset.f):b.dataset.go==="qcpn"?(setTab("qc"),qcShow("pn")):b.dataset.go==="qchl"?(setTab("qc"),qcShow("duyet"),$("qcFilter").value="hl",renderQC()):setTab(b.dataset.go));
   renderDash();
   const ls=S.lenh.slice(0,6);
-  $("hLsx").innerHTML=ls.length?ls.map(o=>{const sp=itemBy(o.maSP);return `<div class="row"><div class="name">${esc(o.so)} <span class="st ${stCls[o.trangThai]||"cancel"}">${esc(o.trangThai)}</span></div><div class="kg">${kg(o.trangThai==="Hoàn thành"?o.slThucTe:o.slDuKien)} kg</div><div class="meta">${esc(sp?sp.ten:(o.tenSP||o.maSP))} · ${dmy(o.ngayHT||o.ngay)}</div></div>`}).join(""):'<div class="empty">Chưa có lệnh nào.</div>';
+  $("hLsx").innerHTML=ls.length?ls.map(o=>{const sp=itemBy(o.maSP);return `<div class="row"><div class="name">${esc(o.so)} <span class="st ${stCls[o.trangThai]||"cancel"}">${esc(o.trangThai)}</span></div><div class="kg">${(()=>{const sl=o.trangThai==="Hoàn thành"?o.slThucTe:o.slDuKien,dv=(sp&&sp.donVi)||"kg",P=(S.dg&&S.dg.lenh||{})[o.so],q=P&&S.dgQ&&S.dgQ[P.qc],t=q&&q.dvThung?Math.floor((+sl||0)/q.dvThung):0,le=q&&q.dvThung?(+sl||0)-t*q.dvThung:0;return `${kg(sl)} ${esc(dv)}${t?`<small>${t} thùng${le?" + "+kg(le)+" "+esc(dv):""}</small>`:""}`})()}</div><div class="meta">${esc(sp?sp.ten:(o.tenSP||o.maSP))} · ${dmy(o.ngayHT||o.ngay)}</div></div>`}).join(""):'<div class="empty">Chưa có lệnh nào.</div>';
+  if(!S.dg&&!S.dgTry&&ls.some(o=>dgIsTP(o))){S.dgTry=1;dgLoad().then(()=>{if(S.tab==="home")renderHome()}).catch(()=>{})}
 }
 
 /* ---------- phiếu xuất nội bộ ---------- */
