@@ -335,7 +335,7 @@ const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất
   ["9.1k","Độ bền phân tán sau 0,5 h — lớp kem / lớp dầu","mL",["OD","SE"],"≤ 2 mL"],
   ["9.1c","Độ bền phân tán sau 0,5 h — lớp cặn","mL",["OD","SE"],"≤ 0,2 mL"],
   ["17","Kích thước hạt","-",["GR"],"Tỷ lệ đường kính lớn nhất/nhỏ nhất ≤ 4; ≥ 85 % hạt trong khoảng công bố"],
-  ["10","Độ bụi","%",["GR"],"Sản phẩm không bụi"]];
+  ["10","Độ bụi (lượng bụi qua rây 50 µm)","%",["GR"],"≤ 1 %"]];
 /* tỷ trọng: mặc định 3 số lẻ, dấu phẩy thập phân */
 const f3=x=>{const t=String(x==null?"":x).trim();if(!/^\d+([.,]\d+)?$/.test(t))return t;return Number(t.replace(",",".")).toFixed(3).replace(".",",")};
 const PBC=new Set(["2","2t","3"]);
@@ -344,7 +344,7 @@ const fam=(c,dg)=>isPB(dg)?(PBC.has(c[0])||!!(c[3]&&c[3].some(isPB))):!(c[3]&&c[
 const PHU=new Set(["5d","11"]);
 const GN=new Set([]); /* chỉ tiêu chỉ ghi nhận (TCCS không quy định) — không đánh giá Đạt/Không đạt */ /* chỉ tiêu phụ (theo dõi kích thước hạt) — in thành bảng riêng */
 /* Phương pháp thử mặc định = hướng dẫn nội bộ trong 8-HƯỚNG DẪN/QC - Hướng dẫn (sửa được trên phiếu) */
-const PP={"1":"QC-HD.36","2":"QC-HD.35","3":"QC-HD.37","4":"QC-HD.38","5":"QC-HD.39","6":"QC-HD.40","7":"QC-HD.41","7.1":"QC-HD.41","7.2":"QC-HD.41","8":"QC-HD.42","9":"QC-HD.43","9.1k":"QC-HD.44","9.1c":"QC-HD.44","11":"QC-HD.45","12":"QC-HD.46","pb1":"QC-HD.52","pb1r":"QC-HD.52","pbA":"QC-HD.51","pbC":"QC-HD.52","pbT":"QC-HD.52"};
+const PP={"1":"QC-HD.36","2":"QC-HD.35","3":"QC-HD.37","4":"QC-HD.38","5":"QC-HD.39","6":"QC-HD.40","7":"QC-HD.41","7.1":"QC-HD.41","7.2":"QC-HD.41","8":"QC-HD.42","9":"QC-HD.43","9.1k":"QC-HD.44","9.1c":"QC-HD.44","10":"QC-HD.54","17":"QC-HD.53","11":"QC-HD.45","12":"QC-HD.46","pb1":"QC-HD.52","pb1r":"QC-HD.52","pbA":"QC-HD.51","pbC":"QC-HD.52","pbT":"QC-HD.52"};
 /* Thông tin mẫu lưu kèm trong kq với khoá bắt đầu bằng "_" ; đánh giá từng chỉ tiêu "~mã"; phương pháp sửa tay "@mã" */
 const HD_DANG={EC:"07",EW:"08",GR:"09",ME:"10",SC:"11",SL:"12",WP:"13",WG:"14",GB:"22",AB:"23",CS:"24",DC:"25",OD:"26",FS:"27",PA:"28",RB:"29",SP:"30",SG:"31",DP:"32",SE:"33",ZC:"34","PB-L":"50","PB-R":"50"};
 const hdLM=dg=>HD_DANG[dg]?"QC-HD."+HD_DANG[dg]:"";
