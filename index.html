@@ -867,7 +867,7 @@ body nav.side .navh{color:#fff;opacity:.85}
 <script>window.SOKHO_VER="web-10";</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=web-7"></script>
-<script src="gas-shim.js?v=web-14"></script>
+<script src="gas-shim.js?v=web-15"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="web.css?v=web-22">
 <script>
@@ -1057,6 +1057,18 @@ function setTab(t,back){if(t==="phieu")t="nhap";if(!back&&S.tab&&t!==S.tab){S.na
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 $("backBtn").onclick=goBack;try{if(GH){GH.replace({t:"home"},{},"");GH.setChangeHandler(e=>{const t=(e&&e.state&&e.state.t)||"home";if(t===S.tab)return;if(S.navStack[S.navStack.length-1]===t)S.navStack.pop();setTab(t,1)})}}catch(e){}
 $("reloadBtn").onclick=refresh;
+/* Tự nạp dữ liệu mới: cứ 20 giây (khi đang mở trang) hỏi máy chủ có trang nào đổi không.
+   Có đổi mà người dùng không đang nhập/đang mở hộp thoại → nạp ngay; đang nhập → hiện nút "Có dữ liệu mới". */
+function apBusy(){const a=document.activeElement;if(a&&a.matches&&a.matches("input:not([type=search]):not([type=button]),textarea,select")&&a.closest("#appView"))return true;
+  if([...document.querySelectorAll(".cfm,.kh-dlg,.lbx,dialog[open]")].some(e=>e.offsetParent||e.getClientRects().length))return true;
+  return ["lnForm","ctForm"].some(i=>$(i)&&!$(i).hidden)||!!($("mvQty")&&$("mvQty").value)}
+let apRun=false,apPend=false;
+function apChip(on){let c=$("apChip");if(!on){if(c)c.remove();return}if(c)return;c=document.createElement("button");c.id="apChip";c.type="button";c.className="apchip";c.textContent="↻ Có dữ liệu mới – bấm để tải";c.onclick=()=>{apChip(0);apPend=false;refresh()};document.body.appendChild(c)}
+async function autoPull(force){if(apRun||!S.me||document.hidden||!window.SOKHO_WEB||!SOKHO_WEB.peek)return;apRun=true;
+  try{const ch=apPend||await SOKHO_WEB.peek();if(!ch)return;if(apBusy()&&!force){apPend=true;apChip(1);return}apPend=false;apChip(0);await refresh()}catch(e){}finally{apRun=false}}
+setInterval(()=>autoPull(),20000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)autoPull()});window.addEventListener("focus",()=>autoPull());
+document.addEventListener("focusout",()=>{if(apPend)setTimeout(()=>{if(!apBusy())autoPull()},400)});
 const DARKQ=[];for(const sh of document.styleSheets){try{for(const r of sh.cssRules)if(r.media&&/prefers-color-scheme:\s*dark/.test(r.media.mediaText))DARKQ.push(r)}catch(e){}}
 function curDark(){let t=null;try{t=localStorage.getItem("soKhoTheme")}catch(e){}return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches}
 function applyTheme(){const d=curDark();DARKQ.forEach(r=>r.media.mediaText=d?"all":"not all");document.documentElement.style.colorScheme=d?"dark":"light";document.documentElement.dataset.theme=d?"dark":"light";
@@ -2522,7 +2534,7 @@ new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:t
 </script>
 <script src="kehoach.js?v=53"></script>
 <script src="dgforms.js?v=59"></script>
-<link rel="stylesheet" href="ui.css?v=3">
+<link rel="stylesheet" href="ui.css?v=4">
 <script src="nav.js?v=6"></script>
 </body>
 </html>

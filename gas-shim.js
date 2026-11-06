@@ -391,5 +391,11 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     history: { push() {}, replace() {}, setChangeHandler() {} },
     url: { getLocation: cb => cb({ parameter: Object.fromEntries(new URLSearchParams(location.search)), hash: location.hash.slice(1) }) }
   } };
-  window.SOKHO_WEB = { sync, signOut: async () => { ME = null; await sb.auth.signOut(); }, db: DB };
+  async function peek() { // chỉ hỏi số phiên bản từng trang – rất nhẹ; true nếu máy khác vừa đổi dữ liệu
+    if (!DB.loaded) return false;
+    const { data, error } = await sb.from("sheet_ver").select("sheet,ver");
+    if (error) throw error;
+    return data.some(v => !DB.sheets[v.sheet] || DB.sheets[v.sheet].ver !== +v.ver);
+  }
+  window.SOKHO_WEB = { sync, peek, signOut: async () => { ME = null; await sb.auth.signOut(); }, db: DB };
 })();
