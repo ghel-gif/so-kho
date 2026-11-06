@@ -302,26 +302,46 @@ function dlOf(q){if(!q)return null;const u=String(q.dvl||"").trim().toLowerCase(
 const dlG=(L,tt)=>{if(!L)return null;const k=L.dv==="ml"?(+tt||0):1;if(!(k>0))return null;const r=x=>Math.round(x*k*100)/100;return {lo:r(L.lo),std:r(L.std),hi:r(L.hi),k}};
 const dlTxt=(L,tt)=>{if(!L)return "";const G=dlG(L,tt),u=L.dv;return `Theo QC-QĐ.04 ${L.src}${L.ten?" ("+esc(L.ten)+")":""}: ${f2(L.qn)} ${u} → ${f2(L.lo)} – ${f2(L.hi)} ${u} (chuẩn ${f2(L.std)})${u==="ml"?(G?` × tỷ trọng ${(+tt).toFixed(3).replace(".",",")} = <b>${f2(G.lo)} – ${f2(G.hi)} g</b> (chuẩn ${f2(G.std)} g)`:" — cần tỷ trọng để quy ra gram"):""}${L.warn?` <span style="color:#c0392b;font-weight:700">⚠ mức chuẩn thấp hơn danh định ${f2(L.qn)} ${u} (TT 21/2014: trung bình lô phải ≥ danh định)</span>`:""}`};
 const f1=v=>v===""||v==null||!isFinite(+String(v).replace(",","."))?(v??""):(+String(v).replace(",",".")).toFixed(1);
-function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro==="Quản lý");let L=dlList().map(x=>Object.assign({},x));
+function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro==="Quản lý");let L=dlList().map(x=>Object.assign({},x)),mode="xem";
   const w=dlg(`<h2>Bảng định lượng QC-QĐ.04 (mục 5.1)</h2>
-   <p class="note">Mức dưới / chuẩn / trên theo đơn vị sản phẩm (g hoặc ml). BM.05 tự lấy theo tên sản phẩm + quy cách; sản phẩm không có trong bảng thì tính theo quy tắc mục 5.2. Hàng lỏng tự nhân tỷ trọng ra gram. ${ed?"":"<b>Chỉ Trưởng phòng QA/QC (Nguyễn Ô Ghel) được sửa bảng này — bạn chỉ xem.</b>"}</p>
-   <div style="display:flex;gap:8px;align-items:center;margin:6px 0"><input id="dlQ" placeholder="Tìm sản phẩm…" style="max-width:240px" autocomplete="off"><span class="note" id="dlN"></span><span style="flex:1"></span>${ed?`<button class="btn" type="button" id="dlAdd">＋ Thêm dòng</button>`:""}</div>
-   <div class="dgx dlw" style="max-height:60vh;overflow:auto"><table><thead><tr><th>Sản phẩm</th><th>Quy cách</th><th>ĐVT</th><th class="dl-lo">Mức dưới</th><th class="dl-std">Mức chuẩn</th><th class="dl-hi">Mức trên</th><th>Ghi chú</th>${ed?"<th></th>":""}</tr></thead><tbody id="dlB"></tbody></table></div>
-   <div class="actions"><button class="btn" type="button" data-x>Đóng</button>${ed?`<button class="btn primary" type="button" id="dlOk">Lưu bảng</button>`:""}</div>`);
-  const box=w.querySelector(".cfm-box");box.style.setProperty("max-width","min(1180px,96vw)","important");box.style.width="min(1180px,96vw)";const stl=document.createElement("style");stl.textContent=".dlw thead th{position:sticky;top:0;z-index:3;background:var(--card,#fff);box-shadow:0 1px 0 var(--line,#d5dde8)}.dlw thead th.dl-lo{background:#fff4e5}.dlw thead th.dl-std{background:#e8f5e9}.dlw thead th.dl-hi{background:#e8f0fe}#dlB td.dl-lo{background:#fff4e5!important}#dlB td.dl-std{background:#e8f5e9!important}#dlB td.dl-hi{background:#e8f0fe!important}th.dl-lo{color:#b45309}th.dl-std{color:#1b5e20}th.dl-hi{color:#1a4fa0}td.dl-lo input{background:#fffaf2}td.dl-std input{background:#f3fbf4;font-weight:700}td.dl-hi input{background:#f4f7ff}#dlB input{text-align:center}#dlB td:first-child input{text-align:left}#dlB select{min-width:66px}#dlB td{padding:3px 4px}";box.appendChild(stl);const dis=ed?"":"disabled";
-  const row=(x,i)=>{const bad=+x.std>0&&+x.qn>0&&+x.std<+x.qn,ord=+x.lo>0&&+x.std>0&&+x.hi>0&&!(+x.lo<=+x.std&&+x.std<=+x.hi);
-    return `<tr data-i="${i}"><td><input data-k="sp" value="${esc(x.sp)}" ${dis} style="min-width:190px"></td><td><input data-k="qn" inputmode="decimal" value="${esc(f1(x.qn))}" ${dis}></td><td><select data-k="dv" ${dis}>${["ml","g"].map(u=>`<option${u===x.dv?" selected":""}>${u}</option>`).join("")}</select></td>
-     ${["lo","std","hi"].map(k=>`<td class="dl-${k}"><input data-k="${k}" inputmode="decimal" value="${esc(f1(x[k]))}" ${dis} class="${(k==="std"&&bad)||ord?"in-bad":""}"></td>`).join("")}<td><input data-k="gc" value="${esc(x.gc||"")}" ${dis} style="min-width:120px"></td>${ed?`<td><button class="btn small" type="button" data-del="${i}" title="Xoá dòng">✕</button></td>`:""}</tr>`};
-  const draw=()=>{const q=nrm($("dlQ").value);$("dlB").innerHTML=L.map((x,i)=>!q||nrm(x.sp).includes(q)?row(x,i):"").join("");const nb=L.filter(x=>+x.std<+x.qn).length;$("dlN").innerHTML=`${L.length} dòng${nb?` · <span style="color:#c0392b">${nb} dòng mức chuẩn &lt; danh định</span>`:""}`};draw();
-  $("dlQ").oninput=draw;
-  $("dlB").addEventListener("input",e=>{const t=e.target,tr=t.closest("tr");if(!tr||!t.dataset.k)return;const x=L[+tr.dataset.i];x[t.dataset.k]=t.dataset.k==="sp"||t.dataset.k==="gc"||t.dataset.k==="dv"?t.value:String(t.value).replace(",",".");
-    if(["qn","lo","std","hi"].includes(t.dataset.k)){const bad=+x.std<+x.qn,ord=!(+x.lo<=+x.std&&+x.std<=+x.hi);tr.querySelectorAll('[data-k="lo"],[data-k="std"],[data-k="hi"]').forEach(el=>el.classList.toggle("in-bad",ord||(el.dataset.k==="std"&&bad)))}});
+   <p class="note">Đơn vị: g hoặc ml của sản phẩm. BM.05 tự lấy theo tên sản phẩm + quy cách; hàng lỏng nhân tỷ trọng ra gram. ${ed?"":"<b>Chỉ Trưởng phòng QA/QC được sửa — bạn chỉ xem.</b>"}</p>
+   <div style="display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap"><input id="dlQ" placeholder="Tìm sản phẩm…" style="max-width:260px" autocomplete="off"><span class="note" id="dlN"></span><span style="flex:1"></span>${ed?`<button class="btn" type="button" id="dlAdd" style="display:none">＋ Thêm dòng</button><button class="btn" type="button" id="dlMode">✎ Sửa bảng</button>`:""}</div>
+   <div class="dlw" style="max-height:62vh;overflow:auto;border:1px solid var(--line,#d5dde8);border-radius:10px"><table class="dlt"><thead id="dlH"></thead><tbody id="dlB"></tbody></table></div>
+   <div class="actions"><button class="btn" type="button" data-x>Đóng</button>${ed?`<button class="btn primary" type="button" id="dlOk" style="display:none">Lưu bảng</button>`:""}</div>`);
+  const box=w.querySelector(".cfm-box");box.style.setProperty("max-width","min(1100px,96vw)","important");box.style.width="min(1100px,96vw)";
+  const stl=document.createElement("style");stl.textContent=`
+   .dlt{width:100%;border-collapse:separate;border-spacing:0;font-size:15px}
+   .dlt thead th{position:sticky;top:0;z-index:3;background:#1f5f4a;color:#fff;font-weight:700;padding:9px 8px;text-align:center;border-bottom:2px solid #174a39}
+   .dlt thead th.c-lo{background:#b45309}.dlt thead th.c-std{background:#1b7a3a}.dlt thead th.c-hi{background:#1a5fb4}
+   .dlt td{padding:7px 8px;border-bottom:1px solid var(--line,#e3e8ef);text-align:center;color:var(--ink,#1b1f24);background:var(--surface,#fff)!important}
+   .dlt td.sp{text-align:left;font-weight:700;border-right:1px solid var(--line,#e3e8ef);vertical-align:top;background:rgba(127,140,160,.08)!important}
+   .dlt td.c-lo{background:rgba(234,120,20,.12)!important}.dlt td.c-std{background:rgba(30,150,70,.15)!important;font-weight:800;font-size:16px}.dlt td.c-hi{background:rgba(40,100,220,.12)!important}
+   .dlt tr.g1 td{border-top:2px solid var(--line,#c9d3df)}
+   .dlt tr.bad td.c-std,.dlt tr.bad td.c-lo,.dlt tr.bad td.c-hi{background:rgba(217,48,37,.2)!important;color:#d93025!important}
+   .dlt td.gc{opacity:.8;font-size:13px;text-align:left}
+   .dlt input,.dlt select{font-size:15px;padding:5px 6px;text-align:center;width:100%;box-sizing:border-box}.dlt td.sp input{text-align:left;font-weight:700}
+   .dlt.edit td{padding:4px}.dlt .rm{padding:2px 8px}`;box.appendChild(stl);
+  const f1v=v=>{const n=+String(v??"").replace(",",".");return String(v??"").trim()===""||!isFinite(n)?"":n.toFixed(1).replace(".",",")};
+  const isBad=x=>(+x.std>0&&+x.qn>0&&+x.std<+x.qn)||(+x.lo>0&&+x.std>0&&+x.hi>0&&!(+x.lo<=+x.std&&+x.std<=+x.hi));
+  const draw=()=>{const q=nrm($("dlQ").value),T=w.querySelector(".dlt");T.classList.toggle("edit",mode==="sua");
+    const idx=L.map((x,i)=>i).filter(i=>!q||nrm(L[i].sp).includes(q));
+    if(mode==="xem"){$("dlH").innerHTML=`<tr><th style="width:28%">Sản phẩm</th><th>Quy cách</th><th class="c-lo">Mức dưới</th><th class="c-std">Mức chuẩn</th><th class="c-hi">Mức trên</th><th>Khoảng cho phép</th><th>Ghi chú</th></tr>`;
+      let h="",k=0;while(k<idx.length){const sp=L[idx[k]].sp;let n=1;while(k+n<idx.length&&L[idx[k+n]].sp===sp)n++;
+        for(let m=0;m<n;m++){const x=L[idx[k+m]],u=x.dv;h+=`<tr class="${m===0?"g1":""} ${isBad(x)?"bad":""}">${m===0?`<td class="sp" rowspan="${n}">${esc(sp)}</td>`:""}<td><b>${f1v(x.qn).replace(/,0$/,"")} ${u}</b></td><td class="c-lo">${f1v(x.lo)}</td><td class="c-std">${f1v(x.std)}</td><td class="c-hi">${f1v(x.hi)}</td><td>${f1v(x.lo)} – ${f1v(x.hi)} ${u}</td><td class="gc">${esc(x.gc||"")}${isBad(x)?`<div style="color:#a50e0e;font-weight:700">⚠ chuẩn &lt; danh định</div>`:""}</td></tr>`}
+        k+=n}
+      $("dlB").innerHTML=h||`<tr><td colspan="7" class="note">Không có dòng nào</td></tr>`}
+    else{$("dlH").innerHTML=`<tr><th style="width:26%">Sản phẩm</th><th style="width:9%">Quy cách</th><th style="width:8%">ĐVT</th><th class="c-lo">Mức dưới</th><th class="c-std">Mức chuẩn</th><th class="c-hi">Mức trên</th><th>Ghi chú</th><th></th></tr>`;
+      $("dlB").innerHTML=idx.map(i=>{const x=L[i];return `<tr data-i="${i}" class="${isBad(x)?"bad":""}"><td class="sp"><input data-k="sp" value="${esc(x.sp)}"></td><td><input data-k="qn" inputmode="decimal" value="${esc(f1(x.qn))}"></td><td><select data-k="dv">${["ml","g"].map(u=>`<option${u===x.dv?" selected":""}>${u}</option>`).join("")}</select></td>${["lo","std","hi"].map(k=>`<td class="c-${k}"><input data-k="${k}" inputmode="decimal" value="${esc(f1(x[k]))}"></td>`).join("")}<td><input data-k="gc" value="${esc(x.gc||"")}"></td><td><button class="btn small rm" type="button" data-del="${i}" title="Xoá dòng">✕</button></td></tr>`}).join("")}
+    const nb=L.filter(isBad).length;$("dlN").innerHTML=`${L.length} dòng · ${new Set(L.map(x=>nrm(x.sp))).size} sản phẩm${nb?` · <span style="color:#c0392b;font-weight:700">${nb} dòng cần xem lại</span>`:""}`};
+  draw();$("dlQ").oninput=draw;
+  $("dlB").addEventListener("input",e=>{const t=e.target,tr=t.closest("tr");if(!tr||!t.dataset.k||tr.dataset.i==null)return;const x=L[+tr.dataset.i];x[t.dataset.k]=["sp","gc","dv"].includes(t.dataset.k)?t.value:String(t.value).replace(",",".");tr.classList.toggle("bad",isBad(x))});
+  $("dlB").addEventListener("change",e=>{if(e.target.dataset.k==="dv")L[+e.target.closest("tr").dataset.i].dv=e.target.value});
   $("dlB").addEventListener("focusout",e=>{const t=e.target;if(["qn","lo","std","hi"].includes(t.dataset&&t.dataset.k)&&t.value.trim()!=="")t.value=f1(t.value)});
-  $("dlB").addEventListener("change",e=>{if(e.target.dataset.k==="dv"){L[+e.target.closest("tr").dataset.i].dv=e.target.value}});
   $("dlB").addEventListener("click",e=>{const b=e.target.closest("[data-del]");if(!b)return;L.splice(+b.dataset.del,1);draw()});
+  if($("dlMode"))$("dlMode").onclick=()=>{mode=mode==="xem"?"sua":"xem";$("dlMode").textContent=mode==="xem"?"✎ Sửa bảng":"👁 Xem bảng";$("dlAdd").style.display=mode==="sua"?"":"none";$("dlOk").style.display=mode==="sua"?"":"none";draw()};
   if($("dlAdd"))$("dlAdd").onclick=()=>{L.unshift({sp:$("dlQ").value.trim(),qn:"",dv:"ml",lo:"",std:"",hi:"",gc:""});$("dlQ").value="";draw();const f=$("dlB").querySelector("input");f&&f.focus()};
   w.querySelector("[data-x]").onclick=()=>w.remove();
-  if($("dlOk"))$("dlOk").onclick=async()=>{const b=$("dlOk");b.disabled=true;try{const R=await api("webDLSave",S.auth,L);S.dg.dl=R;L=R.map(x=>Object.assign({},x));draw();toast("Đã lưu bảng định lượng ("+R.length+" dòng)")}catch(e){toast(e.message)}b.disabled=false}}
+  if($("dlOk"))$("dlOk").onclick=async()=>{const b=$("dlOk");b.disabled=true;try{const R=await api("webDLSave",S.auth,L);S.dg.dl=R;L=R.map(x=>Object.assign({},x));mode="xem";$("dlMode").textContent="✎ Sửa bảng";$("dlAdd").style.display="none";b.style.display="none";draw();toast("Đã lưu bảng định lượng ("+R.length+" dòng)")}catch(e){toast(e.message)}b.disabled=false}}
 window.dlDlg=dlDlg;window.dlOf=dlOf;
 window.qcBar=function(box){if(!box||!canQC()||box.querySelector(".qc-bar"))return;const T=rdTodo();
   const el=document.createElement("div");el.className="qc-bar";el.style.cssText="margin:8px 0;padding:10px 12px;border:1px solid var(--line,#d5dde8);border-radius:10px";
