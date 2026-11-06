@@ -319,3 +319,66 @@ function webQCSave(a, o) {
   } finally { lock.releaseLock(); }
   return qcRows_();
 }
+
+/* ===== Bảng định lượng QC-QĐ.04 (mục 5.1) — sửa trên phần mềm, BM.05 tự lấy ===== */
+const DL_SH = 'DinhLuongQD04', DL_HEAD_ = ['Sản phẩm', 'Quy cách', 'ĐVT', 'Mức dưới', 'Mức chuẩn', 'Mức trên', 'Ghi chú'];
+/* Số liệu gốc theo QC-QĐ.04 lần ban hành 01 (11/08/2025) — dùng khi chưa có trang tính */
+const DL_DEF_ = [
+ ['Atoxa 250SC',100,'ml',99,102,104],['Foszatin 10.5GR',1000,'g',990,1000,1010],['Foszatin 10.5GR',500,'g',495,500,505],
+ ['Azomor 300WG',100,'g',99,102,104],['Azomor 300WG',20,'g',20,21,22],['Bostrobin 380SC',200,'ml',198,202,206],['Bostrobin 380SC',100,'ml',99,102,104],
+ ['Osaku 435WP',100,'g',99,102,104],['Osaku 435WP',20,'g',20,21,22],['Abi copper 230EC',100,'ml',99,102,104],['Asaquat 200SL',900,'ml',891,900,909],
+ ['US-sinate 200SL',4500,'ml',4450,4500,4550],['US-sinate 200SL',900,'ml',891,900,909],['US-sinate 200SL',450,'ml',445,450,455],['US-sinate 200SL',100,'ml',98,100,102],
+ ['Ataflu 240SC',100,'ml',99,102,104],['Ataflu 240SC',25,'ml',25,26,27],['Bifenzin 300SC',100,'ml',99,102,104],['Apro 200SC',200,'ml',198,202,206],['Apro 200SC',100,'ml',99,102,104],
+ ['Asapyr 300SC',100,'ml',99,102,104],['Asapyr 300SC',20,'ml',20,21,22],
+ ['Alupyr 250SC',200,'ml',198,202,206],['Alupyr 250SC',150,'ml',148,151,155],['Alupyr 250SC',100,'ml',99,102,104],['Alupyr 250SC',25,'ml',25,26,27],['Alupyr 250SC',20,'ml',21.5,22.5,23.5],
+ ['Asa Ray 350OD',240,'ml',238,243,247],['Asa Ray 350OD',25,'ml',25,26,27],['Aspiro 150OD',200,'ml',198,202,206],['Aspiro 150OD',100,'ml',99,102,104],
+ ['Trithizole 325SC',200,'ml',198,202,206],['Trithizole 325SC',100,'ml',99,102,104],['Trithizole 325SC',20,'ml',20,21,22],
+ ['Cycozeb 720WP',1000,'g',990,1000,1010],['Cycozeb 720WP',500,'g',495,500,505],['Cycozeb 720WP',450,'g',445,450,455],['Cycozeb 720WP',100,'g',98,100,102],
+ ['Parma 3.6EC',450,'ml',440,445,450],['Parma 3.6EC',20,'ml',20,21,22],['Dofamec 177EC',200,'ml',198,202,206],['Dofamec 177EC',100,'ml',99,102,104],
+ ['Dofama 77EC',150,'ml',148,151,155],['Dofama 77EC',100,'ml',99,102,104],
+ ['Dofama 150WG',50,'g',50,52,54],['Dofama 150WG',12,'g',12.5,13,13.5],['Dofama 150WG',10,'g',10.5,11,11.5],['Dofama 150WG',8,'g',8.5,9,9.5],
+ ['Partin 25WP',100,'g',98,100,102],['Party 400WP',65,'g',64,66,68],['Party 400WP',50,'g',49,52,53],['Party 400WP',15,'g',15,16,17],
+ ['Dorino 285EC',200,'ml',198,202,206],['Dorino 285EC',180,'ml',178,182,186],['Dorino 285EC',100,'ml',99,102,104],['Dorino 285EC',30,'ml',29,30,31],['Dorino 285EC',25,'ml',26,27,28],
+ ['Dofacar 5GR',1000,'g',985,995,1005],['Dorema 200EC',200,'ml',198,202,206],
+ ['Dofaben 22EC',450,'ml',445,450,455],['Dofaben 22EC',100,'ml',99,102,104],['Dofaben 22EC',50,'ml',49,51,53],
+ ['Dofaben 150WG',50,'g',49,51,53],['Dofaben 150WG',8,'g',8,8.5,9],['Dofaben 150WG',6,'g',6,6.5,7],
+ ['Dotrine 0.6SL',200,'ml',198,202,206],['Dotrine 0.6SL',100,'ml',99,102,104],['Dotrine 0.6SL',25,'ml',25,26,27],
+ ['Fentinat 48SC',100,'ml',99,102,104],['Fentinat 48SC',18,'ml',18,19,20],['Fentinat 48SC',15,'ml',15.5,16.5,17.5],
+ ['Doctor 5SC',1000,'ml',990,1000,1010],['Doctor 5SC',450,'ml',445,450,455],['Doctor 5SC',100,'ml',98,100,102],
+ ['Dofazeb 800WP',1000,'g',990,1000,1010],['Dofazeb 800WP',100,'g',98,100,102],['Dofine 0.6SL',250,'ml',245,250,255],['Dofine 0.6SL',240,'ml',235,240,245],
+ ['Propytil 250EC',240,'ml',238,243,247],
+ ['Dimida 600FS',200,'ml',198,202,206],['Dimida 600FS',180,'ml',178,182,186],['Dimida 600FS',100,'ml',99,102,104],['Dimida 600FS',10,'ml',11,11.5,12],
+ ['Thalonil 75WP',500,'g',495,500,505],['Thalonil 75WP',450,'g',445,450,455],['Thalonil 75WP',250,'g',245,250,255],['Thalonil 75WP',100,'g',98,100,102],['Thalonil 75WP',50,'g',48,50,52],['Thalonil 75WP',45,'g',44,46,47],
+ ['Forgon 40EC',450,'ml',440,450,455],
+ ['Beamvil-super 250SC',250,'ml',245,250,255],['Beamvil-super 250SC',240,'ml',235,240,245],['Beamvil-super 250SC',100,'ml',98,102,102],['Beamvil-super 250SC',25,'ml',25,26,27],
+ ['Asmiltatop super 400SC',240,'ml',238,243,247],['Asmiltatop super 400SC',100,'ml',98,100,102],['Asmiltatop super 400SC',15,'ml',15,16,17],
+ ['Be-amusa 810WP',100,'g',99,102,104],['Be-amusa 810WP',45,'g',44,46,47],['Be-amusa 810WP',30,'g',29,31,32],['Be-amusa 810WP',20,'g',19,20.5,21],
+ ['Antimer-so 800WP',250,'g',248,252,257],['Antimer-so 800WP',100,'g',99,102,104],['Antimer-so 800WP',50,'g',49,51,53],['Antimer-so 800WP',40,'g',39,41,42],
+ ['Rildzomigol super 68WG',1000,'g',990,1000,1010],['Rildzomigol super 68WG',500,'g',495,500,505],
+ ['Notralis 18GR',800,'g',785,793,800],['Notralis 18GR',400,'g',388,394,400],['Kasugacin 3SL',250,'ml',248,252,257],
+ ['Dopha Zn 4',500,'ml',490,500,505],['Asata Combi',500,'ml',490,500,505],['Asata Combi',25,'ml',25,26,27],
+ ['Chlorfen Asa 240SC',240,'ml',238,243,247],['Chlorfen Asa 240SC',200,'ml',198,202,206]];
+function dlRows_() {
+  const R = sheet_(DL_SH) ? rows_(DL_SH).filter(r => str_(r[0])) : DL_DEF_.map(r => r.concat(['']));
+  return R.map(r => ({ sp: str_(r[0]), qn: num_(r[1]), dv: str_(r[2]).toLowerCase() === 'g' ? 'g' : 'ml', lo: num_(r[3]), std: num_(r[4]), hi: num_(r[5]), gc: str_(r[6]) }));
+}
+/** Bảng định lượng: ghi đè cả bảng (Quản lý / Kế toán). */
+function webDLSave(a, list) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
+  const clean = (list || []).map(x => [String(x.sp || '').trim().slice(0, 80), num_(x.qn), String(x.dv || '').trim().toLowerCase() === 'g' ? 'g' : 'ml', num_(x.lo), num_(x.std), num_(x.hi), String(x.gc || '').trim().slice(0, 200)]).filter(r => r[0]);
+  const seen = {};
+  clean.forEach(r => {
+    if (!(r[1] > 0)) throw new Error('Ghi quy cách (số) cho ' + r[0]);
+    if (!(r[3] > 0 && r[4] > 0 && r[5] > 0)) throw new Error('Ghi đủ mức dưới / chuẩn / trên cho ' + r[0] + ' ' + r[1] + ' ' + r[2]);
+    if (!(r[3] <= r[4] && r[4] <= r[5])) throw new Error('Mức dưới ≤ chuẩn ≤ trên: ' + r[0] + ' ' + r[1] + ' ' + r[2]);
+    const k = (r[0] + '|' + r[1] + '|' + r[2]).toUpperCase(); if (seen[k]) throw new Error('Trùng dòng ' + r[0] + ' ' + r[1] + ' ' + r[2]); seen[k] = 1;
+  });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(DL_SH, DL_HEAD_), old = Math.max(0, sh.getLastRow() - 1);
+    if (old) sh.getRange(2, 1, old, DL_HEAD_.length).clearContent();
+    if (clean.length) sh.getRange(2, 1, clean.length, DL_HEAD_.length).setValues(clean);
+    log_(me, 'Sửa bảng định lượng QC-QĐ.04', clean.length + ' dòng', '');
+  } finally { lock.releaseLock(); }
+  return clean.map(r => ({ sp: r[0], qn: r[1], dv: r[2], lo: r[3], std: r[4], hi: r[5], gc: r[6] }));
+}
