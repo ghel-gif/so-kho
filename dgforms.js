@@ -104,7 +104,7 @@ function p05(I,d){const c=c05(d),K=B(),bx=v=>K.box(v),u=isGoi(I.q)?"GÓI":"CHAI"
       R.push([ul[0].toUpperCase()+ul.slice(1)+" / thùng",esc(d.dvThung||"……")]);
       R.push(["Trọng lượng thùng",isFinite(c.th)?`${f2(c.thMin)}<span class="ds">–</span>${f2(c.thMax)} kg`:`……<span class="ds">–</span>…… kg`]);
       R.push(["Thùng / pallet",isFinite(tpx)?String(tpx):"……"]);R.push(["Xếp pallet",xp]);
-      return `<table class="qct">${R.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`})()}</td></tr>
+      const kt=String(d.klThung??"").trim(),kh=String(d.klHop??"").trim();return `<table class="qct">${R.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table><div class="gc" style="margin-top:4px"><i>Ghi chú:</i><br>KL bì thùng carton: <b>${kt!==""?f2(num(kt)):"……"}</b> kg (gồm tấm lót)${num(d.dvHop)>0?`<br>KL bì hộp: <b>${kh!==""?fw(num(kh)):"……"}</b> g / hộp`:""}</div>`})()}</td></tr>
    <tr><td colspan="3"><b>Thông tin bán thành phẩm</b><br>Tên: ${esc(I.b.ten||"")} &nbsp; NSX: ${I.b.nsx?dmy(String(I.b.nsx).slice(0,10)):""} &nbsp; Số lô SX: <b>${esc(I.b.lo||"")}</b> &nbsp; Tỷ trọng (nếu có): ${num(d.tyTrong)>0?(+d.tyTrong).toFixed(3).replace(".",",")+" g/ml":""}</td></tr>
    <tr><td colspan="3"><b>Lưu ý</b><table class="lut"><tr><td>Băng keo dán thùng carton</td><td>${["logo Asata","logo khách","không thông tin"].map(x=>`<span class="op">${bx(d.bangKeo===x)} ${x}</span>`).join("")}</td></tr><tr><td>Pallet quấn màng co</td><td>${["Có","Không"].map(x=>`<span class="op">${bx(d.mangCo===x)} ${x}</span>`).join("")}</td></tr>${d.ghiChu?`<tr><td>Ghi chú</td><td>${esc(d.ghiChu)}</td></tr>`:""}</table></td></tr></table>
   ${K.sign([["Người lập phiếu",""],["Phòng QC",""]])}</div>`,true)}
