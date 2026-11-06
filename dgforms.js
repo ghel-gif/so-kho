@@ -21,9 +21,13 @@ function info(D){const o=D.o,q=D.q||{},sp=itemBy(o.maSP)||{ten:o.maSP},b=D.btp[0
 const b05=D=>(D.forms||[]).filter(f=>f.loai==="BM05").pop()||null;
 
 /* ---------- thanh nút trong lệnh đóng gói ---------- */
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('.cfm [data-x="save"],.cfm [data-x="close"],.cfm [data-x="del"]'))setTimeout(()=>document.querySelectorAll(".dgf-bar").forEach(b=>b.upd&&b.upd()),900)},true);
 window.dgfHook=function(box,so){if(!box||!so||box.querySelector(".dgf-bar"))return;
-  const bar=document.createElement("div");bar.className="actions dgf-bar";bar.style.cssText="margin:6px 0 10px;flex-wrap:wrap;justify-content:flex-start;gap:6px";
-  bar.innerHTML=`<span class="note" style="align-self:center">Biểu mẫu QC:</span><button class="btn small" type="button" data-f="BM05">Thông tin đóng gói (BM.05)</button><button class="btn small" type="button" data-f="KT">Kiểm tra quá trình (BM.04/06)</button><button class="btn small" type="button" data-f="BM07">Vệ sinh thiết bị (BM.07)</button>`;
+  const bar=document.createElement("div");bar.className="dgf-bar";
+  const T=[["BM05","BM.05","Thông tin đóng gói","M4 7l8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10"],["KT","BM.04/06","Kiểm tra quá trình","M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"],["BM07","BM.07","Vệ sinh thiết bị","M3 21h18M6 21V10l6-6 6 6v11M10 21v-5h4v5"]];
+  bar.innerHTML=`<div class="dgf-h">Biểu mẫu QC của lệnh này <small>bấm để mở / lập phiếu</small></div><div class="dgf-g">${T.map(([f,m,t,d])=>`<button type="button" class="dgf-t" data-f="${f}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="dgf-x"><b>${m}</b><span>${t}</span></span><em class="dgf-s" data-s="${f}">…</em></button>`).join("")}</div>`;
+  bar.upd=()=>getD(so).then(D=>{const F=D.forms||[];bar.querySelectorAll("[data-s]").forEach(e=>{const f=e.dataset.s,L=F.filter(x=>f==="KT"?/^BM0[46]$/.test(x.loai):x.loai===f);
+    e.className="dgf-s "+(L.length?"ok":"no");e.textContent=L.length?"✓ Đã lập"+(L.length>1?" "+L.length+" phiếu":""):"Chưa lập";e.closest(".dgf-t").classList.toggle("done",!!L.length)})}).catch(()=>{});bar.upd();
   const h2=box.querySelector("h2");if(h2&&h2.parentNode===box)h2.after(bar);else box.prepend(bar);
   bar.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>dgfOpen(so,b.dataset.f))};
 async function dgfOpen(so,f){let D;try{D=await getD(so)}catch(e){return handleErr(e)}

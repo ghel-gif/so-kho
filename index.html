@@ -1302,7 +1302,7 @@ if(kind==="bang"){const D=dgMonth(),M=D.M,aoa=[["BẢNG THEO DÕI BÁN THÀNH PH
 const ws=X.utils.aoa_to_sheet(aoa);ws["!cols"]=DGX_COLS.map(c=>({wch:Math.max(8,Math.min(26,c[0].length+2))}));X.utils.book_append_sheet(wb,ws,M.slice(5)+"-"+M.slice(0,4));X.writeFile(wb,"Theo doi dong goi "+M.slice(5)+"-"+M.slice(0,4)+".xlsx")}
 else{const B=dgBcCalc(),aoa=[["BÁO CÁO ĐÓNG GÓI BÁN THÀNH PHẨM"],["Từ ngày",dmy(B.a),"Đến ngày",dmy(B.b)],["Tổng lệnh","Hoàn thành","Đang/Chờ","Tỷ lệ HT","Định mức rắn (kg)","Thực tế rắn (kg)","Hao hụt rắn (kg)","Hao hụt rắn %"],[B.tong,B.ht,B.tong-B.ht,B.tong?B.ht/B.tong:0,B.r.dm,B.r.tt,B.r.hh,B.r.pct],["Dạng lỏng","","","","Định mức lỏng (L)","Thực tế lỏng (L)","Hao hụt lỏng (L)","Hao hụt lỏng %"],["","","","",B.l.dm,B.l.tt,B.l.hh,B.l.pct],[],["Người vận hành chính","Số lệnh","Định mức kg","Thực tế kg","Hao hụt kg","Định mức L","Thực tế L","Hao hụt L"]].concat(B.nv.map(x=>[x.ten,x.so,x.dk,x.tk,x.tk-x.dk,x.dl,x.tl,x.tl-x.dl]));
 const ws=X.utils.aoa_to_sheet(aoa);ws["!cols"]=[{wch:24}].concat(Array(7).fill({wch:16}));X.utils.book_append_sheet(wb,ws,"BÁO CÁO");X.writeFile(wb,"Bao cao dong goi "+B.a+" den "+B.b+".xlsx")}}catch(e){toast(e.message)}}
-function dgListRender(){const t=S.dgTab||"ds",box=$("dglBox"),seg=`<div class="seg" style="max-width:560px">${[["ds","Danh sách"],["bang","Bảng theo dõi tháng"],["bc","Báo cáo"],["bm","Biểu mẫu QC"]].map(([k,n])=>`<button type="button" data-dt="${k}" aria-pressed="${k===t}">${n}</button>`).join("")}</div>`;
+function dgListRender(){const t=S.dgTab||"ds",box=$("dglBox"),seg=`<div class="seg" style="max-width:760px">${[["ds","Danh sách"],["bang","Bảng theo dõi tháng"],["bc","Báo cáo"],["bm","Biểu mẫu QC"]].map(([k,n])=>`<button type="button" data-dt="${k}" aria-pressed="${k===t}">${n}</button>`).join("")}</div>`;
 if(t==="ds"){dgListRender0();box.insertAdjacentHTML("afterbegin",seg)}
 else if(t==="bm"){box.innerHTML=seg;if(window.dgfTab)dgfTab(box)}
 else{box.innerHTML=seg+(t==="bang"?dgBangRender():dgBcRender());$("dgXls").onclick=()=>dgXlsx(t);
@@ -2533,8 +2533,8 @@ function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
 <script src="kehoach.js?v=54"></script>
-<script src="dgforms.js?v=65"></script>
-<link rel="stylesheet" href="ui.css?v=5">
+<script src="dgforms.js?v=66"></script>
+<link rel="stylesheet" href="ui.css?v=7">
 <script src="nav.js?v=8"></script>
 </body>
 </html>

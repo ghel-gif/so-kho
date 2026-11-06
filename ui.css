@@ -176,3 +176,34 @@ html body select.v-ok option,html body select.v-bad option,html body select.v-na
 /* nút kết luận QC: Đạt xanh lá, Không đạt đỏ */
 html body button[data-qc="Đạt"],html body button[data-pn="Đạt"]{background:#2e7d32!important;border-color:#2e7d32!important;color:#fff!important}
 html body button[data-qc="Đạt"]:hover,html body button[data-pn="Đạt"]:hover{background:#1b5e20!important}
+/* Thanh biểu mẫu QC trong lệnh đóng gói: ô lớn, rõ trạng thái */
+.dgf-bar{margin:8px 0 14px;padding:12px;border:1.5px solid #9fd3ca;border-radius:12px;background:#eef8f6}
+.dgf-h{font-weight:800;font-size:15px;color:#0f5c53;margin:0 0 8px}.dgf-h small{font-weight:500;color:#4a6b66;font-size:12.5px;margin-left:6px}
+.dgf-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dgf-t{display:flex;align-items:center;gap:10px;text-align:left;min-height:64px;padding:10px 12px;border-radius:10px;border:2px solid #0f6f64;background:#fff;color:#123;cursor:pointer;font:inherit;box-shadow:0 2px 0 #0f6f64;transition:transform .08s,box-shadow .08s,background .15s}
+.dgf-t:hover{background:#e3f4f1}.dgf-t:active{transform:translateY(2px);box-shadow:none}
+.dgf-t svg{flex:none;width:30px;height:30px;fill:none;stroke:#0f6f64;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dgf-x{display:flex;flex-direction:column;min-width:0;line-height:1.25}.dgf-x b{font-size:16px;color:#0f5c53}.dgf-x span{font-size:14px;font-weight:600}
+.dgf-s{margin-left:auto;font-style:normal;font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;background:#eceff1;color:#455a64}
+.dgf-s.ok{background:#e6f4ea;color:#1b5e20;border:1px solid #2e7d32}.dgf-s.no{background:#fff3cd;color:#7a4b00;border:1px solid #e0a800}
+.dgf-t.done{border-color:#2e7d32;box-shadow:0 2px 0 #2e7d32}.dgf-t.done svg{stroke:#2e7d32}
+@media screen and (max-width:760px){.dgf-g{grid-template-columns:1fr}}
+:root[data-theme=dark] .dgf-bar{background:#10302c;border-color:#2c6b62}:root[data-theme=dark] .dgf-h{color:#8fe0d3}:root[data-theme=dark] .dgf-h small{color:#a9c7c2}
+:root[data-theme=dark] .dgf-t{background:#16211f;color:#e8f1ef;border-color:#5fc4b4;box-shadow:0 2px 0 #5fc4b4}:root[data-theme=dark] .dgf-t:hover{background:#1d3430}
+:root[data-theme=dark] .dgf-t svg{stroke:#5fc4b4}:root[data-theme=dark] .dgf-x b{color:#8fe0d3}
+:root[data-theme=dark] .dgf-s.ok{background:#123b22;color:#b9f6ca}:root[data-theme=dark] .dgf-s.no{background:#3d2e00;color:#ffe08a}
+@media print{.dgf-bar{display:none!important}}
+/* Nút chuyển mục (.seg): trông rõ là nút bấm, mục đang mở tô đậm */
+html body .seg{display:flex;flex-wrap:wrap;gap:8px;border:0;border-radius:0;overflow:visible;background:none;padding:2px 0}
+html body .seg button{flex:1 1 auto;min-height:44px;padding:9px 14px;border:2px solid #0f6f64!important;border-radius:10px;background:#fff;color:#0f5c53;font-weight:700;font-size:14.5px;box-shadow:0 2px 0 #0f6f64;cursor:pointer;transition:transform .08s,box-shadow .08s,background .15s}
+html body .seg button:hover{background:#e3f4f1}
+html body .seg button:active{transform:translateY(2px);box-shadow:none}
+html body .seg button[aria-pressed="true"]{background:#0f6f64;color:#fff;box-shadow:0 2px 0 #08463f}
+html body .seg button[aria-pressed="true"]::before{content:"✓ "}
+html body .seg button[aria-pressed="true"][data-t="Nhập"]{background:var(--in);border-color:var(--in)!important;color:#fff}
+html body .seg button[aria-pressed="true"][data-t="Xuất"],html body .seg button[aria-pressed="true"][data-t="Đóng gói"]{background:var(--out);border-color:var(--out)!important;color:#fff}
+html body .seg button[aria-pressed="true"][data-t="Kiểm kê"]{background:var(--adj);border-color:var(--adj)!important;color:#fff}
+:root[data-theme=dark] .seg button{background:#16211f;color:#8fe0d3;border-color:#5fc4b4!important;box-shadow:0 2px 0 #5fc4b4}
+:root[data-theme=dark] .seg button:hover{background:#1d3430}
+:root[data-theme=dark] .seg button[aria-pressed="true"]{background:#5fc4b4;color:#0b1f1c;box-shadow:0 2px 0 #2c6b62}
+@media screen and (max-width:600px){html body .seg button{flex:1 1 calc(50% - 8px)}}
