@@ -291,19 +291,21 @@ const dlList=()=>(S.dg&&S.dg.dl)||[];
 const nrm=x=>String(x||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/gi,"d").toLowerCase().replace(/[^a-z0-9]/g,"");
 const DL52={g:[[50,"p",7,4],[100,"a",4,2],[200,"p",4,2],[300,"a",8,4],[500,"p",2,1],[1000,"a",15,5],[10000,"p",1,.5],[15000,"a",100,50],[1e12,"p",1,.5]],
             ml:[[50,"p",7,4],[100,"a",4,2],[200,"p",4,2],[300,"a",8,2],[500,"p",2,1],[1000,"a",15,5],[10000,"p",1,.5],[15000,"a",100,50],[1e12,"p",1,.5]]};
+const dl52List=()=>(S.dg&&S.dg.dl52&&S.dg.dl52.length)?S.dg.dl52:["g","ml"].flatMap(dv=>DL52[dv].map((r,i,A)=>({dv,tu:i?A[i-1][0]:5,den:r[0]>=1e12?"":r[0],loK:r[1]==="p"?"%":"đv",lo:r[2],hiK:r[1]==="p"?"%":"đv",hi:r[3]})));
 /* trả mức định lượng theo QĐ.04 cho quy cách q: {qn,dv,lo,std,hi,src,ten,warn} (đơn vị g hoặc ml của sản phẩm) */
 function dlOf(q){if(!q)return null;const u=String(q.dvl||"").trim().toLowerCase(),v=+q.luong||0;if(!(v>0))return null;
   const dv=/^(ml|l|lít)/.test(u)?"ml":"g",qn=/^(l|lít)$/.test(u)||u==="kg"?v*1000:v,sp=nrm(q.sp);
   const r=sp&&dlList().find(x=>nrm(x.sp)===sp&&Math.abs(+x.qn-qn)<1e-6&&x.dv===dv);
   if(r)return {qn,dv,lo:+r.lo,std:+r.std,hi:+r.hi,src:"mục 5.1",ten:r.sp,warn:+r.std<qn};
-  if(qn<=5)return null;const R=DL52[dv].find(x=>qn<=x[0]),f=(t,k)=>t==="p"?qn*k/100:k,lo=Math.round((qn-f(R[1],R[2]))*100)/100,hi=Math.round((qn+f(R[1],R[3]))*100)/100;
+  const T=dl52List().filter(x=>x.dv===dv),R=T.find(x=>qn>+x.tu&&(x.den===""||x.den==null||qn<=+x.den));if(!R)return null;const f=(t,k)=>t==="%"?qn*k/100:+k,lo=Math.round((qn-f(R.loK,R.lo))*100)/100,hi=Math.round((qn+f(R.hiK,R.hi))*100)/100;
   return {qn,dv,lo,std:qn,hi,src:"mục 5.2",ten:"",warn:false}}
 /* đổi sang gram thuốc: lỏng × tỷ trọng */
 const dlG=(L,tt)=>{if(!L)return null;const k=L.dv==="ml"?(+tt||0):1;if(!(k>0))return null;const r=x=>Math.round(x*k*100)/100;return {lo:r(L.lo),std:r(L.std),hi:r(L.hi),k}};
 const dlTxt=(L,tt)=>{if(!L)return "";const G=dlG(L,tt),u=L.dv;return `Theo QC-QĐ.04 ${L.src}${L.ten?" ("+esc(L.ten)+")":""}: ${f2(L.qn)} ${u} → ${f2(L.lo)} – ${f2(L.hi)} ${u} (chuẩn ${f2(L.std)})${u==="ml"?(G?` × tỷ trọng ${(+tt).toFixed(3).replace(".",",")} = <b>${f2(G.lo)} – ${f2(G.hi)} g</b> (chuẩn ${f2(G.std)} g)`:" — cần tỷ trọng để quy ra gram"):""}${L.warn?` <span style="color:#c0392b;font-weight:700">⚠ mức chuẩn thấp hơn danh định ${f2(L.qn)} ${u} (TT 21/2014: trung bình lô phải ≥ danh định)</span>`:""}`};
 const f1=v=>v===""||v==null||!isFinite(+String(v).replace(",","."))?(v??""):(+String(v).replace(",",".")).toFixed(1);
 function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro==="Quản lý");let L=dlList().map(x=>Object.assign({},x)),mode="xem";
-  const w=dlg(`<h2>Bảng định lượng QC-QĐ.04 (mục 5.1)</h2>
+  let tab="51",L2=dl52List().map(x=>Object.assign({},x));
+  const w=dlg(`<h2 id="dlTt">Bảng định lượng QC-QĐ.04</h2><div style="display:flex;gap:6px;margin:4px 0 6px"><button class="btn small" type="button" data-tab="51">Mục 5.1 · Sản phẩm tên riêng</button><button class="btn small" type="button" data-tab="52">Mục 5.2 · Hàng gia công</button></div>
    <p class="note">Đơn vị: g hoặc ml của sản phẩm. BM.05 tự lấy theo tên sản phẩm + quy cách; hàng lỏng nhân tỷ trọng ra gram. ${ed?"":"<b>Chỉ Trưởng phòng QA/QC được sửa — bạn chỉ xem.</b>"}</p>
    <div style="display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap"><input id="dlQ" placeholder="Tìm sản phẩm…" style="max-width:260px" autocomplete="off"><span class="note" id="dlN"></span><span style="flex:1"></span>${ed?`<button class="btn" type="button" id="dlAdd" style="display:none">＋ Thêm dòng</button><button class="btn" type="button" id="dlMode">✎ Sửa bảng</button>`:""}</div>
    <div class="dlw" style="max-height:62vh;overflow:auto;border:1px solid var(--line,#d5dde8);border-radius:10px"><table class="dlt"><thead id="dlH"></thead><tbody id="dlB"></tbody></table></div>
@@ -323,7 +325,16 @@ function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro===
    .dlt.edit td{padding:4px}.dlt .rm{padding:2px 8px}`;box.appendChild(stl);
   const f1v=v=>{const n=+String(v??"").replace(",",".");return String(v??"").trim()===""||!isFinite(n)?"":n.toFixed(1).replace(".",",")};
   const isBad=x=>(+x.std>0&&+x.qn>0&&+x.std<+x.qn)||(+x.lo>0&&+x.std>0&&+x.hi>0&&!(+x.lo<=+x.std&&+x.std<=+x.hi));
-  const draw=()=>{const q=nrm($("dlQ").value),T=w.querySelector(".dlt");T.classList.toggle("edit",mode==="sua");
+  const sel=(k,v)=>`<select data-k="${k}">${["%","đv"].map(o=>`<option value="${o}"${o===v?" selected":""}>${o==="%"?"%":"g/ml"}</option>`).join("")}</select>`;
+  const nf=v=>{const n=+String(v??"").replace(",",".");return String(v??"").trim()===""||!isFinite(n)?"":String(Math.round(n*1000)/1000).replace(".",",")};
+  const draw52=()=>{const T=w.querySelector(".dlt");T.classList.toggle("edit",mode==="sua");$("dlQ").style.display="none";
+    const sym=d=>d==="g"?"A":"B",u=d=>d==="g"?"g":"ml",lv=(d,k,v,sg)=>`${sym(d)} ${sg} ${nf(v)}${k==="%"?"%":" "+u(d)}`;
+    if(mode==="xem"){$("dlH").innerHTML=`<tr><th>Dạng</th><th>Quy cách danh nghĩa</th><th class="c-lo">Mức dưới</th><th class="c-std">Mức chuẩn</th><th class="c-hi">Mức trên</th></tr>`;
+      let h="";["g","ml"].forEach(d=>{const R=L2.filter(x=>x.dv===d).sort((a,b)=>a.tu-b.tu);R.forEach((x,m)=>{h+=`<tr class="${m===0?"g1":""}">${m===0?`<td class="sp" rowspan="${R.length}">${d==="g"?"5.2.1 Dạng rắn<br><span style='font-weight:400'>A (gram)</span>":"5.2.2 Dạng lỏng<br><span style='font-weight:400'>B (ml)</span>"}</td>`:""}<td><b>${x.den===""||x.den==null?"Trên "+nf(x.tu):"Trên "+nf(x.tu)+" đến "+nf(x.den)}</b></td><td class="c-lo">${lv(d,x.loK,x.lo,"–")}</td><td class="c-std">${sym(d)}</td><td class="c-hi">${lv(d,x.hiK,x.hi,"+")}</td></tr>`})});
+      $("dlB").innerHTML=h;$("dlN").innerHTML=`${L2.length} khoảng · áp dụng cho hàng gia công và sản phẩm chưa có trong mục 5.1`}
+    else{$("dlH").innerHTML=`<tr><th style="width:9%">Dạng</th><th>Trên (A &gt;)</th><th>Đến (A ≤)</th><th class="c-lo" colspan="2">Mức dưới (trừ)</th><th class="c-hi" colspan="2">Mức trên (cộng)</th><th></th></tr>`;
+      $("dlB").innerHTML=L2.map((x,i)=>`<tr data-j="${i}"><td><select data-k="dv">${["g","ml"].map(o=>`<option${o===x.dv?" selected":""}>${o}</option>`).join("")}</select></td><td><input data-k="tu" inputmode="decimal" value="${esc(nf(x.tu))}"></td><td><input data-k="den" inputmode="decimal" placeholder="(không giới hạn)" value="${esc(nf(x.den))}"></td><td class="c-lo"><input data-k="lo" inputmode="decimal" value="${esc(nf(x.lo))}"></td><td class="c-lo">${sel("loK",x.loK)}</td><td class="c-hi"><input data-k="hi" inputmode="decimal" value="${esc(nf(x.hi))}"></td><td class="c-hi">${sel("hiK",x.hiK)}</td><td><button class="btn small rm" type="button" data-del2="${i}">✕</button></td></tr>`).join("");$("dlN").textContent=L2.length+" khoảng"}};
+  const draw=()=>{w.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("primary",b.dataset.tab===tab));if(tab==="52")return draw52();$("dlQ").style.display="";const q=nrm($("dlQ").value),T=w.querySelector(".dlt");T.classList.toggle("edit",mode==="sua");
     const idx=L.map((x,i)=>i).filter(i=>!q||nrm(L[i].sp).includes(q));
     if(mode==="xem"){$("dlH").innerHTML=`<tr><th style="width:28%">Sản phẩm</th><th>Quy cách</th><th class="c-lo">Mức dưới</th><th class="c-std">Mức chuẩn</th><th class="c-hi">Mức trên</th><th>Khoảng cho phép</th><th>Ghi chú</th></tr>`;
       let h="",k=0;while(k<idx.length){const sp=L[idx[k]].sp;let n=1;while(k+n<idx.length&&L[idx[k+n]].sp===sp)n++;
@@ -334,14 +345,18 @@ function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro===
       $("dlB").innerHTML=idx.map(i=>{const x=L[i];return `<tr data-i="${i}" class="${isBad(x)?"bad":""}"><td class="sp"><input data-k="sp" value="${esc(x.sp)}"></td><td><input data-k="qn" inputmode="decimal" value="${esc(f1(x.qn))}"></td><td><select data-k="dv">${["ml","g"].map(u=>`<option${u===x.dv?" selected":""}>${u}</option>`).join("")}</select></td>${["lo","std","hi"].map(k=>`<td class="c-${k}"><input data-k="${k}" inputmode="decimal" value="${esc(f1(x[k]))}"></td>`).join("")}<td><input data-k="gc" value="${esc(x.gc||"")}"></td><td><button class="btn small rm" type="button" data-del="${i}" title="Xoá dòng">✕</button></td></tr>`}).join("")}
     const nb=L.filter(isBad).length;$("dlN").innerHTML=`${L.length} dòng · ${new Set(L.map(x=>nrm(x.sp))).size} sản phẩm${nb?` · <span style="color:#c0392b;font-weight:700">${nb} dòng cần xem lại</span>`:""}`};
   draw();$("dlQ").oninput=draw;
+  w.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;draw()});
+  const up2=e=>{const t=e.target,tr=t.closest("tr");if(!tr||tr.dataset.j==null||!t.dataset.k)return;const x=L2[+tr.dataset.j],k=t.dataset.k;x[k]=["dv","loK","hiK"].includes(k)?t.value:(String(t.value).trim()===""&&k==="den"?"":String(t.value).replace(",","."))};
+  $("dlB").addEventListener("input",up2);$("dlB").addEventListener("change",up2);
+  $("dlB").addEventListener("click",e=>{const b=e.target.closest("[data-del2]");if(!b)return;L2.splice(+b.dataset.del2,1);draw()});
   $("dlB").addEventListener("input",e=>{const t=e.target,tr=t.closest("tr");if(!tr||!t.dataset.k||tr.dataset.i==null)return;const x=L[+tr.dataset.i];x[t.dataset.k]=["sp","gc","dv"].includes(t.dataset.k)?t.value:String(t.value).replace(",",".");tr.classList.toggle("bad",isBad(x))});
   $("dlB").addEventListener("change",e=>{if(e.target.dataset.k==="dv")L[+e.target.closest("tr").dataset.i].dv=e.target.value});
   $("dlB").addEventListener("focusout",e=>{const t=e.target;if(["qn","lo","std","hi"].includes(t.dataset&&t.dataset.k)&&t.value.trim()!=="")t.value=f1(t.value)});
   $("dlB").addEventListener("click",e=>{const b=e.target.closest("[data-del]");if(!b)return;L.splice(+b.dataset.del,1);draw()});
   if($("dlMode"))$("dlMode").onclick=()=>{mode=mode==="xem"?"sua":"xem";$("dlMode").textContent=mode==="xem"?"✎ Sửa bảng":"👁 Xem bảng";$("dlAdd").style.display=mode==="sua"?"":"none";$("dlOk").style.display=mode==="sua"?"":"none";draw()};
-  if($("dlAdd"))$("dlAdd").onclick=()=>{L.unshift({sp:$("dlQ").value.trim(),qn:"",dv:"ml",lo:"",std:"",hi:"",gc:""});$("dlQ").value="";draw();const f=$("dlB").querySelector("input");f&&f.focus()};
+  if($("dlAdd"))$("dlAdd").onclick=()=>{if(tab==="52"){L2.push({dv:"g",tu:"",den:"",loK:"%",lo:"",hiK:"%",hi:""});draw();return}L.unshift({sp:$("dlQ").value.trim(),qn:"",dv:"ml",lo:"",std:"",hi:"",gc:""});$("dlQ").value="";draw();const f=$("dlB").querySelector("input");f&&f.focus()};
   w.querySelector("[data-x]").onclick=()=>w.remove();
-  if($("dlOk"))$("dlOk").onclick=async()=>{const b=$("dlOk");b.disabled=true;try{const R=await api("webDLSave",S.auth,L);S.dg.dl=R;L=R.map(x=>Object.assign({},x));mode="xem";$("dlMode").textContent="✎ Sửa bảng";$("dlAdd").style.display="none";b.style.display="none";draw();toast("Đã lưu bảng định lượng ("+R.length+" dòng)")}catch(e){toast(e.message)}b.disabled=false}}
+  if($("dlOk"))$("dlOk").onclick=async()=>{const b=$("dlOk");b.disabled=true;if(tab==="52"){try{const R=await api("webDL52Save",S.auth,L2);S.dg.dl52=R;L2=R.map(x=>Object.assign({},x));mode="xem";$("dlMode").textContent="✎ Sửa bảng";$("dlAdd").style.display="none";b.style.display="none";draw();toast("Đã lưu bảng mục 5.2 ("+R.length+" khoảng)")}catch(e){toast(e.message)}b.disabled=false;return}try{const R=await api("webDLSave",S.auth,L);S.dg.dl=R;L=R.map(x=>Object.assign({},x));mode="xem";$("dlMode").textContent="✎ Sửa bảng";$("dlAdd").style.display="none";b.style.display="none";draw();toast("Đã lưu bảng định lượng ("+R.length+" dòng)")}catch(e){toast(e.message)}b.disabled=false}}
 window.dlDlg=dlDlg;window.dlOf=dlOf;
 window.qcBar=function(box){if(!box||box.querySelector(".qc-bar"))return;
   if(!canQC()){if(!(S.me&&S.me.qc))return;const el=document.createElement("div");el.className="qc-bar";el.style.cssText="margin:8px 0;display:flex;justify-content:flex-end";el.innerHTML=`<button class="btn" type="button" id="dlOpen">Bảng định lượng (QC-QĐ.04)</button>`;const tools=box.querySelector(".tools");(tools?tools.parentNode:box).insertBefore(el,tools?tools.nextSibling:box.firstChild);$("dlOpen").onclick=()=>dlDlg();return}

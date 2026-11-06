@@ -383,3 +383,33 @@ function webDLSave(a, list) {
   } finally { lock.releaseLock(); }
   return clean.map(r => ({ sp: r[0], qn: r[1], dv: r[2], lo: r[3], std: r[4], hi: r[5], gc: r[6] }));
 }
+
+/* ===== Bảng định lượng QC-QĐ.04 mục 5.2 (hàng gia công — quy tắc theo quy cách danh nghĩa) ===== */
+const DL52_SH = 'DinhLuongQD04_52', DL52_HEAD_ = ['Dạng (g/ml)', 'Trên (A >)', 'Đến (A ≤)', 'Kiểu mức dưới (%/đv)', 'Mức dưới', 'Kiểu mức trên (%/đv)', 'Mức trên'];
+const DL52_DEF_ = (() => { const R = [];
+  [['g', [4, 2], [8, 4]], ['ml', [4, 2], [8, 2]]].forEach(([d, a50, a200]) => {
+    [[5, 50, '%', 7, '%', 4], [50, 100, 'đv', a50[0], 'đv', a50[1]], [100, 200, '%', 4, '%', 2], [200, 300, 'đv', a200[0], 'đv', a200[1]], [300, 500, '%', 2, '%', 1],
+     [500, 1000, 'đv', 15, 'đv', 5], [1000, 10000, '%', 1, '%', 0.5], [10000, 15000, 'đv', 100, 'đv', 50], [15000, '', '%', 1, '%', 0.5]].forEach(r => R.push([d].concat(r)));
+  }); return R; })();
+function dl52Rows_() {
+  const R = sheet_(DL52_SH) ? rows_(DL52_SH).filter(r => str_(r[0])) : DL52_DEF_;
+  return R.map(r => ({ dv: str_(r[0]).toLowerCase() === 'g' ? 'g' : 'ml', tu: num_(r[1]), den: str_(r[2]) === '' ? '' : num_(r[2]), loK: str_(r[3]) === '%' ? '%' : 'đv', lo: num_(r[4]), hiK: str_(r[5]) === '%' ? '%' : 'đv', hi: num_(r[6]) }));
+}
+function webDL52Save(a, list) {
+  const me = auth_(a, [ROLES.QL]); needCT_(me);
+  if (me.ten !== DL_EDITOR_) throw new Error('Chỉ ' + DL_EDITOR_ + ' (Trưởng phòng QA/QC) mới được sửa bảng định lượng QC-QĐ.04.');
+  const clean = (list || []).map(x => [String(x.dv || '').toLowerCase() === 'g' ? 'g' : 'ml', num_(x.tu), String(x.den == null ? '' : x.den).trim() === '' ? '' : num_(x.den), x.loK === '%' ? '%' : 'đv', num_(x.lo), x.hiK === '%' ? '%' : 'đv', num_(x.hi)]);
+  clean.forEach(r => {
+    if (!(r[1] >= 0)) throw new Error('Ghi giá trị "Trên" cho mỗi khoảng.');
+    if (r[2] !== '' && !(r[2] > r[1])) throw new Error('Khoảng ' + r[1] + ' – ' + r[2] + ' ' + r[0] + ': "Đến" phải lớn hơn "Trên".');
+    if (!(r[4] >= 0 && r[6] >= 0)) throw new Error('Ghi mức dưới / mức trên cho khoảng ' + r[1] + ' – ' + (r[2] || '…') + ' ' + r[0]);
+  });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(DL52_SH, DL52_HEAD_), old = Math.max(0, sh.getLastRow() - 1);
+    if (old) sh.getRange(2, 1, old, DL52_HEAD_.length).clearContent();
+    if (clean.length) sh.getRange(2, 1, clean.length, DL52_HEAD_.length).setValues(clean);
+    log_(me, 'Sửa bảng định lượng QC-QĐ.04 mục 5.2', clean.length + ' khoảng', '');
+  } finally { lock.releaseLock(); }
+  return clean.map(r => ({ dv: r[0], tu: r[1], den: r[2], loK: r[3], lo: r[4], hiK: r[5], hi: r[6] }));
+}
