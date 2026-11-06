@@ -307,7 +307,7 @@ function dlOf(q){if(!q)return null;const u=String(q.dvl||"").trim().toLowerCase(
   const T=dl52List().filter(x=>x.dv===dv),R=T.find(x=>qn>+x.tu&&(x.den===""||x.den==null||qn<=+x.den));if(!R)return null;const f=(t,k)=>t==="%"?qn*k/100:+k,lo=Math.round((qn-f(R.loK,R.lo))*100)/100,hi=Math.round((qn+f(R.hiK,R.hi))*100)/100;
   return {qn,dv,lo,std:qn,hi,src:"mục 5.2",ten:"",warn:false}}
 /* đổi sang gram thuốc: lỏng × tỷ trọng */
-const dlG=(L,tt)=>{if(!L)return null;const k=L.dv==="ml"?(+tt||0):1;if(!(k>0))return null;const r=x=>Math.round(x*k*100)/100;return {lo:r(L.lo),std:r(L.std),hi:r(L.hi),k}};
+const dlG=(L,tt)=>{if(!L)return null;const k=L.dv==="ml"?Math.round((+tt||0)*1000)/1000:1;if(!(k>0))return null;const e=1e-9,up=x=>Math.ceil(x*k*10-e)/10,dn=x=>Math.floor(x*k*10+e)/10,rd=x=>Math.round(x*k*10)/10;return {lo:up(L.lo),std:rd(L.std),hi:dn(L.hi),k}};
 const dlTxt=(L,tt)=>{if(!L)return "";const G=dlG(L,tt),u=L.dv;return `Theo QC-QĐ.04 ${L.src}${L.ten?" ("+esc(L.ten)+")":""}: ${f2(L.qn)} ${u} → ${f2(L.lo)} – ${f2(L.hi)} ${u} (chuẩn ${f2(L.std)})${u==="ml"?(G?` × tỷ trọng ${(+tt).toFixed(3).replace(".",",")} = <b>${f2(G.lo)} – ${f2(G.hi)} g</b> (chuẩn ${f2(G.std)} g)`:" — cần tỷ trọng để quy ra gram"):""}${L.warn?` <span style="color:#c0392b;font-weight:700">⚠ mức chuẩn thấp hơn danh định ${f2(L.qn)} ${u} (TT 21/2014: trung bình lô phải ≥ danh định)</span>`:""}`};
 const f1=v=>v===""||v==null||!isFinite(+String(v).replace(",","."))?(v??""):(+String(v).replace(",",".")).toFixed(1);
 function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro==="Quản lý");let L=dlList().map(x=>Object.assign({},x)),mode="xem";
@@ -364,7 +364,7 @@ function dlDlg(){const ed=!!(S.me&&S.me.ten==="Nguyễn Ô Ghel"&&S.me.vaiTro===
   if($("dlAdd"))$("dlAdd").onclick=()=>{if(tab==="52"){L2.push({dv:"g",tu:"",den:"",loK:"%",lo:"",hiK:"%",hi:""});draw();return}L.unshift({sp:$("dlQ").value.trim(),qn:"",dv:"ml",lo:"",std:"",hi:"",gc:""});$("dlQ").value="";draw();const f=$("dlB").querySelector("input");f&&f.focus()};
   w.querySelector("[data-x]").onclick=()=>w.remove();
   if($("dlOk"))$("dlOk").onclick=async()=>{const b=$("dlOk");b.disabled=true;if(tab==="52"){try{const R=await api("webDL52Save",S.auth,L2);S.dg.dl52=R;L2=R.map(x=>Object.assign({},x));mode="xem";$("dlMode").textContent="✎ Sửa bảng";$("dlAdd").style.display="none";b.style.display="none";draw();toast("Đã lưu bảng mục 5.2 ("+R.length+" khoảng)")}catch(e){toast(e.message)}b.disabled=false;return}try{const R=await api("webDLSave",S.auth,L);S.dg.dl=R;L=R.map(x=>Object.assign({},x));mode="xem";$("dlMode").textContent="✎ Sửa bảng";$("dlAdd").style.display="none";b.style.display="none";draw();toast("Đã lưu bảng định lượng ("+R.length+" dòng)")}catch(e){toast(e.message)}b.disabled=false}}
-window.dlDlg=dlDlg;window.dlOf=dlOf;
+window.dlDlg=dlDlg;window.dlOf=dlOf;window.dlG=dlG;
 window.qcBar=function(box){if(!box||box.querySelector(".qc-bar"))return;
   if(!canQC()){if(!(S.me&&S.me.qc))return;const el=document.createElement("div");el.className="qc-bar";el.style.cssText="margin:8px 0;display:flex;justify-content:flex-end";el.innerHTML=`<button class="btn" type="button" id="dlOpen">Bảng định lượng (QC-QĐ.04)</button>`;const tools=box.querySelector(".tools");(tools?tools.parentNode:box).insertBefore(el,tools?tools.nextSibling:box.firstChild);$("dlOpen").onclick=()=>dlDlg();return}
   const T=rdTodo();
