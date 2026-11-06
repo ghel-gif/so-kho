@@ -16,7 +16,7 @@ const DD=(id,v,dis)=>`<select id="${id}" ${dis}><option value="">— chưa kết
 const today=()=>S.today;
 async function getD(so){return api("webDGFGet",S.auth,so)}
 function info(D){const o=D.o,q=D.q||{},sp=itemBy(o.maSP)||{ten:o.maSP},b=D.btp[0]||{},X=(D.P&&D.P.x)||{};
-  const liq=liqOf(q),tt=+b.tt||0,thuoc=toG(q,tt);
+  const liq=liqOf(q),tt=+b.tt||+(D.P&&D.P.tt)||0,thuoc=toG(q,tt);
   return {o,q,sp,b,X,liq,tt,thuoc,tenSP:(q.sp?q.sp+(q.quyCach?" – "+q.quyCach:""):sp.ten),maSP:q.nhan||o.maSP}}
 const b05=D=>(D.forms||[]).filter(f=>f.loai==="BM05").pop()||null;
 
@@ -68,7 +68,7 @@ function f05(D,p){const I=info(D),TK=isGoi(I.q)?"BM05G":"BM05C",d=Object.assign(
    <div class="two">${inp("f5Nd","Nhiệt độ cài đặt",d.nhietDo,dis)}${inp("f5Td","Tốc độ băng tải",d.tocDo,dis)}</div><div class="two">${inp("f5Seal","Seal",d.seal,dis)}${inp("f5Ep","Nhiệt ép",d.nhietEp,dis)}</div>
    <b style="display:block;margin-top:8px">Trọng lượng</b>
    <div class="three" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">${inp("f5Tl","TL thuốc chuẩn (g)",d.tlThuoc,`type="number" step="any" ${dis}`)}${inp("f5Lo","Cận dưới (g)",d.tMin!==undefined&&d.tMin!==""?d.tMin:(num(d.ds)>0?Math.round((num(d.tlThuoc)-num(d.ds))*100)/100:""),`type="number" step="any" ${dis}`)}${inp("f5Hi","Cận trên (g)",d.tMax!==undefined&&d.tMax!==""?d.tMax:(num(d.ds)>0?Math.round((num(d.tlThuoc)+num(d.ds))*100)/100:""),`type="number" step="any" ${dis}`)}</div>
-   ${I.liq||d.tyTrong?`<div class="two">${inp("f5Tt","Tỷ trọng BTP (g/ml)",d.tyTrong,`type="number" step="any" ${dis}`)}<span></span></div>`:""}
+   <div class="two">${inp("f5Tt","Tỷ trọng BTP (g/ml)"+(I.liq?"":" – nếu có"),d.tyTrong,`type="number" step="0.001" ${dis}`)}<span></span></div>
    <div class="two"><label>Loại bao bì tính khối lượng<select id="f5Lbb" ${dis}>${BB_LOAI.map(x=>`<option${x===d.loaiBB?" selected":""}>${x}</option>`).join("")}</select></label>${inp("f5Kbb","Khối lượng bao bì (g)",d.klBB,`type="number" step="any" ${dis}`)}</div>
    <b style="display:block;margin-top:8px">Quy cách đóng gói</b>
    <div class="two">${inp("f5Dvh",(isGoi(I.q)?"Gói":"Chai")+" / hộp (bỏ trống nếu không có hộp)",d.dvHop,`type="number" ${dis}`)}${inp("f5Ht","Hộp / thùng carton lớn",d.hopThung,`type="number" ${dis}`)}</div>
@@ -78,7 +78,7 @@ function f05(D,p){const I=info(D),TK=isGoi(I.q)?"BM05G":"BM05C",d=Object.assign(
    <label>Thùng carton kéo băng keo<select id="f5Bk" ${dis}><option value=""></option>${["logo Asata","logo khách","không thông tin"].map(x=>`<option${x===d.bangKeo?" selected":""}>${x}</option>`).join("")}</select></label>
    ${inp("f5Gc","Ghi chú",d.ghiChu,dis)}<p class="note" id="f5Sum"></p>
    ${p?`<p class="note">Lưu lần cuối: ${esc(p.nguoi)} · ${esc(p.luc)}</p>`:""}<div class="actions">${B().btn4(canW,!!p)}</div>`);
-  const g=()=>{const tb=tbRead(TK,D,w,d.tb);return {tb,maMay:tb.map(t=>t.ma).filter(Boolean).join(", "),mayTen:tb.map(t=>t.ten).filter(Boolean).join("; "),ngay:$("f5Ngay").value,nhietDo:$("f5Nd").value.trim(),tocDo:$("f5Td").value.trim(),seal:$("f5Seal").value.trim(),nhietEp:$("f5Ep").value.trim(),tlThuoc:$("f5Tl").value,tMin:$("f5Lo").value,tMax:$("f5Hi").value,loaiBB:$("f5Lbb").value,klBB:$("f5Kbb").value,dvThung:$("f5Dvt").value,dvHop:$("f5Dvh").value,hopThung:$("f5Ht").value,tyTrong:$("f5Tt")?$("f5Tt").value:(d.tyTrong||""),thungPallet:$("f5Tp").value,lop:$("f5Lop").value,thungLop:$("f5Tl2").value,mangCo:$("f5Mc").value,klThung:$("f5Kt").value,bangKeo:$("f5Bk").value,ghiChu:$("f5Gc").value.trim()}};
+  const g=()=>{const tb=tbRead(TK,D,w,d.tb);return {tb,maMay:tb.map(t=>t.ma).filter(Boolean).join(", "),mayTen:tb.map(t=>t.ten).filter(Boolean).join("; "),ngay:$("f5Ngay").value,nhietDo:$("f5Nd").value.trim(),tocDo:$("f5Td").value.trim(),seal:$("f5Seal").value.trim(),nhietEp:$("f5Ep").value.trim(),tlThuoc:$("f5Tl").value,tMin:$("f5Lo").value,tMax:$("f5Hi").value,loaiBB:$("f5Lbb").value,klBB:$("f5Kbb").value,dvThung:$("f5Dvt").value,dvHop:$("f5Dvh").value,hopThung:$("f5Ht").value,tyTrong:$("f5Tt").value,thungPallet:$("f5Tp").value,lop:$("f5Lop").value,thungLop:$("f5Tl2").value,mangCo:$("f5Mc").value,klThung:$("f5Kt").value,bangKeo:$("f5Bk").value,ghiChu:$("f5Gc").value.trim()}};
   const sum=()=>{const c=c05(g());$("f5Sum").innerHTML=isFinite(c.t)?`Thuốc ${f2(c.t)} g (${f2(c.tMin)} – ${f2(c.tMax)}) · nguyên ${isGoi(I.q)?"gói":"chai"} ${f2(c.n)} g (${f2(c.nMin)} – ${f2(c.nMax)})${isFinite(c.th)?` · thùng ${f2(c.thMin)} – ${f2(c.thMax)} kg`:""}`:""};
   w.addEventListener("input",e=>{if(e.target&&(e.target.id==="f5Dvh"||e.target.id==="f5Dvt")){const h=num($("f5Dvh").value),t=num($("f5Dvt").value);if(h>0&&t>0)$("f5Ht").value=Math.round(t/h*100)/100}sum()});sum();
   B().btnWire(w,{canW,saved:!!p,dirty:false},async()=>{const d=g();p=p||{};p.d=d;await save(D,"BM05",p,d,d.ngay,"");D.forms=(D.forms||[]).filter(x=>x.loai!=="BM05").concat([Object.assign({loai:"BM05",id:p._id},p)])},()=>p05(I,g()))}
