@@ -1422,7 +1422,7 @@ return `<div class="two" data-bi="${i}"><label>${ex?"BTP thêm "+(i-cs.length+1)
 <label>KL tồn cuối (kg)<input data-f="cuoi" type="number" step="any" min="0" inputmode="decimal" value="${esc(b.cuoi??"")}" placeholder="cân khi đóng xong"></label>${ex?`<button type="button" class="btn" data-rm="${i}" style="align-self:end">✕ Bỏ dòng này</button>`:""}</div>`}).join("")+`<div><button type="button" class="btn" id="dgAddBtp">+ Thêm BTP / lô khác</button> <span class="note">Dùng khi 1 lệnh lấy từ 2 lô (hoặc 2 mã) BTP: mỗi lô ghi tồn cuối riêng, BTP thực tế cộng lại.</span></div>`}
 function dgNewRender(){const box=$("dglBox"),N=S.dgN,q0=N.qc&&S.dgQ[N.qc];if(q0&&N.qsFor!==N.qc){N.qs=dgQsInit(q0);N.qsFor=N.qc}const q=dgQe();if(!N.st)N.st="Đang đóng gói";
 let h=`<button type="button" class="back" id="dgBack">‹ Danh sách lệnh đóng gói</button><h2>${N.edit?"Lệnh đóng gói "+esc(N.edit):"Lập lệnh đóng gói"}</h2>
-<p class="note">Nhập như bảng theo dõi Excel — <b>ô trắng</b> là ô cần nhập, <b>ô xám</b> là phần mềm tự điền. Chọn trạng thái <b>Hoàn thành</b> (có ngày hoàn thành và KL tồn cuối) thì phần mềm trừ BTP, bao bì và nhập thành phẩm; trạng thái khác chỉ lưu lệnh, mở lại để nhập tiếp.</p>
+<p class="note">Nhập như bảng theo dõi Excel — <b>ô vàng</b> là ô còn trống cần nhập, <b>ô trắng</b> là đã nhập, <b>ô xám</b> là phần mềm tự điền. Chọn trạng thái <b>Hoàn thành</b> (có ngày hoàn thành và KL tồn cuối) thì phần mềm trừ BTP, bao bì và nhập thành phẩm; trạng thái khác chỉ lưu lệnh, mở lại để nhập tiếp.</p>
 ${N.edit?"":`<label>Mã sản phẩm (mã nhãn)<input id="dgFind" placeholder="Gõ mã nhãn (VD NTL-D1, ALP-D1) hoặc tên sản phẩm" value="${esc(N.find||"")}" autocomplete="off"></label><div id="dgHits"></div>`}`;
 if(q){if(!N.so)N.so=dgSoMoi(N.ngayBD||N.ngay||S.today);if(N.kh===undefined)N.kh=q.pp||"";const s=N.qs||{},v=k=>esc(s[k]??"");
 h+=`<details class="card" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px"><summary><b>${esc(q.nhan)}</b> · ${esc(q.sp)} · ${esc(q.quyCach||q.loai||"")} — xem quy cách, nhãn</summary>${dgSpec(q)}</details>${dgFixHtml(q)}
@@ -2522,8 +2522,8 @@ new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:t
 </script>
 <script src="kehoach.js?v=53"></script>
 <script src="dgforms.js?v=59"></script>
-<link rel="stylesheet" href="ui.css?v=2">
-<script src="nav.js?v=5"></script>
+<link rel="stylesheet" href="ui.css?v=3">
+<script src="nav.js?v=6"></script>
 </body>
 </html>
  
