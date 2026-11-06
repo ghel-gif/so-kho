@@ -39,9 +39,13 @@ try{lab(document);new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{
 /* ---------- Ô cần nhập: tô vàng khi còn trống (ô tự điền / chỉ đọc màu xám) ---------- */
 const NEED_SKIP=/^(q|dgQ|dlQ|lsQ|vtQ|qcQ)$|search|tim|loc|find/i;
 const needOk=e=>{if(!e||!e.matches)return false;if(e.matches("input[type=checkbox],input[type=radio],input[type=hidden],input[type=search],input[type=file],input[type=range],input[type=color],[readonly],:disabled,[data-opt]"))return false;
-  if(!e.closest(".cfm,.kh-dlg,form,#dgView,#pNhap,#pXuat,#pKK,.nhapForm,.card"))return false;if(NEED_SKIP.test(e.id||"")||/^Tìm|^Lọc|^Mã cần/i.test(e.placeholder||""))return false;
+  if(!e.closest(".cfm,.kh-dlg,form,#dgView,#pNhap,#pXuat,#pKK,.nhapForm,.card"))return false;if(NEED_SKIP.test(e.id||"")||/^Tìm|^Lọc|^Mã cần|nếu có|không bắt buộc|tùy chọn/i.test(e.placeholder||""))return false;
   if(/ghi chú|ghichu|note/i.test((e.id||"")+" "+(e.placeholder||"")+" "+((e.closest("label")||{}).textContent||"").slice(0,30)))return false;return true};
-const needUpd=e=>{if(!needOk(e)){e.classList&&e.classList.remove("need-in");return}const v=e.tagName==="SELECT"?(e.value||"").trim():String(e.value||"").trim();e.classList.toggle("need-in",v==="")};
+/* Kết luận Đạt / Không đạt / Không kiểm: tô màu ngay khi chọn */
+const vUpd=e=>{if(!e||e.tagName!=="SELECT")return;const o=e.options[e.selectedIndex],t=((o&&o.text)||"").trim().toLowerCase();
+  const c=/^(không đạt|ko đạt|loại|hủy|fail)/.test(t)?"v-bad":/^(đạt|ok|pass|hoàn thành)/.test(t)?"v-ok":/^(không kiểm|chờ kiểm|chờ)/.test(t)?"v-na":"";
+  e.classList.remove("v-ok","v-bad","v-na");if(c){e.classList.add(c);e.classList.remove("need-in")}};
+const needUpd=e=>{vUpd(e);if(e&&e.classList&&/v-(ok|bad|na)/.test(e.className))return;if(!needOk(e)){e.classList&&e.classList.remove("need-in");return}const v=e.tagName==="SELECT"?((e.value||"").trim()||(/không dùng|không có|nếu có/i.test((e.options[e.selectedIndex]||{}).text||"")?"x":"")):String(e.value||"").trim();e.classList.toggle("need-in",v==="")};
 const needScan=r=>{try{(r.querySelectorAll?r:document).querySelectorAll("input,select").forEach(needUpd)}catch(_){}};
 document.addEventListener("input",e=>needUpd(e.target),true);document.addEventListener("change",e=>needUpd(e.target),true);
 let needT=0;try{new MutationObserver(()=>{clearTimeout(needT);needT=setTimeout(()=>needScan(document),120)}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["readonly","disabled","value"]})}catch(_){}

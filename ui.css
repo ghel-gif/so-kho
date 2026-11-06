@@ -163,3 +163,16 @@ input.in-warn,select.in-warn{border-width:2px!important;border-color:#c98a00!imp
 .apchip:hover{background:#0d47a1}
 @keyframes apIn{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
 @media print{.apchip{display:none!important}}
+/* Kết luận: Đạt xanh lá · Không đạt đỏ · Không kiểm/chờ xám xanh */
+html body select.v-ok{background:#e6f4ea!important;border:2px solid #2e7d32!important;color:#1b5e20!important;font-weight:700;box-shadow:inset 5px 0 0 #2e7d32;animation:vPop .35s ease-out}
+html body select.v-bad{background:#fdecea!important;border:2px solid #c62828!important;color:#b71c1c!important;font-weight:700;box-shadow:inset 5px 0 0 #c62828;animation:vPop .35s ease-out}
+html body select.v-na{background:#eef1f5!important;border:2px solid #78909c!important;color:#37474f!important;font-weight:600}
+html body select.v-ok option,html body select.v-bad option,html body select.v-na option{color:#111;background:#fff;font-weight:400}
+:root[data-theme=dark] select.v-ok{background:#123b22!important;border-color:#66bb6a!important;color:#b9f6ca!important;box-shadow:inset 5px 0 0 #66bb6a}
+:root[data-theme=dark] select.v-bad{background:#4a1414!important;border-color:#ef5350!important;color:#ffcdd2!important;box-shadow:inset 5px 0 0 #ef5350}
+:root[data-theme=dark] select.v-na{background:#263238!important;border-color:#90a4ae!important;color:#cfd8dc!important}
+@keyframes vPop{0%{transform:scale(.97)}60%{transform:scale(1.02)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){select.v-ok,select.v-bad{animation:none}}
+/* nút kết luận QC: Đạt xanh lá, Không đạt đỏ */
+html body button[data-qc="Đạt"],html body button[data-pn="Đạt"]{background:#2e7d32!important;border-color:#2e7d32!important;color:#fff!important}
+html body button[data-qc="Đạt"]:hover,html body button[data-pn="Đạt"]:hover{background:#1b5e20!important}
