@@ -1403,7 +1403,7 @@ const dgLiq=c=>{const u=String(c.dvl||"").toLowerCase();return u==="ml"||u==="l"
 function dgQsInit(q){const hop=!!(q.hop&&+q.dvHop);return {hopT:hop&&+q.dvThung?String(q.dvThung/q.dvHop):"",dvHop:hop?String(q.dvHop):"",spThung:hop?"":String(q.dvThung||""),luong:String(q.luong||""),dvl:({ml:"mL",l:"L",g:"g",kg:"kg"})[String(q.dvl||"").toLowerCase()]||(q.dvl||"")}}
 function dgQe(){const N=S.dgN,q=N&&N.qc&&S.dgQ[N.qc];if(!q)return null;const f=N.fix||{},o=Object.assign({},q);
 Object.keys(f).forEach(k=>{if(String(f[k]??"").trim()!=="")o[k]=String(f[k]).trim()});
-const s=N.qs;if(s){const L=+s.spThung||0,I=+s.hopT||0,K=+s.dvHop||0;o.dvThung=L||(I&&K?I*K:0);o.dvHop=L?(+q.dvHop||0):K;o.luong=+s.luong||0;o.dvl=String(s.dvl||"").toLowerCase()}
+const s=N.qs;if(s){const I=+s.hopT||0,K=+s.dvHop||0,L=I&&K?0:(+s.spThung||0);o.dvThung=I&&K?I*K:L;o.dvHop=L?(+q.dvHop||0):K;o.luong=+s.luong||0;o.dvl=String(s.dvl||"").toLowerCase()}
 o.luong=+o.luong||0;o.dvThung=+o.dvThung||0;o.dvHop=+o.dvHop||0;return o}
 function dgFixHtml(q){return "";const N=S.dgN,o=S.dgQ[N.qc]||{},f=N.fix||{},g=/gói|túi|bao/i.test(q.loai||""),F=[];
 const inp=(k,lab,ph)=>`<label>${lab}<input data-fx="${k}" value="${esc(f[k]??"")}" placeholder="${esc(ph||"")}"></label>`;
@@ -1431,8 +1431,8 @@ h+=`<details class="card" style="padding:10px 12px;border:1px solid var(--line);
 <div class="grp">Bán thành phẩm</div><div id="dgBtp">${dgBtpHtml(q)}</div>
 <div class="grp">Số lượng đóng gói</div>
 <div class="two"><label>Số thùng đủ<input id="dgThung" type="number" min="0" step="1" inputmode="numeric" value="${esc(N.thung??"")}"></label><label>Hộp/thùng<input data-qs="hopT" type="number" min="0" step="1" inputmode="numeric" value="${v("hopT")}"></label><label>Số hộp lẻ<input id="dgHL" type="number" min="0" step="1" inputmode="numeric" value="${esc(N.hl??"")}"></label><label>Gói/chai mỗi hộp<input data-qs="dvHop" type="number" min="0" step="1" inputmode="numeric" value="${v("dvHop")}"></label></div>
-<div class="two"><label>Gói/chai mỗi thùng<input data-qs="spThung" type="number" min="0" step="1" inputmode="numeric" value="${v("spThung")}"></label><label>Gói/chai lẻ<input id="dgLe" type="number" min="0" step="1" inputmode="numeric" value="${esc(N.le??"")}"></label><label>Quy cách 1 gói/chai<input data-qs="luong" type="number" min="0" step="any" inputmode="decimal" value="${v("luong")}"></label><label>ĐVT quy cách<select data-qs="dvl">${["g","kg","mL","L"].map(x=>`<option ${s.dvl===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
-<p class="note">Có hộp: thùng đủ + hộp/thùng + hộp lẻ + gói/chai mỗi hộp + gói/chai lẻ. Không có hộp: thùng đủ + gói/chai mỗi thùng + gói/chai lẻ (ô “mỗi thùng” có số thì tính kiểu không có hộp).</p>
+<div class="two"><label>Gói/chai mỗi thùng<input data-qs="spThung" type="number" min="0" step="1" inputmode="numeric" value="${(+s.hopT&&+s.dvHop)?(+s.hopT)*(+s.dvHop):v("spThung")}" ${(+s.hopT&&+s.dvHop)?'readonly title="Tự tính = hộp/thùng × gói/chai mỗi hộp" style="background:var(--accent-soft,#eef3ea)"':""}></label><label>Gói/chai lẻ<input id="dgLe" type="number" min="0" step="1" inputmode="numeric" value="${esc(N.le??"")}"></label><label>Quy cách 1 gói/chai<input data-qs="luong" type="number" min="0" step="any" inputmode="decimal" value="${v("luong")}"></label><label>ĐVT quy cách<select data-qs="dvl">${["g","kg","mL","L"].map(x=>`<option ${s.dvl===x?"selected":""}>${x}</option>`).join("")}</select></label></div>
+<p class="note">Có hộp: nhập hộp/thùng và gói/chai mỗi hộp → gói/chai mỗi thùng tự tính (khoá). Không có hộp hoặc thùng nhỏ: để trống 2 ô hộp, nhập gói/chai mỗi thùng.</p>
 <div id="dgSum" class="sum"></div>
 <div class="grp">Nhân sự, trạng thái</div>
 <div class="two"><label>Người vận hành chính<input id="dgNVH" list="dgNvl" value="${esc(N.nvh||"")}"></label><label>Phụ việc<input id="dgPV" value="${esc(N.pv||"")}" placeholder="VD Mến, Châm"></label><label>Trạng thái<select id="dgSt">${DG_ST.filter(x=>N.edit||x!=="Hủy / Dừng").map(x=>`<option ${N.st===x?"selected":""}>${x}</option>`).join("")}</select></label><label>Số lô thành phẩm (= số lệnh)<input id="dgLoTP" value="${esc(N.so)}" disabled></label></div>
@@ -1449,7 +1449,8 @@ $("dgSo").oninput=e=>{N.so=e.target.value;$("dgLoTP").value=N.so};on("dgKH","kh"
 $("dgBD").onchange=e=>{const auto=!N.edit&&N.so===dgSoMoi(N.ngayBD||N.ngay||S.today);N.ngayBD=e.target.value;if(auto&&N.ngayBD){N.so=dgSoMoi(N.ngayBD);$("dgSo").value=N.so;$("dgLoTP").value=N.so}};
 $("dgNgay").onchange=e=>{N.ngay=e.target.value};
 $("dgSt").onchange=e=>{N.st=e.target.value;if(N.st==="Hoàn thành"&&!N.ngay){N.ngay=S.today;$("dgNgay").value=N.ngay}dgCalc()};
-box.querySelectorAll("[data-qs]").forEach(el=>{el.oninput=el.onchange=e=>{const k=e.target.dataset.qs;N.qs[k]=e.target.value;if(k==="dvl"){$("dgBtp").innerHTML=dgBtpHtml(dgQe())}dgCalc()}});
+const spLock=()=>{const e=box.querySelector('[data-qs="spThung"]'),I=+N.qs.hopT||0,K=+N.qs.dvHop||0,on=!!(I&&K);if(!e)return;if(on){e.value=I*K;N.qs.spThung=""}else if(e.readOnly)e.value=N.qs.spThung||"";e.readOnly=on;e.style.background=on?"var(--accent-soft,#eef3ea)":"";e.title=on?"Tự tính = hộp/thùng × gói/chai mỗi hộp":""};spLock();
+box.querySelectorAll("[data-qs]").forEach(el=>{el.oninput=el.onchange=e=>{const k=e.target.dataset.qs;if(k==="spThung"&&e.target.readOnly)return;N.qs[k]=e.target.value;if(k==="hopT"||k==="dvHop")spLock();if(k==="dvl"){$("dgBtp").innerHTML=dgBtpHtml(dgQe())}dgCalc()}});
 if($("dgFix"))$("dgFix").addEventListener("change",e=>{const k=e.target.dataset.fx;if(!k)return;N.fix[k]=e.target.value;dgNewRender()});
 $("dgBtp").addEventListener("change",e=>{const r=e.target.closest("[data-bi]"),f=e.target.dataset.f;if(!r||!f)return;const b=N.btp[+r.dataset.bi];b[f]=e.target.value;if(f==="ma"){b.lo=undefined;b.tt=""}if(f==="lo"){const l=(S.lots[b.ma]||[]).find(x=>x.lo===b.lo);if(l&&l.tyTrong)b.tt=l.tyTrong}if(f==="ma"||f==="lo"){$("dgBtp").innerHTML=dgBtpHtml(dgQe())}dgCalc()});
 $("dgBtp").addEventListener("input",e=>{const f=e.target.dataset.f;if(f==="tt"||f==="cuoi"){N.btp[+e.target.closest("[data-bi]").dataset.bi][f]=e.target.value;dgCalc()}});
@@ -1457,7 +1458,7 @@ $("dgBtp").addEventListener("click",e=>{const t=e.target;if(t.id==="dgAddBtp"){c
 $("dgPlan").addEventListener("input",e=>{const ma=e.target.dataset.ma;if(ma)N.ov[ma]=e.target.value});
 $("dgSave").onclick=dgSave;if(N.edit&&window.dgfHook)dgfHook($("dglBox"),N.edit);if($("dgHuy"))$("dgHuy").onclick=async()=>{const so=N.edit;if(!await askConfirm(["Huỷ lệnh đóng gói "+so+"? Lệnh chưa hoàn thành nên chưa trừ kho, huỷ không ảnh hưởng tồn."]))return;try{await api("cancelOrder",S.auth,so);toast("Đã huỷ lệnh "+so);S.dgN=null;await refresh();dgShow("list")}catch(e){handleErr(e)}};if($("dgPrint2"))$("dgPrint2").onclick=()=>{const o=S.lenh.find(x=>x.so===N.edit),P=(S.dg.lenh||{})[N.edit]||{};if(o)dgPrint(o,P,S.dgQ[P.qc]||null)};
 dgCalc()}
-function dgCalc(){const N=S.dgN,q=dgQe();if(!q||!$("dgSum"))return;const per=+q.dvThung||0,th=Math.max(0,parseInt(N.thung)||0),le=Math.max(0,+N.le||0),hl=Math.max(0,parseInt(N.hl)||0),L=+(N.qs&&N.qs.spThung)||0;
+function dgCalc(){const N=S.dgN,q=dgQe();if(!q||!$("dgSum"))return;const per=+q.dvThung||0,th=Math.max(0,parseInt(N.thung)||0),le=Math.max(0,+N.le||0),hl=Math.max(0,parseInt(N.hl)||0),L=(N.qs&&+N.qs.hopT&&+N.qs.dvHop)?0:(+(N.qs&&N.qs.spThung)||0);
 const dv=L?th*L+le:th*per+hl*(+q.dvHop||0)+le,nThung=per?th+(le>0||hl>0?1:0):0;N.dv=dv;N.nThung=nThung;
 const cs=dgComps(q);N.btpKg=cs.map((c,i)=>{const b=N.btp[i]||{},k=c.luong?dv*c.luong*dgFk(c)*(dgLiq(c)?(+b.tt||0):1):0;return Math.round(k*1000)/1000});
 N.btpX=N.btp.map((b0,i)=>{const b=b0||{};return b.cuoi!=null&&b.cuoi!==""?Math.round(((+b.dau||0)-(+b.cuoi))*1000)/1000:null});
