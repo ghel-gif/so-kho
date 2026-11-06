@@ -158,10 +158,9 @@ function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},n=NS[loai],c
     w.querySelectorAll("#fkT [data-nk]").forEach(x=>x.onchange=()=>{const r=d.rounds[+x.dataset.nk];r.nk=x.checked;if(r.nk&&!r.nkLy)r.nkLy="SX chưa chạy";rer()});
     w.querySelectorAll("#fkT [data-nkl]").forEach(x=>x.oninput=()=>{d.rounds[+x.dataset.nkl].nkLy=x.value})};bind();
   const rer=()=>{$("fkT").innerHTML=body();bind()};
-  $("fkT").addEventListener("keydown",e=>{const x=e.target;if(!x.matches||!x.matches("input[data-s]"))return;const K={ArrowLeft:[0,-1],ArrowRight:[0,1],ArrowUp:[-1,0],ArrowDown:[1,0],Enter:[0,1]}[e.key];if(!K)return;
-    const A=[...$("fkT").querySelectorAll("input[data-s]")].filter(i=>!i.disabled),r=+x.dataset.r,c=+x.dataset.s,R=[...new Set(A.map(i=>+i.dataset.r))].sort((a,b)=>a-b),C=A.filter(i=>+i.dataset.r===r).length;
-    let t=null;if(K[0]===0){const row=A.filter(i=>+i.dataset.r===r);let k=row.indexOf(x)+K[1];if(k>=row.length&&e.key==="Enter"){const nr=R[R.indexOf(r)+1];if(nr!=null)t=A.find(i=>+i.dataset.r===nr)}else t=row[Math.max(0,Math.min(row.length-1,k))]}
-    else{const nr=R[R.indexOf(r)+K[0]];if(nr!=null)t=A.find(i=>+i.dataset.r===nr&&+i.dataset.s===c)}
+  $("fkT").addEventListener("keydown",e=>{const x=e.target;if(!x.matches||!x.matches("input[data-s]"))return;const K={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1],Enter:[0,1]}[e.key];if(!K)return;
+    const A=[...$("fkT").querySelectorAll("input[data-s]")].filter(i=>!i.disabled),r=+x.dataset.r,c=+x.dataset.s,at=(rr,cc)=>A.find(i=>+i.dataset.r===rr&&+i.dataset.s===cc),R=[...new Set(A.map(i=>+i.dataset.r))].sort((a,b)=>a-b);
+    let t=null;if(K[0]){const nr=R[R.indexOf(r)+K[0]];if(nr!=null)t=at(nr,c)}else{t=at(r,c+K[1]);if(!t&&e.key==="Enter"){const nr=R[R.indexOf(r)+1];if(nr!=null)t=at(nr,0)}}
     e.preventDefault();if(t&&t!==x){t.focus();t.select&&t.select()}});
   ["fkNmin","fkNmax","fkTmin","fkTmax","fkCach"].forEach(id=>$(id).addEventListener("change",()=>{d.nMin=$("fkNmin").value;d.nMax=$("fkNmax").value;d.tMin=$("fkTmin").value;d.tMax=$("fkTmax").value;d.cach=$("fkCach").value;rer()}));
   if(canW){$("fkAdd").onclick=()=>{if(d.rounds.length>=4)return toast("Tối đa 4 lần kiểm / phiếu — lập phiếu mới cho ca sau.");const l=d.rounds[d.rounds.length-1],m=/(\d+):(\d+)/.exec(l.gio||"");d.rounds.push({gio:m?String((+m[1]+2)%24).padStart(2,"0")+":"+m[2]:"",c:{},v:{},e:{},kl:[]});rer()};
