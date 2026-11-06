@@ -200,7 +200,7 @@ const LOGO=()=>{const i=document.querySelector(".brand img");return i?i.src:""};
 const T13='font:13px/1.35 "Times New Roman",Times,serif;color:#000';
 const dangOf=sp=>{const m=/\d\s*(?:%\s*W\/[WV]\s*)?(WP|WG|WDG|SC|EC|SL|OD|FS|EW|ME|SE|CS|GR|SP|DF|SG|DC)\b/i.exec((sp&&sp.ten)||"");return m?m[1].toUpperCase():""};
 const pr=(html,land)=>{$("printArea").innerHTML=html;let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}
-  pg.textContent="@media print{@page{size:A4 "+(land?"landscape":"portrait")+";margin:10mm}html,body,#printArea{margin:0!important;padding:0!important}#printArea table{border-collapse:collapse}#printArea td,#printArea th{color:#000!important}}";
+  pg.textContent="@media print{@page{size:A4 "+(land?"landscape;margin:8mm}":"portrait;margin:10mm}")+"html,body,#printArea{margin:0!important;padding:0!important}#printArea table{border-collapse:collapse}#printArea td,#printArea th{color:#000!important}}";
   khPrintNow(pg)};
 /* Mẫu in chung: Times New Roman 12.5pt, khung đều, tiêu đề mục nền xám nhạt */
 const PCSS=`<style>

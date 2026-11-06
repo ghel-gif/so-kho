@@ -1,0 +1,106 @@
+/* =====================================================================
+   Sổ Kho — lớp chuẩn hoá giao diện (theo bộ nguyên tắc UI UX Pro Max)
+   Nạp SAU cùng để ghi đè; không đổi cấu trúc HTML/JS.
+   1 Tương phản ≥ 4.5:1 · 2 Vùng chạm ≥ 44px (điện thoại) · 5 Không cuộn ngang
+   6 Chữ tối thiểu 12px, ô nhập 16px trên điện thoại · focus rõ · giảm chuyển động
+   ===================================================================== */
+
+/* ---------- Token màu ngữ nghĩa (sáng) ---------- */
+:root{
+  --ok:#1e7a45; --ok-bg:#e6f4ec; --ok-line:#2e9d5b;
+  --info:#1a5fb4; --info-bg:#e8f0fe;
+  --primary-btn:#0f6f64;          /* nền nút chính: chữ trắng 5.6:1 */
+  --primary-btn-hover:#0b5a51;
+  --primary-btn-ink:#ffffff;
+  --focus:#1a73e8;
+  --danger-badge:#c62828;         /* chấm đỏ số thông báo: chữ trắng 5.6:1 */
+}
+/* ---------- Tối: bật theo nút Sáng/Tối (data-theme) ---------- */
+:root[data-theme=dark]{
+  --ok:#7ddc9f; --ok-bg:#163a26; --ok-line:#2e9d5b;
+  --info:#9cc2ff; --info-bg:#17284a;
+  --primary-btn:#5fc4b4; --primary-btn-hover:#7fd3c6; --primary-btn-ink:#06201b; /* chữ tối trên nền sáng: 9:1 */
+  --focus:#8ab4f8;
+}
+
+/* ---------- 1. Tương phản ---------- */
+.btn.primary,button.btn.primary,.btn.primary:visited{background:var(--primary-btn)!important;border-color:var(--primary-btn)!important;color:var(--primary-btn-ink)!important}
+.btn.primary:hover:not(:disabled){background:var(--primary-btn-hover)!important;border-color:var(--primary-btn-hover)!important}
+.btn.primary svg{stroke:currentColor}
+.bellcnt{background:var(--danger-badge)!important;color:#fff!important;font-size:11px;font-weight:700;min-width:18px;line-height:18px}
+:root[data-theme=dark] .tt{color:#c9a7f5!important}
+:root:not([data-theme=dark]) .in{color:#226b3c}
+:root:not([data-theme=dark]) .out{color:#a3301f}
+
+/* ---------- Focus nhìn thấy khi dùng bàn phím ---------- */
+:focus{outline:none}
+:focus-visible{outline:3px solid var(--focus)!important;outline-offset:2px!important;border-radius:6px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline-offset:0!important}
+nav.side button:focus-visible{outline-color:#fff!important}
+
+/* ---------- Con trỏ & phản hồi khi bấm ---------- */
+button:not(:disabled),[role=button],[role=tab],select,summary,label[for],.stat[title],[data-so],[data-lot]{cursor:pointer}
+button,.btn,a,input,select,textarea{transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}
+button:disabled,.btn:disabled{cursor:not-allowed;opacity:.55}
+
+/* ---------- 6. Chữ: tối thiểu 12px, số thẳng cột ---------- */
+nav.side .navh{font-size:12px!important;letter-spacing:.06em}
+.chip,.st,.grp,.brand small,.who small,.ver,.appver{font-size:12px!important}
+small{font-size:max(12px,.85em)}
+.note{line-height:1.5}
+table td,table th,.qty,.kg,.stat b,[id^=s] b,.num{font-variant-numeric:tabular-nums}
+body{-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility}
+
+/* ---------- Bảng: tiêu đề dính khi cuộn, số canh phải ---------- */
+.dgx{overflow:auto;-webkit-overflow-scrolling:touch}
+.dgx thead th{position:sticky;top:0;z-index:2}
+
+/* ---------- Ô ngày trong hộp thoại: luôn xuống dòng, rộng đều như các ô khác ---------- */
+.cfm label>input[type=date],.cfm label>input[type=month],.cfm label>input[type=time]{display:block;width:100%;box-sizing:border-box;margin-top:4px}
+
+/* ---------- Header: nút nhỏ có vùng bấm đủ lớn ---------- */
+.who button,#logoutBtn{padding:6px 4px!important;min-height:32px}
+#themeBtn{min-height:34px}
+
+/* ---------- 7. Tôn trọng "giảm chuyển động" ---------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 2 + 5. Điện thoại / máy tính bảng ---------- */
+@media screen and (max-width:900px), screen and (pointer:coarse){
+  /* vùng chạm */
+  .btn,button.btn,.backBtn,#themeBtn,.bell,.kh-seg button,nav.side button{min-height:44px}
+  .btn.small,button.btn.small{min-height:40px;padding-left:12px;padding-right:12px}
+  select,input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea{min-height:44px}
+  input[type=checkbox],input[type=radio]{width:22px;height:22px}
+  .bell{min-width:44px}
+  #hMoiPrev,#hMoiNext{min-width:44px;min-height:44px;font-size:20px}
+  /* chữ ô nhập 16px: iPhone không tự phóng to khi chạm */
+  input,select,textarea{font-size:16px!important}
+}
+@media screen and (max-width:600px){
+  /* header gọn, không chồng chữ */
+  .head{gap:6px!important;padding:6px 10px!important}
+  .brand{min-width:0;flex:1 1 auto}
+  .brand img{height:32px!important}
+  .brand h1{font-size:18px!important;margin:0}
+  .brand .hver,.brand h1::after,.brand h1::before{display:none!important}
+  .who{display:flex!important;align-items:center;gap:4px;flex:none;text-align:right}
+  .who br,#whoName,#syncNote{display:none!important}
+  #themeBtn{font-size:0!important;width:40px;padding:0!important;justify-content:center}
+  #themeBtn svg{width:20px;height:20px}
+  #logoutBtn{font-size:13px!important;white-space:nowrap}
+  /* thẻ số liệu: số lớn không bị cắt */
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .summary .stat:first-child{grid-column:1/-1}
+  .stat b{font-size:clamp(18px,6vw,22px)!important;overflow-wrap:anywhere}
+  /* bộ lọc: mỗi ô một hàng, đủ rộng */
+  .filters select,.filters input,.tools select,.tools input{width:100%!important;flex:1 1 100%!important;min-width:0}
+  /* hộp thoại toàn màn hình trên điện thoại, nút dưới cùng dễ bấm */
+  .cfm-box{max-height:calc(100dvh - 16px)}
+  .cfm .actions{position:sticky;bottom:0;background:var(--surface);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));z-index:3}
+  /* không cuộn ngang cả trang */
+  html,body{overflow-x:clip}
+  main{max-width:100vw}
+}

@@ -1059,7 +1059,7 @@ $("backBtn").onclick=goBack;try{if(GH){GH.replace({t:"home"},{},"");GH.setChange
 $("reloadBtn").onclick=refresh;
 const DARKQ=[];for(const sh of document.styleSheets){try{for(const r of sh.cssRules)if(r.media&&/prefers-color-scheme:\s*dark/.test(r.media.mediaText))DARKQ.push(r)}catch(e){}}
 function curDark(){let t=null;try{t=localStorage.getItem("soKhoTheme")}catch(e){}return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches}
-function applyTheme(){const d=curDark();DARKQ.forEach(r=>r.media.mediaText=d?"all":"not all");document.documentElement.style.colorScheme=d?"dark":"light";
+function applyTheme(){const d=curDark();DARKQ.forEach(r=>r.media.mediaText=d?"all":"not all");document.documentElement.style.colorScheme=d?"dark":"light";document.documentElement.dataset.theme=d?"dark":"light";
   $("themeBtn").innerHTML=d?'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>Sáng':'<svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Tối'}
 $("themeBtn").onclick=()=>{const d=!curDark();try{localStorage.setItem("soKhoTheme",d?"dark":"light")}catch(e){}applyTheme()};applyTheme();
 $("sLowBox").onclick=()=>{$("fs").value=$("fs").value==="canh"?"":"canh";render()};
@@ -2520,9 +2520,10 @@ function attachSearch(sel){if(!sel||sel._srch)return;
 function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(id)))}
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
-<script src="kehoach.js?v=52"></script>
-<script src="dgforms.js?v=57"></script>
-<script src="nav.js?v=4"></script>
+<script src="kehoach.js?v=53"></script>
+<script src="dgforms.js?v=59"></script>
+<link rel="stylesheet" href="ui.css?v=2">
+<script src="nav.js?v=5"></script>
 </body>
 </html>
  

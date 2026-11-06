@@ -32,4 +32,7 @@ document.addEventListener("keydown",e=>{
   if(x.type==="number"){e.preventDefault();go(x,D);return}
   if(go(x,D))e.preventDefault()},false);
 document.addEventListener("wheel",e=>{const x=e.target;if(x&&x.type==="number"&&document.activeElement===x)x.blur()},{passive:true});
+/* nút chỉ có biểu tượng: thêm nhãn cho trình đọc màn hình từ title */
+const lab=r=>{(r.querySelectorAll?r:document).querySelectorAll("button:not([aria-label])").forEach(b=>{const t=(b.textContent||"").trim();if(b.title&&(!t||t.length<=2))b.setAttribute("aria-label",b.title)})};
+try{lab(document);new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{if(n.nodeType===1)lab(n)}))).observe(document.body,{childList:true,subtree:true})}catch(_){}
 }catch(e){}})();
