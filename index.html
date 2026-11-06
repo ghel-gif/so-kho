@@ -325,7 +325,7 @@ main form.card,main .box{max-width:none}
 .bm07 table{width:100%;border-collapse:collapse;margin:0;table-layout:fixed}.bm07 th,.bm07 td{border:0;padding:0 2mm;white-space:nowrap;overflow:hidden;text-overflow:clip;vertical-align:middle;text-align:left}.bm07 td[colspan]{white-space:normal;line-height:1.1}.bm07 .bkv td.nm{white-space:normal;line-height:1.1;font-size:13pt}
 .bm07 table.bkv{flex:1 1 auto}.bm07 .bkv th{background:#F2F2F2;font-weight:700;font-size:13pt}.bm07 .bkv td{font-size:14pt}
 .bm07 .bkv tr.sep td,.bm07 .bkv tr.sep th{border-bottom:1px solid #000}
-.bm07 .b1{font-size:20pt!important;font-weight:700}.bm07 .b2{font-size:17pt;font-weight:700}.bm07 td .b2{font-size:17pt}
+.bm07 .b1{font-size:30pt!important;font-weight:700;line-height:1.08}.bm07 .b1.m{font-size:25pt!important}.bm07 .b1.s{font-size:21pt!important}.bm07 .b2{font-size:17pt;font-weight:700}.bm07 td .b2{font-size:17pt}
 .bm07 .bnum{display:inline-block;min-width:24mm;text-align:right;margin-right:4mm}.bm07 .bnum.w2{min-width:15mm}
 .bm07 .tk{font-weight:700;font-size:13pt;margin:2mm 0 1mm}
 .bm07 table.gr th,.bm07 table.gr td{border:1px solid #bfbfbf;height:6.3mm;padding:0 2mm}.bm07 table.gr th{background:#E7E6E6;text-align:center;font-weight:700}
@@ -2352,7 +2352,7 @@ function printBtpLabel(o,a4,hl,list,nc){if(Array.isArray(hl)){nc=list;list=hl;hl
   <div class="mh">Mã hiệu: BM.07-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026</div></div>
   <div class="tt"><h1>THẺ NHẬN DIỆN BÁN THÀNH PHẨM</h1><div class="qr" id="lblQr${k}"></div></div>
   <table class="bkv"><colgroup><col style="width:28%"><col style="width:24%"><col style="width:18%"><col></colgroup>
-  <tr><th>Tên sản phẩm</th><td colspan="3" class="b1">${esc(ten)}</td></tr>
+  <tr><th>Tên sản phẩm</th><td colspan="3" class="b1${ten.length>34?" s":ten.length>22?" m":""}">${esc(ten)}</td></tr>
   <tr class="sep"><th>Hàm lượng</th><td colspan="3"><i style="font-weight:400;text-transform:none">${esc(hl!=null?hl:(sp.hamLuong||hlGoiY(sp)))}</i></td></tr>
   <tr><th>Số lô SX</th><td class="b2">${esc(o.so)}</td><th>Ngày SX</th><td class="b2">${dmy(nsx)}</td></tr>
   <tr><th>Mẻ số</th><td>${c.me?esc(c.me):"&nbsp;&nbsp;&nbsp;"} / ${c.tm?esc(c.tm):""}${c.loai||n>1?" <b class=\"stt\">· "+esc((c.loai||"Phuy").split(" ")[0])+" số "+(k+1)+"/"+n+"</b>":""}</td><th>Mã sản phẩm</th><td>${esc(sp.ma)}</td></tr>
