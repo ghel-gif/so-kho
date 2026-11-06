@@ -1634,7 +1634,7 @@ function qcRows_() {
 function ldgSheet_() { return shX_(LDG_SH, ['Số lệnh', 'Mã QC', 'Kế hoạch (JSON)', 'Người lập', 'Thời điểm']); }
 function ldgMap_() { const o = {}; if (!sheet_(LDG_SH)) return o; rows_(LDG_SH).forEach(r => { const so = str_(r[0]); if (!so) return; let p = {}; try { p = JSON.parse(str_(r[2]) || '{}'); } catch (e) {} o[so] = Object.assign({ qc: str_(r[1]) }, p); }); return o; }
 /** Danh mục quy cách + kế hoạch các lệnh đóng gói (cho tab Lệnh đóng gói TP). */
-function getDG(a) { needCT_(auth_(a)); return { qc: qcRows_(), lenh: ldgMap_(), dl: dlRows_(), dl52: dl52Rows_() }; }
+function getDG(a) { needCT_(auth_(a)); return { qc: qcRows_(), lenh: ldgMap_(), dl: dlRows_(), dl52: dl52Rows_(), cbb: cbbRows_() }; }
 
 function createPackOrder(a, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);

@@ -899,7 +899,7 @@ function addMonths(ymd,n){if(!ymd||!n)return"";const p=ymd.split("-").map(Number
 function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,2600)}
 /* ---------- báo đang xử lý + chặn bấm lặp khi gọi máy chủ ---------- */
 const RUNW=new Set(["createPackOrder","completePackOrder","packDone","savePack","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","setLock"]);
-const WR_FN=new Set(["webQCSave","webDLSave","webDL52Save","webDGFSave","webDGFDel","webVSSave","webHLSave","webBBSave","webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
+const WR_FN=new Set(["webQCSave","webCanBBSave","webDLSave","webDL52Save","webDGFSave","webDGFDel","webVSSave","webHLSave","webBBSave","webKHSave","webKHGui","webKHAct","webMaySave","createPackOrder","completePackOrder","packDone","savePack","login","saveMove","deleteMove","updateMove","saveItem","deleteItem","createOrder","updateOrderInfo","cancelOrder","reopenOrder","completeOrder","saveRecipe","setHamLuongXn","setQC","setTyTrong","saveAlertSettings","sendAlertNow","uploadAnhNhap","setQCPhieu","transferStock","saveXNB","adjustXNB","cancelXNB","importRows","uploadHoSo","setLock","backupNow","setBackup"]);
 const BUSY_TXT={login:"Đang đăng nhập…",completeOrder:"Đang hoàn thành lệnh, trừ kho…",createOrder:"Đang lập lệnh…",reopenOrder:"Đang mở lại lệnh…",saveMove:"Đang ghi phiếu…",updateMove:"Đang lưu thay đổi…",deleteMove:"Đang xoá phiếu…",saveXNB:"Đang ghi phiếu xuất…",adjustXNB:"Đang lưu điều chỉnh…",cancelXNB:"Đang huỷ phiếu…",importRows:"Đang xử lý file Excel…",uploadAnhNhap:"Đang tải ảnh lên…",uploadHoSo:"Đang tải hồ sơ lên…",transferStock:"Đang chuyển kho…",setQC:"Đang lưu QC…",backupNow:"Đang sao lưu…"};
 const BZ={n:0,r:0,fly:new Map(),t:null,t2:null};
 function busyEl(){if(!document.getElementById("busyOv")){const b=document.createElement("div");b.id="busyOv";b.setAttribute("role","status");b.setAttribute("aria-live","polite");
@@ -2521,8 +2521,8 @@ function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
 <script src="kehoach.js?v=52"></script>
-<script src="dgforms.js?v=55"></script>
-<script src="nav.js?v=3"></script>
+<script src="dgforms.js?v=56"></script>
+<script src="nav.js?v=4"></script>
 </body>
 </html>
  

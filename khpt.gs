@@ -413,3 +413,24 @@ function webDL52Save(a, list) {
   } finally { lock.releaseLock(); }
   return clean.map(r => ({ dv: r[0], tu: r[1], den: r[2], loK: r[3], lo: r[4], hiK: r[5], hi: r[6] }));
 }
+
+/* ===== Khối lượng bao bì do QC cân (lưu theo mã quy cách, lần cân mới nhất dùng làm mặc định) ===== */
+const CBB_SH = 'CanBaoBi', CBB_HEAD_ = ['Mã QC', 'Loại', 'Khối lượng', 'Đơn vị', 'Ngày cân', 'Người cân', 'Số lệnh', 'Thời điểm'];
+const CBB_LOAI_ = { klBB: 'g', klHop: 'g', klThung: 'kg' };
+function cbbRows_() {
+  if (!sheet_(CBB_SH)) return [];
+  return rows_(CBB_SH).filter(r => str_(r[0]) && CBB_LOAI_[str_(r[1])]).map(r => ({ qc: str_(r[0]), loai: str_(r[1]), v: num_(r[2]), dv: str_(r[3]), ngay: str_(r[4]), nguoi: str_(r[5]), so: str_(r[6]) }));
+}
+/** o: {qc, so, ngay, vals:{klBB, klHop, klThung}} — ghi các lần cân mới; trả lại toàn bộ lịch sử cân. */
+function webCanBBSave(a, o) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  if (!me.qc && [ROLES.QL, ROLES.KT].indexOf(me.vaiTro) < 0) throw new Error('Chỉ QC ghi khối lượng bao bì cân được.');
+  o = o || {}; const qc = String(o.qc || '').trim(); if (!qc) throw new Error('Thiếu mã quy cách.');
+  const ngay = isYmd_(o.ngay) ? o.ngay : Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd');
+  const add = [];
+  Object.keys(CBB_LOAI_).forEach(k => { const s = String((o.vals || {})[k] == null ? '' : o.vals[k]).trim(); if (s === '') return; const v = num_(s);
+    if (!(v > 0)) throw new Error('Khối lượng không hợp lệ: ' + k); if (k === 'klThung' ? v > 20 : v > 2000) throw new Error('Khối lượng quá lớn, kiểm tra lại đơn vị: ' + k);
+    add.push([qc, k, v, CBB_LOAI_[k], ngay, me.ten, String(o.so || '').slice(0, 60), new Date()]); });
+  if (add.length) { const lock = LockService.getScriptLock(); lock.waitLock(20000); try { const sh = shX_(CBB_SH, CBB_HEAD_); add.forEach(r => sh.appendRow(r)); } finally { lock.releaseLock(); } }
+  return cbbRows_().concat([]);
+}
