@@ -232,10 +232,17 @@ function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true}
 /* BM.06 / BM.08 chỉ dùng cho lô sản xuất mã AHK.… */
 const isAHK=s=>/^AHK\./i.test(String(s||"").trim());
 window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm"||!isAHK(o.so))return;
+  const h2=v.querySelector("h2"),ins=d=>{(h2?h2.nextSibling:v.firstChild)?v.insertBefore(d,h2?h2.nextSibling:v.firstChild):v.appendChild(d)};
+  if(window.qcTiles){const IC=window.QC_IC,d=document.createElement("div"),emp=x=>x===undefined||x===null||String(x).trim()==="";
+    qcTiles(d,[{f:"bb",code:"BM.06",name:"Biên bản sản xuất BTP",icon:IC.doc,open:()=>bbDlg(o.so)},{f:"hl",code:"BM.08",name:"Phiếu kiểm nghiệm hoá lý",icon:IC.flask,open:()=>hlForm(o.maSP,o.so)},{f:"vs",code:"BM.05",name:"Vệ sinh thiết bị khuấy trộn",icon:IC.home,open:()=>vsDlg(o.so)}],async()=>{
+      const [B,H,V]=await Promise.all([api("webBBGet",S.auth,o.so).catch(()=>null),api("webHLGet",S.auth,o.maSP,o.so,"").catch(()=>null),api("webVSGet",S.auth,o.so,"").catch(()=>null)]);const R={};
+      const b=B&&B.bb;R.bb={n:b?1:0,gaps:b?[emp(b.ketLuan)&&"kết luận",emp(b.may)&&"thiết bị",!b.tg&&"thời gian sản xuất"].filter(Boolean):[]};
+      const h=H&&H.p,kq=(h&&h.kq)||{};R.hl={n:h?1:0,gaps:h?[!Object.keys(kq).some(k=>!/^[#_]/.test(k)&&!emp(kq[k]))&&"kết quả kiểm",emp(h.ketLuan)&&"kết luận"].filter(Boolean):[]};
+      const x=V&&V.p&&V.p.lenh===o.so?V.p:null;R.vs={n:x?1:0,gaps:x?[!(x.tb||[]).length&&"thiết bị",emp(x.kq)&&"kết quả vệ sinh"].filter(Boolean):[]};return R});
+    ins(d);return}
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
   d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button><button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button><button class="btn" type="button" data-vs>Vệ sinh thiết bị (BM.05)</button>`;
-  const h2=v.querySelector("h2");(h2?h2.nextSibling:v.firstChild)?v.insertBefore(d,h2?h2.nextSibling:v.firstChild):v.appendChild(d);
-  d.querySelector("[data-bb]").onclick=()=>bbDlg(o.so);d.querySelector("[data-hl]").onclick=()=>hlForm(o.maSP,o.so);d.querySelector("[data-vs]").onclick=()=>vsDlg(o.so)};
+  ins(d);d.querySelector("[data-bb]").onclick=()=>bbDlg(o.so);d.querySelector("[data-hl]").onclick=()=>hlForm(o.maSP,o.so);d.querySelector("[data-vs]").onclick=()=>vsDlg(o.so)};
 
 /* ---------- BM.06 ---------- */
 /* Thời gian theo kế hoạch: lấy ngày + giờ của kế hoạch phối trộn; chưa có kế hoạch → giờ hành chính 07:30–16:30. */

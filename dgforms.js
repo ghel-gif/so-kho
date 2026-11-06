@@ -21,15 +21,41 @@ function info(D){const o=D.o,q=D.q||{},sp=itemBy(o.maSP)||{ten:o.maSP},b=D.btp[0
 const b05=D=>(D.forms||[]).filter(f=>f.loai==="BM05").pop()||null;
 
 /* ---------- thanh nút trong lệnh đóng gói ---------- */
-document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('.cfm [data-x="save"],.cfm [data-x="close"],.cfm [data-x="del"]'))setTimeout(()=>document.querySelectorAll(".dgf-bar").forEach(b=>b.upd&&b.upd()),900)},true);
+/* ---------- Ô biểu mẫu QC dùng chung (lệnh đóng gói + lệnh SX BTP): trạng thái Chưa lập / Cần bổ sung / Đủ ---------- */
+const IC={box:"M4 7l8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10",chk:"M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9",home:"M3 21h18M6 21V10l6-6 6 6v11M10 21v-5h4v5",doc:"M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5",flask:"M9 3h6M10 3v6L4 19a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3L14 9V3M7 15h10"};
+window.QC_IC=IC;
+window.qcTiles=function(bar,T,stat,title){bar.className="dgf-bar";
+  bar.innerHTML=`<div class="dgf-h">${title||"Biểu mẫu QC của lệnh này"} <small>bấm để mở / lập phiếu</small></div><div class="dgf-g">${T.map(t=>`<button type="button" class="dgf-t" data-f="${t.f}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${t.icon}"/></svg><span class="dgf-x"><b>${t.code}</b><span>${esc(t.name)}</span><small class="dgf-gap" data-g="${t.f}" hidden></small></span><em class="dgf-s" data-s="${t.f}">…</em></button>`).join("")}</div>`;
+  T.forEach(t=>bar.querySelector(`[data-f="${t.f}"]`).onclick=t.open);
+  bar.upd=()=>stat().then(R=>T.forEach(t=>{const r=R[t.f]||{n:0,gaps:[]},b=bar.querySelector(`[data-f="${t.f}"]`),e=b.querySelector(".dgf-s"),g=b.querySelector(".dgf-gap");
+    const st=!r.n?"no":r.gaps.length?"warn":"ok";b.classList.remove("done","need");if(st==="ok")b.classList.add("done");if(st==="warn")b.classList.add("need");
+    e.className="dgf-s "+st;e.textContent=st==="no"?"Chưa lập":st==="warn"?"⚠ Cần bổ sung":"✓ Đủ thông tin"+(r.n>1?" · "+r.n+" phiếu":"");
+    g.hidden=!r.gaps.length;g.textContent=r.gaps.length?"Thiếu: "+r.gaps.join("; "):"";b.title=r.gaps.length?"Cần bổ sung: "+r.gaps.join("; "):""})).catch(()=>bar.querySelectorAll(".dgf-s").forEach(e=>e.textContent=""));
+  bar.upd();return bar};
+/* Phiếu đã lập nhưng còn thiếu gì */
+function dgfGap(D,f){const d=f.d||{},G=[],emp=v=>v===undefined||v===null||String(v).trim()==="",pos=v=>num(v)>0;
+  if(f.loai==="BM05"){const g=isGoi(D.q||{});
+    if(emp(d.maMay)&&!(d.tb||[]).some(t=>t&&t.ten))G.push("thiết bị đóng gói");
+    if(!pos(d.tlThuoc))G.push("TL thuốc chuẩn");if(!pos(d.tMin)||!pos(d.tMax))G.push("dung sai");
+    if(!pos(d.klBB))G.push("KL bao bì "+(g?"gói":"chai"));if(!pos(d.dvThung))G.push(g?"số gói/thùng":"số chai/thùng");
+    if(pos(d.dvHop)&&!pos(d.klHop))G.push("KL hộp");if(!pos(d.klThung))G.push("KL thùng carton");
+    if(g?emp(d.nhietEp):emp(d.seal))G.push(g?"nhiệt ép":"công suất seal");return G}
+  if(/^BM0[46]$/.test(f.loai)){const items=[].concat(...(CR[f.loai]||[]).map(x=>x[1])),n=NS[f.loai];
+    if(!(d.tb||[]).some(t=>t&&t.ten)&&emp(d.maMay))G.push("thiết bị");
+    (d.rounds||[]).forEach((r,i)=>{if(r.nk)return;const lb=RL[i]||"Lần "+(i+1),m=items.filter(([k,,isV])=>isV?emp((r.v||{})[k]):!(r.c||{})[k]).length,c=(r.kl||[]).filter(v=>!emp(v)).length;
+      const q=[m?m+" mục chưa đánh giá":"",c<n?"thiếu "+(n-c)+"/"+n+" mẫu cân":""].filter(Boolean);if(q.length)G.push(lb+": "+q.join(", "))});
+    if(emp(f.kl))G.push("kết luận");return G}
+  if(f.loai==="BM07"){const P=d.parts||[];if(emp(d.maMay))G.push("mã máy");if(!P.some(x=>x.th))G.push("chưa tick bộ phận đã vệ sinh");
+    const m=P.filter(x=>x.th&&!x.dg).length;if(m)G.push(m+" bộ phận chưa đánh giá");if(emp(f.kl))G.push("kết luận");return G}
+  return G}
+window.dgfGap=dgfGap;
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('.cfm [data-x="save"],.cfm [data-x="upd"],.cfm [data-x="close"],.cfm [data-x="del"]'))setTimeout(()=>document.querySelectorAll(".dgf-bar").forEach(b=>b.upd&&b.upd()),900)},true);
 window.dgfHook=function(box,so){if(!box||!so||box.querySelector(".dgf-bar"))return;
-  const bar=document.createElement("div");bar.className="dgf-bar";
-  const T=[["BM05","BM.05","Thông tin đóng gói","M4 7l8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10"],["KT","BM.04/06","Kiểm tra quá trình","M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"],["BM07","BM.07","Vệ sinh thiết bị","M3 21h18M6 21V10l6-6 6 6v11M10 21v-5h4v5"]];
-  bar.innerHTML=`<div class="dgf-h">Biểu mẫu QC của lệnh này <small>bấm để mở / lập phiếu</small></div><div class="dgf-g">${T.map(([f,m,t,d])=>`<button type="button" class="dgf-t" data-f="${f}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg><span class="dgf-x"><b>${m}</b><span>${t}</span></span><em class="dgf-s" data-s="${f}">…</em></button>`).join("")}</div>`;
-  bar.upd=()=>getD(so).then(D=>{const F=D.forms||[];bar.querySelectorAll("[data-s]").forEach(e=>{const f=e.dataset.s,L=F.filter(x=>f==="KT"?/^BM0[46]$/.test(x.loai):x.loai===f);
-    e.className="dgf-s "+(L.length?"ok":"no");e.textContent=L.length?"✓ Đã lập"+(L.length>1?" "+L.length+" phiếu":""):"Chưa lập";e.closest(".dgf-t").classList.toggle("done",!!L.length)})}).catch(()=>{});bar.upd();
+  const bar=document.createElement("div");
+  qcTiles(bar,[["BM05","BM.05","Thông tin đóng gói",IC.box],["KT","BM.04/06","Kiểm tra quá trình",IC.chk],["BM07","BM.07","Vệ sinh thiết bị",IC.home]].map(([f,m,t,ic])=>({f,code:m,name:t,icon:ic,open:()=>dgfOpen(so,f)})),async()=>{const D=await getD(so),F=D.forms||[];const R={};
+    ["BM05","KT","BM07"].forEach(f=>{const L=F.filter(x=>f==="KT"?/^BM0[46]$/.test(x.loai):x.loai===f);R[f]={n:L.length,gaps:[].concat(...L.map((x,i)=>dgfGap(D,x).map(g=>L.length>1?dmy(x.ngay)+": "+g:g)))}});return R});
   const h2=box.querySelector("h2");if(h2&&h2.parentNode===box)h2.after(bar);else box.prepend(bar);
-  bar.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>dgfOpen(so,b.dataset.f))};
+};
 async function dgfOpen(so,f){let D;try{D=await getD(so)}catch(e){return handleErr(e)}
   const loai=f==="KT"?(isGoi(D.q)?"BM04":"BM06"):f,L=(D.forms||[]).filter(x=>x.loai===loai);
   if(loai==="BM05")return f05(D,L.pop()||null);

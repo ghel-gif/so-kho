@@ -1315,7 +1315,7 @@ function dgListRender0(){const box=$("dglBox"),f=S.dgF===undefined?"":S.dgF,qw=d
   <div class="list">${rows.length?rows.map(o=>{const it=itemBy(o.maSP),ht=o.trangThai==="Hoàn thành";return `<div class="row click" data-so="${esc(o.so)}"><div class="name">${esc(o.so)} · ${esc(it?it.ten:o.maSP)} <span class="st ${stCls[o.trangThai]||"cancel"}">${esc(o.trangThai==="Đang SX"?((((S.dg.lenh||{})[o.so]||{}).x||{}).st||"Đang đóng gói"):o.trangThai)}</span></div><div class="kg">${dgN0(ht?o.slThucTe:o.slDuKien)} ${esc(it?.donVi||"")}<small>${ht?"thực tế":"kế hoạch"}</small></div><div class="meta">Ra lệnh ${dmy(o.ngay)}${o.ngayHT?" · xong "+dmy(o.ngayHT):""} · ${esc(o.nguoiLap)}${o.khachHang?" · "+esc(o.khachHang):""}</div></div>`}).join(""):`<div class="empty"><b>Chưa có lệnh đóng gói${f?" ("+(f==="Đang SX"?"đang đóng gói":"đã hoàn thành")+")":""}</b>Bấm “Lập lệnh đóng gói”, gõ mã sản phẩm (mã nhãn) (VD ALP-D1) — phần mềm tự bung BTP, chai, nhãn, nhãn phụ, hộp, thùng, tem theo số thùng.</div>`}</div>
   <p class="note">Quy cách đóng gói lấy từ thư mục <b>3-NHÃN</b> (trang tính QuyCachDG: ${dgN0((S.dg.qc||[]).length)} mã nhãn). Lập lệnh chưa trừ kho; khi hoàn thành mới xuất BTP + bao bì theo số thực tế và nhập thành phẩm.</p>`;
   const s=$("dgS");s.oninput=()=>{S.dgS=s.value;const p=s.selectionStart;dgListRender();const n=$("dgS");n.focus();n.setSelectionRange(p,p)};
-  $("dgF").onchange=e=>{S.dgF=e.target.value;dgListRender()};
+  $("dgF").onchange=e=>{S.dgF=e.target.value;dgListRender()};selSeg($("dgF"));
   if(window.qcBar)qcBar(box);
   if($("dgNewBtn"))$("dgNewBtn").onclick=()=>{S.dgN={ngayBD:S.today,ngay:"",thung:"",le:"",hl:"",find:"",btp:[],ov:{},fix:{},pick:true,st:"Đang đóng gói"};dgShow("new")};
 if($("dgDoneBtn"))$("dgDoneBtn").onclick=()=>{S.dgN={done:true,ngay:S.today,ngayBD:S.today,thung:"",le:"",hl:"",find:"",btp:[],ov:{},fix:{},pick:true};dgShow("new")};
@@ -1536,7 +1536,12 @@ setInterval(()=>{try{bellUpdate()}catch(e){}},15000);
 
 function lsxShow(v){S.lsxView=v;$("lsxListView").hidden=v!=="list";$("lnForm").hidden=v!=="new";$("odView").hidden=v!=="detail";$("ctForm").hidden=v!=="ct";window.scrollTo(0,0)}
 document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>{lsxShow("list");renderLsx()});
-$("lsxFilter").addEventListener("change",()=>renderLsx());$("lsxQ").addEventListener("input",()=>renderLsx());
+$("lsxFilter").addEventListener("change",()=>renderLsx());
+/* bộ lọc trạng thái dạng nút (Lệnh SX BTP và Lệnh đóng gói giống nhau) */
+function selSeg(sel){if(!sel||sel.dataset.seg)return;sel.dataset.seg=1;const sg=document.createElement("div");sg.className="seg seg2";sg.style.cssText="margin:0 0 10px";
+  const draw=()=>{sg.innerHTML='<span class="seg2-l">Trạng thái:</span>'+[...sel.options].map(o=>`<button type="button" data-v="${esc(o.value)}" aria-pressed="${o.value===sel.value}">${esc(o.textContent)}</button>`).join("");sg.querySelectorAll("button").forEach(b=>b.onclick=()=>{sel.value=b.dataset.v;sel.dispatchEvent(new Event("change"));if(sg.isConnected)draw()})};
+  draw();sel.style.display="none";const t=sel.closest(".tools")||sel;t.parentNode.insertBefore(sg,t);sel.addEventListener("change",()=>{if(sg.isConnected)draw()})}
+selSeg($("lsxFilter"));$("lsxQ").addEventListener("input",()=>renderLsx());
 function itemOpts(filter){return sorted().filter(filter||(()=>true)).map(i=>`<option value="${esc(i.ma)}">${esc(i.ma)} · ${esc(i.ten)} (${esc(i.donVi)})</option>`).join("")}
 
 function renderLsx(){
@@ -2532,9 +2537,9 @@ function attachSearch(sel){if(!sel||sel._srch)return;
 function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(id)))}
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
-<script src="kehoach.js?v=54"></script>
-<script src="dgforms.js?v=66"></script>
-<link rel="stylesheet" href="ui.css?v=7">
+<script src="kehoach.js?v=55"></script>
+<script src="dgforms.js?v=67"></script>
+<link rel="stylesheet" href="ui.css?v=9">
 <script src="nav.js?v=8"></script>
 </body>
 </html>
