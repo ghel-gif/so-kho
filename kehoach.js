@@ -200,7 +200,10 @@ const LOGO=()=>{const i=document.querySelector(".brand img");return i?i.src:""};
 const T13='font:13px/1.35 "Times New Roman",Times,serif;color:#000';
 const dangOf=sp=>{const m=/\d\s*(?:%\s*W\/[WV]\s*)?(WP|WG|WDG|SC|EC|SL|OD|FS|EW|ME|SE|CS|GR|SP|DF|SG|DC)\b/i.exec((sp&&sp.ten)||"");return m?m[1].toUpperCase():""};
 const pr=(html,land)=>{$("printArea").innerHTML=html;let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}
-  pg.textContent="@media print{@page{size:A4 "+(land?"landscape;margin:8mm}":"portrait;margin:10mm}")+"html,body,#printArea{margin:0!important;padding:0!important}#printArea table{border-collapse:collapse}#printArea td,#printArea th{color:#000!important}}";
+  pg.textContent="@media print{@page{size:A4 "+(land?"landscape;margin:8mm}":"portrait;margin:10mm}")+"html,body,#printArea{margin:0!important;padding:0!important}#printArea table{border-collapse:collapse}#printArea table{max-width:calc(100% - 2px)}#printArea td,#printArea th{color:#000!important}}";
+  /* tràn trang rất ít (≤10 %) → thu nhỏ vừa 1 trang, tránh in thừa trang trắng */
+  try{const mm=96/25.4,W=(land?281:190)*mm,H=(land?194:277)*mm,t=document.createElement("div");t.style.cssText="position:absolute;left:-99999px;top:0;width:"+W+"px";t.innerHTML=html;document.body.appendChild(t);const h=t.scrollHeight;t.remove();
+    if(h>H&&h<=H*1.1)pg.textContent=pg.textContent.replace(/\}$/,"#printArea{zoom:"+(Math.floor(H/h*1000)/1000-0.005)+"}}")}catch(e){}
   khPrintNow(pg)};
 /* Mẫu in chung: Times New Roman 12.5pt, khung đều, tiêu đề mục nền xám nhạt */
 const PCSS=`<style>
