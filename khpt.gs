@@ -132,6 +132,28 @@ function webBBSave(a, so, d) {
   return true;
 }
 
+/* ================= THẺ NHẬN DIỆN BTP (BM.07-QC-QT.03): lưu danh sách phuy / tank theo lệnh ================= */
+const TND_SH = 'TheNhanDien', TND_HEAD = ['Số lệnh', 'Dữ liệu (JSON)', 'Người lưu', 'Thời điểm'];
+function webTNDGet(a, so) {
+  auth_(a); if (!sheet_(TND_SH)) return null;
+  const r = rows_(TND_SH).find(x => str_(x[0]) === String(so || '')); if (!r) return null;
+  let d = null; try { d = JSON.parse(str_(r[1]) || 'null'); } catch (e) { d = null; }
+  return d ? { d, nguoi: str_(r[2]), luc: khTs_(r[3]) } : null;
+}
+function webTNDSave(a, so, d) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  so = String(so || '').trim(); if (!orders_().some(x => x.so === so)) throw new Error('Không tìm thấy lệnh ' + so);
+  d = d || {}; const t = v => String(v == null ? '' : v).trim().slice(0, 60), n = v => (v === '' || v == null) ? '' : (num_(v) || 0);
+  const L = (d.list || []).slice(0, 300).map(c => ({ me: t(c.me), loai: t(c.loai), bi: n(c.bi), net: n(c.net), le: c.le ? 1 : 0 }));
+  if (!L.length) throw new Error('Chưa có thẻ nào.');
+  const o = { list: L, tm: t(d.tm), nc: Math.min(3, Math.max(1, Math.round(num_(d.nc) || 1))), hl: String(d.hl || '').trim().slice(0, 300) };
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try { const sh = shX_(TND_SH, TND_HEAD), R = rows_(TND_SH), i = R.findIndex(x => str_(x[0]) === so), row = [so, JSON.stringify(o), me.ten, new Date()];
+    if (i >= 0) sh.getRange(i + 2, 1, 1, 4).setValues([row]); else sh.appendRow(row); } finally { lock.releaseLock(); }
+  log_(me, 'Thẻ nhận diện BTP', so, L.length + ' thẻ');
+  return { d: o, nguoi: me.ten, luc: new Date() };
+}
+
 /* ================= PHIẾU KIỂM NGHIỆM HOÁ LÝ BTP (BM.08-QC-QT.03) =================
  * Trang PhieuHoaLy: Số phiếu | Mã BTP | Số lô | Ngày kiểm | Dạng | Kết quả (JSON) | Kết luận | Nhận xét | Người thực hiện | Lúc | Trạng thái
  * Phiếu Đạt tự ghi vào hồ sơ lô (loại "Phiếu kiểm hoá lý", link #hl:<số phiếu>) → lô hiện ĐÃ CÓ và QC duyệt Đạt được. */
