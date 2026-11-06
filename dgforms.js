@@ -107,7 +107,7 @@ function p05(I,d){const c=c05(d),K=B(),bx=v=>K.box(v),u=isGoi(I.q)?"GÓI":"CHAI"
       return `<table class="qct">${R.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>`})()}</td></tr>
    <tr><td colspan="3"><b>Thông tin bán thành phẩm</b><br>Tên: ${esc(I.b.ten||"")} &nbsp; NSX: ${I.b.nsx?dmy(String(I.b.nsx).slice(0,10)):""} &nbsp; Số lô SX: <b>${esc(I.b.lo||"")}</b> &nbsp; Tỷ trọng (nếu có): ${num(d.tyTrong)>0?(+d.tyTrong).toFixed(3).replace(".",",")+" g/ml":""}</td></tr>
    <tr><td colspan="3">Lưu ý: thùng carton kéo bằng băng keo: ${bx(d.bangKeo==="logo Asata")} logo Asata ${bx(d.bangKeo==="logo khách")} logo khách ${bx(d.bangKeo==="không thông tin")} không thông tin<br>Pallet quấn màng co: ${bx(d.mangCo==="Có")} Có ${bx(d.mangCo==="Không")} Không${d.ghiChu?"<br>Ghi chú: "+esc(d.ghiChu):""}</td></tr></table>
-  ${K.sign([["Người lập phiếu",""],["Nhân viên QC",""],["Phòng R&D",""]])}</div>`,true)}
+  ${K.sign([["Người lập phiếu",""],["Phòng QC",""]])}</div>`,true)}
 
 /* ---------- BM.04 / BM.06 Phiếu kiểm tra quá trình ---------- */
 /* Thiết bị theo từng dòng (BM.04 / BM.06): máy chính + máy phụ (in date, máy ép / seal, dán nhãn nếu có) */
