@@ -318,10 +318,10 @@ main form.card,main .box{max-width:none}
 .dtip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px;box-shadow:0 6px 18px rgba(0,0,0,.15);line-height:1.45}
 .dtip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
 .bm07{color:#000;font:13pt/1.25 "Times New Roman",Times,serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-sizing:border-box;width:100%;max-width:100%;height:136mm;display:flex;flex-direction:column;overflow:hidden}
-.bm07 .hd{display:grid;grid-template-columns:24mm minmax(0,1fr) 40mm;align-items:center;gap:2mm;padding-bottom:1mm;border-bottom:1px solid #000}.bm07 .hd img{height:11mm}
+.bm07 .hd{display:grid;grid-template-columns:24mm minmax(0,1fr) 38mm 17mm;align-items:center;gap:2mm;padding-bottom:1mm;border-bottom:1px solid #000}.bm07 .hd img{height:11mm}
 .bm07 .co{text-align:center;font-size:8.5pt;line-height:1.2}.bm07 .co b{display:block;font-size:10.5pt;margin-bottom:.5mm}.bm07 .mh{font-size:8.5pt;line-height:1.25}
-.bm07 .tt{position:relative;margin:0 0 1mm;min-height:21mm;padding:1.5mm 23mm 0;display:flex;align-items:flex-start;justify-content:center}.bm07 h1{text-align:center;font-size:19pt;margin:0}
-.bm07 .qr{position:absolute;right:0;top:1mm;width:21mm;height:21mm}.bm07 .qr img,.bm07 .qr canvas{width:21mm!important;height:21mm!important}
+.bm07 .tt{margin:1.5mm 0 2mm;display:flex;justify-content:center}.bm07 h1{text-align:center;font-size:19pt;margin:0}
+.bm07 .qr{width:17mm;height:17mm}.bm07 .qr img,.bm07 .qr canvas{width:17mm!important;height:17mm!important}
 .bm07 table{width:100%;border-collapse:collapse;margin:0;table-layout:fixed}.bm07 th,.bm07 td{border:0;padding:0 2mm;white-space:nowrap;overflow:hidden;text-overflow:clip;vertical-align:middle;text-align:left}.bm07 td[colspan]{white-space:normal;line-height:1.1}.bm07 .bkv td.nm{white-space:normal;line-height:1.1;font-size:13pt}
 .bm07 table.bkv{flex:1 1 auto}.bm07 .bkv th{background:#F2F2F2;font-weight:700;font-size:13pt}.bm07 .bkv td{font-size:14pt}
 .bm07 .bkv tr.sep td,.bm07 .bkv tr.sep th{border-bottom:1px solid #000}
@@ -2349,8 +2349,8 @@ function printBtpLabel(o,a4,hl,list,nc){if(Array.isArray(hl)){nc=list;list=hl;hl
   const f1=v=>(Math.round(v*10)/10).toFixed(1),ten=String(sp.ten||sp.ma).replace(/^BTP\s+/i,""),chu=o.khachHang||(sp.chuHang&&sp.chuHang!=="Asata"?sp.chuHang:"Công ty CP BVTV Asata Hoa Kỳ");
   const card=(c,k,n,nv=(c.net!==undefined?+c.net:kgv))=>`<div class="bm07">
   <div class="hd"><img src="${document.querySelector(".brand img").src}" alt=""><div class="co"><b>CÔNG TY CP BVTV ASATA HOA KỲ</b><i>Đ/c: Lô A3, đường số 5, KCN Hải Sơn (GĐ 3+4), Ấp Bình Tiền 2, Xã Đức Hòa, Tỉnh Tây Ninh</i></div>
-  <div class="mh">Mã hiệu: BM.07-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026</div></div>
-  <div class="tt"><h1>THẺ NHẬN DIỆN BÁN THÀNH PHẨM</h1><div class="qr" id="lblQr${k}"></div></div>
+  <div class="mh">Mã hiệu: BM.07-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026</div><div class="qr" id="lblQr${k}"></div></div>
+  <div class="tt"><h1>THẺ NHẬN DIỆN BÁN THÀNH PHẨM</h1></div>
   <table class="bkv"><colgroup><col style="width:28%"><col style="width:24%"><col style="width:18%"><col></colgroup>
   <tr><th>Tên sản phẩm</th><td colspan="3" class="b1${ten.length>34?" s":ten.length>22?" m":""}">${esc(ten)}</td></tr>
   <tr class="sep"><th>Hàm lượng</th><td colspan="3"><i style="font-weight:400;text-transform:none">${esc(hl!=null?hl:(sp.hamLuong||hlGoiY(sp)))}</i></td></tr>
