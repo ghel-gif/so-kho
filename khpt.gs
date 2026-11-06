@@ -321,7 +321,7 @@ function webQCSave(a, o) {
 }
 
 /* ===== Bảng định lượng QC-QĐ.04 (mục 5.1) — sửa trên phần mềm, BM.05 tự lấy ===== */
-const DL_SH = 'DinhLuongQD04', DL_HEAD_ = ['Sản phẩm', 'Quy cách', 'ĐVT', 'Mức dưới', 'Mức chuẩn', 'Mức trên', 'Ghi chú'];
+const DL_EDITOR_ = 'Nguyễn Ô Ghel', DL_SH = 'DinhLuongQD04', DL_HEAD_ = ['Sản phẩm', 'Quy cách', 'ĐVT', 'Mức dưới', 'Mức chuẩn', 'Mức trên', 'Ghi chú'];
 /* Số liệu gốc theo QC-QĐ.04 lần ban hành 01 (11/08/2025) — dùng khi chưa có trang tính */
 const DL_DEF_ = [
  ['Atoxa 250SC',100,'ml',99,102,104],['Foszatin 10.5GR',1000,'g',990,1000,1010],['Foszatin 10.5GR',500,'g',495,500,505],
@@ -362,9 +362,10 @@ function dlRows_() {
   const R = sheet_(DL_SH) ? rows_(DL_SH).filter(r => str_(r[0])) : DL_DEF_.map(r => r.concat(['']));
   return R.map(r => ({ sp: str_(r[0]), qn: num_(r[1]), dv: str_(r[2]).toLowerCase() === 'g' ? 'g' : 'ml', lo: num_(r[3]), std: num_(r[4]), hi: num_(r[5]), gc: str_(r[6]) }));
 }
-/** Bảng định lượng: ghi đè cả bảng (Quản lý / Kế toán). */
+/** Bảng định lượng: ghi đè cả bảng — chỉ Trưởng phòng QA/QC (DL_EDITOR_). */
 function webDLSave(a, list) {
-  const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
+  const me = auth_(a, [ROLES.QL]); needCT_(me);
+  if (me.ten !== DL_EDITOR_) throw new Error('Chỉ ' + DL_EDITOR_ + ' (Trưởng phòng QA/QC) mới được sửa bảng định lượng QC-QĐ.04.');
   const clean = (list || []).map(x => [String(x.sp || '').trim().slice(0, 80), num_(x.qn), String(x.dv || '').trim().toLowerCase() === 'g' ? 'g' : 'ml', num_(x.lo), num_(x.std), num_(x.hi), String(x.gc || '').trim().slice(0, 200)]).filter(r => r[0]);
   const seen = {};
   clean.forEach(r => {
