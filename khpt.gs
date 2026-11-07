@@ -264,7 +264,7 @@ const DGF_SH = 'BieuMauDG', DGF_HEAD = ['ID', 'Loại', 'Số lệnh', 'Ngày', 
 function dgfAll_() { return (sheet_(DGF_SH) ? rows_(DGF_SH) : []).filter(r => str_(r[0]) && str_(r[8]) !== 'Đã xoá').map(r => { let d = {}; try { d = JSON.parse(str_(r[4]) || '{}'); } catch (e) {}
   return { id: str_(r[0]), loai: str_(r[1]), so: str_(r[2]), ngay: str_(r[3]), d, kl: str_(r[5]), nguoi: str_(r[6]), luc: khTs_(r[7]) }; }); }
 function webDGFGet(a, so) {
-  needCT_(auth_(a));
+  { const me = auth_(a); if (!me.ct && !ldgMap_()[so]) needCT_(me); }
   const od = orders_().find(x => x.so === so); if (!od) throw new Error('Không tìm thấy lệnh ' + so);
   const P = ldgMap_()[so] || {}, q = qcRows_().find(x => x.qc === P.qc) || null, TT = ttMap_(), mv = moves_();
   const btp = (P.btp || []).map(b => { const nh = mv.find(m => m.ma === b.ma && m.lo === b.lo && m.loai === 'Nhập' && !m.trangThai), it = items_().find(i => i.ma === b.ma) || {};
@@ -274,7 +274,7 @@ function webDGFGet(a, so) {
   return { o: od, P, q, btp, forms: dgfAll_().filter(x => x.so === so), may: mayList_(), truoc: i > 0 ? all[i - 1].so : '', sau: i >= 0 && i < all.length - 1 ? all[i + 1].so : '' };
 }
 function webDGFAll(a, tu, den) {
-  needCT_(auth_(a));
+  auth_(a); // biểu mẫu đóng gói: ai đăng nhập cũng xem được
   return dgfAll_().filter(x => (!tu || x.ngay >= tu) && (!den || x.ngay <= den)).map(x => ({ id: x.id, loai: x.loai, so: x.so, ngay: x.ngay, kl: x.kl, may: (x.d && (x.d.mayTen || x.d.may)) || '', maMay: (x.d && x.d.maMay) || '' }));
 }
 function webDGFSave(a, d) {

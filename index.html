@@ -520,7 +520,7 @@ body nav.side .navh{color:#fff;opacity:.85}
     <div class="navh" role="presentation">Sản xuất</div>
     <button role="tab" data-tab="khpt" aria-selected="false" id="tabKhBtn">Kế hoạch phối trộn</button>
     <button role="tab" data-tab="lsx" aria-selected="false" id="tabLsxBtn">Lệnh SX BTP<span class="cnt" id="navLsxCnt" hidden></span></button>
-    <button role="tab" data-tab="dgl" aria-selected="false" class="needPhieu">Lệnh đóng gói TP</button>
+    <button role="tab" data-tab="dgl" aria-selected="false">Lệnh đóng gói TP</button>
     <div class="navh" role="presentation">Kiểm soát</div>
     <button role="tab" data-tab="kk" aria-selected="false" class="needPhieu">Kiểm kê kho</button>
     <button role="tab" data-tab="qc" aria-selected="false" id="tabQcBtn">QC lô</button>
@@ -1274,7 +1274,7 @@ const dgCode=s=>String(s||"").trim().toUpperCase().replace(/·/g,".").replace(/\
 async function dgLoad(force){if(S.dg&&!force)return S.dg;const d=await api("getDG",S.auth);S.dg=d;S._tpQ=null;S.dgQ={};(d.qc||[]).forEach(q=>S.dgQ[q.qc]=q);return d}
 function dgShow(v){S.dgv=v;window.scrollTo(0,0);renderDgl()}
 async function renderDgl(){const box=$("dglBox");if(!box)return;
-  if(!S.me||!S.me.ct){box.innerHTML='<div class="empty"><b>Tài khoản chưa được xem công thức, định mức</b>Nhờ Quản lý cấp quyền “Xem công thức” để lập lệnh đóng gói.</div>';return}
+  if(!S.me){box.innerHTML='<div class="empty">Vui lòng đăng nhập.</div>';return}
   if(!S.dg){box.innerHTML='<div class="empty"><span class="ldg">Đang tải quy cách đóng gói…</span></div>';try{await dgLoad()}catch(e){box.innerHTML='<div class="empty">'+esc(e.message)+'</div>';return}}
   const v=S.dgv||"list";if(v==="new")dgNewRender();else if(v==="detail")dgOdRender();else dgListRender()}
 const DGX_COLS=[["STT",(r,i)=>i+1],["Ngày bắt đầu ĐG",r=>dmy(r.bd)],["Ngày hoàn thành",r=>r.ht?dmy(r.ht):""],["Số lệnh đóng gói",r=>r.so],["Mã sản phẩm",r=>r.ma],["Tên BTP",r=>r.btp],["Số lô BTP",r=>r.lo],["Số thùng đủ",r=>r.thung],["Hộp/thùng",r=>r.hopT],["Số hộp lẻ",r=>r.hopLe],["Gói/chai mỗi hộp",r=>r.spHop],["Gói/chai mỗi thùng",r=>r.spThung],["Gói/chai lẻ",r=>r.le],["Quy cách 1 gói/chai",r=>r.qc],["ĐVT quy cách",r=>r.dvt],["Tổng gói/chai",r=>r.tong],["Tỷ trọng (kg/L)",r=>r.tt],["Định mức BTP (kg)",r=>r.dmKg],["Định mức BTP (L)",r=>r.dmL],["BTP thực tế sử dụng (kg)",r=>r.txKg],["BTP thực tế sử dụng (L)",r=>r.txL],["KL tồn đầu (kg)",r=>r.dau],["KL tồn cuối (kg)",r=>r.cuoi],["Hao hụt (kg)",r=>r.hhKg],["Hao hụt (L)",r=>r.hhL],["Hao hụt %",r=>r.pct],["Người vận hành chính",r=>r.nvh],["Phụ việc",r=>r.pv],["Trạng thái",r=>r.st]];
