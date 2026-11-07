@@ -10,7 +10,7 @@ import sys,json,re
 cur,new,d,note=sys.argv[1:5]
 s=open('index.html').read()
 s=s.replace(f'const APP_VER="{cur}"',f'const APP_VER="{new}"',1)
-s=re.sub(r'APP_DATE="[^"]*"',f'APP_DATE="{d}"',s,1)
+s=re.sub(r'APP_DATE="[^"]*"',f'APP_DATE="{d}"',s,count=1)
 if note:
   i=s.find('APP_NEWS=[')+len('APP_NEWS=[')
   s=s[:i]+json.dumps(note,ensure_ascii=False)+','+s[i:]
