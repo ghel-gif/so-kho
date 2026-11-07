@@ -263,6 +263,7 @@ function webVSSave(a, d) {
 const DGF_SH = 'BieuMauDG', DGF_HEAD = ['ID', 'Loại', 'Số lệnh', 'Ngày', 'Dữ liệu (JSON)', 'Kết luận', 'Người lập', 'Lúc', 'Trạng thái'], DGF_LOAI = ['BM04', 'BM05', 'BM06', 'BM07'];
 function dgfAll_() { return (sheet_(DGF_SH) ? rows_(DGF_SH) : []).filter(r => str_(r[0]) && str_(r[8]) !== 'Đã xoá').map(r => { let d = {}; try { d = JSON.parse(str_(r[4]) || '{}'); } catch (e) {}
   return { id: str_(r[0]), loai: str_(r[1]), so: str_(r[2]), ngay: str_(r[3]), d, kl: str_(r[5]), nguoi: str_(r[6]), luc: khTs_(r[7]) }; }); }
+function dgfDel_(so) { return (sheet_(DGF_SH) ? rows_(DGF_SH) : []).filter(r => str_(r[0]) && str_(r[2]) === so && str_(r[8]) === 'Đã xoá').map(r => ({ id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[3]), kl: str_(r[5]), nguoi: str_(r[6]), luc: khTs_(r[7]) })); }
 function webDGFGet(a, so) {
   { const me = auth_(a); if (!me.ct && !ldgMap_()[so]) needCT_(me); }
   const od = orders_().find(x => x.so === so); if (!od) throw new Error('Không tìm thấy lệnh ' + so);
@@ -271,7 +272,7 @@ function webDGFGet(a, so) {
     return { ma: b.ma, ten: it.ten || '', lo: b.lo, kg: b.kg, nsx: nh ? (nh.nsx || nh.ngay) : '', tt: TT[lotKey_(b.ma, b.lo)] || 0 }; });
   // lệnh đóng gói trước / sau (gợi ý BTP vừa chạy, sẽ chạy cho BM.07)
   const all = orders_().filter(x => x.trangThai !== 'Đã huỷ' && /^TP\./.test(x.maSP || '')).sort((x, y) => (x.ngay + x.so < y.ngay + y.so ? -1 : 1)), i = all.findIndex(x => x.so === so);
-  return { o: od, P, q, btp, forms: dgfAll_().filter(x => x.so === so), may: mayList_(), truoc: i > 0 ? all[i - 1].so : '', sau: i >= 0 && i < all.length - 1 ? all[i + 1].so : '' };
+  return { o: od, P, q, btp, forms: dgfAll_().filter(x => x.so === so), xoa: dgfDel_(so), may: mayList_(), truoc: i > 0 ? all[i - 1].so : '', sau: i >= 0 && i < all.length - 1 ? all[i + 1].so : '' };
 }
 function webDGFAll(a, tu, den) {
   auth_(a); // biểu mẫu đóng gói: ai đăng nhập cũng xem được
@@ -295,10 +296,19 @@ function webDGFSave(a, d) {
   log_(me, 'Biểu mẫu đóng gói ' + d.loai, od.so + ' · ' + id, kl || 'chưa kết luận');
   return id;
 }
+/* Xoá mềm (giữ dữ liệu, khôi phục được). Quản lý, Kế toán hoặc chính người lập phiếu. */
 function webDGFDel(a, id) {
-  const me = auth_(a, [ROLES.QL, ROLES.KT]);
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   const R = sheet_(DGF_SH) ? rows_(DGF_SH) : [], i = R.findIndex(r => str_(r[0]) === id); if (i < 0) throw new Error('Không tìm thấy phiếu.');
-  sheet_(DGF_SH).getRange(i + 2, 9).setValue('Đã xoá'); log_(me, 'Xoá biểu mẫu đóng gói', id, ''); return id;
+  if ([ROLES.QL, ROLES.KT].indexOf(me.vaiTro) < 0 && str_(R[i][6]) !== me.ten) throw new Error('Chỉ người lập phiếu (' + str_(R[i][6]) + ') hoặc Quản lý mới xoá được phiếu này.');
+  sheet_(DGF_SH).getRange(i + 2, 9).setValue('Đã xoá'); log_(me, 'Xoá biểu mẫu đóng gói', str_(R[i][2]) + ' · ' + id, str_(R[i][1]) + ' ngày ' + str_(R[i][3])); return id;
+}
+function webDGFRestore(a, id) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  const R = sheet_(DGF_SH) ? rows_(DGF_SH) : [], i = R.findIndex(r => str_(r[0]) === id); if (i < 0) throw new Error('Không tìm thấy phiếu.');
+  if (str_(R[i][8]) !== 'Đã xoá') return id;
+  if ([ROLES.QL, ROLES.KT].indexOf(me.vaiTro) < 0 && str_(R[i][6]) !== me.ten) throw new Error('Chỉ người lập phiếu (' + str_(R[i][6]) + ') hoặc Quản lý mới khôi phục được phiếu này.');
+  sheet_(DGF_SH).getRange(i + 2, 9).setValue(''); log_(me, 'Khôi phục biểu mẫu đóng gói', str_(R[i][2]) + ' · ' + id, str_(R[i][1]) + ' ngày ' + str_(R[i][3])); return id;
 }
 
 

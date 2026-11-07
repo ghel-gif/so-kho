@@ -59,12 +59,19 @@ window.dgfHook=function(box,so){if(!box||!so||box.querySelector(".dgf-bar"))retu
 async function dgfOpen(so,f){let D;try{D=await getD(so)}catch(e){return handleErr(e)}
   const loai=f==="KT"?(isGoi(D.q)?"BM04":"BM06"):f,L=(D.forms||[]).filter(x=>x.loai===loai);
   if(loai==="BM05")return f05(D,L.pop()||null);
-  if(!L.length)return loai==="BM07"?f07(D,null):fKT(D,loai,null);
+  const X=(D.xoa||[]).filter(x=>x.loai===loai),mine=x=>["Quản lý","Kế toán"].includes(S.me.vaiTro)||x.nguoi===S.me.ten,cw=can.phieu();
+  if(!L.length&&!X.length)return loai==="BM07"?f07(D,null):fKT(D,loai,null);
   const w=document.createElement("div");w.className="cfm";const nm={BM04:"Phiếu kiểm tra quá trình đóng gói (BM.04)",BM06:"Phiếu kiểm tra quá trình đóng chai (BM.06)",BM07:"Biên bản vệ sinh thiết bị đóng gói (BM.07)"}[loai];
-  w.innerHTML=`<div class="cfm-box"><h2>${nm}</h2><p class="note">Lệnh ${esc(so)} đã có ${L.length} phiếu. Mở phiếu cũ hoặc lập phiếu mới (VD: ca khác, ngày khác).</p><div class="list">${L.map((x,i)=>`<div class="row click" data-i="${i}"><div class="name">${esc(dmy(x.ngay))} · ${esc(x.d.ca||x.d.gio||"")} ${x.kl?`<span class="chip">${esc(x.kl)}</span>`:""}</div><div class="meta">${esc(x.nguoi)} · ${esc(x.luc)}</div></div>`).join("")}</div>
+  w.innerHTML=`<div class="cfm-box"><h2>${nm}</h2><p class="note">Lệnh ${esc(so)} đã có ${L.length} phiếu. Mở phiếu cũ hoặc lập phiếu mới (VD: ca khác, ngày khác).</p><div class="list">${L.map((x,i)=>`<div class="row click" data-i="${i}" style="display:flex;align-items:center;gap:8px"><div style="flex:1;min-width:0"><div class="name">${esc(dmy(x.ngay))} · ${esc(x.d.ca||x.d.gio||"")} ${x.kl?`<span class="chip">${esc(x.kl)}</span>`:""}</div><div class="meta">${esc(x.nguoi)} · ${esc(x.luc)}</div></div>${cw&&mine(x)?`<button class="btn small danger" type="button" data-del="${i}" title="Xoá phiếu này (khôi phục được)">🗑 Xoá</button>`:""}</div>`).join("")||'<p class="note">Chưa có phiếu nào đang dùng.</p>'}</div>
+   ${X.length?`<details class="dgf-del" ${L.length?"":"open"}><summary>Phiếu đã xoá (${X.length}) — bấm để xem / khôi phục</summary><div class="list">${X.map((x,i)=>`<div class="row" style="display:flex;align-items:center;gap:8px;opacity:.85"><div style="flex:1;min-width:0"><div class="name"><s>${esc(dmy(x.ngay))}</s> ${x.kl?`<span class="chip">${esc(x.kl)}</span>`:""}</div><div class="meta">Lập: ${esc(x.nguoi)} · ${esc(x.luc)}</div></div>${cw&&mine(x)?`<button class="btn small" type="button" data-res="${i}">↺ Khôi phục</button>`:""}</div>`).join("")}</div></details>`:""}
    <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button><button class="btn primary" type="button" data-x="new">+ Phiếu mới</button></div></div>`;
   document.body.appendChild(w);const go=x=>{w.remove();loai==="BM07"?f07(D,x):fKT(D,loai,x)};
-  w.querySelectorAll("[data-i]").forEach(r=>r.onclick=()=>go(L[+r.dataset.i]));w.querySelector('[data-x="new"]').onclick=()=>go(null);w.querySelector('[data-x="close"]').onclick=()=>w.remove();w.onclick=e=>{if(e.target===w)w.remove()}}
+  w.querySelectorAll("[data-i]").forEach(r=>r.onclick=e=>{if(e.target.closest("[data-del]"))return;go(L[+r.dataset.i])});
+  const again=()=>{w.remove();dgfOpen(so,f);document.querySelectorAll(".dgf-bar").forEach(b=>b.upd&&b.upd())};
+  w.querySelectorAll("[data-del]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const x=L[+b.dataset.del];b.disabled=true;
+    try{await api("webDGFDel",S.auth,x.id);toast("Đã xoá phiếu ngày "+dmy(x.ngay)+" — có thể khôi phục ở mục “Phiếu đã xoá”");again()}catch(er){b.disabled=false;handleErr(er)}});
+  w.querySelectorAll("[data-res]").forEach(b=>b.onclick=async()=>{const x=X[+b.dataset.res];b.disabled=true;
+    try{await api("webDGFRestore",S.auth,x.id);toast("Đã khôi phục phiếu ngày "+dmy(x.ngay));again()}catch(er){b.disabled=false;handleErr(er)}});w.querySelector('[data-x="new"]').onclick=()=>go(null);w.querySelector('[data-x="close"]').onclick=()=>w.remove();w.onclick=e=>{if(e.target===w)w.remove()}}
 async function save(D,loai,p,data,ngay,kl){const id=await api("webDGFSave",S.auth,{id:p&&p.id||p&&p._id||"",loai,so:D.o.so,ngay,data,kl});if(p)p._id=id;return id}
 function dlg(html){const w=document.createElement("div");w.className="cfm";w.innerHTML=`<div class="cfm-box kh-dlg">${html}</div>`;document.body.appendChild(w);w.onclick=e=>{if(e.target===w)w.remove()};return w}
 const inp=(id,lb,v,ex)=>`<label>${lb}<input id="${id}" value="${esc(v==null?"":v)}" ${ex||""}></label>`;
