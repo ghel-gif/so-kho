@@ -85,7 +85,7 @@ body{-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility}
   .brand{min-width:0;flex:1 1 auto}
   .brand img{height:32px!important}
   .brand h1{font-size:18px!important;margin:0}
-  .brand .hver,.brand h1::after,.brand h1::before{display:none!important}
+  .brand h1::after,.brand h1::before{display:none!important}.brand .hver{display:block!important;width:max-content;margin:1px 0 0!important;font-size:10px!important;padding:0 5px!important;line-height:1.5}.brand h1{line-height:1.05}
   .who{display:flex!important;align-items:center;gap:4px;flex:none;text-align:right}
   .who br,#whoName,#syncNote{display:none!important}
   #themeBtn{font-size:0!important;width:40px;padding:0!important;justify-content:center}
