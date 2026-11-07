@@ -410,11 +410,15 @@ function webDLSave(a, list) {
 const DL52_SH = 'DinhLuongQD04_52', DL52_HEAD_ = ['Dạng (g/ml)', 'Trên (A >)', 'Đến (A ≤)', 'Kiểu mức dưới (%/đv)', 'Mức dưới', 'Kiểu mức trên (%/đv)', 'Mức trên'];
 const DL52_DEF_ = (() => { const R = [];
   [['g', [4, 2], [8, 4]], ['ml', [4, 2], [8, 2]]].forEach(([d, a50, a200]) => {
-    [[5, 50, '%', 7, '%', 4], [50, 100, 'đv', a50[0], 'đv', a50[1]], [100, 200, '%', 4, '%', 2], [200, 300, 'đv', a200[0], 'đv', a200[1]], [300, 500, '%', 2, '%', 1],
+    [[0, 5, '%', 7, '%', 4], [5, 50, '%', 7, '%', 4], [50, 100, 'đv', a50[0], 'đv', a50[1]], [100, 200, '%', 4, '%', 2], [200, 300, 'đv', a200[0], 'đv', a200[1]], [300, 500, '%', 2, '%', 1],
      [500, 1000, 'đv', 15, 'đv', 5], [1000, 10000, '%', 1, '%', 0.5], [10000, 15000, 'đv', 100, 'đv', 50], [15000, '', '%', 1, '%', 0.5]].forEach(r => R.push([d].concat(r)));
   }); return R; })();
 function dl52Rows_() {
-  const R = sheet_(DL52_SH) ? rows_(DL52_SH).filter(r => str_(r[0])) : DL52_DEF_;
+  let R = sheet_(DL52_SH) ? rows_(DL52_SH).filter(r => str_(r[0])) : DL52_DEF_;
+  /* TT 21/2014 Phụ lục IV: Qn ≤ 5 g/mL không có T (chỉ yêu cầu trung bình ≥ Qn) → QC-QĐ.04 dùng mức kiểm soát nội bộ −7 % / +4 %.
+     Bảng đã lưu trước khi có dòng này thì tự thêm vào (lưu bảng lần sau là ghi luôn). */
+  ['g', 'ml'].forEach(d => { if (!R.some(r => str_(r[0]).toLowerCase() === d && num_(r[1]) === 0)) R = [[d, 0, 5, '%', 7, '%', 4]].concat(R); });
+  R = R.slice().sort((x, y) => (str_(x[0]).toLowerCase() === 'g' ? 0 : 1) - (str_(y[0]).toLowerCase() === 'g' ? 0 : 1) || num_(x[1]) - num_(y[1]));
   return R.map(r => ({ dv: str_(r[0]).toLowerCase() === 'g' ? 'g' : 'ml', tu: num_(r[1]), den: str_(r[2]) === '' ? '' : num_(r[2]), loK: str_(r[3]) === '%' ? '%' : 'đv', lo: num_(r[4]), hiK: str_(r[5]) === '%' ? '%' : 'đv', hi: num_(r[6]) }));
 }
 function webDL52Save(a, list) {
