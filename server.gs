@@ -761,7 +761,7 @@ function updateOrderInfo(a, so, o) {
         const all = orders_(), trung = all.find(x => x.so.toLowerCase() === moi.toLowerCase() && x.so !== so);
         if (trung && trung.trangThai !== 'Đã huỷ') throw new Error('Số lệnh ' + moi + ' đã tồn tại.');
         if (trung) { let ten = trung.so + ' (huỷ)', k = 2; while (all.some(x => x.so === ten)) ten = trung.so + ' (huỷ ' + k++ + ')'; lx.getRange(orderRow_(trung.so), 1).setValue(ten); }
-        lx.getRange(row, 1).setValue(moi); doi.push('Số lệnh ' + so + ' → ' + moi);
+        lx.getRange(row, 1).setValue(moi); doi.push('Số lệnh ' + so + ' → ' + moi); const nr = renameRefs_(so, moi); if (nr) doi.push(nr + ' dòng biểu mẫu/kế hoạch đổi theo');
       }
       if (o.ngay !== undefined && o.ngay !== od.ngay) { if (!isYmd_(o.ngay)) throw new Error('Ngày ra lệnh không hợp lệ.'); lx.getRange(row, 2).setValue(o.ngay); doi.push('Ngày ' + od.ngay + ' → ' + o.ngay); }
       if (o.slDuKien !== undefined && num_(o.slDuKien) !== od.slDuKien) { const v = num_(o.slDuKien); if (!(v > 0)) throw new Error('Khối lượng dự kiến phải lớn hơn 0.'); lx.getRange(row, 4).setValue(v); doi.push('Dự kiến ' + od.slDuKien + ' → ' + v); }
@@ -775,6 +775,17 @@ function updateOrderInfo(a, so, o) {
   } finally { lock.releaseLock(); }
 }
 
+/* Đổi số lệnh: kéo theo kế hoạch đóng gói, biểu mẫu QC, cân bao bì, biên bản SX, vệ sinh TB, thẻ nhận diện, phiếu kho (chứng từ) */
+function renameRefs_(so, moi) {
+  const T = [['LenhDG', [1]], ['BieuMauDG', [3]], ['CanBaoBi', [7]], ['BienBanSX', [1]], ['VeSinhTB', [2, 4]], ['TheNhanDien', [1]]];
+  let n = 0;
+  T.forEach(([name, cols]) => { const sh = sheet_(name); if (!sh || sh.getLastRow() < 2) return;
+    cols.forEach(c => { const rg = sh.getRange(2, c, sh.getLastRow() - 1, 1), v = rg.getValues(); let ch = false;
+      v.forEach(r => { if (String(r[0]) === so) { r[0] = moi; ch = true; n++; } }); if (ch) rg.setValues(v); }); });
+  const ph = sheet_(SH.PH); if (ph && ph.getLastRow() > 1) { const rg = ph.getRange(2, 9, ph.getLastRow() - 1, 1), v = rg.getValues(); let ch = false;
+    v.forEach(r => { if (String(r[0]) === so) { r[0] = moi; ch = true; n++; } }); if (ch) rg.setValues(v); }
+  return n;
+}
 function orderRow_(so) {
   const i = rows_(SH.LX).findIndex(r => str_(r[0]) === so);
   if (i < 0) throw new Error('Không tìm thấy lệnh ' + so);
