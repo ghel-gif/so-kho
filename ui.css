@@ -223,3 +223,10 @@ html body .seg.seg2 button[aria-pressed="true"]{background:#d7f0eb;color:#0b4a43
 :root[data-theme=dark] .seg.seg2 button{background:transparent;color:#a9d9d0;border-color:#3f7d73!important;box-shadow:none}
 :root[data-theme=dark] .seg.seg2 button[aria-pressed="true"]{background:#1f4a44;color:#e6fffa;border-color:#5fc4b4!important}
 @media screen and (max-width:600px){html body .seg.seg2 button{flex:1 1 auto}}
+/* nút Bảng định lượng QC-QĐ.04: nổi bật, màu xanh dương riêng */
+html body button.dl-open{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:9px 16px;border-radius:10px;border:2px solid #0d47a1!important;background:#1565c0!important;color:#fff!important;font-weight:800;font-size:14.5px;box-shadow:0 2px 0 #0b3a82;cursor:pointer}
+html body button.dl-open:hover{background:#0d47a1!important}
+html body button.dl-open:active{transform:translateY(2px);box-shadow:none}
+html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
+:root[data-theme=dark] button.dl-open{background:#64b5f6!important;border-color:#90caf9!important;color:#0a1f33!important;box-shadow:0 2px 0 #1e5a91}
+:root[data-theme=dark] button.dl-open svg{stroke:#0a1f33}
