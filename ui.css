@@ -230,3 +230,7 @@ html body button.dl-open:active{transform:translateY(2px);box-shadow:none}
 html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}
 :root[data-theme=dark] button.dl-open{background:#64b5f6!important;border-color:#90caf9!important;color:#0a1f33!important;box-shadow:0 2px 0 #1e5a91}
 :root[data-theme=dark] button.dl-open svg{stroke:#0a1f33}
+/* BM.05: chọn căn cứ định lượng */
+.dlsrc{margin:4px 0 8px;padding:8px 10px;border:1.5px solid #90caf9;border-radius:10px;background:#f0f7ff}
+.dlsrc-h{font-weight:800;font-size:13.5px;color:#0d47a1;margin-bottom:6px}
+:root[data-theme=dark] .dlsrc{background:#0f2236;border-color:#2f5d8a}:root[data-theme=dark] .dlsrc-h{color:#90caf9}
