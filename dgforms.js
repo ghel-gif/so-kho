@@ -210,7 +210,7 @@ function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},canW=can.phi
     w.querySelectorAll("#fkT [data-nk]").forEach(x=>x.onchange=()=>{const r=d.rounds[+x.dataset.nk];r.nk=x.checked;rer()});
     w.querySelectorAll("#fkT [data-nkl]").forEach(x=>x.oninput=()=>{d.rounds[+x.dataset.nkl].nkLy=x.value})};bind();
   const rer=()=>{$("fkT").innerHTML=body();bind()};
-  w.addEventListener("change",e=>{if(e.target.matches&&e.target.matches("[data-tb]")){tbRead(loai,D,w,d.tb);const m=nsOf(loai,d);if(m!==n){n=m;toast(voiOf(d.tb)?`Máy ${voiOf(d.tb)} vòi → ${n} mẫu mỗi lần kiểm`:`${n} mẫu mỗi lần kiểm`)}rer()}});
+  w.addEventListener("change",e=>{if(e.target.matches&&e.target.matches("[data-tb]")){e.target.classList.remove("in-bad");tbRead(loai,D,w,d.tb);const m=nsOf(loai,d);if(m!==n){n=m;toast(voiOf(d.tb)?`Máy ${voiOf(d.tb)} vòi → ${n} mẫu mỗi lần kiểm`:`${n} mẫu mỗi lần kiểm`)}rer()}});
   $("fkT").addEventListener("keydown",e=>{const x=e.target;if(!x.matches||!x.matches("input[data-s]"))return;const K={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1],Enter:[0,1]}[e.key];if(!K)return;
     const A=[...$("fkT").querySelectorAll("input[data-s]")].filter(i=>!i.disabled),r=+x.dataset.r,c=+x.dataset.s,at=(rr,cc)=>A.find(i=>+i.dataset.r===rr&&+i.dataset.s===cc),R=[...new Set(A.map(i=>+i.dataset.r))].sort((a,b)=>a-b);
     let t=null;if(K[0]){const nr=R[R.indexOf(r)+K[0]];if(nr!=null)t=at(nr,c)}else{t=at(r,c+K[1]);if(!t&&e.key==="Enter"){const nr=R[R.indexOf(r)+1];if(nr!=null)t=at(nr,0)}}
