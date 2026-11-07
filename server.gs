@@ -965,7 +965,9 @@ function setQC(a, ma, lo, tt, ghiChu, hsdMoi) {
   const L = lots_(items_(), moves_());
   if (!L[ma] || !L[ma][lo]) throw new Error('Không tìm thấy lô ' + (lo || '(chưa có lô)') + ' của ' + ma + '.');
   const old = L[ma][lo];
-  if (tt === 'Đạt' && it.nhom === 'Bán thành phẩm' && old.qc === 'Chờ kiểm' && needHoaLy_(lo)) {
+  /* Quản lý ghi đè cho BTP cũ (tồn từ trước, không còn phiếu): ghi chú phải nêu rõ "BTP cũ" hoặc "ghi đè" — lưu vào nhật ký */
+  const ghiDe = tt === 'Đạt' && me.vaiTro === ROLES.QL && /BTP cũ|ghi đè/i.test(String(ghiChu || ''));
+  if (tt === 'Đạt' && !ghiDe && it.nhom === 'Bán thành phẩm' && old.qc === 'Chờ kiểm' && needHoaLy_(lo)) {
     const hs = hsLoaiMap_()[lotKey_(ma, lo)] || {};
     if (!hs['Phiếu kiểm hoá lý'] && !hs['Phiếu test hoá lý']) throw new Error('Lô BTP ' + ma + ' lô ' + (lo || '(chưa có lô)') + ': tải Phiếu kiểm hoá lý (đạt) lên hồ sơ lô trước, rồi mới duyệt Đạt.');
     if (!hs['Phiếu kết quả hàm lượng']) throw new Error('Lô BTP ' + ma + ' lô ' + (lo || '(chưa có lô)') + ': tải Phiếu kết quả hàm lượng lên hồ sơ lô trước, rồi mới duyệt Đạt.');
