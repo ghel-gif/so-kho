@@ -451,14 +451,14 @@ function webDL52Save(a, list) {
 }
 
 /* ===== Khối lượng bao bì do QC cân (lưu theo mã quy cách, lần cân mới nhất dùng làm mặc định) ===== */
-const CBB_SH = 'CanBaoBi', CBB_HEAD_ = ['Mã QC', 'Loại', 'Khối lượng', 'Đơn vị', 'Ngày cân', 'Người cân', 'Số lệnh', 'Thời điểm', 'Loại bao bì tính KL'];
+const CBB_SH = 'CanBaoBi', CBB_HEAD_ = ['Mã QC', 'Loại', 'Khối lượng', 'Đơn vị', 'Ngày cân', 'Người cân', 'Số lệnh', 'Thời điểm', 'Loại bao bì tính KL', 'Trạng thái', 'Người xoá / khôi phục', 'Lúc xoá / khôi phục'];
 const CBB_LOAI_ = { klBB: 'g', klHop: 'g', klThung: 'kg' };
 function cbbRows_() {
   if (!sheet_(CBB_SH)) return [];
   let B5 = null; /* lần cân cũ chưa ghi loại bao bì → lấy theo phiếu BM.05 của lệnh đó */
   const bbOf = so => { if (!B5) { B5 = {}; try { dgfAll_().forEach(f => { if (f.loai === 'BM05' && f.d && f.d.loaiBB) B5[f.so] = f.d.loaiBB; }); } catch (e) {} } return B5[so] || ''; };
-  return rows_(CBB_SH).filter(r => str_(r[0]) && CBB_LOAI_[str_(r[1])]).map(r => ({ qc: str_(r[0]), loai: str_(r[1]), v: num_(r[2]), dv: str_(r[3]), ngay: str_(r[4]), nguoi: str_(r[5]), so: str_(r[6]),
-    bb: str_(r[1]) === 'klBB' ? (str_(r[8]) || bbOf(str_(r[6]))) : '' }));
+  return rows_(CBB_SH).map((r, i) => [r, i]).filter(([r]) => str_(r[0]) && CBB_LOAI_[str_(r[1])]).map(([r, i]) => ({ id: i + 2, qc: str_(r[0]), loai: str_(r[1]), v: num_(r[2]), dv: str_(r[3]), ngay: str_(r[4]), nguoi: str_(r[5]), so: str_(r[6]),
+    bb: str_(r[1]) === 'klBB' ? (str_(r[8]) || bbOf(str_(r[6]))) : '', xoa: str_(r[9]) === 'Đã xoá' ? 1 : 0, xNguoi: str_(r[10]), xLuc: r[11] ? khTs_(r[11]) : '' }));
 }
 /** o: {qc, so, ngay, vals:{klBB, klHop, klThung}} — ghi các lần cân mới; trả lại toàn bộ lịch sử cân. */
 function webCanBBSave(a, o) {
@@ -472,4 +472,16 @@ function webCanBBSave(a, o) {
     add.push([qc, k, v, CBB_LOAI_[k], ngay, me.ten, String(o.so || '').slice(0, 60), new Date(), k === 'klBB' ? String(o.bb || '').trim().slice(0, 80) : '']); });
   if (add.length) { const lock = LockService.getScriptLock(); lock.waitLock(20000); try { const sh = shX_(CBB_SH, CBB_HEAD_); add.forEach(r => sh.appendRow(r)); } finally { lock.releaseLock(); } }
   return cbbRows_().concat([]);
+}
+/** Xoá (mềm) / khôi phục 1 lần cân bao bì ghi sai — người cân hoặc Quản lý / Kế toán. */
+function webCanBBDel(a, id, khoiPhuc) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  const sh = sheet_(CBB_SH); if (!sh) throw new Error('Chưa có lịch sử cân bao bì.');
+  const R = rows_(CBB_SH), i = Number(id) - 2, r = R[i];
+  if (!(i >= 0) || !r || !str_(r[0])) throw new Error('Không tìm thấy lần cân này — tải lại trang rồi thử lại.');
+  if (str_(r[5]) !== me.ten && [ROLES.QL, ROLES.KT].indexOf(me.vaiTro) < 0) throw new Error('Chỉ người cân (' + str_(r[5]) + ') hoặc Quản lý / Kế toán được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
+  const da = str_(r[9]) === 'Đã xoá'; if (!khoiPhuc && da) throw new Error('Lần cân này đã xoá rồi.'); if (khoiPhuc && !da) throw new Error('Lần cân này chưa bị xoá.');
+  sh.getRange(i + 2, 10, 1, 3).setValues([[khoiPhuc ? '' : 'Đã xoá', me.ten, new Date()]]);
+  log_(me, khoiPhuc ? 'Khôi phục lần cân bao bì' : 'Xoá lần cân bao bì', str_(r[0]) + ' · ' + str_(r[1]), num_(r[2]) + ' ' + str_(r[3]) + ' ngày ' + str_(r[4]) + ' · ' + str_(r[6]));
+  return cbbRows_();
 }
