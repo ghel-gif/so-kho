@@ -202,8 +202,13 @@ const dangOf=sp=>{const m=/\d\s*(?:%\s*W\/[WV]\s*)?(WP|WG|WDG|SC|EC|SL|OD|FS|EW|
 const pr=(html,land)=>{$("printArea").innerHTML=html;let pg=document.getElementById("pgA4");if(!pg){pg=document.createElement("style");pg.id="pgA4";document.head.appendChild(pg)}
   pg.textContent="@media print{@page{size:A4 "+(land?"landscape;margin:8mm}":"portrait;margin:10mm}")+"html,body,#printArea{margin:0!important;padding:0!important}#printArea table{border-collapse:collapse}#printArea table{max-width:calc(100% - 2px)}#printArea td,#printArea th{color:#000!important}}";
   /* tràn trang rất ít (≤10 %) → thu nhỏ vừa 1 trang, tránh in thừa trang trắng */
-  try{const mm=96/25.4,W=(land?281:190)*mm,H=(land?194:277)*mm,t=document.createElement("div");t.style.cssText="position:absolute;left:-99999px;top:0;width:"+W+"px";t.innerHTML=html;document.body.appendChild(t);const h=t.scrollHeight;t.remove();
-    if(h>H&&h<=H*1.2)pg.textContent=pg.textContent.replace(/\}$/,"#printArea{zoom:"+(Math.floor(H/h*1000)/1000-0.005)+"}}")}catch(e){}
+  try{const mm=96/25.4,W=(land?281:190)*mm,H=(land?194:277)*mm,t=document.createElement("div");t.style.cssText="position:absolute;left:-99999px;top:0;width:"+W+"px";t.innerHTML=html;document.body.appendChild(t);
+    /* chừa chỗ ký tối thiểu 3,5 cm (tính cả dòng chức danh), kể cả khi thu nhỏ trang */
+    const SG=35*mm,r1=[...t.querySelectorAll("table.sg")].map(x=>x.rows[0]?x.rows[0].getBoundingClientRect().height:0),
+      fix=(root,z)=>[...root.querySelectorAll("table.sg")].forEach((x,i)=>{const v=Math.max(0,SG/z-(r1[i]||0));x.querySelectorAll(".nm").forEach(d=>{if(d.getBoundingClientRect().height<v||root!==t)d.style.height=v+"px"})});
+    fix(t,1);const h=t.scrollHeight,sh=[...t.querySelectorAll("table.sg")].reduce((a,x)=>a+x.getBoundingClientRect().height,0);t.remove();let z=1;
+    if(h>H){const zz=Math.floor((H-sh)/(h-sh)*1000)/1000-0.005;if(zz>=0.8){z=zz;pg.textContent=pg.textContent.replace(/\}$/,"#printArea{zoom:"+z+"}}")}}
+    fix($("printArea"),z)}catch(e){}
   khPrintNow(pg)};
 /* Mẫu in chung: Times New Roman 12.5pt, khung đều, tiêu đề mục nền xám nhạt */
 const PCSS=`<style>
