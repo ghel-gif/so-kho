@@ -17,6 +17,14 @@
     const it = r.ma && typeof itemBy === "function" ? itemBy(r.ma) : null, nh = it ? it.nhom : "";
     if (nh === "Nguyên liệu") return "tech"; if (nh === "Phân bón") return "pb"; if (r.bu || SOLV.test(t)) return "dm"; if (nh) return "pg";
     return /\d{2,3}(?:[.,]\d+)?\s*%|\btech\b|\bTC\b|kỹ thuật/i.test(t) ? "tech" : "pg"; };
+  /* dòng Tech: hàm lượng hoạt chất trong công thức = %w/w × độ tinh khiết; dạng lỏng có tỷ trọng thì ra thêm g/L */
+  const PUR = r => { const it = r.ma && typeof itemBy === "function" ? itemBy(r.ma) : null, m = /(\d{2,3}(?:[.,]\d+)?)\s*%/.exec((r.ten || "") + " " + (it ? it.ten + " " + (it.hamLuong || "") : "")); const v = m ? parseFloat(m[1].replace(",", ".")) : 100; return v > 0 && v <= 100 ? v : 100; };
+  const HLtxt = (r, d) => { if (loaiOf(r) !== "tech") return ""; const p = parseFloat(String(r.pct ?? "").replace(",", ".")); if (!(p > 0)) return "";
+    const hl = p * PUR(r) / 100, tt = parseFloat(String(d.tyTrong || "").replace(",", ".")), u = DVHL(d);
+    if (u === "g/kg") return (+(hl * 10).toFixed(1)) + " g/kg";
+    if (u === "g/L") return tt > 0 ? (+(hl * tt * 10).toFixed(1)) + " g/L" : (+hl.toFixed(2)) + " % (ghi tỷ trọng để ra g/L)";
+    return (+hl.toFixed(2)) + " %"; };
+  const DVHL = d => ["g/L", "g/kg", "%"].includes(d.dvHL) ? d.dvHL : (LONG.includes(d.dang) ? "g/L" : "%");
   const add = (s, n) => { if (!/^\d{4}-\d{2}-\d{2}/.test(s || "")) return ""; const d = new Date(String(s).slice(0, 10) + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
   const today = () => (window.S && S.today) || new Date().toISOString().slice(0, 10);
   const QL = () => !!(S.me && S.me.vaiTro === "Quản lý" && S.me.ten === "Nguyễn Ô Ghel"); /* chỉ TP. LAB/RD sửa công thức */
@@ -162,7 +170,7 @@
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl)))}" ${ro} style="text-align:right;font-weight:700"></td>
       <td><input data-nl="${i}" data-k="tt" value="${E(r.tt || "")}" ${ro} placeholder=""></td>
       <td class="c"><input type="radio" name="ptBu" data-bu="${i}" ${r.bu ? "checked" : ""} ${ro} title="Dung môi nền: tự bù cho đủ 100%"></td>
-      <td><input data-nl="${i}" data-k="gc" value="${E(r.gc || "")}" ${ro} placeholder="" title="${E(r.gc || "")}"></td>
+      <td><b class="rd-hl" data-hl="${i}">${E(HLtxt(r, d))}</b><input data-nl="${i}" data-k="gc" value="${E(r.gc || "")}" ${ro} placeholder="" title="${E(r.gc || "")}"></td>
       ${ql ? `<td class="rd-act"><button type="button" class="rd-mv" data-up="${i}" title="Lên" ${i ? "" : "disabled"}>▲</button><button type="button" class="rd-mv" data-dn="${i}" title="Xuống" ${i < d.nl.length - 1 ? "" : "disabled"}>▼</button><button type="button" class="rd-mv rd-x" data-rmnl="${i}" title="Xoá dòng">✕</button></td>` : ""}</tr>`).join("");
     /* mức yêu cầu: "5-7", "5 – 7", "≥ 90", ">= 90", "≤ 3", "< 3" → kiểm số đo, tô xanh / đỏ */
     const inYc = (yc, v) => { const x = parseFloat(String(v || "").replace(",", ".")); if (!isFinite(x) || !String(v).trim().match(/^[\d.,\s]+$/)) return null; const t = String(yc || "").replace(/,/g, ".");
@@ -193,7 +201,7 @@
       <div class="grp">2. Công thức sản phẩm</div>
       <datalist id="rdNlDl">${nlList}</datalist>
       <p class="note" style="margin:0 0 6px"><span class="rd-leg"><i style="--lc:#7c3aed">Tech</i><i style="--lc:#0277bd">Dung môi</i><i style="--lc:#d97706">Phụ gia</i><i style="--lc:#2e7d32">Phân bón</i></span> Ghi %w/w từng nguyên liệu. Chọn ô <b>Up to</b> ở dòng <b>dung môi nền</b> (nước, dầu, chất mang…) để tự bù cho đủ 100%.</p>
-      <div class="dgx rd-tb"><table><colgroup><col style="width:${ql ? 46 : 30}px"><col style="width:92px"><col><col style="width:96px"><col style="width:52px"><col style="width:46px"><col style="width:22%">${ql ? '<col style="width:92px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th><th>Ghi chú</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
+      <div class="dgx rd-tb"><table><colgroup><col style="width:${ql ? 46 : 30}px"><col style="width:92px"><col><col style="width:96px"><col style="width:52px"><col style="width:46px"><col style="width:22%">${ql ? '<col style="width:92px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th><th>Hàm lượng <select id="ptDvHL" class="rd-dvhl" title="Đơn vị hàm lượng hoạt chất" ${ql ? "" : "disabled"}>${["g/L", "g/kg", "%"].map(u => `<option ${u === DVHL(d) ? "selected" : ""}>${u}</option>`).join("")}</select> / Ghi chú</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
       <tfoot><tr><td></td><td></td><td><b>Tổng cộng</b> ${ql ? '<button type="button" class="btn small" id="ptAddNl">+ dòng</button>' : ""}</td><td id="ptSum" style="text-align:right;font-weight:700"></td><td colspan="${ql ? 3 : 2}"></td></tr></tfoot></table></div>
       <div class="grp">3. Quy trình pha chế</div>
       <textarea id="ptQT" rows="5" ${ro} style="width:100%" placeholder="Các bước pha chế, thứ tự cho nguyên liệu, tốc độ khuấy, thời gian, nhiệt độ…">${E(d.quyTrinh || "")}</textarea>
@@ -227,10 +235,12 @@
     const num = v => { const x = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(x) ? x : 0; };
     const calc = () => {
       const tt = num(q("#ptTT") ? q("#ptTT").value : d.tyTrong), me = num(d.me) || 0;
+      if (q("#ptTT") && !q("#ptTT").disabled) d.tyTrong = q("#ptTT").value.trim(); if (q("#ptDang") && !q("#ptDang").disabled) d.dang = q("#ptDang").value; if (q("#ptDvHL") && !d.dvHL) q("#ptDvHL").value = DVHL(d);
       const bi = d.nl.findIndex(r => r.bu); if (bi >= 0) d.nl[bi].pct = Math.round((100 - d.nl.reduce((s, r, i) => s + (i === bi ? 0 : num(r.pct)), 0)) * 1000) / 1000;
       const n = NDP(d.nl);
       d.nl.forEach((r, i) => { const inp = w.querySelector(`[data-nl="${i}"][data-k="pct"]`), auto = !!r.bu, tr = w.querySelector(`tr[data-row="${i}"]`), mc = w.querySelector(`[data-ma="${i}"]`);
         if (tr) tr.style.setProperty("--lc", (LO[loaiOf(r)] || [, "#cfd8dc"])[1]); const lc = w.querySelector(`[data-loc="${i}"]`); if (lc) lc.innerHTML = loChip(r, i);
+        const hc = w.querySelector(`[data-hl="${i}"]`); if (hc) hc.textContent = HLtxt(r, d);
         if (inp && document.activeElement !== inp) inp.value = r.pct === "" || r.pct == null ? "" : F3(r.pct, n); if (inp) { inp.readOnly = !!auto; inp.style.background = auto ? "rgba(46,125,50,.08)" : ""; inp.title = auto ? (r.bu ? "Dung môi nền: up to 100%" : "Tự tính từ hàm lượng HC, độ tinh khiết " + r.pur + "% (lấy theo tên / danh mục vật tư)") : ""; }
       });
       const t = d.nl.reduce((s, r) => s + num(r.pct), 0), ok = Math.abs(t - 100) < 0.01;
@@ -280,6 +290,7 @@
     if (q("#pt54")) q("#pt54").onchange = () => { d.t54 = q("#pt54").checked; reKq(); };
     if (q("#pt0")) q("#pt0").onchange = () => { d.t0 = q("#pt0").checked; reKq(); };
     if (q("#ptBD")) q("#ptBD").addEventListener("change", () => { d.ngayBD = q("#ptBD").value; q("#ptKqH").innerHTML = kqHead(); });
+    if (q("#ptDvHL")) q("#ptDvHL").onchange = () => { d.dvHL = q("#ptDvHL").value; calc(); };
     if (q("#ptDang")) q("#ptDang").onchange = () => { d.dang = q("#ptDang").value; const blank = !d.kq.some(r => r.a || r.b || r.c); if (blank) { d.kq = ctOf(d.dang); q("#ptKq").innerHTML = kqRows(); wire(); } w.querySelectorAll(".ptU").forEach(x => x.textContent = hcU()); q("#ptTTRow").hidden = !liq(); w.querySelectorAll(".ptDg2").forEach(x => x.textContent = d.dang || "…"); w.querySelectorAll('[data-k="hc"]').forEach(x => x.placeholder = hcU()); calc(); };
     let maTay = !!(p && d.maCT); const autoMa = () => { if (!ql || maTay || !q("#ptMa")) return; q("#ptMa").value = genMa(q("#ptSp").value, q("#ptDang").value, p && p.id); };
     if (q("#ptMa")) q("#ptMa").addEventListener("input", () => { maTay = !!q("#ptMa").value.trim(); });
@@ -342,8 +353,8 @@
       <p>Số phiếu theo dõi: <b>${E(d.so || "")}</b> <small style="float:right">Chỉ tiêu theo QCVN 01-188:2018/BNNPTNT · phương pháp theo QC-HD nội bộ</small></p>
       <table><colgroup><col style="width:18%"><col style="width:32%"><col style="width:18%"><col style="width:32%"></colgroup><tr class="sec"><td colspan="4">1. THÔNG TIN CHUNG</td></tr><tr><td style="width:22%">Ngày lập phiếu</td><td>${D(d.ngayLap)}</td><td style="width:22%">Người thực hiện</td><td>${E(d.nguoiTH || "")}</td></tr><tr><td>Ngày bắt đầu</td><td>${D(d.ngayBD)}</td><td>Ngày kết thúc</td><td>${D(d.ngayKT)}</td></tr>
       <tr><td>Tên sản phẩm</td><td><b>${E(d.sp || "")}</b></td><td>Mã công thức</td><td>${E(d.maCT || "")}</td></tr><tr><td>Hàm lượng</td><td>${E(d.hl || "")}</td><td>Dạng · tỷ trọng</td><td>${E(d.dang || "")}${d.tyTrong ? " · " + E(d.tyTrong) + " g/ml" : ""}</td></tr></table>
-      <div class="gap"></div><table><colgroup><col style="width:6%"><col style="width:14%"><col><col style="width:11%"><col style="width:12%"><col style="width:22%"></colgroup><tr class="sec"><td colspan="6">2. CÔNG THỨC SẢN PHẨM</td></tr><tr><th>STT</th><th>Mã vật tư</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự thực hiện</th><th>Ghi chú</th></tr>
-      ${nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td>${r.ma ? E(r.ma) : (String(r.ten || "").trim() ? "<i>mới</i>" : "")}</td><td style="${LO[loaiOf(r)] ? "color:" + LO[loaiOf(r)][1] + ";font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact" : ""}">${E(r.ten || "")}</td><td class="r">${r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl))}</td><td class="c">${E(r.tt || "")}</td><td>${E(r.gc || "")}</td></tr>`).join("")}
+      <div class="gap"></div><table><colgroup><col style="width:6%"><col style="width:14%"><col><col style="width:11%"><col style="width:12%"><col style="width:22%"></colgroup><tr class="sec"><td colspan="6">2. CÔNG THỨC SẢN PHẨM</td></tr><tr><th>STT</th><th>Mã vật tư</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự thực hiện</th><th>Hàm lượng (${DVHL(d)}) / Ghi chú</th></tr>
+      ${nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td>${r.ma ? E(r.ma) : (String(r.ten || "").trim() ? "<i>mới</i>" : "")}</td><td style="${LO[loaiOf(r)] ? "color:" + LO[loaiOf(r)][1] + ";font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact" : ""}">${E(r.ten || "")}</td><td class="r">${r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl))}</td><td class="c">${E(r.tt || "")}</td><td>${HLtxt(r, d) ? "<b>HL " + E(HLtxt(r, d)) + "</b>" + (r.gc ? "; " : "") : ""}${E(r.gc || "")}</td></tr>`).join("")}
       <tr><td></td><td></td><td><b>Tổng cộng</b></td><td class="r"><b>${t ? F3(t, NDP(d.nl)) : ""}</b></td><td colspan="2">Tỷ trọng: ${E(d.tyTrong || "")}</td></tr></table>
       <div class="gap"></div><table><tr class="sec"><td>3. QUY TRÌNH PHA CHẾ</td></tr><tr><td class="qt">${E(d.quyTrinh || "")}</td></tr></table>
       <div class="gap"></div><table><colgroup><col style="width:27%"><col style="width:${C.length > 2 ? 17 : 21}%">${C.map(() => `<col>`).join("")}</colgroup><tr class="sec"><td colspan="${2 + C.length}">4. KẾT QUẢ THỰC HIỆN</td></tr><tr><th style="width:27%">Chỉ tiêu <small>(phương pháp)</small></th><th style="width:19%">Yêu cầu</th>${C.map(k => `<th>${CH[k]}</th>`).join("")}</tr>
