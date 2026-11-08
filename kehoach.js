@@ -224,7 +224,7 @@ const PCSS=`<style>
 </style>`;
 const head=(title,meta)=>`<table class="hd"><tr><td class="lg"><img src="${LOGO()}"></td><td class="tt">${title}</td><td class="mt">${meta}</td></tr></table>`;
 const box=c=>`<span style="font-size:14pt;vertical-align:-1px">${c?"☑":"☐"}</span>`;
-const sign=L=>`<table class="sg"><tr>${L.map(x=>`<td><b>${x[0]}</b><br><i>(Ký và ghi rõ họ tên)</i></td>`).join("")}</tr><tr>${L.map(x=>`<td class="nm">${esc(x[1]||"")}</td>`).join("")}</tr></table>`;
+const sign=L=>`<table class="sg"><tr>${L.map(x=>`<td><b>${x[0]}</b><br><i>(Ký và ghi rõ họ tên)</i></td>`).join("")}</tr><tr>${L.map(x=>`<td class="nm"></td>`).join("")}</tr></table>`;
 
 /* Nút chung cho BM.06 / BM.08: Đóng · Lưu (phiếu mới) · Cập nhật (phiếu đã lưu) · In (chỉ in bản đã lưu) */
 const btn4=(canW,saved)=>`<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${canW?`<button class="btn" type="button" data-x="save"${saved?" disabled":""}>Lưu</button><button class="btn" type="button" data-x="upd"${saved?"":" disabled"}>Cập nhật</button>`:""}<button class="btn primary" type="button" data-x="in"${canW&&!saved?" disabled":""}>In</button>`;
