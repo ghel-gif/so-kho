@@ -205,7 +205,7 @@
         ${ql ? `<button class="btn primary" type="button" id="ptSave">${p ? "Lưu" : "Lưu & giao việc"}</button>` : ""}
         ${!ql && toi && d.tt !== "Đã duyệt" ? '<button class="btn" type="button" id="ptDraft">Lưu kết quả</button><button class="btn primary" type="button" id="ptBao">📨 Báo kết quả</button>' : ""}
         ${(toi || ql) && d.tt !== "Đã duyệt" && !d.hong ? '<button class="btn danger" type="button" id="ptHong">⛔ Mẫu hỏng – dừng theo dõi</button>' : ""}
-        ${p ? '<button class="btn" type="button" id="ptPr">🖨 In BM.02</button>' : ""}${p && ql ? '<button class="btn" type="button" id="ptLai">↻ Thử lại (phiếu mới)</button>' : ""}
+        ${p ? '<button class="btn" type="button" id="ptPr">🖨 In BM.02</button>' : ""}${p && ql ? '<button class="btn" type="button" id="ptLai">↻ Thử lại (phiếu mới)</button>' : ""}${p && ql && d.tt === "Đã duyệt" ? '<button class="btn" type="button" id="ptMo">🔓 Mở lại để sửa</button>' : ""}
         ${p && ql ? '<button class="btn danger" type="button" id="ptDel">Xoá</button>' : ""}
         <span style="flex:1"></span><button class="btn" type="button" data-x>Đóng</button></div>`, true);
     const q = s => w.querySelector(s);
@@ -281,6 +281,7 @@
     if (q("#ptPrTop")) q("#ptPrTop").onclick = () => { collect(); prPT(p, d); };
     if (q("#ptLai")) q("#ptLai").onclick = () => { collect(); const n = JSON.parse(JSON.stringify(d)); ["so", "kq", "kqbd", "deXuat", "ngayKT", "danhGia", "xuLy", "ghiChu", "duyetBoi", "duyetLuc", "baoLuc", "maCT"].forEach(k => delete n[k]);
       n.kq = ctOf(n.dang); n.lan = (d.lan || 1) + 1; n.tu = d.so; n.ngayLap = today(); delete n.ngayBD; window.__rdSeed = n; w.remove(); ptDlg(null); toast("Phiếu mới chép từ " + (d.so || "") + " — sửa công thức rồi Lưu & giao việc"); };
+    if (q("#ptMo")) q("#ptMo").onclick = () => { w.querySelectorAll('[name=ptDg],[name=ptXl]').forEach(x => x.checked = false); go({ danhGia: "", xuLy: "", tt: "Đã báo KQ", duyetBoi: "", duyetLuc: "" }, "Đã mở lại phiếu — người thực hiện sửa được kết quả"); };
     if (q("#ptHongX")) q("#ptHongX").onclick = () => { delete d.hong; go(null, "Đã bỏ ghi mẫu hỏng"); };
     if (q("#ptHong")) q("#ptHong").onclick = () => {
       const bd = q("#ptBD").value, x = document.createElement("div"); x.className = "cfm";
