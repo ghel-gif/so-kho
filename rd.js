@@ -144,7 +144,7 @@
     const liq = () => LONG.includes(d.dang), hcU = () => liq() ? "g/L" : "%";
     /* độ tinh khiết nguyên liệu kỹ thuật: lấy theo "98%" trong tên hoặc hàm lượng ở danh mục; không có thì coi 100% */
     const purOf = r => { const it = r.ma && typeof itemBy === "function" ? itemBy(r.ma) : null, m = /(\d{2,3}(?:[.,]\d+)?)\s*%/.exec((r.ten || "") + " " + (it ? it.ten + " " + (it.hamLuong || "") : "")); const v = m ? parseFloat(m[1].replace(",", ".")) : 100; return v > 0 && v <= 100 ? v : 100; };
-    const maCell = r => r.ma ? `${E(r.ma)}<small>${tonTxt(r.ma)}</small>` : (String(r.ten || "").trim() ? '<span class="rd-new">mới</span>' : "");
+    const maCell = r => r.ma ? `${E(r.ma)}` : (String(r.ten || "").trim() ? '<span class="rd-new">mới</span>' : "");
     const nlRows = () => d.nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td data-ma="${i}" class="rd-ma">${maCell(r)}</td><td><input data-nl="${i}" data-k="ten" list="rdNlDl" value="${E(r.ten || "")}" ${ro} placeholder="Mã / tên vật tư trong kho, hoặc tên mới"></td>
       <td><input data-nl="${i}" data-k="hc" type="number" step="any" inputmode="decimal" value="${E(r.hc ?? "")}" ${ro} title="Hoạt chất: hàm lượng muốn có trong sản phẩm" placeholder="${hcU()}" style="text-align:right"></td>
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct ?? "")}" ${ro} style="text-align:right;font-weight:700"></td>
