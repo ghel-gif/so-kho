@@ -259,3 +259,25 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .blv-chip.bad{border-color:#c62828;background:rgba(198,40,40,.08);color:#c62828}
 .blv-chip:hover{filter:brightness(.95)}
 .cfm-box.rd-dlg{max-height:94vh;overflow:auto}
+/* Phòng R&D — phần đánh giá */
+.rd-dg{border:1px solid var(--line,#e3e8ee);border-radius:12px;padding:10px 12px;background:rgba(15,118,110,.03)}
+.rd-wait{background:rgba(124,58,237,.1);color:#5b21b6;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-weight:600}
+.rd-dgr{display:flex;align-items:flex-start;gap:12px;margin:6px 0;flex-wrap:wrap}
+.rd-dgl{flex:0 0 120px;font-weight:700;padding-top:9px}
+.rd-opts{display:flex;gap:8px;flex-wrap:wrap}
+.rd-opt input{position:absolute;opacity:0;pointer-events:none}
+.rd-opt span{display:inline-block;padding:9px 18px;border-radius:10px;border:2px solid var(--line,#cfd8dc);font-weight:700;cursor:pointer;min-width:140px;text-align:center;background:var(--surface,#fff)}
+.rd-opt input:disabled+span{cursor:default;opacity:.75}
+.rd-opt.ok input:checked+span{background:#2e7d32;border-color:#2e7d32;color:#fff}
+.rd-opt.bad input:checked+span{background:#c62828;border-color:#c62828;color:#fff}
+.rd-opt.re input:checked+span{background:#d97706;border-color:#d97706;color:#fff}
+.rd-opt.no input:checked+span{background:#475569;border-color:#475569;color:#fff}
+.rd-opt input:focus-visible+span{outline:2px solid #2563eb;outline-offset:2px}
+.rd-w{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:3px;font-size:12px}
+.rd-w label{display:inline-flex;gap:3px;align-items:center;color:var(--muted,#607d8b)}
+.rd-nb{background:rgba(124,58,237,.12);color:#6d28d9;border-radius:6px;padding:0 6px;font-weight:600}
+.rd-pp{margin-top:4px;font-size:12.5px!important;color:#0f766e}
+.rd-dlg #ptKq td input:not([type=checkbox]){display:block;width:100%;box-sizing:border-box;min-width:0}
+.rd-dlg .rd-w label{flex-direction:row!important;margin:0!important;font-weight:500}
+.rd-dlg .rd-w input[type=checkbox]{width:auto!important;height:auto!important;margin:0}
+.rd-dlg .rd-opts label{margin:0}
