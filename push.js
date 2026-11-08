@@ -56,7 +56,6 @@
         if (miss.length) send("📋 Thiếu biểu mẫu QC: " + o.so, "Lệnh đã hoàn thành nhưng chưa lập " + miss.join(", ") + " · " + (o.qc || ""), { qc: true }, "bm-" + o.so);
       } catch (e) {} }, 1500);
       else if (fn === "createPackOrder") send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.sp, "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
-      else if (fn === "webKHGui" && r) send("Kế hoạch phối trộn đã gửi", r + " lệnh · gửi bởi " + me(), { all: true }, "kh");
       else if (fn === "setQC" && (args[3] === "Đạt" || args[3] === "Không đạt")) send((args[3] === "Đạt" ? "✅ QC Đạt: " : "⛔ QC Không đạt: ") + args[1], "Lô " + args[2] + (args[4] ? " · " + args[4] : "") + " · " + me(), { roles: KHO, ten: ["Phan Thị Cẩm Tiên"] }, "qc-" + args[1] + args[2]);
       else if (fn === "saveMove" && o.loai === "Nhập") send("Nhập kho: " + (o.ma || ""), [o.lo ? "Lô " + o.lo : "", o.soLuong ? o.soLuong + " kg" : "", "nhập bởi " + me(), "kiểm QC nếu cần"].filter(Boolean).join(" · "), { qc: true }, "nhap-" + o.ma + o.lo);
     } catch (e) {}
