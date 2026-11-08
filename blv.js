@@ -59,6 +59,14 @@
     el.querySelectorAll("[data-dgo]").forEach(b => b.onclick = () => { const r = rows[+b.dataset.dgo], f = b.dataset.f; openDG(r.o.so); if (f && window.dgfOpen) setTimeout(() => { try { dgfOpen(r.o.so, f); } catch (e) {} }, 700); });
   }
 
+  async function rdCard(box) {
+    const el = box.querySelector("#blvRd"); if (!el || !window.rdTasks) return;
+    const T = await rdTasks(); if (!T.length) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div class="blv-card" style="--c:#db2777"><div class="blv-h"><span class="blv-i">🧪</span><b>Phòng RD — thử nghiệm, yêu cầu</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r" data-rd="${i}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
+    el.querySelectorAll("[data-rd]").forEach(b => b.onclick = () => rdOpen(T[+b.dataset.rd].id));
+    const sm = box.querySelector(".blv-sum"); if (sm) { const n = (+sm.dataset.n || 0) + T.length; sm.className = "blv-sum bad"; sm.innerHTML = `<b>${n}</b> việc cần chú ý`; }
+    const ok = [...box.querySelectorAll(".blv-card")].find(c => /Phần việc của bạn đang ổn/.test(c.textContent)); if (ok) ok.remove();
+  }
   window.blvRender = async function () {
     const box = document.getElementById("blvBox"); if (!box) return;
     if (!S.me) { box.innerHTML = '<div class="empty">Vui lòng đăng nhập.</div>'; return; }
@@ -79,11 +87,12 @@
       return `<div class="blv-card" style="--c:${M.c}"><div class="blv-h"><span class="blv-i">${M.i}</span><b>${E(s.t)}</b><span class="blv-n">${s.rows.length}</span></div>
         <div class="blv-l">${L.map((x, i) => `<button type="button" class="blv-r" data-k="${s.k}" data-i="${i}"><span>${M.line(x)}</span><span class="blv-go">Mở ›</span></button>`).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
     box.innerHTML = `<div class="blv-top"><div><h2 style="margin:0">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)} — chỉ hiện việc thuộc phần của bạn.</p></div>
-        <div class="blv-sum ${R.n ? "bad" : "ok"}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
-      <div id="blvDg"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
+        <div class="blv-sum ${R.n ? "bad" : "ok"}" data-n="${R.n}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
+      <div id="blvDg"></div><div id="blvRd"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
       ${mine && mine.rows.length ? card(mine) : ""}
       <p class="note" style="margin-top:10px">Bàn làm việc tự cập nhật khi dữ liệu thay đổi. Bấm một dòng để mở đúng lệnh / lô.</p>`;
     box.querySelectorAll(".blv-r").forEach(b => b.onclick = () => { const s = R.sec.find(x => x.k === b.dataset.k); META[b.dataset.k].go(s.rows[+b.dataset.i]); });
     dgCheck(box, R);
+    rdCard(box);
   };
 })();
