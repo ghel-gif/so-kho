@@ -54,6 +54,7 @@
 
   /* ---------- số liệu ---------- */
   const e = v => String(v == null ? "" : v).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const BM_TU = "2026-11-05"; /* biểu mẫu QC trên Sổ Kho bắt đầu dùng từ ngày này — lệnh cũ hơn không nhắc thiếu biểu mẫu */
   const r3 = v => Math.round((+v || 0) * 1000) / 1000;
   const f = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("vi-VN");
   const dmy = s => String(s || "").slice(0, 10).split("-").reverse().join("/");
@@ -84,7 +85,7 @@
     });
     /* lệnh đóng gói thiếu biểu mẫu QC (đang đóng gói, hoặc xong trong 7 ngày) */
     const formMiss = [];
-    orders.filter(o => isTP(o) && (o.trangThai === "Đang SX" || (o.trangThai === "Hoàn thành" && o.ngayHT && days(today, o.ngayHT) <= 7))).forEach(o => {
+    orders.filter(o => isTP(o) && String(o.ngay) >= BM_TU && (o.trangThai === "Đang SX" || (o.trangThai === "Hoàn thành" && o.ngayHT && days(today, o.ngayHT) <= 7))).forEach(o => {
       const F2 = dgf.filter(x => x.so === o.so), miss = [];
       if (!F2.some(x => x.loai === "BM05")) miss.push("BM.05");
       if (!F2.some(x => /^BM0[46]$/.test(x.loai))) miss.push("BM.04/06");
