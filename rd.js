@@ -12,7 +12,7 @@
   const NDP = L => Math.max(0, ...(L || []).filter(r => r && !r.bu).map(r => DP(r.pct)));
   const add = (s, n) => { if (!/^\d{4}-\d{2}-\d{2}/.test(s || "")) return ""; const d = new Date(String(s).slice(0, 10) + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
   const today = () => (window.S && S.today) || new Date().toISOString().slice(0, 10);
-  const QL = () => S.me && S.me.vaiTro === "Quản lý";
+  const QL = () => !!(S.me && S.me.vaiTro === "Quản lý" && S.me.ten === "Nguyễn Ô Ghel"); /* chỉ TP. LAB/RD sửa công thức */
   const META = { PT: ["BM.02-RD-QT.01", "02", "02/01/2026"], YC: ["BM.04-RD-QT.01", "02", "02/01/2026"], SO: ["BM.01-RD-QT.01", "02", "02/01/2026"], GM: ["BM.03-RD-QT.01", "02", "02/01/2026"] };
   const meta = k => `Mã số: <b>${META[k][0]}</b><br>Phiên bản: ${META[k][1]}<br>Ngày hiệu lực: ${META[k][2]}`;
   const TTC = { "Giao": "#2563eb", "Đang thử": "#d97706", "Đã báo KQ": "#7c3aed", "Đã duyệt": "#2e7d32" };

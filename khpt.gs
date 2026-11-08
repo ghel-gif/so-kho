@@ -560,9 +560,11 @@ const RD_SH = 'PhongRD', RD_HEAD = ['ID', 'Loại', 'Ngày', 'Dữ liệu (JSON)
 function rdRows_() { return (sheet_(RD_SH) ? rows_(RD_SH) : []).filter(r => str_(r[0])).map((r, i) => { let d = {}; try { d = JSON.parse(str_(r[3]) || '{}'); } catch (e) {}
   return { id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[2]), d, nguoi: str_(r[4]), luc: khTs_(r[5]), xoa: str_(r[6]) === 'Đã xoá' ? 1 : 0, sua: str_(r[7]) }; }); }
 function webRDAll(a) { const me = auth_(a); needCT_(me); return rdRows_(); }
+/* Phòng R&D: chỉ TP. LAB/RD (Nguyễn Ô Ghel, vai trò Quản lý) lập / sửa công thức, yêu cầu, đánh giá */
+function rdEd_(me) { return me.vaiTro === ROLES.QL && me.ten === DL_EDITOR_; }
 function webRDSave(a, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
-  o = o || {}; const ql = me.vaiTro === ROLES.QL;
+  o = o || {}; const ql = rdEd_(me);
   if (RD_LOAI.indexOf(o.loai) < 0) throw new Error('Loại hồ sơ RD không hợp lệ.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -571,10 +573,10 @@ function webRDSave(a, o) {
     if (id && i < 0) throw new Error('Không tìm thấy hồ sơ (có thể đã bị xoá).');
     const cu = i >= 0 ? (() => { try { return JSON.parse(str_(R[i][3]) || '{}'); } catch (e) { return {}; } })() : null;
     let d = o.d || {};
-    if (o.loai === 'YC' && !ql) throw new Error('Chỉ TP. LAB/RD (Quản lý) lập / sửa yêu cầu nghiên cứu.');
+    if (o.loai === 'YC' && !ql) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập / sửa yêu cầu nghiên cứu.');
     if (o.loai === 'PT') {
       if (!ql) { /* người được giao: chỉ ghi kết quả, ảnh, đề xuất, báo kết quả */
-        if (!cu) throw new Error('Chỉ TP. LAB/RD (Quản lý) lập công thức thử nghiệm.');
+        if (!cu) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập công thức thử nghiệm.');
         if (cu.nguoiTH && cu.nguoiTH !== me.ten) throw new Error('Phiếu này giao cho ' + cu.nguoiTH + '.');
         if (cu.tt === 'Đã duyệt') throw new Error('Phiếu đã được duyệt, không sửa kết quả được nữa.');
         const keep = Object.assign({}, cu); ['kq', 'kqbd', 'deXuat', 'ngayBD', 'ngayKT', 'nvGhi', 'dat54', 'dat0', 'hong'].forEach(k => { if (k in d) keep[k] = d[k]; });
@@ -601,7 +603,7 @@ function webRDDel(a, id, khoiPhuc) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
   const R = sheet_(RD_SH) ? rows_(RD_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id));
   if (i < 0) throw new Error('Không tìm thấy hồ sơ.');
-  if (me.vaiTro !== ROLES.QL && str_(R[i][4]) !== me.ten) throw new Error('Chỉ người lập hoặc Quản lý được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
+  if (!rdEd_(me) && str_(R[i][4]) !== me.ten) throw new Error('Chỉ người lập hoặc ' + DL_EDITOR_ + ' được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
   sheet_(RD_SH).getRange(i + 2, 7, 1, 2).setValues([[khoiPhuc ? '' : 'Đã xoá', me.ten]]);
   log_(me, khoiPhuc ? 'Khôi phục hồ sơ RD' : 'Xoá hồ sơ RD', String(id), '');
   return rdRows_();
