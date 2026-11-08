@@ -222,7 +222,7 @@ nav.side button .cnt{margin-left:auto;background:var(--rail-2);border-color:tran
 nav.side button:hover{background:var(--rail-2);color:#fff}
 nav.side button[aria-selected="true"]{background:#fff;color:var(--rail);font-weight:700;box-shadow:none}
 nav.side button[aria-selected="true"] svg{stroke:var(--water);opacity:1}
-nav.side button[data-tab="home"]{--tc:var(--c-home)}nav.side button[data-tab="ton"]{--tc:var(--c-ton)}nav.side button[data-tab="nhap"]{--tc:var(--c-phieu)}nav.side button[data-tab="dg"],nav.side button[data-tab="dgl"]{--tc:#57e0b0}nav.side button[data-tab="kk"]{--tc:#c3a6ff}
+nav.side button[data-tab="home"]{--tc:var(--c-home)}nav.side button[data-tab="blv"]{--tc:#ffd54f}nav.side button[data-tab="ton"]{--tc:var(--c-ton)}nav.side button[data-tab="nhap"]{--tc:var(--c-phieu)}nav.side button[data-tab="dg"],nav.side button[data-tab="dgl"]{--tc:#57e0b0}nav.side button[data-tab="kk"]{--tc:#c3a6ff}
 nav.side button[data-tab="xnb"]{--tc:var(--c-xnb)}nav.side button[data-tab="lsx"]{--tc:var(--c-lsx)}nav.side button[data-tab="ls"]{--tc:var(--c-ls)}
 nav.side button[data-tab="vt"]{--tc:var(--c-vt)}nav.side button[data-tab="qc"]{--tc:var(--c-qc)}nav.side button[data-tab="bc"]{--tc:var(--c-bc)}
 .ver{color:var(--rail-ink);padding:18px 12px 0;margin-top:auto}.ver b{color:#fff}
@@ -521,6 +521,7 @@ body nav.side .navh{color:#fff;opacity:.85}
   <nav class="side" role="tablist" aria-label="Menu chính">
     <div class="navh" role="presentation">Tổng quan</div>
     <button role="tab" data-tab="home" aria-selected="true">Trang chủ</button>
+    <button role="tab" data-tab="blv" aria-selected="false">Bàn làm việc</button>
     <button role="tab" data-tab="ton" aria-selected="false">Tồn kho</button>
     <div class="navh" role="presentation">Nhập – xuất kho</div>
     <button role="tab" data-tab="nhap" aria-selected="false" class="needPhieu">Phiếu nhập vật tư</button>
@@ -541,6 +542,7 @@ body nav.side .navh{color:#fff;opacity:.85}
   </nav>
 <main>
   <div class="pghead" id="pgHead" hidden><div class="pgtxt"><h1 id="pgTitle"></h1></div><div class="acts" id="pgAct"></div></div>
+  <section id="tab-blv" hidden><div id="blvBox"></div></section>
   <section id="tab-home">
     <div><h2 style="font-size:22px" id="hTitle">Trang chủ</h2><p class="note" id="hSub"></p></div>
     <div class="quick" id="hQuick" aria-label="Việc nhanh của bạn" hidden style="display:none!important"></div>
@@ -952,7 +954,7 @@ const store={get(){try{return JSON.parse(localStorage.getItem("sokho_auth")||"nu
 const WARN_DAYS=90;
 const ttf=v=>(+v||0).toLocaleString("vi-VN",{minimumFractionDigits:3,maximumFractionDigits:3});
 const hanOf=it=>it&&(it.nhom==="Phân bón"||/^BTP PB /i.test(it.ten||""))?36:24;
-const APP_VER="3.6.0",APP_DATE="08/11/2026",APP_NEWS=["Bản tin buổi sáng (điện thoại + email Gmail, theo việc từng người); báo thiếu biểu mẫu QC khi xong lệnh đóng gói; Hồ sơ lô một chạm (in/PDF); Báo cáo → Biểu đồ","Thông báo đẩy: gọi hàm push bằng phiên đăng nhập","Lệnh SX BTP: đối chiếu tồn nguyên liệu theo công thức (trừ phần giữ cho lệnh SX đang mở), báo thiếu khi lập lệnh, cảnh báo trong danh sách và chuông","Lệnh đóng gói: đối chiếu tồn lô BTP (trừ phần đã giữ cho lệnh khác), báo đỏ khi thiếu + gợi ý lô khác, cảnh báo trong danh sách và chuông","Thông báo đẩy trên điện thoại: lệnh SX/đóng gói mới, nhập kho, QC Đạt/Không đạt, kế hoạch phối trộn (bật ở ô chuông)","Cài Sổ Kho như app trên iPhone/Android (biểu tượng Sổ Kho, mở toàn màn hình, có hướng dẫn cài)","Theo dõi cân bao bì: nút Xoá lần cân ghi sai + mục Lần cân đã xoá có Khôi phục","Theo dõi cân bao bì: ghi rõ loại bao bì tính KL (gói thuốc, chai có nhãn không nắp…), mã đã cân hiện chip xanh, tô màu theo loại","Nút Theo dõi cân bao bì (kế Bảng định lượng): chọn mã hàng xem tất cả các lần cân","BM.04/06 in: tiêu đề lần kiểm 2 dòng, số mẫu 1 dòng, tần suất 1 dòng, cột Lỗi/lý do rộng hơn; mọi biểu mẫu chừa ô ký ≥3,5 cm","BM.04/06 in: cột Đầu ca / Sau 2h rộng hơn (12,5 %)","Chọn thiết bị xong thì ô đỏ cảnh báo tắt ngay","BM.04/06: bắt buộc chọn máy in date; BM.06 bắt buộc chọn máy seal nắp và dán nhãn (có lựa chọn Dán thủ công)","Hiện số phiên bản ở đầu trang; khi có bản mới, phần mềm hiện nút “Có phiên bản mới – bấm để tải lại”", "Dữ liệu tự nạp lại khoảng 20 giây/lần; đang nhập dở thì hiện nút “Có dữ liệu mới”", "Giao diện: ô cần nhập tô vàng, ô tự điền xám, Đạt xanh lá / Không đạt đỏ; nút quay lại và nút chuyển mục rõ hơn; cảnh báo có hình động", "Lệnh đóng gói & Lệnh SX BTP: ô Biểu mẫu QC báo Chưa lập / Cần bổ sung (ghi rõ thiếu gì) / Đủ thông tin", "BM.05: chọn căn cứ định lượng mục 5.1 / 5.2; bỏ nhiệt độ cài đặt, tốc độ băng tải; chỉ số (1)(2)(3) cho ghi chú; Xếp pallet dự kiến", "BM.04/06: số mẫu theo số vòi máy; bỏ lý do khi Không kiểm; nút Xoá / Khôi phục phiếu; bản in chữ to hơn, cột tiêu chí rộng", "QC-QĐ.04 mục 5.2 thêm khoảng ≤ 5 g/ml; thẻ nhận diện BTP có Lưu / Cập nhật; đổi số lệnh kéo theo biểu mẫu, kế hoạch", "Tài khoản Chỉ xem xem được Lệnh đóng gói; Quản lý ghi đè duyệt Đạt cho BTP cũ (ghi chú “BTP cũ”)"];
+const APP_VER="3.6.1",APP_DATE="08/11/2026",APP_NEWS=["Thêm tab Bàn làm việc: mỗi người thấy việc của riêng mình (lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn, âm kho, hết hạn, lệnh đang làm), bấm để mở đúng lệnh / lô","Bản tin buổi sáng (điện thoại + email Gmail, theo việc từng người); báo thiếu biểu mẫu QC khi xong lệnh đóng gói; Hồ sơ lô một chạm (in/PDF); Báo cáo → Biểu đồ","Thông báo đẩy: gọi hàm push bằng phiên đăng nhập","Lệnh SX BTP: đối chiếu tồn nguyên liệu theo công thức (trừ phần giữ cho lệnh SX đang mở), báo thiếu khi lập lệnh, cảnh báo trong danh sách và chuông","Lệnh đóng gói: đối chiếu tồn lô BTP (trừ phần đã giữ cho lệnh khác), báo đỏ khi thiếu + gợi ý lô khác, cảnh báo trong danh sách và chuông","Thông báo đẩy trên điện thoại: lệnh SX/đóng gói mới, nhập kho, QC Đạt/Không đạt, kế hoạch phối trộn (bật ở ô chuông)","Cài Sổ Kho như app trên iPhone/Android (biểu tượng Sổ Kho, mở toàn màn hình, có hướng dẫn cài)","Theo dõi cân bao bì: nút Xoá lần cân ghi sai + mục Lần cân đã xoá có Khôi phục","Theo dõi cân bao bì: ghi rõ loại bao bì tính KL (gói thuốc, chai có nhãn không nắp…), mã đã cân hiện chip xanh, tô màu theo loại","Nút Theo dõi cân bao bì (kế Bảng định lượng): chọn mã hàng xem tất cả các lần cân","BM.04/06 in: tiêu đề lần kiểm 2 dòng, số mẫu 1 dòng, tần suất 1 dòng, cột Lỗi/lý do rộng hơn; mọi biểu mẫu chừa ô ký ≥3,5 cm","BM.04/06 in: cột Đầu ca / Sau 2h rộng hơn (12,5 %)","Chọn thiết bị xong thì ô đỏ cảnh báo tắt ngay","BM.04/06: bắt buộc chọn máy in date; BM.06 bắt buộc chọn máy seal nắp và dán nhãn (có lựa chọn Dán thủ công)","Hiện số phiên bản ở đầu trang; khi có bản mới, phần mềm hiện nút “Có phiên bản mới – bấm để tải lại”", "Dữ liệu tự nạp lại khoảng 20 giây/lần; đang nhập dở thì hiện nút “Có dữ liệu mới”", "Giao diện: ô cần nhập tô vàng, ô tự điền xám, Đạt xanh lá / Không đạt đỏ; nút quay lại và nút chuyển mục rõ hơn; cảnh báo có hình động", "Lệnh đóng gói & Lệnh SX BTP: ô Biểu mẫu QC báo Chưa lập / Cần bổ sung (ghi rõ thiếu gì) / Đủ thông tin", "BM.05: chọn căn cứ định lượng mục 5.1 / 5.2; bỏ nhiệt độ cài đặt, tốc độ băng tải; chỉ số (1)(2)(3) cho ghi chú; Xếp pallet dự kiến", "BM.04/06: số mẫu theo số vòi máy; bỏ lý do khi Không kiểm; nút Xoá / Khôi phục phiếu; bản in chữ to hơn, cột tiêu chí rộng", "QC-QĐ.04 mục 5.2 thêm khoảng ≤ 5 g/ml; thẻ nhận diện BTP có Lưu / Cập nhật; đổi số lệnh kéo theo biểu mẫu, kế hoạch", "Tài khoản Chỉ xem xem được Lệnh đóng gói; Quản lý ghi đè duyệt Đạt cho BTP cũ (ghi chú “BTP cũ”)"];
 const S={xnView:"new",xnLines:[],auth:null,me:null,items:[],bal:{},lots:{},nhom:[],congThuc:{},lenh:[],today:"",tab:"ton",mvType:"Nhập",editMa:null,armed:null,hist:[],
   lsxView:"list",od:null,odLines:[],odMoves:null,ctLines:[],nhomQC:[],bcView:"sx",qcOpen:null,dtLines:[]};
 const can={phieu:()=>["Quản lý","Kế toán","Thủ kho","Nhân viên","Kế toán kho"].includes(S.me?.vaiTro),
@@ -1021,7 +1023,7 @@ async function refresh(){try{S.tk={};await loadData();loadDash();render();bellUp
 function handleErr(e){if(/đăng nhập|PIN/.test(e.message)){store.set(null);snapClear();showLogin(e.message)}else toast(e.message)}
 
 /* ---------- tabs ---------- */
-const NAV_ICON={khpt:"M4 5h16v15H4zM4 9h16M8 3v4M16 3v4M8 13h3M8 16h6",nhap:"M12 3v11M7.5 9.5 12 14l4.5-4.5M4 16v4h16v-4",dg:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",dgl:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",kk:"M9 3h6v3H9zM8 5H5v16h14V5h-3M9 14l2 2 4-4",home:"M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",ton:"M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10",phieu:"M9 3h6v3H9zM8 5H5v16h14V5h-3M12 10v7M8.5 13.5h7",xnb:"M21 8l-9-5-9 5v8l9 5 3-1.7M3 8l9 5 9-5M12 13v8M16 16h6M19.5 13.5 22 16l-2.5 2.5",lsx:"M9 3h6M10 3v6l-5.5 9.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3M7.5 15h9",ls:"M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2",vt:"M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01",qc:"M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-5",bc:"M4 20V11M10 20V5M16 20v-8M21 20H3"};
+const NAV_ICON={blv:"M3 8h18v12H3zM9 8V5h6v3M3 13h18M11 13v2h2v-2",khpt:"M4 5h16v15H4zM4 9h16M8 3v4M16 3v4M8 13h3M8 16h6",nhap:"M12 3v11M7.5 9.5 12 14l4.5-4.5M4 16v4h16v-4",dg:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",dgl:"M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",kk:"M9 3h6v3H9zM8 5H5v16h14V5h-3M9 14l2 2 4-4",home:"M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z",ton:"M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10",phieu:"M9 3h6v3H9zM8 5H5v16h14V5h-3M12 10v7M8.5 13.5h7",xnb:"M21 8l-9-5-9 5v8l9 5 3-1.7M3 8l9 5 9-5M12 13v8M16 16h6M19.5 13.5 22 16l-2.5 2.5",lsx:"M9 3h6M10 3v6l-5.5 9.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3M7.5 15h9",ls:"M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2",vt:"M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01",qc:"M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-5",bc:"M4 20V11M10 20V5M16 20v-8M21 20H3"};
 document.querySelectorAll("nav.side button[data-tab]").forEach(b=>{const p=NAV_ICON[b.dataset.tab];if(!p||b.querySelector("svg"))return;const cnt=b.querySelector(".cnt");const t=document.createElement("span");t.className="lbl";
   [...b.childNodes].forEach(n=>{if(n!==cnt&&!(n.classList&&n.classList.contains("hint")))t.appendChild(n)});b.prepend(t);b.insertAdjacentHTML("afterbegin",`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${p}"/></svg>`)});
 const PHIEU_TAB={nhap:["Nhập","Phiếu nhập vật tư","mua"],dg:["Đóng gói","Lệnh đóng gói thành phẩm: trừ BTP lấy ra đóng gói","donggoi"],kk:["Kiểm kê","Kiểm kê kho","kiemke"]};
@@ -1067,7 +1069,7 @@ function setTab(t,back){if(t==="phieu")t="nhap";if(!back&&S.tab&&t!==S.tab){S.na
   if(pt){const was=S.mvType;S.mvType=pt[0];$("mvTitle").textContent=pt[1];document.querySelectorAll('#tab-phieu .seg button').forEach(x=>x.setAttribute("aria-pressed",x.dataset.t===pt[0]));
     if(was!==pt[0]){$("mvLotOut").dataset.ma="";$("mvQty").value=""}if($("impKind")&&$("impKind").value!==pt[2]){$("impKind").value=pt[2];$("impKind").dispatchEvent(new Event("change"))}}
   $("qrBox").hidden=t!=="kk";if(t==="kk")qrInit();if(pt)setTimeout(loadRec,0);
-  ["home","ton","phieu","xnb","khpt","lsx","dgl","ls","vt","qc","bc"].forEach(k=>$("tab-"+k).hidden=k!==sec);window.scrollTo(0,0);pgHead(t);render();if(t==="ls")loadHistory();if(t==="bc")bcShow(S.bcView);if(t==="xnb")xnShow(S.xnView);if(t==="dgl")renderDgl();if(t==="khpt"&&window.khRender)khRender()}
+  ["home","blv","ton","phieu","xnb","khpt","lsx","dgl","ls","vt","qc","bc"].forEach(k=>$("tab-"+k).hidden=k!==sec);if(t==="blv"&&window.blvRender)blvRender();window.scrollTo(0,0);pgHead(t);render();if(t==="ls")loadHistory();if(t==="bc")bcShow(S.bcView);if(t==="xnb")xnShow(S.xnView);if(t==="dgl")renderDgl();if(t==="khpt"&&window.khRender)khRender()}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 $("backBtn").onclick=goBack;try{if(GH){GH.replace({t:"home"},{},"");GH.setChangeHandler(e=>{const t=(e&&e.state&&e.state.t)||"home";if(t===S.tab)return;if(S.navStack[S.navStack.length-1]===t)S.navStack.pop();setTab(t,1)})}}catch(e){}
 $("reloadBtn").onclick=refresh;
@@ -1127,7 +1129,7 @@ function render(){
   }
   $("stockList").innerHTML=h;
   $("stockList").querySelectorAll(".row.click").forEach(r=>r.onclick=()=>tkToggle(r.dataset.ma));tkFill();
-  renderForm();renderItems();renderLsx();renderQC();renderHome();renderMoi();renderXnForm();if(S.tab==="bc")bcRefresh();
+  renderForm();renderItems();renderLsx();renderQC();renderHome();renderMoi();renderXnForm();if(S.tab==="bc")bcRefresh();if(S.tab==="blv"&&window.blvRender)blvRender();
   const lv=$("lsItem").value;
   $("lsItem").innerHTML='<option value="">Tất cả vật tư</option>'+sorted().map(i=>`<option value="${esc(i.ma)}">${esc(i.ma)} · ${esc(i.ten)}</option>`).join("");
   $("lsItem").value=itemBy(lv)?lv:"";
@@ -2610,9 +2612,10 @@ new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:t
 <script src="kehoach.js?v=57"></script>
 <script src="push.js?v=4"></script>
 <script src="hoso.js?v=2"></script>
-<script src="bieudo.js?v=2"></script>
+<script src="bieudo.js?v=3"></script>
+<script src="blv.js?v=1"></script>
 <script src="dgforms.js?v=90"></script>
-<link rel="stylesheet" href="ui.css?v=13">
+<link rel="stylesheet" href="ui.css?v=14">
 <script src="nav.js?v=8"></script>
 <script>
 /* Gợi ý cài Sổ Kho như app trên điện thoại (PWA) — chỉ hiện khi mở bằng trình duyệt, chưa cài, chưa bấm Ẩn */

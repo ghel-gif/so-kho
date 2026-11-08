@@ -240,3 +240,18 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .cbb-chip[aria-pressed=true]{background:#2e7d32;color:#fff}.cbb-chip[aria-pressed=true] small{color:#e8f5e9}
 :root[data-theme=dark] .cbb-chip{background:#1e3a24;color:#c8e6c9;border-color:#66bb6a}
 :root[data-theme=dark] .cbb-chip[aria-pressed=true]{background:#66bb6a;color:#0b1f0f}
+/* Bàn làm việc */
+.blv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin:4px 0 12px}
+.blv-sum{padding:10px 16px;border-radius:14px;font-size:16px;font-weight:600}
+.blv-sum b{font-size:22px}
+.blv-sum.bad{background:rgba(198,40,40,.1);color:#c62828;border:1.5px solid rgba(198,40,40,.4)}
+.blv-sum.ok{background:rgba(46,125,50,.1);color:#2e7d32;border:1.5px solid rgba(46,125,50,.4)}
+.blv-card{border:1px solid var(--line,#e3e8ee);border-left:5px solid var(--c);border-radius:14px;margin:0 0 12px;background:var(--surface,#fff);overflow:hidden}
+.blv-h{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:16px}
+.blv-i{font-size:18px}
+.blv-n{margin-left:auto;background:var(--c);color:#fff;border-radius:999px;padding:1px 10px;font-weight:700;font-size:14px}
+.blv-l{border-top:1px solid var(--line,#eef1f4)}
+.blv-r{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line,#eef1f4);padding:9px 12px;font:inherit;font-size:14.5px;color:inherit;cursor:pointer}
+.blv-r:last-child{border-bottom:0}
+.blv-r:hover{background:rgba(15,118,110,.06)}
+.blv-go{flex:none;color:var(--c);font-weight:700;font-size:13px}

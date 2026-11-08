@@ -92,7 +92,8 @@
       if (miss.length) formMiss.push({ so: o.so, nguoi: o.nguoiLap, xong: o.trangThai === "Hoàn thành", miss, sp: (IM[o.maSP] || {}).ten || o.maSP });
     });
     const exp30 = A.exp.filter(x => x.con <= 30);
-    return { today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP };
+    const open = orders.filter(o => o.trangThai === "Đang SX").sort(byDate).map(o => ({ so: o.so, ngay: o.ngay, nguoi: o.nguoiLap, sx: o.nguoiSX || "", qcSX: o.qcSX || "", dg: isTP(o), sp: (IM[o.maSP] || {}).ten || o.maSP, sl: o.slDuKien }));
+    return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP };
   }
 
   /* ---------- bản tin riêng từng người ---------- */
@@ -103,9 +104,10 @@
     dgShort: { t: "Lệnh đóng gói thiếu tồn BTP", h: ["Lệnh", "BTP", "Lô đã chọn", "Cần (kg)", "Thiếu (kg)"], row: x => [e(x.so), e(x.ma), e(x.lots.join(", ")), f(x.need), "<b style='color:#c62828'>" + f(x.short) + "</b>"] },
     lsxShort: { t: "Lệnh SX BTP thiếu nguyên liệu", h: ["Lệnh", "Thiếu"], row: x => [e(x.so), x.sh.map(s => e(s.ma) + " " + f(s.short) + " kg").join("; ")] },
     low: { t: "Âm kho / dưới mức tối thiểu", h: ["Mã", "Tên", "Tồn (kg)", "Tối thiểu (kg)"], row: x => [e(x.ma), e(x.ten), x.am ? "<b style='color:#c62828'>" + f(x.ton) + "</b>" : f(x.ton), x.min ? f(x.min) : ""] },
+    mine: { t: "Lệnh đang làm của tôi", h: ["Lệnh", "Loại", "Sản phẩm", "Ra lệnh"], row: x => [e(x.so), x.dg ? "Đóng gói" : "SX BTP", e(x.sp), dmy(x.ngay)] },
     treo: { t: "Lệnh SX chưa hoàn thành (treo lâu)", h: ["Lệnh", "Sản phẩm", "Ngày ra lệnh", "Đã treo"], row: x => [e(x.so), e(x.maSP), dmy(x.ngay), x.ngayTreo + " ngày"] }
   };
-  const SHORT = { cho: n => n + " lô chờ QC", formMiss: n => n + " lệnh thiếu biểu mẫu QC", exp: n => n + " lô sắp/quá hạn", dgShort: n => n + " lệnh đóng gói thiếu BTP", lsxShort: n => n + " lệnh SX thiếu NL", low: n => n + " mã âm/dưới tối thiểu", treo: n => n + " lệnh SX treo" };
+  const SHORT = { mine: n => n + " lệnh đang làm", cho: n => n + " lô chờ QC", formMiss: n => n + " lệnh thiếu biểu mẫu QC", exp: n => n + " lô sắp/quá hạn", dgShort: n => n + " lệnh đóng gói thiếu BTP", lsxShort: n => n + " lệnh SX thiếu NL", low: n => n + " mã âm/dưới tối thiểu", treo: n => n + " lệnh SX treo" };
   function forUser(u, X) {
     const role = u.vai_tro || "", ql = role === "Quản lý", qc = ql || !!u.quyen_qc, kho = ["Thủ kho", "Kế toán kho", "Kế toán"].includes(role), mine = x => x.nguoi === u.ten;
     const S = {};
@@ -117,16 +119,17 @@
       const dg = X.dgShort.filter(mine), ls = X.lsxShort.filter(mine), fm = X.formMiss.filter(mine), tr = X.treo.filter(t => (X.orders.find(o => o.so === t.so) || {}).nguoiLap === u.ten);
       if (dg.length) S.dgShort = dg; if (ls.length) S.lsxShort = ls; if (!qc && fm.length) S.formMiss = fm; if (tr.length) S.treo = tr;
     }
+    if (!ql) { const inc = (s, t) => String(s || "").split(",").map(x => x.trim()).includes(t); S.mine = X.open.filter(o => o.nguoi === u.ten || inc(o.sx, u.ten) || inc(o.qcSX, u.ten)); }
     Object.keys(S).forEach(k => { if (!S[k] || !S[k].length) delete S[k]; });
-    const keys = ["formMiss", "cho", "dgShort", "lsxShort", "low", "exp", "treo"].filter(k => S[k]);
-    const n = keys.reduce((s, k) => s + S[k].length, 0);
+    const keys = ["formMiss", "cho", "dgShort", "lsxShort", "low", "exp", "treo", "mine"].filter(k => S[k]);
+    const n = keys.filter(k => k !== "mine").reduce((s, k) => s + S[k].length, 0);
     const tbl = k => { const D = SEC[k], R = S[k].slice(0, 40); return `<h3 style="margin:18px 0 6px;font-size:15px;color:#0f5f56">${D.t} (${S[k].length})</h3><table style="border-collapse:collapse;font-size:13px;width:100%">` +
       `<tr>${D.h.map(h => `<th style="text-align:left;border-bottom:2px solid #cfd8dc;padding:5px 10px 5px 0">${h}</th>`).join("")}</tr>` +
       R.map(r => `<tr>${D.row(r).map(c => `<td style="border-bottom:1px solid #eceff1;padding:5px 10px 5px 0;vertical-align:top">${c == null ? "" : c}</td>`).join("")}</tr>`).join("") + `</table>` + (S[k].length > 40 ? `<p style="color:#78909c;font-size:12px">… và ${S[k].length - 40} dòng nữa — xem trong Sổ Kho.</p>` : ""); };
     const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#1d2a22;max-width:760px"><h2 style="margin:0 0 4px;color:#0f6f64">Sổ Kho — bản tin sáng ${dmy(X.today)}</h2><p style="margin:0 0 10px;color:#546e7a">Chào ${e(u.ten)}. ${n ? "Việc của bạn cần chú ý hôm nay:" : "Hôm nay không có việc tồn đọng nào trong phần việc của bạn. 👍"}</p>` +
       keys.map(tbl).join("") + `<p style="margin-top:20px"><a href="https://ghel-gif.github.io/so-kho/" style="background:#0f6f64;color:#fff;padding:9px 16px;border-radius:8px;text-decoration:none;font-weight:bold">Mở Sổ Kho</a></p><p style="color:#90a4ae;font-size:11px">Bản tin tự động · tắt / đổi email trong Sổ Kho → chuông 🔔 → Bản tin buổi sáng.</p></div>`;
-    const sum = keys.map(k => SHORT[k](S[k].length)).join(" · ");
-    return { n, keys, html, subject: "Sổ Kho " + dmy(X.today) + ": " + (n ? n + " việc cần chú ý" : "không có việc tồn"), push: n ? sum : "" };
+    const sum = keys.filter(k => k !== "mine").map(k => SHORT[k](S[k].length)).join(" · ");
+    return { n, keys, sec: keys.map(k => ({ k, t: SEC[k].t, rows: S[k] })), today: X.today, html, subject: "Sổ Kho " + dmy(X.today) + ": " + (n ? n + " việc cần chú ý" : "không có việc tồn"), push: n ? sum : "" };
   }
 
   G.SOKHO_BRIEF = {

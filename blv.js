@@ -1,0 +1,53 @@
+/* Sổ Kho — BÀN LÀM VIỆC: việc của riêng người đang đăng nhập (cùng logic với bản tin sáng — brief.js). */
+"use strict";
+(function () {
+  const E = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const D = s => { s = String(s || "").slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split("-").reverse().join("/") : s; };
+  const N = v => (Math.round((+v || 0) * 100) / 100).toLocaleString("vi-VN");
+  let CODE = null;
+  async function code() {
+    if (CODE) return CODE;
+    const v = window.SOKHO_VER || Date.now(), g = f => fetch(f + "?v=" + v, { cache: "no-cache" }).then(r => r.text());
+    const [a, b] = await Promise.all([g("server.gs"), g("khpt.gs")]);
+    if (!window.SOKHO_BRIEF) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "brief.js?v=" + v; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+    return CODE = a + "\n" + b;
+  }
+  /* mỗi mục: màu, biểu tượng, nội dung 1 dòng, bấm thì mở đúng chỗ */
+  const META = {
+    formMiss: { c: "#c62828", i: "📋", line: x => `<b>${E(x.so)}</b> · ${E(x.sp)} — còn thiếu <b style="color:#c62828">${E(x.miss.join(", "))}</b>${x.xong ? " (lệnh đã xong)" : ""}`, go: x => openDG(x.so) },
+    cho: { c: "#7c3aed", i: "🧪", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} · lô <b>${E(x.lo || "—")}</b> · ${N(x.ton)} kg · chờ từ ${D(x.ngay)}`, go: x => window.lotCard ? lotCard(x.ma, x.lo) : setTab("qc") },
+    dgShort: { c: "#c62828", i: "⚠", line: x => `<b>${E(x.so)}</b> · ${E(x.ma)} lô ${E(x.lots.join(", "))} — cần ${N(x.need)} kg, <b style="color:#c62828">thiếu ${N(x.short)} kg</b>`, go: x => openDG(x.so) },
+    lsxShort: { c: "#c62828", i: "⚠", line: x => `<b>${E(x.so)}</b> — thiếu ${x.sh.map(s => E(s.ma) + " " + N(s.short) + " kg").join("; ")}`, go: x => openLSX(x.so) },
+    low: { c: "#e5484d", i: "📉", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} — tồn <b style="color:${x.am ? "#c62828" : "inherit"}">${N(x.ton)} kg</b>${x.min ? " / tối thiểu " + N(x.min) : ""}`, go: () => bellTon("am") },
+    exp: { c: "#d97706", i: "⏳", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} · lô ${E(x.lo || "—")} · HSD ${D(x.hsd)} — ${x.con < 0 ? `<b style="color:#c62828">quá hạn ${-x.con} ngày</b>` : "còn " + x.con + " ngày"} · ${N(x.ton)} kg`, go: x => window.lotCard ? lotCard(x.ma, x.lo) : bellTon("hsd") },
+    treo: { c: "#5a4fcf", i: "🕒", line: x => `<b>${E(x.so)}</b> · ${E(x.maSP)} — ra lệnh ${D(x.ngay)}, treo ${x.ngayTreo} ngày`, go: x => openLSX(x.so) },
+    mine: { c: "#0f766e", i: "🛠", line: x => `<b>${E(x.so)}</b> · ${x.dg ? "Đóng gói" : "SX BTP"} · ${E(x.sp)} · ra lệnh ${D(x.ngay)}`, go: x => x.dg ? openDG(x.so) : openLSX(x.so) }
+  };
+  function openDG(so) { S.dgv = "detail"; S.dgSo = so; S.dgN = null; S.dgC = null; setTab("dgl"); }
+  function openLSX(so) { setTab("lsx"); setTimeout(() => { try { if (typeof openOrder === "function" && S.me && S.me.ct) openOrder(so); } catch (e) {} }, 80); }
+
+  window.blvRender = async function () {
+    const box = document.getElementById("blvBox"); if (!box) return;
+    if (!S.me) { box.innerHTML = '<div class="empty">Vui lòng đăng nhập.</div>'; return; }
+    if (!box.dataset.ok) box.innerHTML = `<div class="empty"><span class="ldg">Đang gom việc của bạn…</span></div>`;
+    let R;
+    try {
+      const db = window.SOKHO_WEB && SOKHO_WEB.db; if (!db || !db.sheets) throw new Error("Chưa tải xong dữ liệu.");
+      const sheets = {}; Object.keys(db.sheets).forEach(n => sheets[n] = db.sheets[n].rows);
+      const me = { ten: S.me.ten, vai_tro: S.me.vaiTro, quyen_qc: !!S.me.qc };
+      const cd = await code(); R = window.SOKHO_BRIEF.build(sheets, cd, [me])[0];
+    } catch (e) { box.innerHTML = `<div class="empty">Không lập được bàn làm việc: ${E(e.message)}</div>`; return; }
+    box.dataset.ok = 1;
+    const urgent = R.sec.filter(s => s.k !== "mine"), mine = R.sec.find(s => s.k === "mine");
+    const h = new Date().getHours(), chao = h < 11 ? "Chào buổi sáng" : h < 14 ? "Chào buổi trưa" : h < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+    const card = s => { const M = META[s.k], L = s.rows.slice(0, 30);
+      return `<div class="blv-card" style="--c:${M.c}"><div class="blv-h"><span class="blv-i">${M.i}</span><b>${E(s.t)}</b><span class="blv-n">${s.rows.length}</span></div>
+        <div class="blv-l">${L.map((x, i) => `<button type="button" class="blv-r" data-k="${s.k}" data-i="${i}"><span>${M.line(x)}</span><span class="blv-go">Mở ›</span></button>`).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
+    box.innerHTML = `<div class="blv-top"><div><h2 style="margin:0">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)} — chỉ hiện việc thuộc phần của bạn.</p></div>
+        <div class="blv-sum ${R.n ? "bad" : "ok"}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
+      ${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
+      ${mine && mine.rows.length ? card(mine) : ""}
+      <p class="note" style="margin-top:10px">Bàn làm việc tự cập nhật khi dữ liệu thay đổi. Bấm một dòng để mở đúng lệnh / lô.</p>`;
+    box.querySelectorAll(".blv-r").forEach(b => b.onclick = () => { const s = R.sec.find(x => x.k === b.dataset.k); META[b.dataset.k].go(s.rows[+b.dataset.i]); });
+  };
+})();
