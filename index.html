@@ -929,7 +929,7 @@ function api0(fn,...args){const w=WR_FN.has(fn);let key=null;
   const RW=w&&RUNW.has(fn);
   const p=new Promise((res,rej)=>{const gs=google.script.run.withSuccessHandler(res).withFailureHandler(e=>rej(e&&e.message?e:new Error(String(e))));RW?gs.runW(fn,args):gs[fn](...args)})
     .then(x=>{if(!RW)return x;if(x&&x.d)S.pre={d:x.d,t:Date.now()};return x?x.r:x})
-    .then(r=>{big?busyOff(true):readOff();if(key)BZ.fly.delete(key);return r},e=>{big?busyOff(false):readOff();if(key)BZ.fly.delete(key);throw e});
+    .then(r=>{big?busyOff(true):readOff();if(key)BZ.fly.delete(key);if(w&&window.pushHook)try{pushHook(fn,args,r)}catch(x){}return r},e=>{big?busyOff(false):readOff();if(key)BZ.fly.delete(key);throw e});
   if(key)BZ.fly.set(key,p);return p}
 async function api(fn,...args){try{return await api0(fn,...args)}catch(e){const m=String(e.message||"").match(/CẦN XÁC NHẬN\|(\[[\s\S]*\])/);if(!m)throw e;
   let L=[];try{L=JSON.parse(m[1])}catch(x){L=[m[1]]}
@@ -946,7 +946,7 @@ const store={get(){try{return JSON.parse(localStorage.getItem("sokho_auth")||"nu
 const WARN_DAYS=90;
 const ttf=v=>(+v||0).toLocaleString("vi-VN",{minimumFractionDigits:3,maximumFractionDigits:3});
 const hanOf=it=>it&&(it.nhom==="Phân bón"||/^BTP PB /i.test(it.ten||""))?36:24;
-const APP_VER="3.4.8",APP_DATE="08/11/2026",APP_NEWS=["Cài Sổ Kho như app trên iPhone/Android (biểu tượng Sổ Kho, mở toàn màn hình, có hướng dẫn cài)","Theo dõi cân bao bì: nút Xoá lần cân ghi sai + mục Lần cân đã xoá có Khôi phục","Theo dõi cân bao bì: ghi rõ loại bao bì tính KL (gói thuốc, chai có nhãn không nắp…), mã đã cân hiện chip xanh, tô màu theo loại","Nút Theo dõi cân bao bì (kế Bảng định lượng): chọn mã hàng xem tất cả các lần cân","BM.04/06 in: tiêu đề lần kiểm 2 dòng, số mẫu 1 dòng, tần suất 1 dòng, cột Lỗi/lý do rộng hơn; mọi biểu mẫu chừa ô ký ≥3,5 cm","BM.04/06 in: cột Đầu ca / Sau 2h rộng hơn (12,5 %)","Chọn thiết bị xong thì ô đỏ cảnh báo tắt ngay","BM.04/06: bắt buộc chọn máy in date; BM.06 bắt buộc chọn máy seal nắp và dán nhãn (có lựa chọn Dán thủ công)","Hiện số phiên bản ở đầu trang; khi có bản mới, phần mềm hiện nút “Có phiên bản mới – bấm để tải lại”", "Dữ liệu tự nạp lại khoảng 20 giây/lần; đang nhập dở thì hiện nút “Có dữ liệu mới”", "Giao diện: ô cần nhập tô vàng, ô tự điền xám, Đạt xanh lá / Không đạt đỏ; nút quay lại và nút chuyển mục rõ hơn; cảnh báo có hình động", "Lệnh đóng gói & Lệnh SX BTP: ô Biểu mẫu QC báo Chưa lập / Cần bổ sung (ghi rõ thiếu gì) / Đủ thông tin", "BM.05: chọn căn cứ định lượng mục 5.1 / 5.2; bỏ nhiệt độ cài đặt, tốc độ băng tải; chỉ số (1)(2)(3) cho ghi chú; Xếp pallet dự kiến", "BM.04/06: số mẫu theo số vòi máy; bỏ lý do khi Không kiểm; nút Xoá / Khôi phục phiếu; bản in chữ to hơn, cột tiêu chí rộng", "QC-QĐ.04 mục 5.2 thêm khoảng ≤ 5 g/ml; thẻ nhận diện BTP có Lưu / Cập nhật; đổi số lệnh kéo theo biểu mẫu, kế hoạch", "Tài khoản Chỉ xem xem được Lệnh đóng gói; Quản lý ghi đè duyệt Đạt cho BTP cũ (ghi chú “BTP cũ”)"];
+const APP_VER="3.5.0",APP_DATE="08/11/2026",APP_NEWS=["Thông báo đẩy trên điện thoại: lệnh SX/đóng gói mới, nhập kho, QC Đạt/Không đạt, kế hoạch phối trộn (bật ở ô chuông)","Cài Sổ Kho như app trên iPhone/Android (biểu tượng Sổ Kho, mở toàn màn hình, có hướng dẫn cài)","Theo dõi cân bao bì: nút Xoá lần cân ghi sai + mục Lần cân đã xoá có Khôi phục","Theo dõi cân bao bì: ghi rõ loại bao bì tính KL (gói thuốc, chai có nhãn không nắp…), mã đã cân hiện chip xanh, tô màu theo loại","Nút Theo dõi cân bao bì (kế Bảng định lượng): chọn mã hàng xem tất cả các lần cân","BM.04/06 in: tiêu đề lần kiểm 2 dòng, số mẫu 1 dòng, tần suất 1 dòng, cột Lỗi/lý do rộng hơn; mọi biểu mẫu chừa ô ký ≥3,5 cm","BM.04/06 in: cột Đầu ca / Sau 2h rộng hơn (12,5 %)","Chọn thiết bị xong thì ô đỏ cảnh báo tắt ngay","BM.04/06: bắt buộc chọn máy in date; BM.06 bắt buộc chọn máy seal nắp và dán nhãn (có lựa chọn Dán thủ công)","Hiện số phiên bản ở đầu trang; khi có bản mới, phần mềm hiện nút “Có phiên bản mới – bấm để tải lại”", "Dữ liệu tự nạp lại khoảng 20 giây/lần; đang nhập dở thì hiện nút “Có dữ liệu mới”", "Giao diện: ô cần nhập tô vàng, ô tự điền xám, Đạt xanh lá / Không đạt đỏ; nút quay lại và nút chuyển mục rõ hơn; cảnh báo có hình động", "Lệnh đóng gói & Lệnh SX BTP: ô Biểu mẫu QC báo Chưa lập / Cần bổ sung (ghi rõ thiếu gì) / Đủ thông tin", "BM.05: chọn căn cứ định lượng mục 5.1 / 5.2; bỏ nhiệt độ cài đặt, tốc độ băng tải; chỉ số (1)(2)(3) cho ghi chú; Xếp pallet dự kiến", "BM.04/06: số mẫu theo số vòi máy; bỏ lý do khi Không kiểm; nút Xoá / Khôi phục phiếu; bản in chữ to hơn, cột tiêu chí rộng", "QC-QĐ.04 mục 5.2 thêm khoảng ≤ 5 g/ml; thẻ nhận diện BTP có Lưu / Cập nhật; đổi số lệnh kéo theo biểu mẫu, kế hoạch", "Tài khoản Chỉ xem xem được Lệnh đóng gói; Quản lý ghi đè duyệt Đạt cho BTP cũ (ghi chú “BTP cũ”)"];
 const S={xnView:"new",xnLines:[],auth:null,me:null,items:[],bal:{},lots:{},nhom:[],congThuc:{},lenh:[],today:"",tab:"ton",mvType:"Nhập",editMa:null,armed:null,hist:[],
   lsxView:"list",od:null,odLines:[],odMoves:null,ctLines:[],nhomQC:[],bcView:"sx",qcOpen:null,dtLines:[]};
 const can={phieu:()=>["Quản lý","Kế toán","Thủ kho","Nhân viên","Kế toán kho"].includes(S.me?.vaiTro),
@@ -1537,7 +1537,7 @@ function bellTon(k){setTab("ton");setTimeout(()=>{const f=$("fs");if(f){f.value=
 function bellUpdate(){const b=$("bellCnt");if(!b)return;let L=[];try{L=bellItems()}catch(e){}S.bellL=L;const n=L.reduce((s,x)=>s+x.n,0);b.textContent=n>99?"99+":String(n);b.hidden=!n;if($("bellPop"))bellOpen(true)}
 function bellOpen(keep){let p=$("bellPop");if(p&&!keep){p.remove();return}const L=S.bellL||[];
 const h=`<div class="bh"><b>Thông báo</b><small>Bấm vào từng dòng để mở</small></div>${L.length?L.map((x,i)=>`<div class="bi" data-i="${i}"><span class="dot" style="background:${x.c}"></span><div><b>${esc(x.t)}</b><small>${esc(x.s)}</small></div></div>`).join(""):'<div class="none">Không có việc cần chú ý.</div>'}`;
-if(!p){p=document.createElement("div");p.id="bellPop";p.className="bellpop";document.body.appendChild(p)}p.innerHTML=h;
+if(!p){p=document.createElement("div");p.id="bellPop";p.className="bellpop";document.body.appendChild(p)}p.innerHTML=h;{const pr=document.createElement("div");p.appendChild(pr);if(window.pushRow)pushRow(pr)}
 p.querySelectorAll(".bi").forEach(el=>el.onclick=()=>{const x=L[+el.dataset.i];p.remove();x.go()})}
 document.addEventListener("click",e=>{const p=$("bellPop");if(p&&!p.contains(e.target)&&!(e.target.closest&&e.target.closest("#bellBtn")))p.remove()});
 setInterval(()=>{try{bellUpdate()}catch(e){}},15000);
@@ -2562,6 +2562,7 @@ function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
 <script src="kehoach.js?v=57"></script>
+<script src="push.js?v=1"></script>
 <script src="dgforms.js?v=90"></script>
 <link rel="stylesheet" href="ui.css?v=13">
 <script src="nav.js?v=8"></script>
