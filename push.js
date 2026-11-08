@@ -5,10 +5,16 @@
   const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   async function call(body) {
-    const { data, error } = await window.SOKHO_SB.functions.invoke("push", { body });
-    if (error) { let m = error.message; try { const j = await error.context.json(); if (j && j.error) m = j.error; } catch (e) {} throw new Error(m); }
-    if (data && data.error) throw new Error(data.error);
-    return data;
+    /* chỉ gửi phiên đăng nhập (Authorization) — hàm "push" xác thực theo người dùng, không đọc apikey */
+    const { data: ss } = await window.SOKHO_SB.auth.getSession(), tok = ss && ss.session && ss.session.access_token;
+    if (!tok) throw new Error("Phiên đăng nhập đã hết — đăng nhập lại Sổ Kho.");
+    const r = await fetch(window.SOKHO_CFG.url + "/functions/v1/push", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + tok }, body: JSON.stringify(body) });
+    let j = null; try { j = await r.json(); } catch (e) {}
+    if (!r.ok || (j && j.error)) {
+      const m = (j && (j.error || j.message)) || ("Lỗi " + r.status);
+      throw new Error(r.status === 404 ? "Chưa có hàm gửi thông báo (push) trên Supabase." : m);
+    }
+    return j;
   }
   const b64u = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
   const reg = () => navigator.serviceWorker.register("sw.js", { scope: "./" });
