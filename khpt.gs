@@ -485,3 +485,71 @@ function webCanBBDel(a, id, khoiPhuc) {
   log_(me, khoiPhuc ? 'Khôi phục lần cân bao bì' : 'Xoá lần cân bao bì', str_(r[0]) + ' · ' + str_(r[1]), num_(r[2]) + ' ' + str_(r[3]) + ' ngày ' + str_(r[4]) + ' · ' + str_(r[6]));
   return cbbRows_();
 }
+
+/* ================= HỒ SƠ LÔ MỘT CHẠM: truy xuất 1 lô (lên nguồn + xuống nơi dùng) ================= */
+function webHoSoLo(a, ma, lo) {
+  const me = auth_(a); lo = String(lo || '');
+  const items = items_(), IM = {}; items.forEach(i => IM[i.ma] = i);
+  if (!IM[ma]) throw new Error('Không có mã ' + ma);
+  const all = moves_(), mv = all.filter(m => !m.trangThai), Q = qcMap_(), HL = hlMap_(), cfg = settings_(), L = lots_(items, all, cfg, Q), TT = ttMap_();
+  const O = {}; orders_().forEach(o => O[o.so] = o);
+  const LD = ldgMap_(), DF = dgfAll_(), HS = sheet_(SH.HS) ? rows_(SH.HS) : [];
+  const ct = me.ct;
+  const info = (m, l) => {
+    const x = (L[m] || {})[l] || {}, q = Q[lotKey_(m, l)] || {}, it = IM[m] || {};
+    return { ma: m, ten: it.ten || '', nhom: it.nhom || '', lo: l, nsx: x.nsx || '', hsd: x.hsd || '', ton: Math.round((x.ton || 0) * 1000) / 1000,
+      qc: q.tt || x.qc || '', qcNgay: q.ngay || '', qcNguoi: q.nguoi || '', qcGhi: q.ghiChu || '', hl: HL[lotKey_(m, l)] || '', tt: TT[lotKey_(m, l)] || '',
+      hs: HS.filter(r => str_(r[0]) === m && str_(r[1]) === l).map(r => ({ loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]) })) };
+  };
+  const ord = so => { const o = O[so]; if (!o) return null; const P = LD[so];
+    return { so, ngay: o.ngay, ngayHT: o.ngayHT, maSP: o.maSP, tenSP: (IM[o.maSP] || {}).ten || '', sl: o.trangThai === 'Hoàn thành' ? o.slThucTe : o.slDuKien, trangThai: o.trangThai,
+      nguoiLap: o.nguoiLap, nguoiSX: o.nguoiSX, qcSX: o.qcSX, khachHang: o.khachHang, dg: !!P, qcMa: P ? P.qc : '',
+      forms: DF.filter(f => f.so === so).map(f => ({ loai: f.loai, ngay: f.ngay, nguoi: f.nguoi, kl: f.kl })) }; };
+  /* nguồn: lệnh đã nhập ra lô này → các lô nguyên liệu / BTP / bao bì đã xuất cho lệnh đó */
+  const nguon = (m, l, depth) => {
+    const nh = mv.filter(x => x.ma === m && x.lo === l && x.loai === 'Nhập' && x.lenh);
+    return [...new Set(nh.map(x => x.lenh))].map(so => {
+      const o = ord(so); if (!o) return null;
+      const X = mv.filter(x => x.lenh === so && x.loai === 'Xuất'), vao = [];
+      X.forEach(x => { const it = IM[x.ma] || {}; const r = { ma: x.ma, ten: it.ten || '', nhom: it.nhom || '', lo: x.lo, kg: x.kg, sl: x.soLuong, dv: x.donVi, ngay: x.ngay };
+        if (it.nhom === 'Bán thành phẩm' || it.nhom === 'Nguyên liệu') { Object.assign(r, info(x.ma, x.lo), { kg: x.kg }); if (depth > 0 && it.nhom === 'Bán thành phẩm') r.nguon = nguon(x.ma, x.lo, depth - 1); }
+        if (!ct && o.dg === false && it.nhom !== 'Bán thành phẩm') return; /* không xem công thức: ẩn nguyên liệu của lệnh SX */
+        vao.push(r); });
+      return { lenh: o, nhapKg: nh.filter(x => x.lenh === so).reduce((s, x) => s + x.kg, 0), vao };
+    }).filter(Boolean);
+  };
+  /* nơi dùng: lô này đã xuất cho lệnh nào → lệnh đó nhập ra lô thành phẩm / BTP nào */
+  const dung = (m, l) => mv.filter(x => x.ma === m && x.lo === l && x.loai === 'Xuất' && x.lenh).map(x => {
+    const o = ord(x.lenh), ra = mv.filter(y => y.lenh === x.lenh && y.loai === 'Nhập').map(y => ({ ma: y.ma, ten: (IM[y.ma] || {}).ten || '', lo: y.lo, kg: y.kg, sl: y.soLuong, dv: y.donVi }));
+    return { lenh: o, kg: x.kg, ngay: x.ngay, ra };
+  });
+  const the = mv.filter(x => x.ma === ma && x.lo === lo).sort((p, q) => (p.ngay + p.id < q.ngay + q.id ? -1 : 1))
+    .map(x => ({ ngay: x.ngay, loai: x.loai, kg: x.kg, sl: x.soLuong, dv: x.donVi, chungTu: x.chungTu, lenh: x.lenh, nguoi: x.nguoiLap, ghiChu: x.ghiChu }));
+  return { lot: info(ma, lo), nguon: nguon(ma, lo, 2), dung: dung(ma, lo), the, luc: Utilities.formatDate(new Date(), tz_(), 'dd/MM/yyyy HH:mm'), nguoi: me.ten,
+    cty: str_(settings_raw_('Địa chỉ công ty')) };
+}
+
+/* ================= BIỂU ĐỒ (Báo cáo → Biểu đồ) ================= */
+function webBieuDo(a, n) {
+  auth_(a, [ROLES.QL]);
+  n = Math.min(24, Math.max(3, Math.round(num_(n)) || 12));
+  const now = new Date(), M = [];
+  for (let i = n - 1; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 15); M.push(Utilities.formatDate(d, tz_(), 'yyyy-MM')); }
+  const items = items_(), IM = {}; items.forEach(i => IM[i.ma] = i);
+  const mv = moves_().filter(m => !m.trangThai && M.indexOf(String(m.ngay).slice(0, 7)) >= 0);
+  /* nguyên liệu, phụ gia xuất cho lệnh SX theo tháng */
+  const NH = ['Nguyên liệu', 'Phụ gia / dung môi'], nl = {}, tong = {}, top = {};
+  NH.forEach(h => nl[h] = M.map(() => 0));
+  mv.forEach(m => { if (m.loai !== 'Xuất' || !m.lenh) return; const it = IM[m.ma] || {}; if (NH.indexOf(it.nhom) < 0) return;
+    const i = M.indexOf(String(m.ngay).slice(0, 7)); nl[it.nhom][i] += m.kg; top[m.ma] = (top[m.ma] || 0) + m.kg; });
+  const T = Object.keys(top).sort((x, y) => top[y] - top[x]).slice(0, 8).map(ma => ({ ma, ten: (IM[ma] || {}).ten || '', s: M.map(mo => mv.filter(m => m.ma === ma && m.loai === 'Xuất' && m.lenh && String(m.ngay).slice(0, 7) === mo).reduce((s, m) => s + m.kg, 0)) }));
+  /* sản lượng: BTP nhập từ lệnh SX, thành phẩm nhập từ lệnh đóng gói */
+  const sl = { btp: M.map(() => 0), tp: M.map(() => 0) };
+  mv.forEach(m => { if (m.loai !== 'Nhập' || !m.lenh) return; const nh = (IM[m.ma] || {}).nhom, i = M.indexOf(String(m.ngay).slice(0, 7)); if (nh === 'Bán thành phẩm') sl.btp[i] += m.kg; else if (nh === 'Thành phẩm') sl.tp[i] += m.kg; });
+  /* QC: kết luận cuối cùng của từng lô, theo tháng kết luận */
+  const qc = { dat: M.map(() => 0), kd: M.map(() => 0) };
+  Object.values(qcMap_()).forEach(q => { const i = M.indexOf(String(q.ngay).slice(0, 7)); if (i < 0) return; if (q.tt === 'Đạt') qc.dat[i]++; else if (q.tt === 'Không đạt') qc.kd[i]++; });
+  const r = v => Math.round(v * 10) / 10;
+  Object.keys(nl).forEach(k => nl[k] = nl[k].map(r)); T.forEach(t => t.s = t.s.map(r)); sl.btp = sl.btp.map(r); sl.tp = sl.tp.map(r);
+  return { M, nl, top: T, sl, qc };
+}

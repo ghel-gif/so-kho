@@ -801,9 +801,15 @@ body nav.side .navh{color:#fff;opacity:.85}
       <button type="button" data-v="nk" aria-pressed="false" id="bcNkBtn">Nhật ký</button>
       <button type="button" data-v="cb" aria-pressed="false" id="bcCbBtn">Cảnh báo</button>
       <button type="button" data-v="kh" aria-pressed="false" id="bcKhBtn">Hàng khách gửi</button>
+      <button type="button" data-v="bd" aria-pressed="false" id="bcBdBtn">📊 Biểu đồ</button>
       <button type="button" data-v="ks" aria-pressed="false" id="bcKsBtn">Khoá sổ · Sao lưu</button>
     </div>
 
+    <div id="bc-bd" class="box" hidden>
+      <h2>Biểu đồ theo dõi</h2>
+      <div class="tools"><select id="bdN" aria-label="Khoảng thời gian" style="max-width:180px;height:42px;flex:0 0 auto"><option value="6">6 tháng</option><option value="12" selected>12 tháng</option><option value="24">24 tháng</option></select></div>
+      <div id="bdOut"><p class="note">Đang tải…</p></div>
+    </div>
     <div id="bc-sx" class="box" hidden>
       <h2>Xuất nguyên liệu cho sản xuất theo tháng</h2>
       <p class="note">Tổng số đã xuất cho các lệnh sản xuất trong tháng, gộp theo mã. Dùng để hạch toán xuất kho sản xuất.</p>
@@ -946,7 +952,7 @@ const store={get(){try{return JSON.parse(localStorage.getItem("sokho_auth")||"nu
 const WARN_DAYS=90;
 const ttf=v=>(+v||0).toLocaleString("vi-VN",{minimumFractionDigits:3,maximumFractionDigits:3});
 const hanOf=it=>it&&(it.nhom==="Phân bón"||/^BTP PB /i.test(it.ten||""))?36:24;
-const APP_VER="3.5.3",APP_DATE="08/11/2026",APP_NEWS=["Thông báo đẩy: gọi hàm push bằng phiên đăng nhập","Lệnh SX BTP: đối chiếu tồn nguyên liệu theo công thức (trừ phần giữ cho lệnh SX đang mở), báo thiếu khi lập lệnh, cảnh báo trong danh sách và chuông","Lệnh đóng gói: đối chiếu tồn lô BTP (trừ phần đã giữ cho lệnh khác), báo đỏ khi thiếu + gợi ý lô khác, cảnh báo trong danh sách và chuông","Thông báo đẩy trên điện thoại: lệnh SX/đóng gói mới, nhập kho, QC Đạt/Không đạt, kế hoạch phối trộn (bật ở ô chuông)","Cài Sổ Kho như app trên iPhone/Android (biểu tượng Sổ Kho, mở toàn màn hình, có hướng dẫn cài)","Theo dõi cân bao bì: nút Xoá lần cân ghi sai + mục Lần cân đã xoá có Khôi phục","Theo dõi cân bao bì: ghi rõ loại bao bì tính KL (gói thuốc, chai có nhãn không nắp…), mã đã cân hiện chip xanh, tô màu theo loại","Nút Theo dõi cân bao bì (kế Bảng định lượng): chọn mã hàng xem tất cả các lần cân","BM.04/06 in: tiêu đề lần kiểm 2 dòng, số mẫu 1 dòng, tần suất 1 dòng, cột Lỗi/lý do rộng hơn; mọi biểu mẫu chừa ô ký ≥3,5 cm","BM.04/06 in: cột Đầu ca / Sau 2h rộng hơn (12,5 %)","Chọn thiết bị xong thì ô đỏ cảnh báo tắt ngay","BM.04/06: bắt buộc chọn máy in date; BM.06 bắt buộc chọn máy seal nắp và dán nhãn (có lựa chọn Dán thủ công)","Hiện số phiên bản ở đầu trang; khi có bản mới, phần mềm hiện nút “Có phiên bản mới – bấm để tải lại”", "Dữ liệu tự nạp lại khoảng 20 giây/lần; đang nhập dở thì hiện nút “Có dữ liệu mới”", "Giao diện: ô cần nhập tô vàng, ô tự điền xám, Đạt xanh lá / Không đạt đỏ; nút quay lại và nút chuyển mục rõ hơn; cảnh báo có hình động", "Lệnh đóng gói & Lệnh SX BTP: ô Biểu mẫu QC báo Chưa lập / Cần bổ sung (ghi rõ thiếu gì) / Đủ thông tin", "BM.05: chọn căn cứ định lượng mục 5.1 / 5.2; bỏ nhiệt độ cài đặt, tốc độ băng tải; chỉ số (1)(2)(3) cho ghi chú; Xếp pallet dự kiến", "BM.04/06: số mẫu theo số vòi máy; bỏ lý do khi Không kiểm; nút Xoá / Khôi phục phiếu; bản in chữ to hơn, cột tiêu chí rộng", "QC-QĐ.04 mục 5.2 thêm khoảng ≤ 5 g/ml; thẻ nhận diện BTP có Lưu / Cập nhật; đổi số lệnh kéo theo biểu mẫu, kế hoạch", "Tài khoản Chỉ xem xem được Lệnh đóng gói; Quản lý ghi đè duyệt Đạt cho BTP cũ (ghi chú “BTP cũ”)"];
+const APP_VER="3.6.0",APP_DATE="08/11/2026",APP_NEWS=["Bản tin buổi sáng (điện thoại + email Gmail, theo việc từng người); báo thiếu biểu mẫu QC khi xong lệnh đóng gói; Hồ sơ lô một chạm (in/PDF); Báo cáo → Biểu đồ","Thông báo đẩy: gọi hàm push bằng phiên đăng nhập","Lệnh SX BTP: đối chiếu tồn nguyên liệu theo công thức (trừ phần giữ cho lệnh SX đang mở), báo thiếu khi lập lệnh, cảnh báo trong danh sách và chuông","Lệnh đóng gói: đối chiếu tồn lô BTP (trừ phần đã giữ cho lệnh khác), báo đỏ khi thiếu + gợi ý lô khác, cảnh báo trong danh sách và chuông","Thông báo đẩy trên điện thoại: lệnh SX/đóng gói mới, nhập kho, QC Đạt/Không đạt, kế hoạch phối trộn (bật ở ô chuông)","Cài Sổ Kho như app trên iPhone/Android (biểu tượng Sổ Kho, mở toàn màn hình, có hướng dẫn cài)","Theo dõi cân bao bì: nút Xoá lần cân ghi sai + mục Lần cân đã xoá có Khôi phục","Theo dõi cân bao bì: ghi rõ loại bao bì tính KL (gói thuốc, chai có nhãn không nắp…), mã đã cân hiện chip xanh, tô màu theo loại","Nút Theo dõi cân bao bì (kế Bảng định lượng): chọn mã hàng xem tất cả các lần cân","BM.04/06 in: tiêu đề lần kiểm 2 dòng, số mẫu 1 dòng, tần suất 1 dòng, cột Lỗi/lý do rộng hơn; mọi biểu mẫu chừa ô ký ≥3,5 cm","BM.04/06 in: cột Đầu ca / Sau 2h rộng hơn (12,5 %)","Chọn thiết bị xong thì ô đỏ cảnh báo tắt ngay","BM.04/06: bắt buộc chọn máy in date; BM.06 bắt buộc chọn máy seal nắp và dán nhãn (có lựa chọn Dán thủ công)","Hiện số phiên bản ở đầu trang; khi có bản mới, phần mềm hiện nút “Có phiên bản mới – bấm để tải lại”", "Dữ liệu tự nạp lại khoảng 20 giây/lần; đang nhập dở thì hiện nút “Có dữ liệu mới”", "Giao diện: ô cần nhập tô vàng, ô tự điền xám, Đạt xanh lá / Không đạt đỏ; nút quay lại và nút chuyển mục rõ hơn; cảnh báo có hình động", "Lệnh đóng gói & Lệnh SX BTP: ô Biểu mẫu QC báo Chưa lập / Cần bổ sung (ghi rõ thiếu gì) / Đủ thông tin", "BM.05: chọn căn cứ định lượng mục 5.1 / 5.2; bỏ nhiệt độ cài đặt, tốc độ băng tải; chỉ số (1)(2)(3) cho ghi chú; Xếp pallet dự kiến", "BM.04/06: số mẫu theo số vòi máy; bỏ lý do khi Không kiểm; nút Xoá / Khôi phục phiếu; bản in chữ to hơn, cột tiêu chí rộng", "QC-QĐ.04 mục 5.2 thêm khoảng ≤ 5 g/ml; thẻ nhận diện BTP có Lưu / Cập nhật; đổi số lệnh kéo theo biểu mẫu, kế hoạch", "Tài khoản Chỉ xem xem được Lệnh đóng gói; Quản lý ghi đè duyệt Đạt cho BTP cũ (ghi chú “BTP cũ”)"];
 const S={xnView:"new",xnLines:[],auth:null,me:null,items:[],bal:{},lots:{},nhom:[],congThuc:{},lenh:[],today:"",tab:"ton",mvType:"Nhập",editMa:null,armed:null,hist:[],
   lsxView:"list",od:null,odLines:[],odMoves:null,ctLines:[],nhomQC:[],bcView:"sx",qcOpen:null,dtLines:[]};
 const can={phieu:()=>["Quản lý","Kế toán","Thủ kho","Nhân viên","Kế toán kho"].includes(S.me?.vaiTro),
@@ -1360,7 +1366,7 @@ function dgHits(){const N=S.dgN,box=$("dgHits");if(!box)return;const qw=dgFd(N.f
 function dgOdRender0(){const box=$("dglBox"),o=S.lenh.find(x=>x.so===S.dgSo);if(!o)return dgShow("list");
   const sp=itemBy(o.maSP),P=(S.dg.lenh||{})[o.so]||{},q=S.dgQ[P.qc]||null,u=sp?.donVi||"",ht=o.trangThai==="Hoàn thành",dang=o.trangThai==="Đang SX";
   let h=`<button type="button" class="back" id="dgBack">‹ Danh sách lệnh đóng gói</button>
-  <h2>Lệnh đóng gói ${esc(o.so)} <span class="st ${stCls[o.trangThai]||"cancel"}">${esc(o.trangThai)}</span></h2>
+  <h2>Lệnh đóng gói ${esc(o.so)} <span class="st ${stCls[o.trangThai]||"cancel"}">${esc(o.trangThai)}</span></h2>${ht&&P.x&&P.x.loTP?`<div style="margin:4px 0 8px"><button class="btn" type="button" data-hslo="${esc(o.maSP)}|${esc(P.x.loTP)}">📄 Hồ sơ lô thành phẩm ${esc(P.x.loTP)} (in / PDF)</button></div>`:""}
   <div class="kv"><span>Thành phẩm</span><b>${esc(o.maSP)} · ${esc(sp?.ten||"")}</b>
   <span>Kế hoạch</span><b>${dgN0(o.slDuKien)} ${esc(u)}${P.thung||P.le?` (${dgN0(P.thung||0)} thùng${+P.le?" + "+dgN0(P.le)+" lẻ":""})`:""}</b>
   <span>Ngày ra lệnh</span><b>${dmy(o.ngay)} · ${esc(o.nguoiLap)}</b>
@@ -1835,9 +1841,10 @@ function qcShow(v){S.qcView=v;document.querySelectorAll("#qcSeg button").forEach
   if(v==="tx"){const cur=$("txItem").value;$("txItem").innerHTML='<option value="">— Chọn mã theo dõi lô —</option>'+itemOpts(i=>i.theoLo);if(itemBy(cur))$("txItem").value=cur}}
 document.querySelectorAll("#qcSeg button").forEach(b=>b.onclick=()=>qcShow(b.dataset.v));
 function bcShow(v){S.bcView=v;document.querySelectorAll("#bcSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===v));
-  ["sx","hh","dt","nk","cb","kh","ks"].forEach(k=>$("bc-"+k).hidden=k!==v);bcRefresh(true)}
+  ["sx","hh","dt","nk","cb","kh","ks","bd"].forEach(k=>$("bc-"+k).hidden=k!==v);bcRefresh(true)}
 document.querySelectorAll("#bcSeg button").forEach(b=>b.onclick=()=>bcShow(b.dataset.v));
 function bcRefresh(first){const v=S.bcView;
+  if(v==="bd"&&first&&window.bieuDo)bieuDo();
   if(v==="sx"&&first)loadSx();
   if(v==="kh"){const c=$("khChu").value;$("khChu").innerHTML=S.chuHang.filter(x=>x!=="Asata").map(x=>`<option>${esc(x)}</option>`).join("");if(c)$("khChu").value=c;
     if(!$("khTu").value){$("khTu").value=S.today.slice(0,8)+"01";$("khDen").value=S.today}}
@@ -2294,7 +2301,7 @@ function lotCard(ma,lo){let it=itemBy(ma),l=null;
   const h=`<div class="cfm" id="lotCard"><div class="cfm-box lotc"><button class="lotx" type="button" data-a="x" aria-label="Đóng">✕</button><h2>${it?esc(it.ten):"Không tìm thấy vật tư"}</h2><p class="note" style="margin:2px 0 10px">${esc(ma)} · Lô <b>${esc(lo)}</b></p>
     <div class="kv">${row("Tồn hiện tại",l?kg(l.ton)+" kg"+(l.tyTrong?" ≈ "+kg(l.ton/l.tyTrong)+" L":""):"0 kg (lô đã hết hoặc chưa nhập kho)")}${row("QC",qcc+(l&&l.qcNgay?" "+dmy(l.qcNgay):""))}${row("Ngày SX / NSX",l&&l.nsx?dmy(l.nsx):o?dmy(o.ngayHT||o.ngay):"")}${row("Hạn sử dụng",l&&l.hsd?dmy(l.hsd)+hsdChip(l.hsd):"")}${row("Tỷ trọng",l&&l.tyTrong?ttf(l.tyTrong):"")}${o?row("Lệnh SX",esc(o.so)+" · "+esc(o.trangThai||"")):""}${o?row("Người SX",esc(o.nguoiSX||"")):""}${o?row("QC kiểm tra",esc(o.qcSX||"")):""}</div>
     <div id="lotMore" class="note" style="margin-top:12px">Đang tải hồ sơ lô và nguyên liệu đã dùng…</div>
-    <div class="actions" style="margin-top:14px">${can.phieu()?'<button class="btn" type="button" data-a="kk">Kiểm kê lô này</button>':""}${!$("tabQcBtn").hidden?'<button class="btn" type="button" data-a="qc">Mở QC lô</button>':""}${it?'<button class="btn" type="button" data-a="tk">Xem thẻ kho</button>':""}<button class="btn primary" type="button" data-a="x">Đóng</button></div></div></div>`;
+    <div class="actions" style="margin-top:14px">${can.phieu()?'<button class="btn" type="button" data-a="kk">Kiểm kê lô này</button>':""}${!$("tabQcBtn").hidden?'<button class="btn" type="button" data-a="qc">Mở QC lô</button>':""}${it?'<button class="btn" type="button" data-a="tk">Xem thẻ kho</button><button class="btn" type="button" data-a="hs">📄 Hồ sơ lô (in / PDF)</button>':""}<button class="btn primary" type="button" data-a="x">Đóng</button></div></div></div>`;
   const old=$("lotCard");if(old)old.remove();document.body.insertAdjacentHTML("beforeend",h);const c=$("lotCard");
   api("webLotInfo",S.auth,ma,lo).then(r=>{const box=$("lotMore");if(!box)return;
     const has=t=>(r.hs||[]).filter(x=>x.loai===t),yes=(t,ok,no)=>{const l=has(t);return l.length?`<span class="st done">ĐÃ CÓ</span> `+l.map(x=>`<a href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.ten||x.loai)}</a>`).join(" · "):(no||'<span class="chip neg">CHƯA CÓ</span>')};
@@ -2304,7 +2311,7 @@ function lotCard(ma,lo){let it=itemBy(ma),l=null;
     if((r.nl||[]).length){html+=`<div class="lsec">Nguyên liệu đã dùng (${r.nl.length})</div><div class="nll">`+r.nl.map(x=>`<div class="nlr"><div class="nlt"><b>${esc(x.ma)}</b><span>${esc(x.ten)}</span></div><div class="nlk">${kg(x.kg)} kg</div><div class="nls">Lô <b>${esc(x.lo||"(không lô)")}</b>${x.qc?" · QC "+esc(x.qc):""}${x.lenh&&x.lenh!==lo?" · lệnh "+esc(x.lenh):""}</div></div>`).join("")+`</div>`}
     else if(r.btp){html+=`<div class="note">Chưa có dữ liệu nguyên liệu đã dùng (lô không gắn lệnh SX trên sổ).</div>`}
     box.className="";box.innerHTML=html||"";if(window.hlLotHook)hlLotHook(box,ma,lo,r);}).catch(e=>{const box=$("lotMore");if(box)box.textContent="Không tải được: "+e.message});
-  c.onclick=e=>{if(e.target===c){c.remove();return}const bt=e.target.closest("[data-a]");if(!bt)return;const t=bt.dataset.a;c.remove();
+  c.onclick=e=>{if(e.target===c){c.remove();return}const bt=e.target.closest("[data-a]");if(!bt)return;const t=bt.dataset.a;c.remove();if(t==="hs"){if(window.hoSoLo)hoSoLo(ma,lo);return}
     if(t==="kk"){setTab("kk");qrFind(lo,ma);setTimeout(()=>$("qrBox").scrollIntoView({behavior:"smooth"}),200)}
     else if(t==="qc"){setTab("qc");qcShow("duyet");$("qcFilter").value="";$("qcQ").value=lo;S.qcOpen=JSON.stringify([ma,lo]);renderQC()}
     else if(t==="tk"){S.tkOpen=ma;$("q").value=ma;setTab("ton")}}}
@@ -2601,7 +2608,9 @@ function scanSearch(){SRCH_IDS.forEach(id=>attachSearch(document.getElementById(
 new MutationObserver(scanSearch).observe(document.body,{childList:true,subtree:true});scanSearch();
 </script>
 <script src="kehoach.js?v=57"></script>
-<script src="push.js?v=3"></script>
+<script src="push.js?v=4"></script>
+<script src="hoso.js?v=2"></script>
+<script src="bieudo.js?v=2"></script>
 <script src="dgforms.js?v=90"></script>
 <link rel="stylesheet" href="ui.css?v=13">
 <script src="nav.js?v=8"></script>
