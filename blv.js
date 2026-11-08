@@ -7,7 +7,7 @@
   let CODE = null;
   async function code() {
     if (CODE) return CODE;
-    const v = window.SOKHO_VER || Date.now(), g = f => fetch(f + "?v=" + v, { cache: "no-cache" }).then(r => r.text());
+    const v = (typeof APP_VER !== "undefined" ? APP_VER : "") + "-" + (window.SOKHO_VER || ""), g = f => fetch(f + "?v=" + v, { cache: "no-cache" }).then(r => r.text());
     const [a, b] = await Promise.all([g("server.gs"), g("khpt.gs")]);
     if (!window.SOKHO_BRIEF) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "brief.js?v=" + v; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
     return CODE = a + "\n" + b;
