@@ -154,6 +154,7 @@
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl)))}" ${ro} style="text-align:right;font-weight:700"></td>
       <td><input data-nl="${i}" data-k="tt" value="${E(r.tt || "")}" ${ro} placeholder=""></td>
       <td class="c"><input type="radio" name="ptBu" data-bu="${i}" ${r.bu ? "checked" : ""} ${ro} title="Dung môi nền: tự bù cho đủ 100%"></td>
+      <td><input data-nl="${i}" data-k="gc" value="${E(r.gc || "")}" ${ro} placeholder="" title="${E(r.gc || "")}"></td>
       ${ql ? `<td class="rd-act"><button type="button" class="rd-mv" data-up="${i}" title="Lên" ${i ? "" : "disabled"}>▲</button><button type="button" class="rd-mv" data-dn="${i}" title="Xuống" ${i < d.nl.length - 1 ? "" : "disabled"}>▼</button><button type="button" class="rd-mv rd-x" data-rmnl="${i}" title="Xoá dòng">✕</button></td>` : ""}</tr>`).join("");
     /* mức yêu cầu: "5-7", "5 – 7", "≥ 90", ">= 90", "≤ 3", "< 3" → kiểm số đo, tô xanh / đỏ */
     const inYc = (yc, v) => { const x = parseFloat(String(v || "").replace(",", ".")); if (!isFinite(x) || !String(v).trim().match(/^[\d.,\s]+$/)) return null; const t = String(yc || "").replace(/,/g, ".");
@@ -176,7 +177,7 @@
       <p class="note" style="margin:0 0 8px">BM.02-RD-QT.01 · ${p ? chip(p) : ""} ${d.baoLuc ? " · báo kết quả " + E(d.baoLuc) : ""}${d.duyetBoi ? " · duyệt: " + E(d.duyetBoi) + " " + E(d.duyetLuc || "") : ""}</p>
       <div class="grp">1. Thông tin chung ${ql ? "" : '<small class="note">(do TP. LAB/RD lập)</small>'}</div>
       <div class="two"><label>Tên sản phẩm *<input id="ptSp" value="${E(d.sp || "")}" ${ro} placeholder="VD Pymetrozine 20% + Nitenpyram 15% OD"></label><label>Mã công thức<input id="ptMa" value="${E(d.maCT || "")}" ${ro} placeholder="VD PN35OD-03"></label></div>
-      <div class="two"><label>Hàm lượng<input id="ptHl" value="${E(d.hl || "")}" ${ro}></label><label>Thuộc yêu cầu nghiên cứu (sổ BM.04)<select id="ptYc" ${ro}><option value="">${YC.length ? "— Chọn yêu cầu (để trống nếu tự thử, không theo yêu cầu) —" : "Chưa có yêu cầu nào trong sổ BM.04"}</option>${YC.map(y => `<option value="${E(y.id)}" ${y.id === d.yc ? "selected" : ""}>${E(D(y.ngay) + " · " + (y.d.noiDung || "").slice(0, 60))}</option>`).join("")}</select></label></div>
+      <div class="two"><label>Hàm lượng<input id="ptHl" value="${E(d.hl || "")}" ${ro}></label><label>Thuộc yêu cầu nghiên cứu (sổ BM.04)<select id="ptYc" ${ro}><option value="">— Để trống: tự ghi 1 dòng mới vào sổ BM.04 —</option>${YC.map(y => `<option value="${E(y.id)}" ${y.id === d.yc ? "selected" : ""}>${E(D(y.ngay) + " · " + (y.d.noiDung || "").slice(0, 60))}</option>`).join("")}</select></label></div>
       <div class="two"><label>Ngày lập phiếu<input id="ptLap" type="date" value="${E(d.ngayLap || "")}" ${ro}></label><label>Người thực hiện<select id="ptNg" ${ro}>${userOpts(d.nguoiTH)}</select></label></div>
       <div class="two"><label>Dạng sản phẩm *<select id="ptDang" ${ro}><option value="">— chọn dạng —</option>${DANGS.map(x => `<option ${x === d.dang ? "selected" : ""}>${x}</option>`).join("")}</select></label><span></span></div>
       <div class="two" id="ptTTRow" ${liq() ? "" : "hidden"}><label>Tỷ trọng dự kiến (g/ml) *<input id="ptTT" type="number" step="any" inputmode="decimal" value="${E(d.tyTrong || "")}" ${ro} placeholder="VD 1.10 — để quy g/L ra %w/w"></label><span></span></div>
@@ -184,7 +185,7 @@
       <div class="grp">2. Công thức sản phẩm</div>
       <datalist id="rdNlDl">${nlList}</datalist>
       <p class="note" style="margin:0 0 6px">Ghi %w/w từng nguyên liệu. Chọn ô <b>Up to</b> ở dòng <b>dung môi nền</b> (nước, dầu, chất mang…) để tự bù cho đủ 100%.</p>
-      <div class="dgx rd-tb"><table><colgroup><col style="width:${ql ? 46 : 30}px"><col style="width:92px"><col><col style="width:96px"><col style="width:52px"><col style="width:46px">${ql ? '<col style="width:92px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
+      <div class="dgx rd-tb"><table><colgroup><col style="width:${ql ? 46 : 30}px"><col style="width:92px"><col><col style="width:96px"><col style="width:52px"><col style="width:46px"><col style="width:22%">${ql ? '<col style="width:92px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th><th>Ghi chú</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
       <tfoot><tr><td></td><td></td><td><b>Tổng cộng</b> ${ql ? '<button type="button" class="btn small" id="ptAddNl">+ dòng</button>' : ""}</td><td id="ptSum" style="text-align:right;font-weight:700"></td><td colspan="${ql ? 3 : 2}"></td></tr></tfoot></table></div>
       <div class="grp">3. Quy trình pha chế</div>
       <textarea id="ptQT" rows="5" ${ro} style="width:100%" placeholder="Các bước pha chế, thứ tự cho nguyên liệu, tốc độ khuấy, thời gian, nhiệt độ…">${E(d.quyTrinh || "")}</textarea>
@@ -289,7 +290,8 @@
     };
     const go = async (extra, msg) => { collect(); Object.assign(d, extra || {}); try {
         const giaoMoi = ql && d.nguoiTH && (!p || p.d.nguoiTH !== d.nguoiTH) && d.nguoiTH !== S.me.ten;
-        const r = await save({ id: p && p.id, loai: "PT", ngay: d.ngayLap || today(), d }, msg);
+        let r = await save({ id: p && p.id, loai: "PT", ngay: d.ngayLap || today(), d }, msg);
+        if (ql) try { r = await ycSync(r); } catch (e) { toast("Chưa ghi được sổ BM.04: " + e.message); }
         if (giaoMoi) push("🧪 Giao thử nghiệm " + (r.d.so || ""), (r.d.sp || "") + " · lập " + D(r.d.ngayLap) + " · giao bởi " + S.me.ten, { ten: [d.nguoiTH] });
         if (extra && extra.tt === "Đã báo KQ") push("📨 Kết quả thử nghiệm " + (r.d.so || ""), (r.d.sp || "") + " · " + S.me.ten + " đã báo kết quả, chờ đánh giá", { roles: ["Quản lý"] });
         if (ql && d.danhGia && (!p || p.d.danhGia !== d.danhGia) && d.nguoiTH && d.nguoiTH !== S.me.ten) push((d.danhGia === "Đạt" ? "✅ " : "⛔ ") + "Đánh giá " + (r.d.so || "") + ": " + d.danhGia, (r.d.sp || "") + (d.xuLy ? " · " + d.xuLy : ""), { ten: [d.nguoiTH] });
@@ -330,9 +332,9 @@
       <p>Số phiếu theo dõi: <b>${E(d.so || "")}</b> <small style="float:right">Chỉ tiêu theo QCVN 01-188:2018/BNNPTNT · phương pháp theo QC-HD nội bộ</small></p>
       <table><colgroup><col style="width:18%"><col style="width:32%"><col style="width:18%"><col style="width:32%"></colgroup><tr class="sec"><td colspan="4">1. THÔNG TIN CHUNG</td></tr><tr><td style="width:22%">Ngày lập phiếu</td><td>${D(d.ngayLap)}</td><td style="width:22%">Người thực hiện</td><td>${E(d.nguoiTH || "")}</td></tr><tr><td>Ngày bắt đầu</td><td>${D(d.ngayBD)}</td><td>Ngày kết thúc</td><td>${D(d.ngayKT)}</td></tr>
       <tr><td>Tên sản phẩm</td><td><b>${E(d.sp || "")}</b></td><td>Mã công thức</td><td>${E(d.maCT || "")}</td></tr><tr><td>Hàm lượng</td><td>${E(d.hl || "")}</td><td>Dạng · tỷ trọng</td><td>${E(d.dang || "")}${d.tyTrong ? " · " + E(d.tyTrong) + " g/ml" : ""}</td></tr></table>
-      <div class="gap"></div><table><colgroup><col style="width:7%"><col style="width:17%"><col><col style="width:14%"><col style="width:17%"></colgroup><tr class="sec"><td colspan="5">2. CÔNG THỨC SẢN PHẨM</td></tr><tr><th>STT</th><th>Mã vật tư</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự thực hiện</th></tr>
-      ${nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td>${r.ma ? E(r.ma) : (String(r.ten || "").trim() ? "<i>mới</i>" : "")}</td><td>${E(r.ten || "")}</td><td class="r">${r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl))}</td><td class="c">${E(r.tt || "")}</td></tr>`).join("")}
-      <tr><td></td><td></td><td><b>Tổng cộng</b></td><td class="r"><b>${t ? F3(t, NDP(d.nl)) : ""}</b></td><td>Tỷ trọng: ${E(d.tyTrong || "")}</td></tr></table>
+      <div class="gap"></div><table><colgroup><col style="width:6%"><col style="width:14%"><col><col style="width:11%"><col style="width:12%"><col style="width:22%"></colgroup><tr class="sec"><td colspan="6">2. CÔNG THỨC SẢN PHẨM</td></tr><tr><th>STT</th><th>Mã vật tư</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự thực hiện</th><th>Ghi chú</th></tr>
+      ${nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td>${r.ma ? E(r.ma) : (String(r.ten || "").trim() ? "<i>mới</i>" : "")}</td><td>${E(r.ten || "")}</td><td class="r">${r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl))}</td><td class="c">${E(r.tt || "")}</td><td>${E(r.gc || "")}</td></tr>`).join("")}
+      <tr><td></td><td></td><td><b>Tổng cộng</b></td><td class="r"><b>${t ? F3(t, NDP(d.nl)) : ""}</b></td><td colspan="2">Tỷ trọng: ${E(d.tyTrong || "")}</td></tr></table>
       <div class="gap"></div><table><tr class="sec"><td>3. QUY TRÌNH PHA CHẾ</td></tr><tr><td class="qt">${E(d.quyTrinh || "")}</td></tr></table>
       <div class="gap"></div><table><colgroup><col style="width:27%"><col style="width:${C.length > 2 ? 17 : 21}%">${C.map(() => `<col>`).join("")}</colgroup><tr class="sec"><td colspan="${2 + C.length}">4. KẾT QUẢ THỰC HIỆN</td></tr><tr><th style="width:27%">Chỉ tiêu <small>(phương pháp)</small></th><th style="width:19%">Yêu cầu</th>${C.map(k => `<th>${CH[k]}</th>`).join("")}</tr>
       ${(d.kq || []).filter(r => String(r.ct || "").trim()).map((r, i) => { const wv = r.w != null ? r.w : (r.n28 ? "a" : (catOf(r.ct) || {}).w || "abc"); return `<tr><td>4.${i + 1} ${E(r.ct || "")}${r.nb ? " <small>(nội bộ)</small>" : ""}${r.pp ? `<br><small>${E(r.pp)}</small>` : ""}</td><td><small>${E(r.yc || "")}</small></td>${C.map(k => wv.includes(k) ? `<td>${E(r[k] || "")}</td>` : `<td class="c">—</td>`).join("")}</tr>`; }).join("")}
@@ -343,6 +345,18 @@
   }
 
   /* ---------------- BM.04: yêu cầu ---------------- */
+  /* phiếu công thức → tự ghi / cập nhật 1 dòng ở sổ yêu cầu BM.04 (dòng do phiếu tạo ra: d.tuPT = id phiếu) */
+  async function ycSync(r) {
+    const p = r.d, y = p.yc ? rec(p.yc) : null;
+    if (y && y.d.tuPT !== r.id) return r; /* phiếu gắn yêu cầu có sẵn: giữ nguyên */
+    const n = Object.assign({}, y ? y.d : {}, { tuPT: r.id, donVi: (y && y.d.donVi) || "Phòng R&D",
+      noiDung: "Thử nghiệm công thức " + (p.sp || "") + (p.hl ? " – " + p.hl : "") + (p.dang && !String(p.sp || "").toUpperCase().includes(p.dang.toUpperCase()) ? " (" + p.dang + ")" : "") + " · phiếu " + (p.so || ""),
+      nguoiTH: p.nguoiTH || "", ngayKT: p.danhGia ? (p.ngayKT || today()) : (y && y.d.ngayKT) || "",
+      ghiChu: p.danhGia ? "Kết luận: " + p.danhGia + (p.xuLy ? " · " + p.xuLy : "") : (p.hong ? "Mẫu hỏng" : (y && y.d.ghiChu) || "") });
+    const yr = await api("webRDSave", S.auth, { id: y && y.id, loai: "YC", ngay: y ? y.ngay : (p.ngayLap || today()), d: n });
+    if (!y) return await api("webRDSave", S.auth, { id: r.id, loai: "PT", ngay: p.ngayLap || today(), d: Object.assign({}, p, { yc: yr.id }) });
+    return r;
+  }
   function ycDlg(y) {
     const ql = QL(), d = y ? Object.assign({}, y.d) : {}, ro = ql ? "" : "disabled";
     const w = dlg(y ? "Yêu cầu nghiên cứu" : "Ghi yêu cầu nghiên cứu", `<p class="note" style="margin:0 0 8px">BM.04-RD-QT.01 · Sổ theo dõi yêu cầu</p>
