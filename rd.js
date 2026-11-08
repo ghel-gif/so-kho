@@ -237,6 +237,11 @@
       w.querySelectorAll("[data-rmnl]").forEach(b => b.onclick = () => { d.nl.splice(+b.dataset.rmnl, 1); q("#ptNl").innerHTML = nlRows(); wire(); calc(); });
     };
     wire(); calc();
+    /* nút Đạt / Không đạt, Thử lại / Không thử lại: bấm lần nữa để bỏ chọn */
+    w.querySelectorAll(".rd-opt input[type=radio]").forEach(r => {
+      const mark = () => w.querySelectorAll(`input[name="${r.name}"]`).forEach(x => x.dataset.was = x.checked ? "1" : "");
+      mark(); r.addEventListener("click", () => { if (r.dataset.was === "1") r.checked = false; mark(); });
+    });
     setTimeout(() => { if (!p && q("#ptMa") && !q("#ptMa").value) autoMa(); }, 0);
     if (q("#ptTT")) q("#ptTT").oninput = calc;
     if (q("#ptQcvn")) q("#ptQcvn").onclick = () => { if (!d.dang) return toast("Chọn dạng sản phẩm trước.");
