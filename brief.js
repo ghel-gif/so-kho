@@ -63,7 +63,7 @@
   function facts(F) {
     const cfg = F.settings_(), A = F.alertData_(), items = F.items_(), IM = {}; items.forEach(i => IM[i.ma] = i);
     const mv = F.moves_(), bal = F.balances_(items, mv), L = F.lots_(items, mv, cfg), today = A.today;
-    const orders = F.orders_().filter(o => !/\(huỷ/.test(o.so));
+    const orders = F.orders_().filter(o => !/\(huỷ/.test(o.so)), recent = o => String(o.ngay) >= BM_TU; /* chỉ xét lệnh từ ngày áp dụng trở đi */
     const isTP = o => { const it = IM[o.maSP]; return it ? it.nhom === "Thành phẩm" : /^TP\./.test(o.maSP || ""); };
     const ldg = (F.ldgMap_ && F.ldgMap_()) || {}, CT = F.recipes_(), dgf = (F.dgfAll_ && F.dgfAll_()) || [];
     const byDate = (a, b) => String(a.ngay).localeCompare(String(b.ngay)) || String(a.so).localeCompare(String(b.so), "vi", { numeric: true });
@@ -71,17 +71,17 @@
     /* lệnh đóng gói đang mở lấy quá tồn lô BTP (lệnh trước giữ trước) */
     const remL = {}, dgShort = [];
     orders.filter(o => isTP(o) && o.trangThai === "Đang SX").sort(byDate).forEach(o => {
-      const P = ldg[o.so]; if (!P || !Array.isArray(P.btp)) return; const by = {};
+      const P = ldg[o.so]; const rc = recent(o); if (!P || !Array.isArray(P.btp)) return; const by = {};
       P.btp.forEach(b => { if (!b || !b.ma) return; const g = by[b.ma] || (by[b.ma] = { ma: b.ma, need: 0, lots: [] }); g.need += +b.kg || 0; if (b.lo && !g.lots.includes(b.lo)) g.lots.push(b.lo); });
       Object.values(by).filter(g => g.lots.length).forEach(g => { let got = 0; g.lots.forEach(lo => { const k = g.ma + "|" + lo; if (remL[k] == null) remL[k] = lotTon(g.ma, lo); const t = Math.min(remL[k], g.need - got); if (t > 0) { remL[k] -= t; got += t; } });
-        if (g.need - got > 0.0005) dgShort.push({ so: o.so, nguoi: o.nguoiLap, ma: g.ma, lots: g.lots, need: r3(g.need), short: r3(g.need - got) }); });
+        if (rc && g.need - got > 0.0005) dgShort.push({ so: o.so, nguoi: o.nguoiLap, ma: g.ma, lots: g.lots, need: r3(g.need), short: r3(g.need - got) }); });
     });
     /* lệnh SX BTP đang mở thiếu nguyên liệu theo công thức */
     const remN = {}, lsxShort = [], water = it => /NUOC$/i.test(it.ma) || /^nước( |$)/i.test(String(it.ten || "").trim());
     orders.filter(o => !isTP(o) && o.trangThai === "Đang SX" && CT[o.maSP]).sort(byDate).forEach(o => {
       const need = {}; CT[o.maSP].forEach(l => { const it = IM[l.ma]; if (!it || water(it)) return; need[it.ma] = (need[it.ma] || 0) + l.dm * (+o.slDuKien || 0) * (it.heSo || 1); });
       const sh = []; Object.entries(need).forEach(([ma, k]) => { if (!(k > 0)) return; if (remN[ma] == null) remN[ma] = Math.max(0, (bal[ma] || {}).ton || 0); const t = Math.min(remN[ma], k); remN[ma] -= t; if (k - t > 0.0005) sh.push({ ma, short: r3(k - t) }); });
-      if (sh.length) lsxShort.push({ so: o.so, nguoi: o.nguoiLap, sh });
+      if (sh.length && recent(o)) lsxShort.push({ so: o.so, nguoi: o.nguoiLap, sh });
     });
     /* lệnh đóng gói thiếu biểu mẫu QC (đang đóng gói, hoặc xong trong 7 ngày) */
     const formMiss = [];
@@ -93,7 +93,7 @@
       if (miss.length) formMiss.push({ so: o.so, nguoi: o.nguoiLap, xong: o.trangThai === "Hoàn thành", miss, sp: (IM[o.maSP] || {}).ten || o.maSP });
     });
     const exp30 = A.exp.filter(x => x.con <= 30);
-    const open = orders.filter(o => o.trangThai === "Đang SX").sort(byDate).map(o => ({ so: o.so, ngay: o.ngay, nguoi: o.nguoiLap, sx: o.nguoiSX || "", qcSX: o.qcSX || "", dg: isTP(o), sp: (IM[o.maSP] || {}).ten || o.maSP, sl: o.slDuKien }));
+    const open = orders.filter(o => o.trangThai === "Đang SX" && recent(o)).sort(byDate).map(o => ({ so: o.so, ngay: o.ngay, nguoi: o.nguoiLap, sx: o.nguoiSX || "", qcSX: o.qcSX || "", dg: isTP(o), sp: (IM[o.maSP] || {}).ten || o.maSP, sl: o.slDuKien }));
     return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP };
   }
 
