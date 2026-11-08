@@ -285,3 +285,13 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .rd-new{background:rgba(217,119,6,.15);color:#b45309;border-radius:6px;padding:1px 6px;font-weight:700;font-size:12px}
 .rd-dlg label.pk{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;margin:0 10px 0 0!important}
 .rd-dlg label.pk input{width:auto!important;height:auto!important}
+/* bảng nhập R&D gọn */
+.rd-tb table{table-layout:fixed;width:100%}
+.rd-tb th{padding:6px 5px!important;font-size:12.5px;line-height:1.2}
+.rd-tb td{padding:3px 4px!important;vertical-align:middle}
+.rd-tb td input:not([type=checkbox]):not([type=radio]){height:32px!important;padding:3px 7px!important;font-size:14px!important;width:100%;box-sizing:border-box;min-width:0;display:block}
+.rd-tb .rd-ma{font-size:12px;line-height:1.2}.rd-tb .rd-ma small{display:block;color:var(--muted,#607d8b);font-weight:500}
+.rd-tb .rd-w{gap:6px;margin-top:3px;flex-wrap:nowrap}
+.rd-tb .rd-w .rd-pp{height:24px!important;font-size:12px!important;padding:1px 5px!important;flex:1 1 auto;width:auto!important;margin:0}
+.rd-tb .btn.small{padding:3px 8px;min-height:0}
+.rd-tb td.c input[type=radio]{display:block;margin:0 auto}
