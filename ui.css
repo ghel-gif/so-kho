@@ -255,3 +255,6 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .blv-r:last-child{border-bottom:0}
 .blv-r:hover{background:rgba(15,118,110,.06)}
 .blv-go{flex:none;color:var(--c);font-weight:700;font-size:13px}
+.blv-chip{border:1.5px solid #f9a825;background:rgba(249,168,37,.12);color:#7a5200;border-radius:999px;padding:4px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.blv-chip.bad{border-color:#c62828;background:rgba(198,40,40,.08);color:#c62828}
+.blv-chip:hover{filter:brightness(.95)}

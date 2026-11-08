@@ -48,7 +48,7 @@ function dgfGap(D,f){const d=f.d||{},G=[],emp=v=>v===undefined||v===null||String
   if(f.loai==="BM07"){const P=d.parts||[];if(emp(d.maMay))G.push("mã máy");if(!P.some(x=>x.th))G.push("chưa tick bộ phận đã vệ sinh");
     const m=P.filter(x=>x.th&&!x.dg).length;if(m)G.push(m+" bộ phận chưa đánh giá");if(emp(f.kl))G.push("kết luận");return G}
   return G}
-window.dgfGap=dgfGap;
+window.dgfGap=dgfGap;window.dgfOpen=(so,f)=>dgfOpen(so,f);
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('.cfm [data-x="save"],.cfm [data-x="upd"],.cfm [data-x="close"],.cfm [data-x="del"]'))setTimeout(()=>document.querySelectorAll(".dgf-bar").forEach(b=>b.upd&&b.upd()),900)},true);
 window.dgfHook=function(box,so){if(!box||!so||box.querySelector(".dgf-bar"))return;
   const bar=document.createElement("div");
