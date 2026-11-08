@@ -111,16 +111,15 @@
   const SHORT = { mine: n => n + " lệnh đang làm", cho: n => n + " lô chờ QC", formMiss: n => n + " lệnh thiếu biểu mẫu QC", exp: n => n + " lô sắp/quá hạn", dgShort: n => n + " lệnh đóng gói thiếu BTP", lsxShort: n => n + " lệnh SX thiếu NL", low: n => n + " mã âm/dưới tối thiểu", treo: n => n + " lệnh SX treo" };
   function forUser(u, X) {
     const role = u.vai_tro || "", ql = role === "Quản lý", qc = ql || !!u.quyen_qc, kho = ["Thủ kho", "Kế toán kho", "Kế toán"].includes(role), mine = x => x.nguoi === u.ten;
-    const S = {};
-    if (qc) { S.cho = X.cho; S.formMiss = ql ? X.formMiss : X.formMiss; }
-    if (ql || kho) { S.dgShort = X.dgShort; S.lsxShort = X.lsxShort; S.low = X.low; S.exp = X.exp; }
-    else if (qc) S.exp = X.exp30;
-    if (ql) S.treo = X.treo;
-    if (!ql && !kho) { /* nhân viên: lệnh của chính mình */
-      const dg = X.dgShort.filter(mine), ls = X.lsxShort.filter(mine), fm = X.formMiss.filter(mine), tr = X.treo.filter(t => (X.orders.find(o => o.so === t.so) || {}).nguoiLap === u.ten);
-      if (dg.length) S.dgShort = dg; if (ls.length) S.lsxShort = ls; if (!qc && fm.length) S.formMiss = fm; if (tr.length) S.treo = tr;
+    /* Quản lý: thấy tất cả. Người khác: chỉ việc của mình (QC thêm lô chờ QC và biểu mẫu QC còn thiếu). */
+    const S = {}, inc = (s, t) => String(s || "").split(",").map(x => x.trim()).includes(t);
+    if (ql) Object.assign(S, { cho: X.cho, formMiss: X.formMiss, dgShort: X.dgShort, lsxShort: X.lsxShort, low: X.low, exp: X.exp, treo: X.treo });
+    else {
+      const myOrd = new Set(X.open.filter(o => o.nguoi === u.ten || inc(o.sx, u.ten) || inc(o.qcSX, u.ten)).map(o => o.so)), mine = x => x.nguoi === u.ten || myOrd.has(x.so);
+      if (qc) { S.cho = X.cho; S.formMiss = X.formMiss; } else S.formMiss = X.formMiss.filter(mine);
+      S.dgShort = X.dgShort.filter(mine); S.lsxShort = X.lsxShort.filter(mine);
+      S.mine = X.open.filter(o => myOrd.has(o.so));
     }
-    if (!ql) { const inc = (s, t) => String(s || "").split(",").map(x => x.trim()).includes(t); S.mine = X.open.filter(o => o.nguoi === u.ten || inc(o.sx, u.ten) || inc(o.qcSX, u.ten)); }
     Object.keys(S).forEach(k => { if (!S[k] || !S[k].length) delete S[k]; });
     const keys = ["formMiss", "cho", "dgShort", "lsxShort", "low", "exp", "treo", "mine"].filter(k => S[k]);
     const n = keys.filter(k => k !== "mine").reduce((s, k) => s + S[k].length, 0);
