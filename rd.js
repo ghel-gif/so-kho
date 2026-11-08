@@ -18,7 +18,7 @@
      w: điều kiện áp dụng (a = thường 28 °C, b = 54 °C 14 ngày, c = 0 °C 7 ngày). nb = chỉ tiêu theo dõi nội bộ, không bắt buộc theo QCVN. */
   const CAT = [
     { ct: "Ngoại quan", yc: "Đồng nhất, đúng mô tả dạng", pp: "QC-HD.36", w: "abc" },
-    { ct: "Hàm lượng hoạt chất", yc: "Theo đăng ký (Bảng 1); sau 54 °C ≥ 95% trước bảo quản", pp: "Gửi mẫu ngoài · QC-HD.49", w: "ab" },
+    { ct: "Hàm lượng hoạt chất", yc: "Theo đăng ký (Bảng 1); sau 54 °C ≥ 95% trước bảo quản", pp: "QC-HD.49 (gửi ngoài)", w: "ab" },
     { ct: "pH (5%w/w)", yc: "", pp: "QC-HD.35", w: "ab", nb: 1 },
     { ct: "Tỷ trọng (g/ml)", yc: "", pp: "QC-HD.37", w: "a", nb: 1 },
     { ct: "Độ bọt (sau 1 phút)", yc: "≤ 60 ml", pp: "QC-HD.38", w: "a" },
@@ -142,12 +142,12 @@
     const tonTxt = ma => { const t = ((S.bal || {})[ma] || {}).ton; return t == null ? "" : "tồn " + (Math.round(t * 100) / 100).toLocaleString("vi-VN") + " kg"; };
     const tag = r => r.ma ? `<small style="color:#2e7d32">✓ ${E(r.ma)} · ${tonTxt(r.ma)}</small>` : (String(r.ten || "").trim() ? '<small style="color:#b26a00">● vật tư mới (chưa có trong kho)</small>' : "");
     const liq = () => LONG.includes(d.dang), hcU = () => liq() ? "g/L" : "%";
+    /* độ tinh khiết nguyên liệu kỹ thuật: lấy theo "98%" trong tên hoặc hàm lượng ở danh mục; không có thì coi 100% */
+    const purOf = r => { const it = r.ma && typeof itemBy === "function" ? itemBy(r.ma) : null, m = /(\d{2,3}(?:[.,]\d+)?)\s*%/.exec((r.ten || "") + " " + (it ? it.ten + " " + (it.hamLuong || "") : "")); const v = m ? parseFloat(m[1].replace(",", ".")) : 100; return v > 0 && v <= 100 ? v : 100; };
     const maCell = r => r.ma ? `${E(r.ma)}<small>${tonTxt(r.ma)}</small>` : (String(r.ten || "").trim() ? '<span class="rd-new">mới</span>' : "");
     const nlRows = () => d.nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td data-ma="${i}" class="rd-ma">${maCell(r)}</td><td><input data-nl="${i}" data-k="ten" list="rdNlDl" value="${E(r.ten || "")}" ${ro} placeholder="Mã / tên vật tư trong kho, hoặc tên mới"></td>
       <td><input data-nl="${i}" data-k="hc" type="number" step="any" inputmode="decimal" value="${E(r.hc ?? "")}" ${ro} title="Hoạt chất: hàm lượng muốn có trong sản phẩm" placeholder="${hcU()}" style="text-align:right"></td>
-      <td><input data-nl="${i}" data-k="pur" type="number" step="any" inputmode="decimal" value="${E(r.pur ?? "")}" ${ro} title="Độ tinh khiết nguyên liệu kỹ thuật (%)" placeholder="%" style="text-align:right"></td>
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct ?? "")}" ${ro} style="text-align:right;font-weight:700"></td>
-      <td class="r" data-g="${i}"></td>
       <td><input data-nl="${i}" data-k="tt" value="${E(r.tt || "")}" ${ro} placeholder=""></td>
       <td class="c"><input type="radio" name="ptBu" data-bu="${i}" ${r.bu ? "checked" : ""} ${ro} title="Dung môi nền: tự bù cho đủ 100%"></td>
       ${ql ? `<td><button type="button" class="btn small" data-rmnl="${i}">✕</button></td>` : ""}</tr>`).join("");
@@ -162,9 +162,9 @@
     const ctDl = `<datalist id="rdCtDl">${CAT.map(c => `<option value="${E(c.ct)}">${E((c.nb ? "nội bộ · " : "QCVN · ") + (c.pp || ""))}</option>`).join("")}</datalist>`;
     const kqRows = () => d.kq.map((r, i) => { const wv = wOf(r);
       return `<tr><td><input data-kq="${i}" data-k="ct" list="rdCtDl" value="${E(r.ct || "")}" ${ql ? "" : "disabled"} placeholder="Chọn hoặc gõ chỉ tiêu" title="${E(r.ct || "")}">
-        <div class="rd-w">${[["a", "28°"], ["b", "54°"], ["c", "0°"]].map(([k, t]) => `<label title="Đo ở điều kiện này"><input type="checkbox" data-w="${i}" data-c="${k}" ${wv.includes(k) ? "checked" : ""} ${ql ? "" : "disabled"}>${t}</label>`).join("")}<input data-kq="${i}" data-k="pp" value="${E(r.pp || "")}" ${ql ? "" : "disabled"} placeholder="phương pháp" class="rd-pp" title="Phương pháp thử">${r.nb ? '<span class="rd-nb">nội bộ</span>' : ""}</div></td>
-        <td><input data-kq="${i}" data-k="yc" value="${E(r.yc || "")}" ${ql ? "" : "disabled"} placeholder="Mức yêu cầu" title="${E(r.yc || "")}"></td>
-        ${cols().map(k => !wv.includes(k) ? `<td class="c note">—</td>` : `<td><input data-kq="${i}" data-k="${k}" value="${E(r[k] || "")}" ${ghiKQ ? "" : "disabled"}></td>`).join("")}
+        <div class="rd-w">${[["a", "28°"], ["b", "54°"], ["c", "0°"]].map(([k, t]) => `<label title="Đo ở điều kiện này"><input type="checkbox" data-w="${i}" data-c="${k}" ${wv.includes(k) ? "checked" : ""} ${ql ? "" : "disabled"}>${t}</label>`).join("")}<textarea data-kq="${i}" data-k="pp" rows="1" ${ql ? "" : "disabled"} placeholder="phương pháp" class="rd-pp rd-ta" title="Phương pháp thử">${E(r.pp || "")}</textarea>${r.nb ? '<span class="rd-nb">nội bộ</span>' : ""}</div></td>
+        <td><textarea data-kq="${i}" data-k="yc" rows="1" class="rd-ta" ${ql ? "" : "disabled"} placeholder="Mức yêu cầu">${E(r.yc || "")}</textarea></td>
+        ${cols().map(k => !wv.includes(k) ? `<td class="c note">—</td>` : `<td><textarea data-kq="${i}" data-k="${k}" rows="1" class="rd-ta" ${ghiKQ ? "" : "disabled"}>${E(r[k] || "")}</textarea></td>`).join("")}
         ${ql ? `<td><button type="button" class="btn small" data-rmkq="${i}">✕</button></td>` : ""}</tr>`; }).join("");
     const kqMark = () => w.querySelectorAll('[data-kq]').forEach(el => { const k = el.dataset.k; if (!"abc".includes(k)) return; const r = d.kq[+el.dataset.kq], ok = inYc(r.yc, r[k]); el.style.boxShadow = ok === null ? "" : ok ? "inset 0 0 0 2px #2e7d32" : "inset 0 0 0 2px #c62828"; el.title = ok === null ? "" : ok ? "Đạt mức yêu cầu" : "Ngoài mức yêu cầu " + r.yc; });
     const w = dlg(p ? `Phiếu thử nghiệm ${E(d.so || "")}` : "Lập công thức thử nghiệm", `
@@ -174,14 +174,14 @@
       <div class="two"><label>Tên sản phẩm *<input id="ptSp" value="${E(d.sp || "")}" ${ro} placeholder="VD Pymetrozine 20% + Nitenpyram 15% OD"></label><label>Mã công thức<input id="ptMa" value="${E(d.maCT || "")}" ${ro} placeholder="VD PN35OD-03"></label></div>
       <div class="two"><label>Hàm lượng<input id="ptHl" value="${E(d.hl || "")}" ${ro}></label><label>Thuộc yêu cầu nghiên cứu (sổ BM.04)<select id="ptYc" ${ro}><option value="">${YC.length ? "— Chọn yêu cầu (để trống nếu tự thử, không theo yêu cầu) —" : "Chưa có yêu cầu nào trong sổ BM.04"}</option>${YC.map(y => `<option value="${E(y.id)}" ${y.id === d.yc ? "selected" : ""}>${E(D(y.ngay) + " · " + (y.d.noiDung || "").slice(0, 60))}</option>`).join("")}</select></label></div>
       <div class="two"><label>Ngày lập phiếu<input id="ptLap" type="date" value="${E(d.ngayLap || "")}" ${ro}></label><label>Người thực hiện<select id="ptNg" ${ro}>${userOpts(d.nguoiTH)}</select></label></div>
-      <div class="two"><label>Dạng sản phẩm *<select id="ptDang" ${ro}><option value="">— chọn dạng —</option>${DANGS.map(x => `<option ${x === d.dang ? "selected" : ""}>${x}</option>`).join("")}</select></label><label>Khối lượng mẻ thử (g)<input id="ptMe" type="number" step="any" inputmode="decimal" value="${E(d.me || 500)}" ${ghiKQ ? "" : "disabled"}></label></div>
+      <div class="two"><label>Dạng sản phẩm *<select id="ptDang" ${ro}><option value="">— chọn dạng —</option>${DANGS.map(x => `<option ${x === d.dang ? "selected" : ""}>${x}</option>`).join("")}</select></label><span></span></div>
       <div class="two" id="ptTTRow" ${liq() ? "" : "hidden"}><label>Tỷ trọng dự kiến (g/ml) *<input id="ptTT" type="number" step="any" inputmode="decimal" value="${E(d.tyTrong || "")}" ${ro} placeholder="VD 1.10 — để quy g/L ra %w/w"></label><span></span></div>
       ${ql ? `<div class="tools" style="margin:4px 0"><select id="ptFrom" style="max-width:420px"><option value="">📋 Chép công thức từ…</option><optgroup label="Phiếu thử trước">${live(R).filter(x => x.loai === "PT" && (!p || x.id !== p.id)).map(x => `<option value="pt:${E(x.id)}">${E((x.d.so || "") + " · " + (x.d.sp || "") + (x.d.maCT ? " · " + x.d.maCT : "") + (x.d.danhGia ? " · " + x.d.danhGia : ""))}</option>`).join("")}</optgroup><optgroup label="Công thức sản xuất đang dùng">${Object.keys(S.congThuc || {}).map(m => `<option value="ct:${E(m)}">${E(m + " · " + ((itemBy && itemBy(m) || {}).ten || ""))}</option>`).join("")}</optgroup></select></div>` : ""}
       <div class="grp">2. Công thức sản phẩm</div>
       <datalist id="rdNlDl">${nlList}</datalist>
-      <p class="note" style="margin:0 0 6px">Hoạt chất: ghi <b>hàm lượng muốn có</b> (<span class="ptU">${hcU()}</span>) và <b>độ tinh khiết</b> nguyên liệu kỹ thuật → phần mềm tự tính %w/w${liq() ? " (cần tỷ trọng)" : ""}. Chọn ô <b>Up to</b> ở dòng <b>dung môi nền</b> (nước, dầu, chất mang…) để tự bù cho đủ 100%. Cột <b>Cân</b> là số gam cần cân cho mẻ thử.</p>
-      <div class="dgx rd-tb"><table><colgroup><col style="width:34px"><col style="width:96px"><col><col style="width:78px"><col style="width:68px"><col style="width:82px"><col style="width:72px"><col style="width:58px"><col style="width:44px">${ql ? '<col style="width:38px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>HC (<span class="ptU">${hcU()}</span>)</th><th>TK %</th><th>%w/w</th><th>Cân (g)</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
-      <tfoot><tr><td></td><td></td><td><b>Tổng cộng</b> ${ql ? '<button type="button" class="btn small" id="ptAddNl">+ dòng</button>' : ""}</td><td colspan="2"></td><td id="ptSum" style="text-align:right;font-weight:700"></td><td id="ptSumG" class="r"></td><td colspan="${ql ? 3 : 2}"></td></tr></tfoot></table></div>
+      <p class="note" style="margin:0 0 6px">Hoạt chất: ghi <b>hàm lượng muốn có</b> (<span class="ptU">${hcU()}</span>) → phần mềm tự tính %w/w theo độ tinh khiết ghi trong tên vật tư (VD "98%"; không ghi thì tính 100%)${liq() ? " (cần tỷ trọng)" : ""}. Chọn ô <b>Up to</b> ở dòng <b>dung môi nền</b> (nước, dầu, chất mang…) để tự bù cho đủ 100%.</p>
+      <div class="dgx rd-tb"><table><colgroup><col style="width:30px"><col style="width:92px"><col><col style="width:80px"><col style="width:86px"><col style="width:52px"><col style="width:46px">${ql ? '<col style="width:38px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th title="Hàm lượng hoạt chất muốn có trong sản phẩm">HC (<span class="ptU">${hcU()}</span>)</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
+      <tfoot><tr><td></td><td></td><td><b>Tổng cộng</b> ${ql ? '<button type="button" class="btn small" id="ptAddNl">+ dòng</button>' : ""}</td><td></td><td id="ptSum" style="text-align:right;font-weight:700"></td><td colspan="${ql ? 3 : 2}"></td></tr></tfoot></table></div>
       <div class="grp">3. Quy trình pha chế</div>
       <textarea id="ptQT" rows="5" ${ro} style="width:100%" placeholder="Các bước pha chế, thứ tự cho nguyên liệu, tốc độ khuấy, thời gian, nhiệt độ…">${E(d.quyTrinh || "")}</textarea>
       <div class="grp">4. Kết quả thực hiện ${toi && !ql ? '<small class="note" style="color:#2563eb">(phần của bạn)</small>' : ""}</div>
@@ -214,24 +214,28 @@
     const num = v => { const x = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(x) ? x : 0; };
     const calc = () => {
       const tt = num(q("#ptTT") ? q("#ptTT").value : d.tyTrong), me = num(d.me) || 0;
+      d.nl.forEach(r => { if (num(r.hc) > 0 && !(num(r.pur) > 0)) r.pur = purOf(r); });
       d.nl.forEach((r, i) => { if (num(r.hc) > 0 && num(r.pur) > 0) { const v = liq() ? (tt > 0 ? r.hc / (10 * tt) / (r.pur / 100) : null) : num(r.hc) / (num(r.pur) / 100); if (v != null) r.pct = Math.round(v * 1000) / 1000; } });
       const bi = d.nl.findIndex(r => r.bu); if (bi >= 0) d.nl[bi].pct = Math.round((100 - d.nl.reduce((s, r, i) => s + (i === bi ? 0 : num(r.pct)), 0)) * 1000) / 1000;
       d.nl.forEach((r, i) => { const inp = w.querySelector(`[data-nl="${i}"][data-k="pct"]`), auto = (num(r.hc) > 0 && num(r.pur) > 0) || r.bu;
-        if (inp && document.activeElement !== inp) inp.value = r.pct ?? ""; if (inp) { inp.readOnly = !!auto; inp.style.background = auto ? "rgba(46,125,50,.08)" : ""; inp.title = auto ? (r.bu ? "Dung môi nền: up to 100%" : "Tự tính từ hàm lượng và độ tinh khiết") : ""; }
-        const g = w.querySelector(`[data-g="${i}"]`); if (g) g.textContent = me && num(r.pct) ? (Math.round(num(r.pct) * me / 100 * 100) / 100).toLocaleString("vi-VN") : ""; });
+        if (inp && document.activeElement !== inp) inp.value = r.pct ?? ""; if (inp) { inp.readOnly = !!auto; inp.style.background = auto ? "rgba(46,125,50,.08)" : ""; inp.title = auto ? (r.bu ? "Dung môi nền: up to 100%" : "Tự tính từ hàm lượng HC, độ tinh khiết " + r.pur + "% (lấy theo tên / danh mục vật tư)") : ""; }
+      });
       const t = d.nl.reduce((s, r) => s + num(r.pct), 0), ok = Math.abs(t - 100) < 0.01;
       q("#ptSum").innerHTML = (Math.round(t * 1000) / 1000).toLocaleString("vi-VN") + " %" + (t && !ok ? `<br><small>${t > 100 ? "thừa" : "thiếu"} ${(Math.round(Math.abs(100 - t) * 1000) / 1000).toLocaleString("vi-VN")}%</small>` : "");
       q("#ptSum").style.color = ok || !t ? "#2e7d32" : "#c62828";
-      q("#ptSumG").textContent = me ? (Math.round(t * me / 100 * 100) / 100).toLocaleString("vi-VN") + " g" : "";
+      
       const warn = liq() && !(tt > 0) && d.nl.some(r => num(r.hc) > 0); q("#ptTT").style.outline = warn ? "2px solid #c62828" : ""; q("#ptTT").title = warn ? "Dạng lỏng: ghi tỷ trọng để tính %w/w từ g/L" : "";
     };
     const sum = calc;
     const wire = () => {
       w.querySelectorAll("[data-nl]").forEach(i => i.oninput = () => { const k = i.dataset.k, r = d.nl[+i.dataset.nl]; r[k] = (k === "pct" || k === "hc" || k === "pur") ? (i.value === "" ? "" : num(i.value)) : i.value;
         if (k === "ten") { const it = findVT(i.value); if (it) { r.ma = it.ma; r.ten = it.ten; } else { r.ma = ""; r.ten = i.value.trim(); } const mc = w.querySelector(`[data-ma="${i.dataset.nl}"]`); if (mc) mc.innerHTML = maCell(r); }
-        if (k === "ten" && !r.pur) { const it = r.ma ? itemBy(r.ma) : null; const m = it && /(\d{2}(?:[.,]\d+)?)\s*%/.exec(it.ten + " " + (it.hamLuong || "")); if (m && /TECH|TC|kỹ thuật/i.test(it.ten + it.ma)) { r.pur = num(m[1]); const pi = w.querySelector(`[data-nl="${i.dataset.nl}"][data-k="pur"]`); if (pi) pi.value = r.pur; } }
+        if (k === "ten") r.pur = "";
+        if (false) { const it = r.ma ? itemBy(r.ma) : null; const m = it && /(\d{2}(?:[.,]\d+)?)\s*%/.exec(it.ten + " " + (it.hamLuong || "")); if (m && /TECH|TC|kỹ thuật/i.test(it.ten + it.ma)) { r.pur = num(m[1]); const pi = w.querySelector(`[data-nl="${i.dataset.nl}"][data-k="pur"]`); if (pi) pi.value = r.pur; } }
         calc(); });
       w.querySelectorAll("[data-bu]").forEach(i => i.onchange = () => { d.nl.forEach((r, k) => r.bu = k === +i.dataset.bu); calc(); });
+      const fit = t => { t.style.height = "auto"; t.style.height = Math.max(30, t.scrollHeight + 2) + "px"; };
+      w.querySelectorAll("textarea.rd-ta").forEach(t => { fit(t); t.addEventListener("input", () => fit(t)); t.addEventListener("keydown", e => { if (e.key === "Enter") e.preventDefault(); }); });
       w.querySelectorAll("[data-kq]").forEach(i => i.oninput = () => { const r = d.kq[+i.dataset.kq]; r[i.dataset.k] = i.value; kqMark();
         if (i.dataset.k === "ct") { const c = catOf(i.value); if (c) { Object.assign(r, { yc: r.yc || c.yc, pp: r.pp || c.pp, w: c.w, nb: c.nb ? 1 : 0 }); q("#ptKq").innerHTML = kqRows(); wire(); } } }); kqMark();
       w.querySelectorAll("[data-w]").forEach(c => c.onchange = () => { const r = d.kq[+c.dataset.w], set = new Set(wOf(r).split("")); c.checked ? set.add(c.dataset.c) : set.delete(c.dataset.c); r.w = ["a", "b", "c"].filter(x => set.has(x)).join(""); if (!c.checked) r[c.dataset.c] = ""; q("#ptKq").innerHTML = kqRows(); wire(); });
@@ -253,7 +257,6 @@
     if (q("#pt54")) q("#pt54").onchange = () => { d.t54 = q("#pt54").checked; reKq(); };
     if (q("#pt0")) q("#pt0").onchange = () => { d.t0 = q("#pt0").checked; reKq(); };
     if (q("#ptBD")) q("#ptBD").addEventListener("change", () => { d.ngayBD = q("#ptBD").value; q("#ptKqH").innerHTML = kqHead(); });
-    if (q("#ptMe")) q("#ptMe").oninput = () => { d.me = num(q("#ptMe").value); calc(); };
     if (q("#ptDang")) q("#ptDang").onchange = () => { d.dang = q("#ptDang").value; const blank = !d.kq.some(r => r.a || r.b || r.c); if (blank) { d.kq = ctOf(d.dang); q("#ptKq").innerHTML = kqRows(); wire(); } w.querySelectorAll(".ptU").forEach(x => x.textContent = hcU()); q("#ptTTRow").hidden = !liq(); w.querySelectorAll(".ptDg2").forEach(x => x.textContent = d.dang || "…"); w.querySelectorAll('[data-k="hc"]').forEach(x => x.placeholder = hcU()); calc(); };
     let maTay = !!(p && d.maCT); const autoMa = () => { if (!ql || maTay || !q("#ptMa")) return; q("#ptMa").value = genMa(q("#ptSp").value, q("#ptDang").value, p && p.id); };
     if (q("#ptMa")) q("#ptMa").addEventListener("input", () => { maTay = !!q("#ptMa").value.trim(); });
@@ -269,7 +272,6 @@
     const collect = () => {
       if (ql) Object.assign(d, { sp: q("#ptSp").value.trim(), maCT: q("#ptMa").value.trim(), hl: q("#ptHl").value.trim(), yc: q("#ptYc").value, ngayLap: q("#ptLap").value, nguoiTH: q("#ptNg").value, t54: q("#pt54").checked, t0: q("#pt0").checked, tyTrong: q("#ptTT").value.trim(), quyTrinh: q("#ptQT").value, dang: q("#ptDang").value,
         danhGia: (w.querySelector('[name=ptDg]:checked') || {}).value || "", xuLy: (w.querySelector('[name=ptXl]:checked') || {}).value || "", ghiChu: q("#ptGc").value.trim() });
-      if (q("#ptMe")) d.me = num(q("#ptMe").value) || 500;
       if (ghiKQ) Object.assign(d, { ngayBD: q("#ptBD").value, kqbd: q("#ptKqbd").value.trim(), deXuat: q("#ptDx").value.trim(), ngayKT: q("#ptKT").value });
       d.nl = d.nl.filter(r => String(r.ten || "").trim() || String(r.pct || "").trim()); d.kq = d.kq.filter(r => String(r.ct || "").trim() || r.yc || r.a || r.b || r.c);
     };
