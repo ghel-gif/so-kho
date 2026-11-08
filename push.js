@@ -43,6 +43,7 @@
     try {
       const o = args[1] || {};
       if (fn === "createOrder") send("Lệnh SX BTP mới: " + (o.so || ""), [o.maSP, o.slDuKien ? o.slDuKien + " kg" : "", "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: QL, ten: ["Phan Thị Cẩm Tiên"] }, "lsx-" + o.so);
+      else if (fn === "savePack" && !o.hoanThanh && !((window.S && S.lenh) || []).some(x => x.so === o.so)) send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.dv ? o.dv + " gói/chai" : "", "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
       else if (fn === "createPackOrder") send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.sp, "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
       else if (fn === "webKHGui" && r) send("Kế hoạch phối trộn đã gửi", r + " lệnh · gửi bởi " + me(), { all: true }, "kh");
       else if (fn === "setQC" && (args[3] === "Đạt" || args[3] === "Không đạt")) send((args[3] === "Đạt" ? "✅ QC Đạt: " : "⛔ QC Không đạt: ") + args[1], "Lô " + args[2] + (args[4] ? " · " + args[4] : "") + " · " + me(), { roles: KHO, ten: ["Phan Thị Cẩm Tiên"] }, "qc-" + args[1] + args[2]);
