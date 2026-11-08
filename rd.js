@@ -156,9 +156,9 @@
     const liq = () => LONG.includes(d.dang), hcU = () => liq() ? "g/L" : "%";
     /* độ tinh khiết nguyên liệu kỹ thuật: lấy theo "98%" trong tên hoặc hàm lượng ở danh mục; không có thì coi 100% */
     const purOf = r => { const it = r.ma && typeof itemBy === "function" ? itemBy(r.ma) : null, m = /(\d{2,3}(?:[.,]\d+)?)\s*%/.exec((r.ten || "") + " " + (it ? it.ten + " " + (it.hamLuong || "") : "")); const v = m ? parseFloat(m[1].replace(",", ".")) : 100; return v > 0 && v <= 100 ? v : 100; };
-    const loChip = (r, i) => { const k = loaiOf(r); return k ? `<button type="button" class="rd-lo" data-lo="${i}" style="--lc:${LO[k][1]}" title="${ql ? "Bấm để đổi loại: Tech → Dung môi → Phụ gia → Phân bón" : ""}" ${ql ? "" : "disabled"}>${LO[k][0]}</button>` : ""; };
-    const maCell = (r, i) => (r.ma ? `${E(r.ma)}` : (String(r.ten || "").trim() ? '<span class="rd-new">mới</span>' : "")) + loChip(r, i);
-    const nlRows = () => d.nl.map((r, i) => `<tr data-row="${i}" style="--lc:${(LO[loaiOf(r)] || [, "transparent"])[1]}"><td class="c rd-num">${ql ? `<span class="rd-drag" draggable="true" data-dr="${i}" title="Kéo để đổi vị trí">⠿</span>` : ""}${i + 1}</td><td data-ma="${i}" class="rd-ma">${maCell(r, i)}</td><td><input data-nl="${i}" data-k="ten" list="rdNlDl" value="${E(r.ten || "")}" ${ro} placeholder="Mã / tên vật tư trong kho, hoặc tên mới"></td>
+    const loChip = (r, i) => { const k = loaiOf(r); return k ? `<button type="button" class="rd-lo" data-lo="${i}" style="--lc:${LO[k][1]}" title="${LO[k][0]}${ql ? " — bấm để đổi: Tech → Dung môi → Phụ gia → Phân bón" : ""}" ${ql ? "" : "disabled"}></button>` : '<span class="rd-lo0"></span>'; };
+    const maCell = r => r.ma ? `${E(r.ma)}` : (String(r.ten || "").trim() ? '<span class="rd-new">mới</span>' : "");
+    const nlRows = () => d.nl.map((r, i) => `<tr data-row="${i}" style="--lc:${(LO[loaiOf(r)] || [, "#cfd8dc"])[1]}"><td class="c rd-num">${ql ? `<span class="rd-drag" draggable="true" data-dr="${i}" title="Kéo để đổi vị trí">⠿</span>` : ""}${i + 1}</td><td data-ma="${i}" class="rd-ma">${maCell(r)}</td><td class="rd-tn"><span data-loc="${i}">${loChip(r, i)}</span><input data-nl="${i}" data-k="ten" list="rdNlDl" value="${E(r.ten || "")}" ${ro} placeholder="Mã / tên vật tư trong kho, hoặc tên mới"></td>
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl)))}" ${ro} style="text-align:right;font-weight:700"></td>
       <td><input data-nl="${i}" data-k="tt" value="${E(r.tt || "")}" ${ro} placeholder=""></td>
       <td class="c"><input type="radio" name="ptBu" data-bu="${i}" ${r.bu ? "checked" : ""} ${ro} title="Dung môi nền: tự bù cho đủ 100%"></td>
@@ -230,7 +230,7 @@
       const bi = d.nl.findIndex(r => r.bu); if (bi >= 0) d.nl[bi].pct = Math.round((100 - d.nl.reduce((s, r, i) => s + (i === bi ? 0 : num(r.pct)), 0)) * 1000) / 1000;
       const n = NDP(d.nl);
       d.nl.forEach((r, i) => { const inp = w.querySelector(`[data-nl="${i}"][data-k="pct"]`), auto = !!r.bu, tr = w.querySelector(`tr[data-row="${i}"]`), mc = w.querySelector(`[data-ma="${i}"]`);
-        if (tr) tr.style.setProperty("--lc", (LO[loaiOf(r)] || [, "transparent"])[1]); if (mc) mc.innerHTML = maCell(r, i);
+        if (tr) tr.style.setProperty("--lc", (LO[loaiOf(r)] || [, "#cfd8dc"])[1]); const lc = w.querySelector(`[data-loc="${i}"]`); if (lc) lc.innerHTML = loChip(r, i);
         if (inp && document.activeElement !== inp) inp.value = r.pct === "" || r.pct == null ? "" : F3(r.pct, n); if (inp) { inp.readOnly = !!auto; inp.style.background = auto ? "rgba(46,125,50,.08)" : ""; inp.title = auto ? (r.bu ? "Dung môi nền: up to 100%" : "Tự tính từ hàm lượng HC, độ tinh khiết " + r.pur + "% (lấy theo tên / danh mục vật tư)") : ""; }
       });
       const t = d.nl.reduce((s, r) => s + num(r.pct), 0), ok = Math.abs(t - 100) < 0.01;
@@ -242,7 +242,7 @@
     const sum = calc;
     const wire = () => {
       w.querySelectorAll("[data-nl]").forEach(i => i.oninput = () => { const k = i.dataset.k, r = d.nl[+i.dataset.nl]; r[k] = (k === "pct" || k === "hc" || k === "pur") ? (i.value === "" ? "" : num(i.value)) : i.value;
-        if (k === "ten") { const it = findVT(i.value); if (it) { r.ma = it.ma; r.ten = it.ten; } else { r.ma = ""; r.ten = i.value.trim(); } const mc = w.querySelector(`[data-ma="${i.dataset.nl}"]`); if (mc) mc.innerHTML = maCell(r, +i.dataset.nl); }
+        if (k === "ten") { const it = findVT(i.value); if (it) { r.ma = it.ma; r.ten = it.ten; } else { r.ma = ""; r.ten = i.value.trim(); } const mc = w.querySelector(`[data-ma="${i.dataset.nl}"]`); if (mc) mc.innerHTML = maCell(r); }
         if (k === "ten") r.pur = "";
         if (false) { const it = r.ma ? itemBy(r.ma) : null; const m = it && /(\d{2}(?:[.,]\d+)?)\s*%/.exec(it.ten + " " + (it.hamLuong || "")); if (m && /TECH|TC|kỹ thuật/i.test(it.ten + it.ma)) { r.pur = num(m[1]); const pi = w.querySelector(`[data-nl="${i.dataset.nl}"][data-k="pur"]`); if (pi) pi.value = r.pur; } }
         calc(); });
@@ -343,7 +343,7 @@
       <table><colgroup><col style="width:18%"><col style="width:32%"><col style="width:18%"><col style="width:32%"></colgroup><tr class="sec"><td colspan="4">1. THÔNG TIN CHUNG</td></tr><tr><td style="width:22%">Ngày lập phiếu</td><td>${D(d.ngayLap)}</td><td style="width:22%">Người thực hiện</td><td>${E(d.nguoiTH || "")}</td></tr><tr><td>Ngày bắt đầu</td><td>${D(d.ngayBD)}</td><td>Ngày kết thúc</td><td>${D(d.ngayKT)}</td></tr>
       <tr><td>Tên sản phẩm</td><td><b>${E(d.sp || "")}</b></td><td>Mã công thức</td><td>${E(d.maCT || "")}</td></tr><tr><td>Hàm lượng</td><td>${E(d.hl || "")}</td><td>Dạng · tỷ trọng</td><td>${E(d.dang || "")}${d.tyTrong ? " · " + E(d.tyTrong) + " g/ml" : ""}</td></tr></table>
       <div class="gap"></div><table><colgroup><col style="width:6%"><col style="width:14%"><col><col style="width:11%"><col style="width:12%"><col style="width:22%"></colgroup><tr class="sec"><td colspan="6">2. CÔNG THỨC SẢN PHẨM</td></tr><tr><th>STT</th><th>Mã vật tư</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự thực hiện</th><th>Ghi chú</th></tr>
-      ${nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td style="${LO[loaiOf(r)] ? "box-shadow:inset 3px 0 0 " + LO[loaiOf(r)][1] : ""}">${r.ma ? E(r.ma) : (String(r.ten || "").trim() ? "<i>mới</i>" : "")}${LO[loaiOf(r)] ? ` <small style="color:${LO[loaiOf(r)][1]}">· ${LO[loaiOf(r)][0]}</small>` : ""}</td><td>${E(r.ten || "")}</td><td class="r">${r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl))}</td><td class="c">${E(r.tt || "")}</td><td>${E(r.gc || "")}</td></tr>`).join("")}
+      ${nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td>${r.ma ? E(r.ma) : (String(r.ten || "").trim() ? "<i>mới</i>" : "")}</td><td style="${LO[loaiOf(r)] ? "color:" + LO[loaiOf(r)][1] + ";font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact" : ""}">${E(r.ten || "")}</td><td class="r">${r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl))}</td><td class="c">${E(r.tt || "")}</td><td>${E(r.gc || "")}</td></tr>`).join("")}
       <tr><td></td><td></td><td><b>Tổng cộng</b></td><td class="r"><b>${t ? F3(t, NDP(d.nl)) : ""}</b></td><td colspan="2">Tỷ trọng: ${E(d.tyTrong || "")}</td></tr></table>
       <div class="gap"></div><table><tr class="sec"><td>3. QUY TRÌNH PHA CHẾ</td></tr><tr><td class="qt">${E(d.quyTrinh || "")}</td></tr></table>
       <div class="gap"></div><table><colgroup><col style="width:27%"><col style="width:${C.length > 2 ? 17 : 21}%">${C.map(() => `<col>`).join("")}</colgroup><tr class="sec"><td colspan="${2 + C.length}">4. KẾT QUẢ THỰC HIỆN</td></tr><tr><th style="width:27%">Chỉ tiêu <small>(phương pháp)</small></th><th style="width:19%">Yêu cầu</th>${C.map(k => `<th>${CH[k]}</th>`).join("")}</tr>
