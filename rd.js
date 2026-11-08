@@ -147,11 +147,11 @@
     /* độ tinh khiết nguyên liệu kỹ thuật: lấy theo "98%" trong tên hoặc hàm lượng ở danh mục; không có thì coi 100% */
     const purOf = r => { const it = r.ma && typeof itemBy === "function" ? itemBy(r.ma) : null, m = /(\d{2,3}(?:[.,]\d+)?)\s*%/.exec((r.ten || "") + " " + (it ? it.ten + " " + (it.hamLuong || "") : "")); const v = m ? parseFloat(m[1].replace(",", ".")) : 100; return v > 0 && v <= 100 ? v : 100; };
     const maCell = r => r.ma ? `${E(r.ma)}` : (String(r.ten || "").trim() ? '<span class="rd-new">mới</span>' : "");
-    const nlRows = () => d.nl.map((r, i) => `<tr><td class="c">${i + 1}</td><td data-ma="${i}" class="rd-ma">${maCell(r)}</td><td><input data-nl="${i}" data-k="ten" list="rdNlDl" value="${E(r.ten || "")}" ${ro} placeholder="Mã / tên vật tư trong kho, hoặc tên mới"></td>
+    const nlRows = () => d.nl.map((r, i) => `<tr data-row="${i}"><td class="c rd-num">${ql ? `<span class="rd-drag" draggable="true" data-dr="${i}" title="Kéo để đổi vị trí">⠿</span>` : ""}${i + 1}</td><td data-ma="${i}" class="rd-ma">${maCell(r)}</td><td><input data-nl="${i}" data-k="ten" list="rdNlDl" value="${E(r.ten || "")}" ${ro} placeholder="Mã / tên vật tư trong kho, hoặc tên mới"></td>
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct === "" || r.pct == null ? "" : F3(r.pct))}" ${ro} style="text-align:right;font-weight:700"></td>
       <td><input data-nl="${i}" data-k="tt" value="${E(r.tt || "")}" ${ro} placeholder=""></td>
       <td class="c"><input type="radio" name="ptBu" data-bu="${i}" ${r.bu ? "checked" : ""} ${ro} title="Dung môi nền: tự bù cho đủ 100%"></td>
-      ${ql ? `<td><button type="button" class="btn small" data-rmnl="${i}">✕</button></td>` : ""}</tr>`).join("");
+      ${ql ? `<td class="rd-act"><button type="button" class="rd-mv" data-up="${i}" title="Lên" ${i ? "" : "disabled"}>▲</button><button type="button" class="rd-mv" data-dn="${i}" title="Xuống" ${i < d.nl.length - 1 ? "" : "disabled"}>▼</button><button type="button" class="rd-mv rd-x" data-rmnl="${i}" title="Xoá dòng">✕</button></td>` : ""}</tr>`).join("");
     /* mức yêu cầu: "5-7", "5 – 7", "≥ 90", ">= 90", "≤ 3", "< 3" → kiểm số đo, tô xanh / đỏ */
     const inYc = (yc, v) => { const x = parseFloat(String(v || "").replace(",", ".")); if (!isFinite(x) || !String(v).trim().match(/^[\d.,\s]+$/)) return null; const t = String(yc || "").replace(/,/g, ".");
       let m = /(-?\d+(?:\.\d+)?)\s*[-–÷~]\s*(-?\d+(?:\.\d+)?)/.exec(t); if (m) return x >= +m[1] && x <= +m[2];
@@ -181,7 +181,7 @@
       <div class="grp">2. Công thức sản phẩm</div>
       <datalist id="rdNlDl">${nlList}</datalist>
       <p class="note" style="margin:0 0 6px">Ghi %w/w từng nguyên liệu. Chọn ô <b>Up to</b> ở dòng <b>dung môi nền</b> (nước, dầu, chất mang…) để tự bù cho đủ 100%.</p>
-      <div class="dgx rd-tb"><table><colgroup><col style="width:30px"><col style="width:92px"><col><col style="width:96px"><col style="width:52px"><col style="width:46px">${ql ? '<col style="width:38px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
+      <div class="dgx rd-tb"><table><colgroup><col style="width:${ql ? 46 : 30}px"><col style="width:92px"><col><col style="width:96px"><col style="width:52px"><col style="width:46px">${ql ? '<col style="width:92px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th>Thứ tự</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
       <tfoot><tr><td></td><td></td><td><b>Tổng cộng</b> ${ql ? '<button type="button" class="btn small" id="ptAddNl">+ dòng</button>' : ""}</td><td id="ptSum" style="text-align:right;font-weight:700"></td><td colspan="${ql ? 3 : 2}"></td></tr></tfoot></table></div>
       <div class="grp">3. Quy trình pha chế</div>
       <textarea id="ptQT" rows="5" ${ro} style="width:100%" placeholder="Các bước pha chế, thứ tự cho nguyên liệu, tốc độ khuấy, thời gian, nhiệt độ…">${E(d.quyTrinh || "")}</textarea>
@@ -241,6 +241,14 @@
       w.querySelectorAll("[data-w]").forEach(c => c.onchange = () => { const r = d.kq[+c.dataset.w], set = new Set(wOf(r).split("")); c.checked ? set.add(c.dataset.c) : set.delete(c.dataset.c); r.w = ["a", "b", "c"].filter(x => set.has(x)).join(""); if (!c.checked) r[c.dataset.c] = ""; q("#ptKq").innerHTML = kqRows(); wire(); });
       w.querySelectorAll("[data-rmkq]").forEach(b => b.onclick = () => { d.kq.splice(+b.dataset.rmkq, 1); q("#ptKq").innerHTML = kqRows(); wire(); });
       w.querySelectorAll("[data-rmnl]").forEach(b => b.onclick = () => { d.nl.splice(+b.dataset.rmnl, 1); q("#ptNl").innerHTML = nlRows(); wire(); calc(); });
+      const mv = (a, b) => { if (b < 0 || b >= d.nl.length || a === b) return; const [x] = d.nl.splice(a, 1); d.nl.splice(b, 0, x); q("#ptNl").innerHTML = nlRows(); wire(); calc(); const tr = w.querySelector(`#ptNl tr[data-row="${b}"]`); if (tr) { tr.classList.add("rd-flash"); setTimeout(() => tr.classList.remove("rd-flash"), 700); } };
+      w.querySelectorAll("[data-up]").forEach(b => b.onclick = () => mv(+b.dataset.up, +b.dataset.up - 1));
+      w.querySelectorAll("[data-dn]").forEach(b => b.onclick = () => mv(+b.dataset.dn, +b.dataset.dn + 1));
+      let from = null;
+      w.querySelectorAll("[data-dr]").forEach(h => { h.ondragstart = e => { from = +h.dataset.dr; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", String(from)); e.dataTransfer.setDragImage(h.closest("tr"), 20, 20); } catch (x) {} h.closest("tr").classList.add("rd-dragging"); };
+        h.ondragend = () => { w.querySelectorAll("#ptNl tr").forEach(t => t.classList.remove("rd-dragging", "rd-over")); }; });
+      w.querySelectorAll("#ptNl tr[data-row]").forEach(tr => { tr.ondragover = e => { if (from == null) return; e.preventDefault(); w.querySelectorAll("#ptNl tr").forEach(t => t.classList.remove("rd-over")); tr.classList.add("rd-over"); };
+        tr.ondrop = e => { e.preventDefault(); const to = +tr.dataset.row; const f = from; from = null; mv(f, to); }; });
     };
     wire(); calc();
     /* nút Đạt / Không đạt, Thử lại / Không thử lại: bấm lần nữa để bỏ chọn */
