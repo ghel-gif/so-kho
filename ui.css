@@ -326,3 +326,4 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 #khoThuBan{position:sticky;top:0;z-index:60;background:#fde047;color:#422006;font-weight:700;font-size:13.5px;text-align:center;padding:5px 10px;border-bottom:2px solid #ca8a04}
 .rd-me{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 8px}.rd-me input{width:110px!important}.rd-me select{width:auto!important}.rd-me .note{margin:0}
 .rd-tb td.rd-can{text-align:right;font-variant-numeric:tabular-nums;color:#0f766e;font-weight:600;white-space:nowrap}
+.rd-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 6px}.rd-pick .note{margin:0}
