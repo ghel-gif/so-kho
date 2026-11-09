@@ -1428,12 +1428,12 @@ function getOwnerReport(a, chu, tu, den) {
 }
 
 /* ================= HỒ SƠ LÔ: COA / PHIẾU TEST HOÁ LÝ ================= */
-const HS_LOAI = ['COA', 'Phiếu KTCL hàng nhập khẩu', 'Phiếu kiểm hoá lý', 'Phiếu kết quả hàm lượng', 'Phiếu test hoá lý', 'Khác'];
+const HS_LOAI = ['COA', 'Phiếu KTCL hàng nhập khẩu', 'Phiếu kiểm hoá lý', 'Phiếu kết quả hàm lượng', 'Giấy chứng nhận hợp quy', 'Phiếu test hoá lý', 'Khác'];
 /** Loại hồ sơ theo nhóm: nguyên liệu kỹ thuật (tech) và bán thành phẩm. */
-const HS_THEO_NHOM = { 'Nguyên liệu': ['COA', 'Phiếu KTCL hàng nhập khẩu', 'Khác'], 'Bán thành phẩm': ['Phiếu kiểm hoá lý', 'Phiếu kết quả hàm lượng', 'Khác'] };
+const HS_THEO_NHOM = { 'Nguyên liệu': ['COA', 'Phiếu KTCL hàng nhập khẩu', 'Khác'], 'Bán thành phẩm': ['Phiếu kiểm hoá lý', 'Phiếu kết quả hàm lượng', 'Giấy chứng nhận hợp quy', 'Khác'] };
 const HS_MIME = { pdf: /^application\/pdf$/, img: /^image\/(jpeg|png|webp|heic|heif)$/, word: /^application\/(msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document)$/ };
-const HS_NHAN = { 'COA': ['pdf', 'img'], 'Phiếu KTCL hàng nhập khẩu': ['pdf', 'word', 'img'], 'Phiếu kiểm hoá lý': ['pdf', 'img'], 'Phiếu kết quả hàm lượng': ['pdf', 'img'], 'Phiếu test hoá lý': ['pdf', 'img'], 'Khác': ['pdf', 'img', 'word'] };
-const HS_TEN = { 'COA': 'COA', 'Phiếu KTCL hàng nhập khẩu': 'KTCL-NK', 'Phiếu kiểm hoá lý': 'HoaLy', 'Phiếu kết quả hàm lượng': 'HamLuong', 'Phiếu test hoá lý': 'TestHL', 'Khác': 'HS' };
+const HS_NHAN = { 'COA': ['pdf', 'img'], 'Phiếu KTCL hàng nhập khẩu': ['pdf', 'word', 'img'], 'Phiếu kiểm hoá lý': ['pdf', 'img'], 'Phiếu kết quả hàm lượng': ['pdf', 'img'], 'Giấy chứng nhận hợp quy': ['pdf', 'img'], 'Phiếu test hoá lý': ['pdf', 'img'], 'Khác': ['pdf', 'img', 'word'] };
+const HS_TEN = { 'COA': 'COA', 'Phiếu KTCL hàng nhập khẩu': 'KTCL-NK', 'Phiếu kiểm hoá lý': 'HoaLy', 'Phiếu kết quả hàm lượng': 'HamLuong', 'Giấy chứng nhận hợp quy': 'HopQuy', 'Phiếu test hoá lý': 'TestHL', 'Khác': 'HS' };
 function hoSoCount_() {
   const c = {};
   hsRows_().forEach(r => { const k = str_(r[0]) + '|' + str_(r[1]); if (str_(r[0])) c[k] = (c[k] || 0) + 1; });
