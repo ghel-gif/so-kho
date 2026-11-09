@@ -46,7 +46,7 @@ async function briefToken(db: any) {
 async function buildBriefs(db: any, users: any[]) {
   const sheets: Record<string, any[]> = {};
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await db.from("sheet_rows").select("sheet,idx,data").order("sheet").order("idx").range(from, from + 999);
+    const { data, error } = await db.from("sheet_rows").select("sheet,idx,data").not("sheet", "like", "ao:%").order("sheet").order("idx").range(from, from + 999);
     if (error) throw error;
     (data || []).forEach((r: any) => { (sheets[r.sheet] = sheets[r.sheet] || [])[r.idx] = r.data || []; });
     if (!data || data.length < 1000) break;
@@ -60,7 +60,7 @@ async function buildBriefs(db: any, users: any[]) {
 async function runDaily(db: any, b: any) {
   const tok = await briefToken(db);
   if (!b || b.token !== tok) return Response.json({ error: "Sai mã bản tin." }, { status: 401 });
-  const { data: U } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc");
+  const { data: U } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc,kho_thu").eq("kho_thu", false);
   const { data: C } = await db.from("ban_tin_cfg").select("*");
   const cfg = (t: string, role: string) => (C || []).find((x: any) => x.ten === t) || { email: "", email_on: true, push_on: role !== "Chỉ xem" };
   const users = (U || []).filter((u: any) => { const c = cfg(u.ten, u.vai_tro); return c.push_on || (c.email_on && c.email); });
@@ -82,7 +82,7 @@ export default {
       if (ctx.authMode === "none") return await runDaily(db, await req.json().catch(() => ({})));
       const uid = (ctx.userClaims as any)?.id || (ctx.jwtClaims as any)?.sub;
       if (!uid) return Response.json({ error: "Chưa đăng nhập Sổ Kho." }, { status: 401 });
-      const { data: me } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc").eq("auth_uid", uid).maybeSingle();
+      const { data: me } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc,kho_thu").eq("auth_uid", uid).maybeSingle();
       if (!me) return Response.json({ error: "Không tìm thấy người dùng." }, { status: 403 });
       const b = await req.json().catch(() => ({}));
       const k = await keys(db);
@@ -96,12 +96,13 @@ export default {
         return Response.json({ ok: 1 });
       }
       if (b.a === "unsub") { await db.from("push_sub").delete().eq("endpoint", String(b.endpoint || "")); return Response.json({ ok: 1 }); }
+      if (me.kho_thu && b.a !== "test") return Response.json({ error: "Tài khoản kho thử không dùng chức năng này." }, { status: 403 });
       const QL = me.vai_tro === "Quản lý";
       if (b.a === "bcfg") {
         const { data: C } = await db.from("ban_tin_cfg").select("*");
         const mine = (C || []).find((x: any) => x.ten === me.ten) || { ten: me.ten, email: "", email_on: true, push_on: true };
         if (!QL) return Response.json({ me: mine });
-        const { data: U } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc");
+        const { data: U } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc,kho_thu").eq("kho_thu", false);
         const all = (U || []).map((u: any) => Object.assign({ vai_tro: u.vai_tro, qc: !!u.quyen_qc }, (C || []).find((x: any) => x.ten === u.ten) || { ten: u.ten, email: "", email_on: true, push_on: u.vai_tro !== "Chỉ xem" }));
         return Response.json({ me: mine, all, token: await briefToken(db) });
       }
@@ -125,7 +126,7 @@ export default {
       else if (b.a === "send") {
         if (me.vai_tro === "Chỉ xem") return Response.json({ error: "Tài khoản chỉ xem không gửi thông báo." }, { status: 403 });
         const to = b.to || {};
-        const { data: U } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc");
+        const { data: U } = await db.from("nguoi_dung").select("ten,vai_tro,quyen_qc,kho_thu").eq("kho_thu", false);
         names = (U || []).filter((x: any) => to.all || (to.qc && x.quyen_qc) || (to.roles || []).includes(x.vai_tro) || (to.ten || []).includes(x.ten))
           .map((x: any) => x.ten).filter((t: string) => t !== me.ten);
       } else return Response.json({ error: "Thao tác không hợp lệ." }, { status: 400 });

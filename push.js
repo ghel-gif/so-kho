@@ -39,7 +39,7 @@
     const r = await navigator.serviceWorker.getRegistration("./"); const s = r && await r.pushManager.getSubscription();
     if (s) { try { await call({ a: "unsub", endpoint: s.endpoint }); } catch (e) {} await s.unsubscribe(); }
   }
-  const send = (title, body, to, tag) => call({ a: "send", title, body, to, tag, url: "./" }).catch(e => console.warn("push", e.message));
+  const send = (title, body, to, tag) => (window.SOKHO_WEB && SOKHO_WEB.khoThu && SOKHO_WEB.khoThu()) ? Promise.resolve() : call({ a: "send", title, body, to, tag, url: "./" }).catch(e => console.warn("push", e.message));
   window.SKPush = { ok, state, on, off, test: () => call({ a: "test" }), send };
 
   /* ----- Sự kiện gửi thông báo (gọi sau khi lưu thành công) ----- */

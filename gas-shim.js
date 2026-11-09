@@ -25,8 +25,14 @@
   const store = v => v instanceof Date ? fmt(v, "yyyy-MM-dd HH:mm:ss") : (v === undefined || v === null ? "" : v);
 
   /* ---------- kho dữ liệu trong máy ---------- */
-  const DB = { sheets: {}, dirty: {}, backup: {}, loaded: false };
-  const CACHE_K = "sokho-web-cache-v1";
+  const DB = { sheets: {}, dirty: {}, backup: {}, loaded: false, ao: null };
+  /* KHO THỬ: tài khoản gắn kho_thu chỉ đọc / ghi các trang "ao:<tên>" (số liệu ảo) — máy chủ (RLS) cũng chặn như vậy */
+  const AO = () => !!(ME && ME.kho_thu), PX = "ao:";
+  const phys = n => AO() ? PX + n : n, logi = n => AO() ? (n.startsWith(PX) ? n.slice(PX.length) : null) : (n.startsWith(PX) ? null : n);
+  const vers = data => (data || []).map(v => ({ sheet: logi(v.sheet), ver: v.ver })).filter(v => v.sheet);
+  const CACHE_K0 = "sokho-web-cache-v1";
+  let CACHE_K = CACHE_K0;
+  function modeCheck() { const ao = AO(); if (DB.ao !== null && DB.ao !== ao) { DB.sheets = {}; DB.loaded = false; } DB.ao = ao; CACHE_K = CACHE_K0 + (ao ? "-ao" : ""); }
   function saveCache() {
     try { const o = {}; Object.keys(DB.sheets).forEach(n => o[n] = { ver: DB.sheets[n].ver, rows: DB.sheets[n].rows.map(r => r.map(store)) }); localStorage.setItem(CACHE_K, JSON.stringify(o)); } catch (e) { try { localStorage.removeItem(CACHE_K); } catch (e2) {} }
   }
@@ -37,9 +43,9 @@
     const by = {}; names.forEach(n => by[n] = []);
     let from = 0;
     for (;;) {
-      const { data, error } = await sb.from("sheet_rows").select("sheet,idx,data").in("sheet", names).order("sheet").order("idx").range(from, from + 999);
+      const { data, error } = await sb.from("sheet_rows").select("sheet,idx,data").in("sheet", names.map(phys)).order("sheet").order("idx").range(from, from + 999);
       if (error) throw error;
-      data.forEach(r => { const a = by[r.sheet]; a[r.idx] = (r.data || []).map(revive); });
+      data.forEach(r => { const a = by[logi(r.sheet)]; if (a) a[r.idx] = (r.data || []).map(revive); });
       if (data.length < 1000) break; from += 1000;
     }
     Object.keys(by).forEach(n => { const a = by[n]; for (let i = 0; i < a.length; i++) if (!a[i]) a[i] = []; });
@@ -49,9 +55,11 @@
   async function sync() { // tải các trang có thay đổi kể từ lần trước
     if (syncP) return syncP;
     syncP = (async () => {
+      modeCheck();
       if (!DB.loaded) { loadCache(); DB.loaded = true; }
-      const { data, error } = await sb.from("sheet_ver").select("sheet,ver");
+      const r0 = await sb.from("sheet_ver").select("sheet,ver"), error = r0.error;
       if (error) throw error;
+      const data = vers(r0.data);
       const need = data.filter(v => !DB.sheets[v.sheet] || DB.sheets[v.sheet].ver !== +v.ver).map(v => v.sheet);
       if (need.length) {
         const by = await fetchRows(need);
@@ -215,10 +223,10 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   async function flush() {
     const names = Object.keys(DB.dirty); if (!names.length) return;
     const p = names.map(n => { const d = DB.dirty[n], R = DB.sheets[n].rows; const idx = d.replace ? R.map((_, i) => i) : [...d.idx];
-      return { sheet: n, base_ver: DB.sheets[n].ver, replace: d.replace, rows: idx.map(i => [i, (R[i] || []).map(store)]) }; });
+      return { sheet: phys(n), base_ver: DB.sheets[n].ver, replace: d.replace, rows: idx.map(i => [i, (R[i] || []).map(store)]) }; });
     const { data, error } = await sb.rpc("ghi_nhieu", { p });
     if (error) throw new Error(error.message);
-    Object.keys(data || {}).forEach(n => { if (DB.sheets[n]) DB.sheets[n].ver = +data[n]; });
+    Object.keys(data || {}).forEach(k => { const n = logi(k); if (n && DB.sheets[n]) DB.sheets[n].ver = +data[k]; });
     DB.dirty = {}; DB.backup = {}; saveCache();
   }
   async function run(fn, args) {
@@ -231,7 +239,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
     for (let lan = 0; lan < 2; lan++) {
       await sync();
-      if (!DB.sheets.VatTu || !DB.sheets.Phieu) { if (ME && ME.vai_tro === "Quản lý") napDuLieu(); throw new Error("Đã đăng nhập đúng, nhưng Supabase CHƯA CÓ DỮ LIỆU Sổ Kho." + (ME && ME.vai_tro === "Quản lý" ? " Bấm nút “Chọn file dữ liệu” ở giữa màn hình." : " Nhờ Quản lý nạp dữ liệu.")); }
+      if (!DB.sheets.VatTu || !DB.sheets.Phieu) { if (AO()) throw new Error("Kho thử chưa có số liệu ảo. Nhờ anh Ghel chạy file nạp số liệu kho thử trong Supabase."); if (ME && ME.vai_tro === "Quản lý") napDuLieu(); throw new Error("Đã đăng nhập đúng, nhưng Supabase CHƯA CÓ DỮ LIỆU Sổ Kho." + (ME && ME.vai_tro === "Quản lý" ? " Bấm nút “Chọn file dữ liệu” ở giữa màn hình." : " Nhờ Quản lý nạp dữ liệu.")); }
       SRV.__reset(); DB.dirty = {}; DB.backup = {};
       let res;
       try {
@@ -299,6 +307,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   /* ---------- ảnh hàng / marking khi nhập kho: Supabase Storage (bucket anh-nhap) ---------- */
   const BUCKET = "anh-nhap";
   async function uploadAnh(a, id, name, mime, b64) {
+    if (AO()) throw new Error("Kho thử: không tải ảnh lên.");
     if (!/^image\/(jpeg|png|webp)$/.test(String(mime || ""))) throw new Error("Chỉ nhận ảnh (JPG, PNG).");
     const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     if (bytes.length > 8 * 1024 * 1024) throw new Error("Ảnh lớn quá 8 MB.");
@@ -334,6 +343,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
      mỗi đêm Apps Script chép thêm 1 bản sang thư mục hồ sơ lô trên Drive ---------- */
   const HS_BUCKET = "ho-so";
   async function uploadHoSoWeb(a, ma, lo, loai, name, mime, b64) {
+    if (AO()) throw new Error("Kho thử: không tải hồ sơ lên.");
     const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, bytes.length]);
     const ext = (String(name || "").match(/\.[A-Za-z0-9]{2,5}$/) || [mime === "application/pdf" ? ".pdf" : /word/.test(mime) ? ".docx" : ".jpg"])[0];
@@ -393,9 +403,8 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   } };
   async function peek() { // chỉ hỏi số phiên bản từng trang – rất nhẹ; true nếu máy khác vừa đổi dữ liệu
     if (!DB.loaded) return false;
-    const { data, error } = await sb.from("sheet_ver").select("sheet,ver");
-    if (error) throw error;
-    return data.some(v => !DB.sheets[v.sheet] || DB.sheets[v.sheet].ver !== +v.ver);
+    const r0 = await sb.from("sheet_ver").select("sheet,ver"); if (r0.error) throw r0.error;
+    return vers(r0.data).some(v => !DB.sheets[v.sheet] || DB.sheets[v.sheet].ver !== +v.ver);
   }
-  window.SOKHO_WEB = { sync, peek, signOut: async () => { ME = null; await sb.auth.signOut(); }, db: DB };
+  window.SOKHO_WEB = { sync, peek, signOut: async () => { ME = null; DB.sheets = {}; DB.loaded = false; DB.ao = null; await sb.auth.signOut(); }, db: DB, khoThu: () => AO() };
 })();
