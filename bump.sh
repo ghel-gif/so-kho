@@ -4,7 +4,8 @@ set -e; cd "$(dirname "$0")"
 cur=$(grep -o 'const APP_VER="[0-9.]*"' index.html | grep -o '[0-9.]*[0-9]')
 IFS=. read -r a b c <<<"$cur"
 if [ "$1" = minor ]; then b=$((b+1)); c=0; shift; elif [ "$1" = patch ]; then c=$((c+1)); shift; else c=$((c+1)); fi
-if [ "$c" -gt 9 ]; then b=$((b+1)); c=0; fi  # số cuối chỉ 1 chữ số: 3.7.9 -> 3.8.0
+if [ "$c" -gt 9 ]; then b=$((b+1)); c=0; fi  # mỗi số chỉ 1 chữ số: 3.7.9 -> 3.8.0
+if [ "$b" -gt 9 ]; then a=$((a+1)); b=0; fi  # 3.9.9 -> 4.0.0
 new="$a.$b.$c"; d=$(TZ=Asia/Ho_Chi_Minh date +%d/%m/%Y)
 python3 - "$cur" "$new" "$d" "$1" <<'P'
 import sys,json,re
