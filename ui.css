@@ -324,3 +324,5 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .rd-tb .rd-hl{display:block;font-size:12px;color:#7c3aed;line-height:1.2;margin:0 0 2px 2px}.rd-tb .rd-hl:empty{display:none}
 .rd-tb .rd-dvhl{height:24px!important;min-height:0!important;padding:0 4px!important;font-size:12px!important;width:auto!important;display:inline-block;margin:0 2px;vertical-align:middle}
 #khoThuBan{position:sticky;top:0;z-index:60;background:#fde047;color:#422006;font-weight:700;font-size:13.5px;text-align:center;padding:5px 10px;border-bottom:2px solid #ca8a04}
+.rd-me{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 8px}.rd-me input{width:110px!important}.rd-me select{width:auto!important}.rd-me .note{margin:0}
+.rd-tb td.rd-can{text-align:right;font-variant-numeric:tabular-nums;color:#0f766e;font-weight:600;white-space:nowrap}
