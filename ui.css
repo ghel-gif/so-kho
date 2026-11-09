@@ -123,8 +123,8 @@ button.back:hover::first-letter{color:inherit}
 /* ---------- Ô cần nhập / ô tự điền ---------- */
 :root{--need-bg:#fff8e1;--need-line:#f0a500;--fill-bg:var(--surface,#fff);--auto-bg:#eef1f4;--auto-ink:#3d4a57}
 :root[data-theme=dark]{--need-bg:#3a2f12;--need-line:#e0a526;--auto-bg:#1c2630;--auto-ink:#b9c6d3}
-html body input.need-in,html body select.need-in{background:var(--need-bg)!important;border-color:var(--need-line)!important;box-shadow:inset 4px 0 0 var(--need-line)!important}
-input.need-in::placeholder{color:#8a6d1d;opacity:.9}
+html body input.need-in,html body select.need-in,html body textarea.need-in{background:var(--need-bg)!important;border-color:var(--need-line)!important;box-shadow:inset 4px 0 0 var(--need-line)!important}
+input.need-in::placeholder,textarea.need-in::placeholder{color:#8a6d1d;opacity:.9}
 :root[data-theme=dark] input.need-in::placeholder{color:#e8c56a}
 input[readonly]:not([type=checkbox]):not([type=radio]),select:disabled,input:disabled:not([type=checkbox]):not([type=radio]){background:var(--auto-bg)!important;color:var(--auto-ink)!important;border-style:dashed!important;box-shadow:none!important}
 .need-legend{display:inline-flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:2px 0 8px}
