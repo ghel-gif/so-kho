@@ -305,6 +305,7 @@
     if (q("#pt0")) q("#pt0").onchange = () => { d.t0 = q("#pt0").checked; reKq(); };
     if (q("#ptBD")) q("#ptBD").addEventListener("change", () => { d.ngayBD = q("#ptBD").value; q("#ptKqH").innerHTML = kqHead(); });
     if (q("#ptDvHL")) q("#ptDvHL").onchange = () => { d.dvHL = q("#ptDvHL").value; calc(); };
+    if (q("#ptMeSL")) { q("#ptMeSL").addEventListener("input", calc); q("#ptMeDV").addEventListener("change", calc); }
     if (q("#ptDang")) q("#ptDang").onchange = () => { d.dang = q("#ptDang").value; const blank = !d.kq.some(r => r.a || r.b || r.c); if (blank) { d.kq = ctOf(d.dang); q("#ptKq").innerHTML = kqRows(); wire(); } w.querySelectorAll(".ptU").forEach(x => x.textContent = hcU()); q("#ptTTRow").hidden = !liq(); w.querySelectorAll(".ptDg2").forEach(x => x.textContent = d.dang || "…"); w.querySelectorAll('[data-k="hc"]').forEach(x => x.placeholder = hcU()); calc(); };
     let maTay = !!(p && d.maCT); const autoMa = () => { if (!ql || maTay || !q("#ptMa")) return; q("#ptMa").value = genMa(q("#ptSp").value, q("#ptDang").value, p && p.id); };
     if (q("#ptMa")) q("#ptMa").addEventListener("input", () => { maTay = !!q("#ptMa").value.trim(); });
