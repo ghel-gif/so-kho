@@ -223,15 +223,15 @@
       ${ghiKQ ? '<button type="button" class="btn small" id="ptAddKq" style="margin-top:6px">+ chỉ tiêu</button>' : ""}
       <div class="two" style="margin-top:8px"><label>Kết quả ban đầu (tóm tắt — ghi vào Sổ BM.01)<textarea id="ptKqbd" rows="2" ${ghiKQ ? "" : "disabled"}>${E(d.kqbd || "")}</textarea></label><label>Đề xuất của người thực hiện<textarea id="ptDx" rows="2" ${ghiKQ ? "" : "disabled"}>${E(d.deXuat || "")}</textarea></label></div>
       <label style="max-width:300px">Ngày kết thúc (người thực hiện ghi)<input id="ptKT" type="date" value="${E(d.ngayKT || "")}" ${ghiKQ ? "" : "disabled"}></label>
-      <div class="grp">5. Đánh giá ${ql ? "" : '<small class="note">(TP. LAB/RD)</small>'}</div>
+      <div class="grp">5. Đánh giá <small class="note">(người thực hiện đánh giá, TP. LAB/RD duyệt)</small></div>
       <div class="rd-dg">
-        ${d.tt === "Đã báo KQ" && ql ? `<div class="rd-wait">📨 ${E(d.nguoiTH || "")} đã báo kết quả${d.baoLuc ? " lúc " + E(d.baoLuc) : ""} — xem phần 4 rồi đánh giá.</div>` : ""}
+        ${d.tt === "Đã báo KQ" && ql ? `<div class="rd-wait">📨 ${E(d.nguoiTH || "")} đã báo kết quả${d.baoLuc ? " lúc " + E(d.baoLuc) : ""} — xem phần 4, 5 rồi bấm Lưu để duyệt.</div>` : ""}
         <div class="rd-dgr"><span class="rd-dgl">Kết luận</span><div class="rd-opts">
-          ${[["Đạt", "✓ Đạt", "ok"], ["Không đạt", "✗ Không đạt", "bad"]].map(([v, t, c]) => `<label class="rd-opt ${c}"><input type="radio" name="ptDg" value="${v}" ${(d.danhGia || (d.hong ? "Không đạt" : "")) === v ? "checked" : ""} ${ro}><span>${t}</span></label>`).join("")}</div></div>
+          ${[["Đạt", "✓ Đạt", "ok"], ["Không đạt", "✗ Không đạt", "bad"]].map(([v, t, c]) => `<label class="rd-opt ${c}"><input type="radio" name="ptDg" value="${v}" ${(d.danhGia || (d.hong ? "Không đạt" : "")) === v ? "checked" : ""} ${ghiKQ ? "" : "disabled"}><span>${t}</span></label>`).join("")}</div></div>
         <div class="rd-dgr"><span class="rd-dgl">Đề xuất xử lý</span><div class="rd-opts">
-          ${[["Thử nghiệm lại", "↻ Thử nghiệm lại", "re"], ["Không thử lại", "■ Không thử lại", "no"]].map(([v, t, c]) => `<label class="rd-opt ${c}"><input type="radio" name="ptXl" value="${v}" ${(d.xuLy || (d.hong ? "Thử nghiệm lại" : "")) === v ? "checked" : ""} ${ro}><span>${t}</span></label>`).join("")}</div></div>
-        <div class="rd-dgr"><span class="rd-dgl">Ghi chú</span><textarea id="ptGc" rows="2" ${ro} style="flex:1 1 300px;min-width:240px" placeholder="Nhận xét, hướng điều chỉnh công thức…">${E(d.ghiChu || "")}</textarea></div>
-        ${!ql && !d.danhGia ? '<p class="note" style="margin:6px 0 0">TP. LAB/RD sẽ đánh giá sau khi bạn báo kết quả.</p>' : ""}
+          ${[["Thử nghiệm lại", "↻ Thử nghiệm lại", "re"], ["Không thử lại", "■ Không thử lại", "no"]].map(([v, t, c]) => `<label class="rd-opt ${c}"><input type="radio" name="ptXl" value="${v}" ${(d.xuLy || (d.hong ? "Thử nghiệm lại" : "")) === v ? "checked" : ""} ${ghiKQ ? "" : "disabled"}><span>${t}</span></label>`).join("")}</div></div>
+        <div class="rd-dgr"><span class="rd-dgl">Ghi chú</span><textarea id="ptGc" rows="2" ${ghiKQ ? "" : "disabled"} style="flex:1 1 300px;min-width:240px" placeholder="Nhận xét, hướng điều chỉnh công thức…">${E(d.ghiChu || "")}</textarea></div>
+        ${!ql && !d.danhGia ? '<p class="note" style="margin:6px 0 0">Bạn tự đánh giá kết luận và đề xuất xử lý, rồi bấm Báo kết quả — TP. LAB/RD sẽ xem và duyệt.</p>' : ""}
       </div>
       <div class="actions" style="flex-wrap:wrap">
         ${ql ? `<button class="btn primary" type="button" id="ptSave">${p ? "Lưu" : "Lưu & giao việc"}</button>` : ""}
@@ -321,7 +321,8 @@
     q("[data-x]").onclick = () => w.remove();
     const collect = () => {
       if (ql) Object.assign(d, { loaiTN: q("#ptLoai").value, sp: q("#ptSp").value.trim(), maCT: q("#ptMa").value.trim(), hl: q("#ptHl").value.trim(), yc: q("#ptYc").value, ngayLap: q("#ptLap").value, nguoiTH: q("#ptNg").value, t54: q("#pt54").checked, t0: q("#pt0").checked, tyTrong: q("#ptTT").value.trim(), quyTrinh: q("#ptQT").value, dang: q("#ptDang").value,
-        danhGia: (w.querySelector('[name=ptDg]:checked') || {}).value || "", xuLy: (w.querySelector('[name=ptXl]:checked') || {}).value || "", ghiChu: q("#ptGc").value.trim() });
+      });
+      if (ghiKQ) Object.assign(d, { danhGia: (w.querySelector('[name=ptDg]:checked') || {}).value || "", xuLy: (w.querySelector('[name=ptXl]:checked') || {}).value || "", ghiChu: q("#ptGc").value.trim() });
       if (ghiKQ) Object.assign(d, { meSL: q("#ptMeSL").value.trim(), meDV: q("#ptMeDV").value, ngayBD: q("#ptBD").value, kqbd: q("#ptKqbd").value.trim(), deXuat: q("#ptDx").value.trim(), ngayKT: q("#ptKT").value });
       d.nl = d.nl.filter(r => String(r.ten || "").trim() || String(r.pct || "").trim()); d.kq = d.kq.filter(r => String(r.ct || "").trim() || r.yc || r.a || r.b || r.c);
     };

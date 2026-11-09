@@ -579,7 +579,7 @@ function webRDSave(a, o) {
         if (!cu) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập công thức thử nghiệm.');
         if (cu.nguoiTH && cu.nguoiTH !== me.ten) throw new Error('Phiếu này giao cho ' + cu.nguoiTH + '.');
         if (cu.tt === 'Đã duyệt') throw new Error('Phiếu đã được duyệt, không sửa kết quả được nữa.');
-        const keep = Object.assign({}, cu); ['kq', 'kqbd', 'deXuat', 'ngayBD', 'ngayKT', 'nvGhi', 'dat54', 'dat0', 'hong', 'meSL', 'meDV'].forEach(k => { if (k in d) keep[k] = d[k]; });
+        const keep = Object.assign({}, cu); ['kq', 'kqbd', 'deXuat', 'ngayBD', 'ngayKT', 'nvGhi', 'dat54', 'dat0', 'hong', 'meSL', 'meDV', 'danhGia', 'xuLy', 'ghiChu'].forEach(k => { if (k in d) keep[k] = d[k]; });
         keep.tt = d.tt === 'Đã báo KQ' ? 'Đã báo KQ' : (cu.tt === 'Giao' ? 'Đang thử' : cu.tt);
         if (keep.tt === 'Đã báo KQ') keep.baoLuc = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm');
         d = keep;
