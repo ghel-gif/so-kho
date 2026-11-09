@@ -588,6 +588,7 @@ function webRDSave(a, o) {
         if (!d.so) { const ym = Utilities.formatDate(new Date(), tz_(), 'yyMM'), n = R.filter(r => str_(r[1]) === 'PT' && JSON.parse(str_(r[3]) || '{}').so && String(JSON.parse(str_(r[3]) || '{}').so).indexOf('PT-' + ym) === 0).length + 1; d.so = 'PT-' + ym + '-' + ('0' + n).slice(-2); }
         if (!d.tt) d.tt = d.nguoiTH ? 'Giao' : 'Đang thử';
         if (d.danhGia && ['Đạt', 'Không đạt'].indexOf(d.danhGia) >= 0) { d.tt = 'Đã duyệt'; d.duyetBoi = me.ten; d.duyetLuc = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm'); }
+        else if (d.tt === 'Đã duyệt') { d.tt = d.baoLuc ? 'Đã báo KQ' : 'Đang thử'; d.duyetBoi = ''; d.duyetLuc = ''; } /* bỏ chọn kết luận = mở lại phiếu */
       }
     }
     const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
