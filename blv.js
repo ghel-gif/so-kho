@@ -70,7 +70,7 @@
   async function qaCard(box) {
     const el = box.querySelector("#blvQa"); if (!el || !window.qaTasks) return;
     const T = await qaTasks(); if (!T.length) { el.innerHTML = ""; return; }
-    el.innerHTML = `<div class="blv-card" style="--c:#0284c7"><div class="blv-h"><span class="blv-i">🔎</span><b>Phòng QA/QC — vật tư nhập, sự không phù hợp</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r" data-qa="${i}" style="border-left:3px solid ${x.c}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
+    el.innerHTML = `<div class="blv-card" style="--c:#0284c7"><div class="blv-h"><span class="blv-i">🔎</span><b>Phòng QC — kiểm vật tư nhập kho, sự không phù hợp</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r" data-qa="${i}" style="border-left:3px solid ${x.c}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
     el.querySelectorAll("[data-qa]").forEach(b => b.onclick = () => qaOpen(T[+b.dataset.qa].id));
     const sm = box.querySelector(".blv-sum"); if (sm) { const n = (+sm.dataset.n || 0) + T.length; sm.dataset.n = n; sm.className = "blv-sum bad"; sm.innerHTML = `<b>${n}</b> việc cần chú ý`; }
     const ok = [...box.querySelectorAll(".blv-card")].find(c => /Phần việc của bạn đang ổn/.test(c.textContent)); if (ok) ok.remove();
