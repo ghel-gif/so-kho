@@ -93,26 +93,30 @@
         <div class="list">${L.length ? L.map(r => { const d = r.d, t = ttOf(r);
           return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
           <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
-          : `<div class="empty"><b>Chưa có lô vật tư nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi vật tư về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>`;
+          : `<div class="empty"><b>Chưa có lô vật tư nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi vật tư về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>
+        ${delBox(R.filter(x => x.xoa && SO[x.loai]).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap))), "data-id", x => `<b>${SO[x.loai].bm.slice(0, 5)}</b> · ${E(x.d.ten || "")} · về ${D(x.d.ngayNhap)}`)}`;
     } else if (view === "ngay") {
       const P = live(R).filter(x => x.loai === "KH" && x.d.duKien === ngay5), A = vt().filter(r => r.d.ngayNhap === ngay5).sort((a, c) => String(a.d.gioNhap || "").localeCompare(String(c.d.gioNhap || "")));
       h += `<div class="tools"><input type="date" id="qaN5" value="${E(ngay5)}" style="width:auto">${QC() ? '<button class="btn primary" type="button" id="qaKH">+ Thêm kế hoạch giao</button>' : ""}<button class="btn" type="button" id="qaPr5">🖨 In BM.05 ngày ${D(ngay5)}</button></div>
         <h3 style="margin:8px 0 4px">Kế hoạch giao (thu mua báo)</h3>
         <div class="dgx"><table><thead><tr><th>Dự kiến giao</th><th>NCC</th><th>Tên hàng</th><th>Đơn vị</th><th>Số lượng</th><th>Ghi chú</th></tr></thead><tbody>${P.length ? P.map(p => `<tr class="click" data-kh="${E(p.id)}" style="cursor:pointer"><td>${D(p.d.duKien)}${p.d.gio ? " " + E(p.d.gio) : ""}</td><td>${E(p.d.ncc)}</td><td>${E(p.d.ten)}</td><td>${E(p.d.dvt)}</td><td style="text-align:right">${N(p.d.sl)}</td><td>${E(p.d.ghiChu)}</td></tr>`).join("") : '<tr><td colspan="6" class="note">Chưa có kế hoạch giao cho ngày này.</td></tr>'}</tbody></table></div>
         <h3 style="margin:12px 0 4px">Thực tế giao (tự lấy từ các sổ BM.01–04)</h3>
-        <div class="dgx"><table><thead><tr><th>Thời gian giao</th><th>NCC</th><th>Loại vật tư</th><th>Tên vật tư</th><th>Quy cách</th><th>NPP</th><th>Số lượng</th><th>Tình trạng</th><th>Đánh giá</th><th>Ghi chú</th><th>Kết quả</th></tr></thead><tbody>${A.length ? A.map(r => `<tr class="click" data-id="${E(r.id)}" style="cursor:pointer"><td>${D(r.d.ngayNhap)}${r.d.gioNhap ? " " + E(r.d.gioNhap) : ""}</td><td>${E(r.d.ncc)}</td><td>${E(r.d.loaiVT)}</td><td>${E(r.d.ten)}</td><td>${E(r.d.quyCach)}</td><td>${E(r.d.npp)}</td><td style="text-align:right">${N(r.d.sl)}</td><td>${E(r.d.tinhTrangKho || "")}</td><td>${E(r.d.ketLuan || "Chờ kiểm")}</td><td>${E(r.d.ghiChu)}</td><td>${E(r.d.xnQL || r.d.kqXuLy || "")}</td></tr>`).join("") : '<tr><td colspan="11" class="note">Chưa có vật tư về trong ngày này.</td></tr>'}</tbody></table></div>`;
+        <div class="dgx"><table><thead><tr><th>Thời gian giao</th><th>NCC</th><th>Loại vật tư</th><th>Tên vật tư</th><th>Quy cách</th><th>NPP</th><th>Số lượng</th><th>Tình trạng</th><th>Đánh giá</th><th>Ghi chú</th><th>Kết quả</th></tr></thead><tbody>${A.length ? A.map(r => `<tr class="click" data-id="${E(r.id)}" style="cursor:pointer"><td>${D(r.d.ngayNhap)}${r.d.gioNhap ? " " + E(r.d.gioNhap) : ""}</td><td>${E(r.d.ncc)}</td><td>${E(r.d.loaiVT)}</td><td>${E(r.d.ten)}</td><td>${E(r.d.quyCach)}</td><td>${E(r.d.npp)}</td><td style="text-align:right">${N(r.d.sl)}</td><td>${E(r.d.tinhTrangKho || "")}</td><td>${E(r.d.ketLuan || "Chờ kiểm")}</td><td>${E(r.d.ghiChu)}</td><td>${E(r.d.xnQL || r.d.kqXuLy || "")}</td></tr>`).join("") : '<tr><td colspan="11" class="note">Chưa có vật tư về trong ngày này.</td></tr>'}</tbody></table></div>
+        ${delBox(R.filter(x => x.xoa && x.loai === "KH" && x.d.duKien === ngay5), "data-kh", x => `Kế hoạch giao · ${E(x.d.ten || "")} · ${E(x.d.ncc || "")}`)}`;
     } else {
       const L = live(R).filter(x => x.loai === "KPH" && (!thangK || String(x.d.ngay).slice(0, 7) === thangK || !x.d.dong)).sort((a, c) => String(c.d.ngay).localeCompare(String(a.d.ngay)) || String(c.d.so).localeCompare(String(a.d.so)));
       h += `<div class="tools">${QC() ? '<button class="btn primary" type="button" id="qaNewK">+ Ghi sự không phù hợp</button>' : ""}<input type="month" id="qaKM" value="${E(thangK)}" style="width:auto"><button class="btn" type="button" id="qaPrK">🖨 In sổ BM.01-QC-QT.05${thangK ? " tháng " + thangK.slice(5) + "/" + thangK.slice(0, 4) : ""}</button></div>
         <p class="note" style="margin:0 0 8px">Sự KPH chưa xử lý xong luôn hiện, không theo tháng. Lô vật tư không đạt: mở lô ở sổ kiểm tra rồi bấm “Lập phiếu KPH”.</p>
         <div class="list">${L.length ? L.map(k => `<div class="row click" data-k="${E(k.id)}"><div class="name">${E(k.d.so)} · ${E(k.d.suKPH)} <span class="st" style="background:${k.d.dong ? "#2e7d32" : "#c62828"};color:#fff;border-color:${k.d.dong ? "#2e7d32" : "#c62828"}">${k.d.dong ? "Đã xử lý" : "Đang xử lý"}</span>${k.d.mucDo ? ` <span class="st">${E(k.d.mucDo)}</span>` : ""}</div><div class="kg">${N(k.d.slKPH)}<small>KPH</small></div>
-          <div class="meta">${D(k.d.ngay)} · ${E(k.d.sanPham || "")}${k.d.bpPhatHien ? " · phát hiện: " + E(k.d.bpPhatHien) : ""}${k.d.khacPhuc ? " · khắc phục: " + E(String(k.d.khacPhuc).slice(0, 80)) : ""}</div></div>`).join("") : '<div class="empty"><b>Chưa có sự không phù hợp nào</b></div>'}</div>`;
+          <div class="meta">${D(k.d.ngay)} · ${E(k.d.sanPham || "")}${k.d.bpPhatHien ? " · phát hiện: " + E(k.d.bpPhatHien) : ""}${k.d.khacPhuc ? " · khắc phục: " + E(String(k.d.khacPhuc).slice(0, 80)) : ""}</div></div>`).join("") : '<div class="empty"><b>Chưa có sự không phù hợp nào</b></div>'}</div>
+        ${delBox(R.filter(x => x.xoa && x.loai === "KPH").sort((a, c) => String(c.d.ngay).localeCompare(String(a.d.ngay))), "data-k", x => `${E(x.d.so || "")} · ${E(x.d.suKPH || "")} · ${D(x.d.ngay)}`)}`;
     }
     b.innerHTML = h;
     b.querySelectorAll(".seg [data-v]").forEach(x => x.onclick = () => { view = x.dataset.v; renderQA(); });
     b.querySelectorAll("[data-id]").forEach(x => x.onclick = () => { const r = rec(x.dataset.id); if (r) vtDlg(r); });
     b.querySelectorAll("[data-kh]").forEach(x => x.onclick = () => { const r = rec(x.dataset.kh); if (r) khDlg(r); });
     b.querySelectorAll("[data-k]").forEach(x => x.onclick = () => { const r = rec(x.dataset.k); if (r) kphDlg(r); });
+    b.querySelectorAll("[data-res]").forEach(x => x.onclick = async ev => { ev.stopPropagation(); x.disabled = true; try { await api("webQADel", S.auth, x.dataset.res, true); toast("Đã khôi phục phiếu"); renderQA(); } catch (e) { x.disabled = false; toast(e.message); } });
     const on = (id, ev, f) => { const el = document.getElementById(id); if (el) el[ev] = f; };
     on("qaNew", "onclick", () => vtDlg(null)); on("qaKH", "onclick", () => khDlg(null)); on("qaNewK", "onclick", () => kphDlg(null));
     on("qaFSo", "onchange", e => { fSo = e.target.value; renderQA(); }); on("qaFTT", "onchange", e => { fTT = e.target.value; renderQA(); }); on("qaFM", "onchange", e => { fThang = e.target.value; renderQA(); });
@@ -132,6 +136,15 @@
   const sel = (k, v, L, blank) => `<select data-k="${k}">${blank !== false ? `<option value="">${blank || "—"}</option>` : ""}${L.map(x => `<option${x === v ? " selected" : ""}>${E(x)}</option>`).join("")}${v && !L.includes(v) ? `<option selected>${E(v)}</option>` : ""}</select>`;
   const userSel = (k, v) => sel(k, v, USERS.length ? USERS : [S.me.ten], "— chọn —");
   async function save(o, msg) { const r = await api("webQASave", S.auth, o); toast(msg || "Đã lưu"); return r; }
+  /* thanh nút chung của phiếu QA/QC (giống BM.06 / BM.08): Lưu = phiếu mới · Cập nhật = phiếu đã lưu · Xoá · Khôi phục (phiếu đã xoá) */
+  const canRes = r => !!r && (TP() || r.nguoi === S.me.ten);
+  const acts = (r, canW, canDel) => r && r.xoa
+    ? `<div class="actions">${canRes(r) ? '<button class="btn ok qa-res" type="button" data-a="res">↺ Khôi phục</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button></div>`
+    : `<div class="actions">${r && canDel ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button>${canW ? `<button class="btn${r ? "" : " primary"}" type="button" data-a="sv"${r ? ' disabled title="Phiếu đã lưu — sửa xong bấm Cập nhật"' : ""}>Lưu</button><button class="btn${r ? " primary" : ""}" type="button" data-a="up"${r ? "" : ' disabled title="Lưu phiếu mới trước"'}>Cập nhật</button>` : ""}</div>`;
+  const delNote = r => r && r.xoa ? `<p class="note qa-delnote">🗑 Phiếu này đã bị xoá${r.sua ? " (" + E(r.sua) + ")" : ""}. ${canRes(r) ? "Bấm <b>Khôi phục</b> để đưa lại vào sổ." : "Chỉ người lập hoặc TP. QA/QC khôi phục được."}</p>` : "";
+  /* phiếu đã xoá của một mục: cuối danh sách, bấm để xem / khôi phục (giống “Phiếu đã xoá” ở biểu mẫu đóng gói) */
+  const delBox = (L, attr, line) => { const X = L.filter(canRes); if (!X.length) return "";
+    return `<details class="qa-del"><summary>🗑 Phiếu đã xoá (${X.length}) — bấm để xem / khôi phục</summary><div class="list">${X.map(x => `<div class="row click" ${attr}="${E(x.id)}"><div class="name">${line(x)} <span class="st" style="background:#eceff1;color:#455a64;border-color:#b0bec5">Đã xoá${x.sua ? " · " + E(x.sua) : ""}</span></div><div class="kg"><button type="button" class="btn small ok" data-res="${E(x.id)}">↺ Khôi phục</button></div></div>`).join("")}</div></details>`; };
   const qcCodes = () => (S.dg && S.dg.qc) || [];
   function codesFor(so) {
     const Q = qcCodes(), out = [];
@@ -144,14 +157,14 @@
 
   /* ---------------- sổ kiểm tra vật tư (BM.01–04) ---------------- */
   function vtDlg(r, so0) {
-    const isNew = !r, me = S.me.ten, d = r ? JSON.parse(JSON.stringify(r.d)) : { ngayNhap: today(), tinhTrangKho: "Bình thường", ngayKT: today(), nguoiKT: me, dvt: "cái" };
+    let isNew = !r; const me = S.me.ten, d = r ? JSON.parse(JSON.stringify(r.d)) : { ngayNhap: today(), tinhTrangKho: "Bình thường", ngayKT: today(), nguoiKT: me, dvt: "cái" };
     let so = r ? r.loai : (so0 || fSo || "NHAN");
-    const tp = TP(), locked = !!(r && r.d.xnQL && !tp), canEd = QC() && !locked;
+    const tp = TP(); let locked, canEd; const st = () => { locked = !!(r && r.d.xnQL && !tp); canEd = QC() && !locked && !(r && r.xoa); }; st();
     if (!d.nguoiKT) d.nguoiKT = me;
     const draw = () => {
       const S0 = SO[so], A = vt(), C = codesFor(so), ro = canEd ? "" : "disabled";
       const g = goiY(so, d);
-      return `${isNew ? `<div class="seg subseg" style="margin-bottom:8px">${ORDER.map(k => `<button type="button" data-so="${k}" aria-pressed="${k === so}">${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</button>`).join("")}</div>` : `<p class="note" style="margin:0 0 6px"><b>${S0.bm}</b> · ${S0.tieuDe.toLowerCase()} · ghi bởi ${E(r.nguoi)}${r.sua && r.sua !== r.nguoi ? " · sửa cuối " + E(r.sua) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</p>`}
+      return `${delNote(r)}${isNew ? `<div class="seg subseg" style="margin-bottom:8px">${ORDER.map(k => `<button type="button" data-so="${k}" aria-pressed="${k === so}">${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</button>`).join("")}</div>` : `<p class="note" style="margin:0 0 6px"><b>${S0.bm}</b> · ${S0.tieuDe.toLowerCase()} · ghi bởi ${E(r.nguoi)}${r.sua && r.sua !== r.nguoi ? " · sửa cuối " + E(r.sua) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</p>`}
         ${locked ? `<p class="note" style="background:#e8f5e9;padding:6px 8px;border-radius:6px">✓ TP. QA/QC đã xác nhận (${E(d.xnQLNguoi || "")}${d.xnQLLuc ? " · " + E(d.xnQLLuc) : ""}) — chỉ xem.</p>` : ""}
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}${fld("Giờ giao", inp("gioNhap", d.gioNhap, 'type="time" data-opt'))}
@@ -177,12 +190,12 @@
             <small class="note" id="qaGY">${g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý."}</small></div>
           ${fld(so === "NHAN" ? "Phiếu yêu cầu xử lý SPKPH" : so === "TUI" ? "Yêu cầu xử lý SP KPH" : "Phiếu yêu cầu xử lý SPKPH", inp("ycXuLy", d.ycXuLy, 'placeholder="số phiếu KPH (nếu có)"') + (r && canEd ? ` <button type="button" class="btn small" id="qaMkK">Lập phiếu KPH</button>` : ""), true)}
         </div></fieldset>
-        <fieldset class="qa-fs" ${tp ? "" : "disabled"}><legend>Xác nhận</legend><div class="two qa-g">
+        <fieldset class="qa-fs" ${tp && !(r && r.xoa) ? "" : "disabled"}><legend>Xác nhận</legend><div class="two qa-g">
           ${fld("Xác nhận của quản lý phòng QC (TP. QA/QC)", inp("xnQL", d.xnQL, 'list="qaXN" data-opt') + dl("qaXN", XN))}
           ${fld("Kết quả xử lý", inp("kqXuLy", d.kqXuLy, "data-opt"))}
-          <p class="note" style="grid-column:1/-1;margin:0">${d.xnQL ? "Đã xác nhận: " + E(d.xnQLNguoi || "") + (d.xnQLLuc ? " · " + E(d.xnQLLuc) : "") + ". " : ""}${tp ? "Xoá ô xác nhận rồi Lưu để mở lại cho QC sửa." : "Chỉ TP. QA/QC (Nguyễn Ô Ghel) xác nhận."} Xác nhận của bộ phận thu mua: ký tay trên bản in.</p>
+          <p class="note" style="grid-column:1/-1;margin:0">${d.xnQL ? "Đã xác nhận: " + E(d.xnQLNguoi || "") + (d.xnQLLuc ? " · " + E(d.xnQLLuc) : "") + ". " : ""}${tp ? "Xoá ô xác nhận rồi bấm Cập nhật để mở lại cho QC sửa." : "Chỉ TP. QA/QC (Nguyễn Ô Ghel) xác nhận."} Xác nhận của bộ phận thu mua: ký tay trên bản in.</p>
         </div></fieldset>
-        <div class="actions">${r && (tp || (canEd && r.nguoi === me)) ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button>${canEd || tp ? '<button class="btn primary" type="button" data-a="sv">Lưu</button>' : ""}</div>`;
+        ${acts(r, canEd || (tp && !(r && r.xoa)), r && (tp || (canEd && r.nguoi === me)))}`;
     };
     const w = dlg((isNew ? "Ghi vật tư về" : "Lô vật tư") + " — " + SO[so].bm, draw(), true), bx = w.querySelector(".cfm-box");
     const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; d[k] = el.type === "checkbox" ? el.checked : el.value.trim(); }); };
@@ -208,10 +221,15 @@
         if (n) { pull(); hint(); toast("Đã điền theo lần kiểm gần nhất (" + D(L.d.ngayNhap) + "): NCC, loại, quy cách…"); } });
       const mk = bx.querySelector("#qaMkK"); if (mk) mk.onclick = async () => { pull(); try { const o = await save({ id: r.id, loai: so, d }, "Đã lưu lô vật tư"); Object.assign(d, o.d); w.remove(); kphDlg(null, { ngay: d.ngayKT || today(), suKPH: "Vật tư nhập không đạt: " + d.ten, nn: { vatTu: true }, hienTrang: d.ghiChu || "", moTa: [d.loaiVT, d.ncc ? "NCC " + d.ncc : "", d.ngayNhap ? "về " + D(d.ngayNhap) : ""].filter(Boolean).join(" · "), sanPham: [d.ten, d.npp, d.quyCach].filter(Boolean).join(" - "), slKPH: soLoi(d), slKT: d.soMau || "", mucDo: +d.loiNang > 0 ? "Nặng" : "Nhẹ", bpPhatHien: "Phòng QA/QC", bpLienQuan: "Thu mua", nguon: r.id }); } catch (e) { toast(e.message); } };
       bx.querySelector('[data-a="x"]').onclick = () => w.remove();
-      const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá lô vật tư này khỏi sổ?"])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
-      const sv = bx.querySelector('[data-a="sv"]'); if (sv) sv.onclick = async () => { pull(); if (!d.ten) { toast("Ghi " + SO[so].ten.toLowerCase() + "."); return; }
+      const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá lô vật tư này khỏi sổ? Khôi phục được ở mục “Phiếu đã xoá” cuối danh sách."])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá — khôi phục được ở mục “Phiếu đã xoá”"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
+      const rs = bx.querySelector('[data-a="res"]'); if (rs) rs.onclick = async () => { rs.disabled = true; try { await api("webQADel", S.auth, r.id, true); r.xoa = 0; toast("Đã khôi phục lô vật tư vào sổ"); st(); re(); renderQA(); } catch (e) { rs.disabled = false; toast(e.message); } };
+      /* Lưu (phiếu mới) và Cập nhật (phiếu đã lưu): lưu xong vẫn mở phiếu để ghi tiếp, bấm Đóng khi xong */
+      const doSave = async btn => { pull(); if (!d.ten) { toast("Ghi " + SO[so].ten.toLowerCase() + "."); return; }
         if (!d.ketQua && so === "NHAN" && d.ketLuan) d.ketQua = kqTxt(d); if (d.loiNang !== "" || d.loiNhe !== "") d.soLoi = soLoi(d);
-        sv.disabled = true; try { await save({ id: r && r.id, loai: so, d }, d.xnQL && tp ? "Đã lưu và xác nhận" : d.ketLuan ? "Đã lưu kết quả kiểm tra — chờ TP. QA/QC xác nhận" : "Đã ghi vật tư về — chờ kiểm (hạn 48 giờ)"); w.remove(); renderQA(); } catch (e) { sv.disabled = false; toast(e.message); } };
+        btn.disabled = true; const moi = !r;
+        try { const o = await save({ id: r && r.id, loai: so, d }, d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô vật tư");
+          Object.assign(d, o.d); r = Object.assign(r || { loai: so, nguoi: me, xoa: 0 }, { id: o.id, d: JSON.parse(JSON.stringify(o.d)), sua: me }); isNew = false; st(); re(); renderQA(); } catch (e) { btn.disabled = false; toast(e.message); } };
+      ["sv", "up"].forEach(k => { const b0 = bx.querySelector(`[data-a="${k}"]`); if (b0) b0.onclick = () => doSave(b0); });
     }
     /* cỡ mẫu tự điền theo số lượng (chỉ khi ô còn trống hoặc vẫn là số tự điền) */
     bx.addEventListener("input", e => { pull(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
@@ -220,26 +238,28 @@
 
   /* ---------------- BM.05: kế hoạch giao ---------------- */
   function khDlg(r) {
-    const d = r ? Object.assign({}, r.d) : { duKien: ngay5 || today(), dvt: "cái" }, ed = QC();
-    const w = dlg(r ? "Kế hoạch giao" : "Thêm kế hoạch giao (BM.05)", `<fieldset class="qa-fs" ${ed ? "" : "disabled"}><div class="two qa-g">
+    const d = r ? Object.assign({}, r.d) : { duKien: ngay5 || today(), dvt: "cái" }, ed = QC() && !(r && r.xoa);
+    const w = dlg(r ? "Kế hoạch giao" : "Thêm kế hoạch giao (BM.05)", `${delNote(r)}<fieldset class="qa-fs" ${ed ? "" : "disabled"}><div class="two qa-g">
       ${fld("Ngày dự kiến giao", inp("duKien", d.duKien, 'type="date"'))}${fld("Giờ", inp("gio", d.gio, 'type="time"'))}
       ${fld("Nhà cung cấp", inp("ncc", d.ncc, 'list="qaNcc2"') + dl("qaNcc2", live(R).map(x => x.d.ncc)))}${fld("Tên hàng", inp("ten", d.ten))}
       ${fld("Đơn vị", inp("dvt", d.dvt))}${fld("Số lượng", inp("sl", d.sl, 'type="number" step="any" min="0"'))}
       ${fld("Ghi chú", inp("ghiChu", d.ghiChu), true)}</div></fieldset>
-      <div class="actions">${r && ed ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button>${ed ? '<button class="btn primary" type="button" data-a="sv">Lưu</button>' : ""}</div>`);
+      ${acts(r, ed, ed && canRes(r))}`);
     const bx = w.querySelector(".cfm-box"), pull = () => bx.querySelectorAll("[data-k]").forEach(el => d[el.dataset.k] = el.value.trim());
     bx.querySelector('[data-a="x"]').onclick = () => w.remove();
-    const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
-    const sv = bx.querySelector('[data-a="sv"]'); if (sv) sv.onclick = async () => { pull(); sv.disabled = true; try { await save({ id: r && r.id, loai: "KH", d }); ngay5 = d.duKien || ngay5; w.remove(); renderQA(); } catch (e) { sv.disabled = false; toast(e.message); } };
+    const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá kế hoạch giao này? Khôi phục được ở mục “Phiếu đã xoá”."])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá — khôi phục được ở mục “Phiếu đã xoá”"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
+    const rs = bx.querySelector('[data-a="res"]'); if (rs) rs.onclick = async () => { rs.disabled = true; try { await api("webQADel", S.auth, r.id, true); toast("Đã khôi phục kế hoạch giao"); w.remove(); renderQA(); } catch (e) { rs.disabled = false; toast(e.message); } };
+    ["sv", "up"].forEach(k => { const b0 = bx.querySelector(`[data-a="${k}"]`); if (b0) b0.onclick = async () => { pull(); b0.disabled = true; const moi = !r;
+      try { const o = await save({ id: r && r.id, loai: "KH", d }, moi ? "Đã lưu kế hoạch giao" : "Đã cập nhật kế hoạch giao"); ngay5 = d.duKien || ngay5; w.remove(); renderQA(); if (moi) { const n = { id: o.id, loai: "KH", d: o.d, nguoi: S.me.ten, xoa: 0 }; khDlg(n); } } catch (e) { b0.disabled = false; toast(e.message); } }; });
   }
 
   /* ---------------- QC-QT.05: sổ theo dõi sự không phù hợp ---------------- */
   const NN = [["thietBi", "Thiết bị"], ["vatTu", "Vật tư"], ["nguyenLieu", "Nguyên liệu"], ["quaTrinh", "Quá trình"], ["conNguoi", "Con người"]];
   const tiLe = d => { const a = parseFloat(d.slKPH), b = parseFloat(d.slKT); return isFinite(a) && b > 0 ? (a / b * 100).toFixed(2).replace(/\.?0+$/, "") + " %" : ""; };
   function kphDlg(r, seed) {
-    const d = r ? JSON.parse(JSON.stringify(r.d)) : Object.assign({ ngay: today(), nn: {}, bpPhatHien: "Phòng QA/QC" }, seed || {}), ed = QC();
+    const d = r ? JSON.parse(JSON.stringify(r.d)) : Object.assign({ ngay: today(), nn: {}, bpPhatHien: "Phòng QA/QC" }, seed || {}), ed = QC() && !(r && r.xoa);
     if (!d.nn) d.nn = {};
-    const w = dlg(r ? "Sự không phù hợp " + E(d.so || "") : "Ghi sự không phù hợp (BM.01-QC-QT.05)", `<fieldset class="qa-fs" ${ed ? "" : "disabled"}><div class="two qa-g">
+    const w = dlg(r ? "Sự không phù hợp " + E(d.so || "") : "Ghi sự không phù hợp (BM.01-QC-QT.05)", `${delNote(r)}<fieldset class="qa-fs" ${ed ? "" : "disabled"}><div class="two qa-g">
       ${fld("Ngày", inp("ngay", d.ngay, 'type="date"'))}${fld("Số phiếu", inp("so", d.so, 'placeholder="tự đánh số KPH-yyMM-nn"'))}
       ${fld("Sự không phù hợp", inp("suKPH", d.suKPH), true)}
       <div style="grid-column:1/-1"><b>Nguyên nhân</b> ${NN.map(([k, t]) => `<label class="qa-chk" style="display:inline-flex;margin-right:12px"><input type="checkbox" data-nn="${k}"${d.nn[k] ? " checked" : ""}> ${t}</label>`).join("")}</div>
@@ -253,17 +273,18 @@
       <label class="qa-chk"><input type="checkbox" data-k="dong"${d.dong ? " checked" : ""}> Đã xử lý xong${d.dongNguoi ? " (" + E(d.dongNguoi) + (d.dongLuc ? " · " + E(d.dongLuc) : "") + ")" : ""}</label>
       </div></fieldset>
       ${d.nguon && rec(d.nguon) ? `<p class="note">Từ lô vật tư: <a href="#" id="qaSrc">${E(rec(d.nguon).d.ten)}</a></p>` : ""}
-      <div class="actions">${r && ed ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button>${ed ? '<button class="btn primary" type="button" data-a="sv">Lưu</button>' : ""}</div>`, true);
+      ${acts(r, ed, ed && canRes(r))}`, true);
     const bx = w.querySelector(".cfm-box");
     const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => d[el.dataset.k] = el.type === "checkbox" ? el.checked : el.value.trim()); bx.querySelectorAll("[data-nn]").forEach(el => d.nn[el.dataset.nn] = el.checked); };
     bx.addEventListener("input", () => { pull(); const t = bx.querySelector("#qaTL"); if (t) t.value = tiLe(d); });
     bx.querySelector('[data-a="x"]').onclick = () => w.remove();
     const src = bx.querySelector("#qaSrc"); if (src) src.onclick = ev => { ev.preventDefault(); w.remove(); vtDlg(rec(d.nguon)); };
-    const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá sự không phù hợp này?"])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
-    const sv = bx.querySelector('[data-a="sv"]'); if (sv) sv.onclick = async () => { pull(); sv.disabled = true;
-      try { const o = await save({ id: r && r.id, loai: "KPH", d }, "Đã lưu sự không phù hợp");
-        if (!r && d.nguon) { const v = rec(d.nguon); if (v && !v.d.ycXuLy) { try { await api("webQASave", S.auth, { id: v.id, loai: v.loai, d: Object.assign({}, v.d, { ycXuLy: o.d.so }) }); } catch (e) {} } }
-        w.remove(); view = "kph"; renderQA(); } catch (e) { sv.disabled = false; toast(e.message); } };
+    const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá sự không phù hợp này? Khôi phục được ở mục “Phiếu đã xoá”."])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá — khôi phục được ở mục “Phiếu đã xoá”"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
+    const rs = bx.querySelector('[data-a="res"]'); if (rs) rs.onclick = async () => { rs.disabled = true; try { await api("webQADel", S.auth, r.id, true); toast("Đã khôi phục sự không phù hợp"); w.remove(); view = "kph"; renderQA(); } catch (e) { rs.disabled = false; toast(e.message); } };
+    ["sv", "up"].forEach(k => { const b0 = bx.querySelector(`[data-a="${k}"]`); if (b0) b0.onclick = async () => { pull(); b0.disabled = true; const moi = !r;
+      try { const o = await save({ id: r && r.id, loai: "KPH", d }, moi ? "Đã lưu sự không phù hợp" : "Đã cập nhật sự không phù hợp");
+        if (moi && d.nguon) { const v = rec(d.nguon); if (v && !v.d.ycXuLy) { try { await api("webQASave", S.auth, { id: v.id, loai: v.loai, d: Object.assign({}, v.d, { ycXuLy: o.d.so }) }); } catch (e) {} } }
+        w.remove(); view = "kph"; renderQA(); if (moi) kphDlg({ id: o.id, loai: "KPH", d: o.d, nguoi: S.me.ten, xoa: 0 }); } catch (e) { b0.disabled = false; toast(e.message); } }; });
   }
 
   /* ---------------- bản in ---------------- */

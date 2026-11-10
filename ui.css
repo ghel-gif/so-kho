@@ -711,3 +711,24 @@ small{font-size:max(12.5px,.85em)}
 /* giao diện tối: ô nhập trong Lệnh đóng gói không bị ép nền trắng */
 :root[data-theme=dark] #dglBox input:not([disabled]):not([type=checkbox]):not(.need-in),:root[data-theme=dark] #dglBox select:not([disabled]):not(.need-in){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
 :root[data-theme=dark] #dglBox input[disabled],:root[data-theme=dark] #dglBox select[disabled]{background:#1c2630!important;color:#b9c6d3!important;-webkit-text-fill-color:#b9c6d3;border-color:#33465a!important}
+/* ---------- Tồn kho (4.4.4): mỗi mã một dòng khi được, lô gộp thành dòng nhỏ, sọc xen kẽ ---------- */
+#stockList .row{padding:7px 14px}
+#stockList .row:nth-child(even of .row){background:color-mix(in srgb,#1a5fb4 3.5%,var(--surface))}
+#stockList .row.click:hover{background:color-mix(in srgb,#1a5fb4 8%,var(--surface))}
+#stockList .row .kg{font-size:15.5px;font-weight:800}
+#stockList .tkm>span{font-weight:500}
+#stockList .lots.lp{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:3px 0 0;padding:0;border:0}
+#stockList .lots.lp .lot{display:inline-flex;justify-content:flex-start;flex:0 0 auto;align-items:center;gap:6px;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--ink) 5%,var(--surface));border:1px solid var(--line);font-size:12.5px;color:var(--muted);white-space:nowrap}
+#stockList .lots.lp .lot b{color:var(--ink);font-weight:600}
+#stockList .lots.lp .lot .lq{color:var(--ink);font-weight:700}
+#stockList .lots.lp .lot .lq.ng{color:#c62828}
+#stockList .lots.lp .lot .chip{margin:0;font-size:10.5px!important;padding:0 6px}
+/* kiểm vật tư: phiếu đã xoá + nút khôi phục */
+.qa-del{margin-top:12px}
+.qa-del>summary{cursor:pointer;font-weight:700;color:var(--muted);padding:8px 2px}
+.qa-del .list{margin-top:6px}
+.qa-del .row .name{color:var(--muted)}
+.btn.ok.qa-res,.qa-del [data-res]{background:#2e7d32!important;color:#fff!important;border-color:#2e7d32!important;font-weight:700}
+.qa-delnote{background:#eceff1;border-left:5px solid #78909c;padding:8px 12px;border-radius:8px;color:#37474f;margin:0 0 8px}
+:root[data-theme=dark] .qa-delnote{background:#1f2a33;color:#cfd8dc}
+@media (min-width:1200px){#stockList .lots.lp{grid-column:1/-2}}
