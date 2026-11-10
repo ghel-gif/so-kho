@@ -612,6 +612,29 @@ function updateKK_(a, me, sh, row, m, mv, d) {
   log_(me, 'Sửa phiếu kiểm kê', it.ma + (m.lo ? ' lô ' + m.lo : '') + ' · ' + m.id, doi.join(' · ') || 'không đổi');
   return true;
 }
+/** Ghi "Người kiểm kê: …" vào ghi chú các phiếu kiểm kê của 1 ngày (lọc theo nhóm vật tư) — chỉ đổi ghi chú, không đổi số lượng. */
+function webKKNguoi(a, ngay, nhom, ten) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT]);
+  if (!isYmd_(ngay)) throw new Error('Ngày không hợp lệ.');
+  ten = String(ten || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 8).join(', ');
+  if (!ten) throw new Error('Chọn người kiểm kê.');
+  nhom = String(nhom || '').trim();
+  const IT = {}; items_().forEach(i => { IT[i.ma] = i; });
+  let n = 0;
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_(SH.PH), last = sh.getLastRow(); if (last < 2) return 0;
+    const R = sh.getRange(2, 1, last - 1, 17).getValues();
+    R.forEach((r, i) => {
+      if (str_(r[3]) !== 'Kiểm kê' || str_(r[2]) !== ngay || str_(r[11])) return;
+      const it = IT[str_(r[4])]; if (nhom && (!it || it.nhom !== nhom)) return;
+      const cu = str_(r[9]), g = cu.replace(/\s*·?\s*Người kiểm kê:[^·]*/g, '').trim(), v = [g, 'Người kiểm kê: ' + ten].filter(Boolean).join(' · ');
+      if (v !== cu) { sh.getRange(i + 2, 10).setValue(v); n++; }
+    });
+    if (n) log_(me, 'Ghi người kiểm kê', ngay + (nhom ? ' · ' + nhom : ''), ten + ' · ' + n + ' phiếu');
+  } finally { lock.releaseLock(); }
+  return n;
+}
 function updateMove(a, id, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);

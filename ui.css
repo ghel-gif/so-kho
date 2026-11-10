@@ -1027,3 +1027,9 @@ button.wxln svg{width:16px;height:16px}
   .qc-bar .dl-open svg{width:16px!important;height:16px!important}
   .tools input[type=month],.tools input[type=date]{flex:1 1 calc(50% - 4px)!important;width:auto!important}
 }
+/* ===== 4.5.4 · kiểm kê: người kiểm kê ===== */
+.pick.chua .pk{border-color:var(--need-line);background:var(--need-bg)}
+#mvKKWrap{margin-top:2px}
+details.kkng{margin:4px 0 8px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface)}
+details.kkng>summary{cursor:pointer;font-weight:700;color:var(--accent)}
+details.kkng .kkng-b{display:flex;flex-direction:column;gap:10px;margin-top:10px}
