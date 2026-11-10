@@ -572,10 +572,10 @@ html body .in-miss{outline:3px solid #e11d48!important;outline-offset:2px!import
 #stockList .row .kg{font-weight:700;font-size:15px;text-align:right;white-space:nowrap;color:var(--ink)}
 #stockList .row .kg small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
 #stockList .row .kg.ng,#stockList .lot .lq.ng{color:#c62828}
-#stockList .tkm{font-size:13px;color:var(--muted)}
-#stockList .tkm>span{white-space:nowrap}
-#stockList .tkm i{font-style:normal}
-#stockList .tkm .z{opacity:.4}
+#stockList .stkn{font-size:13px;color:var(--muted)}
+#stockList .stkn>span{white-space:nowrap}
+#stockList .stkn i{font-style:normal}
+#stockList .stkn .z{opacity:.4}
 #stockList .row.r-bad{box-shadow:inset 4px 0 0 #e11d48}
 #stockList .row.r-warn{box-shadow:inset 4px 0 0 #f59e0b}
 #stockList .grp small{margin-left:8px;font-weight:600;letter-spacing:0;text-transform:none;opacity:.8}
@@ -584,26 +584,26 @@ html body .in-miss{outline:3px solid #e11d48!important;outline-offset:2px!import
 #stockList .lot .lq{white-space:nowrap;text-align:right}
 .chip.own{background:#efe9fb!important;color:#5b3aa6!important;box-shadow:inset 0 0 0 1px #c9b8ef!important}
 :root[data-theme=dark] .chip.own{background:#2a2142!important;color:#d6c8ff!important;box-shadow:inset 0 0 0 1px #5b4a8a!important}
-#stockList .tkh{display:none}
+#stockList .stkh{display:none}
 @media (min-width:1200px){
-  #stockList .row,#stockList .tkh{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px 92px 80px 136px;column-gap:14px;align-items:center}
-  #stockList .tkh{position:sticky;top:var(--hdrH,60px);z-index:3;padding:9px 14px;background:color-mix(in srgb,#1a5fb4 7%,var(--surface));border-bottom:1px solid var(--line);font:700 11.5px/1.2 var(--font,inherit);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-  #stockList .tkh>span:not(:first-child){text-align:right}
+  #stockList .row,#stockList .stkh{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px 92px 80px 136px;column-gap:14px;align-items:center}
+  #stockList .stkh{position:sticky;top:var(--hdrH,60px);z-index:3;padding:9px 14px;background:color-mix(in srgb,#1a5fb4 7%,var(--surface));border-bottom:1px solid var(--line);font:700 11.5px/1.2 var(--font,inherit);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  #stockList .stkh>span:not(:first-child){text-align:right}
   #stockList .row{padding:8px 14px;row-gap:2px}
   #stockList .row .name{grid-column:1;grid-row:1}#stockList .row .kg{grid-column:6;grid-row:1}
-  #stockList .tkm{display:contents}
-  #stockList .tkm>span{grid-row:1}
-  #stockList .tkm>span{text-align:right;font-size:13.5px;color:var(--ink)}
-  #stockList .tkm>span.in{color:var(--in,#226b3c)}#stockList .tkm>span.out{color:var(--out,#a3301f)}#stockList .tkm>span.adj{color:var(--adj,#6d28d9)}
-  #stockList .tkm>span.z{color:var(--muted)}
-  #stockList .tkm i{display:none}
+  #stockList .stkn{display:contents}
+  #stockList .stkn>span{grid-row:1}
+  #stockList .stkn>span{text-align:right;font-size:13.5px;color:var(--ink)}
+  #stockList .stkn>span.in{color:var(--in,#226b3c)}#stockList .stkn>span.out{color:var(--out,#a3301f)}#stockList .stkn>span.adj{color:var(--adj,#6d28d9)}
+  #stockList .stkn>span.z{color:var(--muted)}
+  #stockList .stkn i{display:none}
   #stockList .lots{grid-column:1/-1}
 }
 @media (max-width:1199px){
   #stockList .row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name kg" "num kg" "lots lots"}
-  #stockList .row .name{grid-area:name}#stockList .row .kg{grid-area:kg;align-self:start}#stockList .row .tkm{grid-area:num;display:flex;flex-wrap:wrap;gap:0 10px}#stockList .row .lots{grid-area:lots}
-  #stockList .tkm>span.z,#stockList .tkm>span:empty{display:none}
-  #stockList .tkm>span.in{color:var(--in,#226b3c)}#stockList .tkm>span.out{color:var(--out,#a3301f)}
+  #stockList .row .name{grid-area:name}#stockList .row .kg{grid-area:kg;align-self:start}#stockList .row .stkn{grid-area:num;display:flex;flex-wrap:wrap;gap:0 10px}#stockList .row .lots{grid-area:lots}
+  #stockList .stkn>span.z,#stockList .stkn>span:empty{display:none}
+  #stockList .stkn>span.in{color:var(--in,#226b3c)}#stockList .stkn>span.out{color:var(--out,#a3301f)}
 }
 @media (prefers-reduced-motion:reduce){.need-nx,label.need-nxl::after,.need-cnt>i,.need-flash,.in-miss,.warnbox::before,.errbox::before,.alert-bad,.dgf-s.no,.dgf-s.no::before{animation:none!important}}
 /* kiểm kê QR: chưa có lô nào trong đợt thì ẩn hàng nút Ghi đợt (đỡ một hàng trống) */
@@ -613,8 +613,8 @@ label{font-size:14px}
 .qa-dlg .qa-g label{font-size:13.5px}
 small{font-size:max(12.5px,.85em)}
 .grp{font-size:12px!important}
-#stockList .tkh{font-size:12px}
-#stockList .lot,#stockList .tkm{font-size:13px}
+#stockList .stkh{font-size:12px}
+#stockList .lot,#stockList .stkn{font-size:13px}
 /* ---------- Điện thoại: gọn hơn — tiêu đề và nút cùng hàng, bộ lọc 2 cột, ẩn hướng dẫn dài ---------- */
 @media (max-width:600px){
   .pghead{flex-direction:row!important;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;text-align:left}
@@ -671,8 +671,15 @@ small{font-size:max(12.5px,.85em)}
 .dgbang tbody tr.run td{background:color-mix(in srgb,#f59e0b 10%,var(--surface))}
 .dgbang tbody tr:hover td{background:color-mix(in srgb,#1a5fb4 9%,var(--surface))}
 .dgbang tbody td{background:var(--surface)}
-.dgbang tbody td:nth-child(4),.dgbang thead tr:last-child th:nth-child(4){position:sticky;left:0;z-index:1;font-weight:700;box-shadow:2px 0 0 var(--line)}
-.dgbang thead tr:last-child th:nth-child(4){z-index:3}
+/* cố định 3 cột Số lệnh · Mã SP · Tên SP khi kéo ngang (viền vẽ riêng từng ô để đi theo cột) */
+.dgbang table{border-collapse:separate;border-spacing:0}
+.dgbang .fz{position:sticky;z-index:2;box-sizing:border-box}
+.dgbang .fz1{left:0;width:200px;min-width:200px;font-weight:700}
+.dgbang .fz2{left:200px;width:130px;min-width:130px}
+.dgbang .fz3{left:330px;width:210px;min-width:210px;white-space:normal;box-shadow:3px 0 0 color-mix(in srgb,var(--ink) 22%,transparent)}
+.dgbang thead th.fz{z-index:4}
+.dgbang thead tr.grh th.fzg{position:sticky;left:0;z-index:4;box-shadow:3px 0 0 color-mix(in srgb,var(--ink) 22%,transparent)}
+.dgbang thead tr:last-child th.fz{background:color-mix(in srgb,#1a5fb4 8%,var(--surface))}
 .dgbang td.hhp{color:#c62828;font-weight:700}
 .dgbang td.hhn{color:#1565c0;font-weight:700}
 .dgbc{max-width:720px}
@@ -716,7 +723,7 @@ small{font-size:max(12.5px,.85em)}
 #stockList .row:nth-child(even of .row){background:color-mix(in srgb,#1a5fb4 3.5%,var(--surface))}
 #stockList .row.click:hover{background:color-mix(in srgb,#1a5fb4 8%,var(--surface))}
 #stockList .row .kg{font-size:15.5px;font-weight:800}
-#stockList .tkm>span{font-weight:500}
+#stockList .stkn>span{font-weight:500}
 #stockList .lots.lp{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:3px 0 0;padding:0;border:0}
 #stockList .lots.lp .lot{display:inline-flex;justify-content:flex-start;flex:0 0 auto;align-items:center;gap:6px;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--ink) 5%,var(--surface));border:1px solid var(--line);font-size:12.5px;color:var(--muted);white-space:nowrap}
 #stockList .lots.lp .lot b{color:var(--ink);font-weight:600}
@@ -732,3 +739,46 @@ small{font-size:max(12.5px,.85em)}
 .qa-delnote{background:#eceff1;border-left:5px solid #78909c;padding:8px 12px;border-radius:8px;color:#37474f;margin:0 0 8px}
 :root[data-theme=dark] .qa-delnote{background:#1f2a33;color:#cfd8dc}
 @media (min-width:1200px){#stockList .lots.lp{grid-column:1/-2}}
+/* ---------- Thẻ kho (mở từ Tồn kho): tóm tắt + sổ cột Ngày · Loại · Nhập · Xuất · Tồn sau · Chi tiết, chia tháng ---------- */
+#stockList #tkLog{background:color-mix(in srgb,#1a5fb4 4%,var(--surface));border:1.5px solid color-mix(in srgb,#1a5fb4 40%,var(--line));border-left:5px solid #1a5fb4;border-radius:12px;padding:12px 14px;margin:4px 0 14px;cursor:default}
+#tkLog .tkh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px}
+#tkLog .tkti{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-width:0;flex:1 1 320px}
+#tkLog .tkti>b{font-size:16px;flex:none;min-width:0}
+#tkLog .tkti .code{margin:0}
+#tkLog .tkten{font-weight:600;color:var(--ink)}
+#tkLog .tkact{display:flex;flex-wrap:wrap;gap:6px}
+#tkLog .tksum{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 10px}
+#tkLog .tksum>span{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+#tkLog .tksum b{font-size:16px;color:var(--ink);font-variant-numeric:tabular-nums}
+#tkLog .tksum .in b{color:var(--in,#226b3c)}#tkLog .tksum .out b{color:var(--out,#a3301f)}#tkLog .tksum .adj b{color:var(--adj,#6d28d9)}
+#tkLog .tksum .ton{border:2px solid #1a5fb4}#tkLog .tksum .ton b{font-weight:800}
+#tkLog .tkfil{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 8px}
+#tkLog .tkfil .note{margin:0}
+#tkLog .tkt-tb{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+#tkLog .tkr{display:grid;grid-template-columns:96px 150px 100px 100px 100px minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:7px 12px;border-top:1px solid var(--line);font-size:13.5px}
+#tkLog .tkr.tkhd{border-top:0;background:color-mix(in srgb,#1a5fb4 9%,var(--surface));font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+#tkLog .tkr .r,#tkLog .tkk,#tkLog .tks{text-align:right;font-variant-numeric:tabular-nums}
+#tkLog .tkd{font-variant-numeric:tabular-nums}
+#tkLog .tkk{font-weight:700}
+#tkLog .tkk.in{color:var(--in,#226b3c)}#tkLog .tkk.out{color:var(--out,#a3301f)}#tkLog .tkk.adj{color:var(--adj,#6d28d9)}
+#tkLog .tks{color:var(--ink);font-weight:600}
+#tkLog .tkm{color:var(--muted);font-size:13px;line-height:1.4;min-width:0;overflow-wrap:anywhere}
+#tkLog .tkm b{color:var(--ink)}
+#tkLog .tkby{opacity:.85}
+#tkLog .tkmon{padding:5px 12px;background:color-mix(in srgb,var(--ink) 5%,var(--surface));font-size:12px;font-weight:700;color:var(--muted);border-top:1px solid var(--line);text-transform:uppercase;letter-spacing:.03em}
+#tkLog .tkr.del{opacity:.55}#tkLog .tkr.del .tkk,#tkLog .tkr.del .tks{text-decoration:line-through}
+@media (max-width:720px){
+  #tkLog .tksum{grid-template-columns:repeat(2,minmax(0,1fr))}#tkLog .tksum .ton{grid-column:1/-1}
+  #tkLog .tkr{grid-template-columns:auto minmax(0,1fr) auto;padding:8px 10px}
+  #tkLog .tkr.tkhd{display:none}
+  #tkLog .tkk:empty{display:none}
+  #tkLog .tkk{grid-column:3;grid-row:1}
+  #tkLog .tks{grid-column:3;grid-row:2;font-size:12px;color:var(--muted);font-weight:500}#tkLog .tks::before{content:"tồn "}
+  #tkLog .tkm{grid-column:1/-1}
+}
+#tkLog .code{display:inline-block;font-weight:700;font-size:12.5px;color:var(--water,#1d6fd1);background:color-mix(in srgb,var(--water,#1d6fd1) 9%,var(--surface));border-radius:6px;padding:1px 7px;letter-spacing:.01em}
+@media (max-width:720px){
+  #tkLog .tksum{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#tkLog .tksum .ton{grid-column:span 2}
+  #tkLog .tksum>span{padding:6px 8px}#tkLog .tksum b{font-size:14.5px}
+  #tkLog .tkact .btn{min-height:38px;padding:6px 10px;font-size:13px}
+}
