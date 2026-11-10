@@ -37,7 +37,7 @@
   const KC = {
     M1: { ten: "Cân SX hằng ngày", qua: [500, 1000], chuan: "QUẢ CÂN 500G M1, 1000G M1", chu: "quả cân M1 500 g, 1.000 g", nv: "Nhân viên QC line", ky: ["Trưởng phòng QA/QC", "Nhân viên QC"],
       dp: () => 1, gh: () => ({ 500: 0.3, 1000: 0.5 }), luat: "QC-HD.01: mỗi ngày có sản xuất, cân 2 lần quả cân M1 500 g (mỗi lần lệch ≤ 0,3 g) và 1.000 g (≤ 0,5 g); cả 2 lần trong giới hạn mới đạt." },
-    F1: { ten: "Cân PTN hằng tuần", qua: [100, 200], chuan: "Quả cân 200g F1, 100g F1", chu: "quả cân F1 100 g, 200 g", nv: "Nhân viên PTN", ky: ["Trưởng phòng QA/QC", "Nhân viên PTN"],
+    F1: { ten: "Cân PTN hằng tuần", qua: [100, 200], chuan: "Quả cân 200g F1, 100g F1", chu: "quả cân F1 100 g, 200 g", nv: "Nhân viên QC", ky: ["Trưởng phòng QA/QC", "Nhân viên QC"],
       dp: doc => +doc && +doc <= 0.001 ? 3 : 2, gh: doc => +doc && +doc <= 0.001 ? { 100: 0.002, 200: 0.005 } : { 100: 0.02, 200: 0.05 },
       luat: "QC-HD.01: mỗi tuần, cân 2 lần quả cân F1 100 g và 200 g — cân 2 số lẻ lệch ≤ 0,02 / 0,05 g, cân 3 số lẻ ≤ 0,002 / 0,005 g; cả 2 lần trong giới hạn mới đạt." }
   };
