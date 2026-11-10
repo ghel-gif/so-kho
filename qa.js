@@ -92,7 +92,7 @@
     if (!b.dataset.ok) b.innerHTML = '<div class="empty"><span class="ldg">Đang tải sổ QA/QC…</span></div>';
     try { await load(); } catch (e) { b.innerHTML = `<div class="empty">${E(e.message)}</div>`; return; }
     b.dataset.ok = 1;
-    const seg = [["vt", "Kiểm tra vật tư nhập (BM.01–04)"], ["ngay", "Sổ hằng ngày (BM.05)"], ["kph", "Sự không phù hợp (QC-QT.05)"]];
+    const seg = [["vt", "Kiểm bao bì nhập (BM.01–04)"], ["ngay", "Sổ hằng ngày (BM.05)"], ["kph", "Sự không phù hợp (QC-QT.05)"]];
     let h = `<div class="seg subseg" style="margin-bottom:10px">${seg.map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${t}</button>`).join("")}</div>`;
     if (view === "vt") {
       const all = vt(), cho = all.filter(r => ttOf(r) === "Chờ kiểm"), cxn = all.filter(r => ttOf(r) === "Chờ xác nhận");
@@ -106,7 +106,7 @@
         <button class="btn" type="button" id="qaPr">🖨 In sổ ${fSo ? SO[fSo].bm.slice(0, 5) : "BM.01–04"}${fThang ? " tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</button></div>
         <p class="note" style="margin:0 0 8px">${cho.length ? `<b style="color:#d97706">${cho.length} lô chờ kiểm</b> (hạn 48 giờ, hàng gấp 60 phút)` : "Không có lô chờ kiểm"} · ${cxn.length ? `<b style="color:#7c3aed">${cxn.length} lô chờ TP. QA/QC xác nhận</b>` : "không có lô chờ xác nhận"}. Lô chưa xác nhận luôn hiện, không theo tháng.</p>
         <div class="list">${L.length ? L.map(r => { const d = r.d, t = ttOf(r);
-          return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
+          return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh chụp khi nhận hàng">📷 ${r.anh}</span>` : ""}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
           <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
           : `<div class="empty"><b>Chưa có lô bao bì nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi bao bì về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>
         ${delBox(R.filter(x => x.xoa && SO[x.loai]).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap))), "data-id", x => `<b>${SO[x.loai].bm.slice(0, 5)}</b> · ${E(x.d.ten || "")} · về ${D(x.d.ngayNhap)}`)}`;
@@ -150,6 +150,20 @@
   const inp = (k, v, at) => `<input data-k="${k}" value="${E(v ?? "")}" ${at || ""}>`;
   const sel = (k, v, L, blank) => `<select data-k="${k}">${blank !== false ? `<option value="">${blank || "—"}</option>` : ""}${L.map(x => `<option${x === v ? " selected" : ""}>${E(x)}</option>`).join("")}${v && !L.includes(v) ? `<option selected>${E(v)}</option>` : ""}</select>`;
   const userSel = (k, v) => kiemPick(`data-k="${k}"`, v, "", USERS);
+  const ACC = "image/" + "*";
+  async function upQA(id, files) {
+    let n = 0;
+    for (const f of files) {
+      try {
+        let b, mime = "image/jpeg";
+        try { b = await shrinkImg(f); } catch (e0) { /* máy không giải mã được ảnh (thường là HEIC của iPhone trên máy tính) */
+          if (/^image\/(jpeg|png|webp)$/.test(f.type) && f.size <= 8 * 1024 * 1024) { b = await f2b64(f); mime = f.type; }
+          else throw new Error(/hei[cf]/i.test(f.type + f.name) ? "ảnh HEIC (iPhone) máy này không đọc được — chụp lại trong Sổ Kho bằng điện thoại, hoặc đổi sang JPG" : "không đọc được ảnh, đổi sang JPG / PNG rồi thử lại"); }
+        await api("uploadAnhQA", S.auth, id, f.name, mime, b); n++;
+      } catch (e) { toast("Không tải được ảnh " + f.name + ": " + (e && e.message || e)); }
+    }
+    if (n) toast(`Đã đính kèm ${n} ảnh vào lô bao bì`); return n;
+  }
   async function save(o, msg) { const r = await api("webQASave", S.auth, o); toast(msg || "Đã lưu"); return r; }
   /* thanh nút chung của phiếu QA/QC (giống BM.06 / BM.08): Lưu = phiếu mới · Cập nhật = phiếu đã lưu · Xoá · Khôi phục (phiếu đã xoá) */
   const canRes = r => !!r && (TP() || r.nguoi === S.me.ten);
@@ -211,6 +225,8 @@
           ${fld("Tình trạng khi nhận", inp("tinhTrangKho", d.tinhTrangKho, 'list="qaTTK"') + dl("qaTTK", ["Bình thường", "Móp / méo", "Ướt", "Thiếu số lượng", "Rách bao gói"]))}
           <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
         </div></fieldset>
+        <div class="qa-anh"><div class="qa-anh-h"><b>📷 Ảnh bao bì</b><small>không bắt buộc · chụp nhãn, số lô, thùng hàng, lỗi thấy được</small></div><div class="anhs" id="qaAnhL" hidden></div>
+          ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Chụp ảnh</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label></div>` : ""}<small class="note" id="qaAnhN"></small></div>
         <fieldset class="qa-fs" ${ro}><legend>Kiểm tra (${S0.hd})</legend><div class="two qa-g">
           ${canEd ? `<div class="qa-quick" style="grid-column:1/-1"><button type="button" class="btn ok" data-a="all">✓ Đạt hết</button><span class="note">Bấm khi lô không có lỗi: điền tất cả tiêu chí đạt, 0 lỗi, cỡ mẫu theo ${S0.hd}, kết luận Đạt. Có lỗi thì sửa riêng ô đó.</span></div>` : ""}
           ${fld("Ngày kiểm tra", inp("ngayKT", d.ngayKT, 'type="date"'))}<div class="qa-pkw" style="grid-column:1/-1"><span class="qa-pkl">Người kiểm mẫu</span>${userSel("nguoiKT", d.nguoiKT)}</div>
@@ -231,7 +247,19 @@
         </div></fieldset>
         ${acts(r, canEd || (tp && !(r && r.xoa)), r && (tp || (canEd && r.nguoi === me)))}`;
     };
+    let anh = null, pend = []; /* anh: ảnh đã lưu của phiếu · pend: ảnh chụp khi phiếu chưa lưu, tải lên ngay sau khi bấm Lưu */
     const w = dlg((isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm, draw(), true), bx = w.querySelector(".cfm-box");
+    const anhPaint = () => {
+      const L = bx.querySelector("#qaAnhL"), n = bx.querySelector("#qaAnhN"); if (!L) return; const A = anh || [];
+      L.innerHTML = A.map(x => `<a class="anh" data-fid="${E(x.fid)}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>`).join("")
+        + pend.map((p, i) => `<span class="anh qa-pend" title="${E(p.f.name)} — chưa lưu"><img alt="" src="${p.url}"><button type="button" class="qa-px" data-px="${i}" aria-label="Bỏ ảnh này">✕</button></span>`).join("");
+      L.hidden = !A.length && !pend.length;
+      if (A.length && typeof anhLoad === "function") anhLoad(L);
+      L.querySelectorAll("[data-px]").forEach(b => b.onclick = e => { e.stopPropagation(); const p = pend.splice(+b.dataset.px, 1)[0]; if (p) URL.revokeObjectURL(p.url); anhPaint(); });
+      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để phóng to. Ảnh lưu trên máy chủ 7 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
+        : pend.length ? `<b>${pend.length} ảnh</b> sẽ tải lên khi bấm <b>Lưu</b>.` : "Chụp xong, ảnh tải lên khi bấm Lưu.";
+    };
+    const anhGet = async () => { if (!r || !r.id) return; try { anh = await api("webAnhQA", S.auth, r.id); } catch (e) { anh = anh || []; } if (bx.isConnected) anhPaint(); };
     const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; d[k] = el.type === "checkbox" ? el.checked : el.value.trim(); }); };
     const re = () => { const y = bx.scrollTop; bx.innerHTML = `<h2>${(isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm}</h2>` + draw(); wire(); bx.scrollTop = y; };
     const hint = () => { const g = goiY(so, d), el = bx.querySelector("#qaGY"), S0 = SO[so]; if (el) el.innerHTML = g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý.";
@@ -239,6 +267,11 @@
       const k = bx.querySelector('[data-k="ketQua"]'); if (k) k.placeholder = kqTxt(d); };
     function wire() {
       bx.querySelectorAll("[data-so]").forEach(x => x.onclick = () => { pull(); so = x.dataset.so; re(); });
+      bx.querySelectorAll("input[data-anh]").forEach(inp => inp.onchange = async () => {
+        const fs = [...(inp.files || [])]; inp.value = ""; if (!fs.length) return;
+        if (r && r.id) { if (await upQA(r.id, fs)) { await anhGet(); renderQA(); } }
+        else { fs.forEach(f => pend.push({ f, url: URL.createObjectURL(f) })); anhPaint(); } });
+      anhPaint();
       bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); }));
       kiemWire(bx);
       const ma = bx.querySelector('[data-k="ma"]'), maH = () => { const h = bx.querySelector("#qaMaH"); if (!h || !ma) return; const v = ma.value.trim(), it = bbBy(v), mp = !it && bbMap(v, so);
@@ -270,10 +303,13 @@
         if (!d.ketQua && so === "NHAN" && d.ketLuan) d.ketQua = kqTxt(d); if (d.loiNang !== "" || d.loiNhe !== "") d.soLoi = soLoi(d);
         btn.disabled = true; const moi = !r;
         try { const o = await save({ id: r && r.id, loai: so, d }, d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô bao bì");
-          Object.assign(d, o.d); r = Object.assign(r || { loai: so, nguoi: me, xoa: 0 }, { id: o.id, d: JSON.parse(JSON.stringify(o.d)), sua: me }); isNew = false; st(); re(); renderQA(); } catch (e) { btn.disabled = false; toast(e.message); } };
+          const P = moi ? pend.splice(0) : []; if (moi) anh = [];
+          Object.assign(d, o.d); r = Object.assign(r || { loai: so, nguoi: me, xoa: 0 }, { id: o.id, d: JSON.parse(JSON.stringify(o.d)), sua: me }); isNew = false; st(); re(); renderQA();
+          if (P.length) { await upQA(r.id, P.map(p => p.f)); P.forEach(p => URL.revokeObjectURL(p.url)); await anhGet(); renderQA(); } } catch (e) { btn.disabled = false; toast(e.message); } };
       ["sv", "up"].forEach(k => { const b0 = bx.querySelector(`[data-a="${k}"]`); if (b0) b0.onclick = () => doSave(b0); });
     }
     /* cỡ mẫu tự điền theo số lượng (chỉ khi ô còn trống hoặc vẫn là số tự điền) */
+    if (r && r.id) anhGet();
     bx.addEventListener("input", e => { pull(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
     wire();
   }

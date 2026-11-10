@@ -1109,3 +1109,38 @@ details.kkng .kkng-b{display:flex;flex-direction:column;gap:10px;margin-top:10px
 /* canvas: mây, mưa, nắng, trăng sao, chim vẽ như thật — thay các hình tĩnh bằng CSS */
 #skyFx .sk-cv{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 :root[data-skycv=on] #skyFx i:not(.sk-g){display:none!important}
+
+/* ===== 4.5.7 · ảnh chụp khi ghi bao bì về ===== */
+.qa-anh{border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin:0 0 10px;background:var(--surface)}
+.qa-anh-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-bottom:4px}
+.qa-anh-h small{color:var(--muted);font-size:12px}
+.qa-anh .anhs{margin:6px 0}
+.anhs[hidden]{display:none!important}
+.qa-anh-b{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0}
+.qa-anh-b .btn{cursor:pointer;position:relative}
+.qa-anh-b input[type=file]{display:none!important}
+.qa-anh .note{display:block;margin-top:2px}
+.qa-pend{position:relative;outline:2px dashed #d97706;outline-offset:-2px;cursor:default}
+.qa-px{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.62);color:#fff;font-size:12px;line-height:24px;padding:0;cursor:pointer}
+.qa-anhc{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;vertical-align:1px}
+:root[data-theme=dark] .qa-anhc{background:#1e1b4b;color:#c7d2fe;border-color:#3730a3}
+.lbx{z-index:1300}
+@media (max-width:600px){.qa-anh .anh{width:84px;height:84px}.qa-anh-b .btn{flex:1 1 140px;justify-content:center;text-align:center}}
+
+/* ===== 4.5.7 · đầu trang điện thoại không chồng chữ (nút Trở lại + Tìm + Online + Chuông + Đăng xuất) ===== */
+@media screen and (max-width:600px){
+  .brand{gap:6px!important}
+  .backBtn:not([hidden]){margin-right:0!important}
+  .brand:has(> #backBtn:not([hidden])) > img,.brand:has(> #backBtn:not([hidden])) > .sep{display:none!important}
+  .brand > div{min-width:0}
+  .brand h1{white-space:nowrap}
+}
+@media screen and (max-width:420px){
+  #themeBtn{width:34px!important}
+  #logoutBtn{font-size:0!important;width:36px;min-width:36px;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border-radius:10px}
+  #logoutBtn::before{content:"";width:20px;height:20px;background:currentColor;
+    -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 16l4-4-4-4M19 12H9'/%3E%3C/svg%3E") center/contain no-repeat;
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 16l4-4-4-4M19 12H9'/%3E%3C/svg%3E") center/contain no-repeat}
+}
+@media screen and (max-width:380px){.brand img{height:26px!important}.brand h1{font-size:16px!important}.who{gap:2px!important}.who button.timb,.who button.onlb{margin-right:0!important}}
+@media screen and (max-width:340px){.brand > img,.brand > .sep{display:none!important}}

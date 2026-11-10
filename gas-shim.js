@@ -171,6 +171,24 @@ function webThemAnh(a, id, fname, fid) {
   return (anMap_()[m.id] || []).length;
 }
 function webKiemAnh(a, fid) { auth_(a); return !!(sheet_(AN_SH) && rows_(AN_SH).some(r => str_(r[5]) === String(fid))); }
+/* --- ảnh kiểm bao bì nhập kho (sổ BM.01–04): chung kho ảnh với ảnh nhập kho, cột ID ghi "QA:<số hồ sơ>" ---
+   Ảnh nằm ở Supabase, sau 7 ngày được dời sang Google Drive cùng đợt dời ảnh hằng đêm (sql/14_anh_kiem_bao_bi.sql). */
+function qaAnhRec_(me, id) {
+  const r = qaRows_().find(x => x.id === String(id));
+  if (!r || QA_VT.indexOf(r.loai) < 0) throw new Error('Không tìm thấy lô bao bì (có thể đã bị xoá).');
+  if (r.xoa) throw new Error('Lô bao bì này đã bị xoá, khôi phục rồi mới thêm ảnh.');
+  if (!qaQC_(me)) throw new Error('Chỉ QC hoặc Quản lý thêm ảnh vào sổ kiểm bao bì.');
+  if (r.d.xnQL && !qaTP_(me)) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không thêm ảnh được nữa.');
+  return r;
+}
+function webQAKiemAnh(a, id) { const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]), r = qaAnhRec_(me, id); return { ma: r.d.ma || '', ngay: r.d.ngayNhap || '' }; }
+function webThemAnhQA(a, id, fname, fid) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]), r = qaAnhRec_(me, id);
+  shX_(AN_SH, ['ID phiếu nhập', 'Mã', 'Số lô', 'Tên file', 'Link', 'File ID', 'Người', 'Thời điểm']).appendRow(['QA:' + r.id, r.d.ma || '', '', fname, '', fid, me.ten, new Date()]);
+  log_(me, 'Ảnh kiểm bao bì', (r.d.ma || r.d.ten || r.id) + ' · về ngày ' + (r.d.ngayNhap || ''), fname);
+  return (anMap_()['QA:' + r.id] || []).length;
+}
+function webAnhQA(a, id) { auth_(a); return (anMap_()['QA:' + String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi })); }
 function webKiemHoSo(a, ma, lo, loai, mime, size) {
   const me = auth_(a);
   if (!me.qc) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC.');
@@ -234,6 +252,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     if (fn === "getUserNames") { const { data, error } = await sb.rpc("ds_dang_nhap"); if (error) throw error; const TT = ["Nguyễn Ô Ghel", "Phan Thị Cẩm Tiên", "Châu Trần Yến Nhi", "KT Kho"], k = n => { const i = TT.indexOf(n); return i < 0 ? 99 : i; }; return (data || []).map(u => u.ten).sort((a, b) => k(a) - k(b) || a.localeCompare(b, "vi")); }
     if (fn === "login") return login(args[0]);
     if (fn === "uploadAnhNhap") return uploadAnh(...args);
+    if (fn === "uploadAnhQA") return uploadAnhQA(...args);
     if (fn === "getAnh") return getAnhWeb(...args);
     if (fn === "uploadHoSo") return uploadHoSoWeb(...args);
     if (!ME) { try { await loadMe(); } catch (e) {} if (!ME) throw new Error("Vui lòng đăng nhập."); }
@@ -319,6 +338,21 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     const { error } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
     if (error) throw new Error("Không tải ảnh lên được: " + error.message + (/bucket|not found|policy|security/i.test(error.message) ? " (Quản lý cần chạy file 08_anh_nhap_kho.sql)" : ""));
     return run("webThemAnh", [a, id, fname, "sb:" + path]);
+  }
+  /* ảnh chụp khi ghi bao bì về (sổ kiểm bao bì nhập kho) — không bắt buộc */
+  async function uploadAnhQA(a, id, name, mime, b64) {
+    if (AO()) throw new Error("Kho thử: không tải ảnh lên.");
+    if (!/^image\/(jpeg|png|webp)$/.test(String(mime || ""))) throw new Error("Chỉ nhận ảnh (JPG, PNG).");
+    const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    if (bytes.length > 8 * 1024 * 1024) throw new Error("Ảnh lớn quá 8 MB.");
+    const q = await run("webQAKiemAnh", [a, id]); /* kiểm quyền + phiếu trước khi tải, khỏi để ảnh mồ côi */
+    const ext = mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg";
+    const stamp = fmt(new Date(), "yyyyMMdd-HHmmss");
+    const fname = ["KiemBB", q.ma || "chua-ma", q.ngay || "", stamp].filter(Boolean).join("_").replace(/[\\/:*?"<>|]/g, "-") + ext;
+    const path = "QA_" + String(id).replace(/[^A-Za-z0-9._-]/g, "_") + "/" + stamp + "-" + Math.random().toString(36).slice(2, 7) + ext;
+    const { error } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
+    if (error) throw new Error("Không tải ảnh lên được: " + error.message + (/bucket|not found|policy|security/i.test(error.message) ? " (Quản lý cần chạy file 08_anh_nhap_kho.sql)" : ""));
+    return run("webThemAnhQA", [a, id, fname, "sb:" + path]);
   }
   async function getAnhWeb(a, fid) {
     fid = String(fid || "");

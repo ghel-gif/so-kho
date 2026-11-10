@@ -615,7 +615,8 @@ function webRDDel(a, id, khoiPhuc) {
 const QA_SH = 'PhongQAQC', QA_HEAD = ['ID', 'Loại', 'Ngày', 'Dữ liệu (JSON)', 'Người lập', 'Lúc', 'Trạng thái', 'Người sửa cuối'], QA_VT = ['NHAN', 'TUI', 'CHAI', 'THUNG'], QA_LOAI = QA_VT.concat(['KH', 'KPH']);
 function qaRows_() { return (sheet_(QA_SH) ? rows_(QA_SH) : []).filter(r => str_(r[0])).map(r => { let d = {}; try { d = JSON.parse(str_(r[3]) || '{}'); } catch (e) {}
   return { id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[2]), d, nguoi: str_(r[4]), luc: khTs_(r[5]), xoa: str_(r[6]) === 'Đã xoá' ? 1 : 0, sua: str_(r[7]) }; }); }
-function webQAAll(a) { auth_(a); return qaRows_(); }
+function webQAAll(a) { auth_(a); let A = {}; try { A = anMap_(); } catch (e) {} /* kèm số ảnh chụp khi ghi bao bì về */
+  return qaRows_().map(r => { const n = (A['QA:' + r.id] || []).length; if (n) r.anh = n; return r; }); }
 function qaTP_(me) { return me.vaiTro === ROLES.QL && me.ten === DL_EDITOR_; } /* TP. QA/QC xác nhận */
 function qaQC_(me) { return !!me.qc || me.vaiTro === ROLES.QL; }
 const QA_XN_ = ['xnQL', 'xnQLNguoi', 'xnQLLuc', 'kqXuLy'];
