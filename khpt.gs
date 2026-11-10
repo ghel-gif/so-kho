@@ -619,6 +619,24 @@ function webQAAll(a) { auth_(a); return qaRows_(); }
 function qaTP_(me) { return me.vaiTro === ROLES.QL && me.ten === DL_EDITOR_; } /* TP. QA/QC xác nhận */
 function qaQC_(me) { return !!me.qc || me.vaiTro === ROLES.QL; }
 const QA_XN_ = ['xnQL', 'xnQLNguoi', 'xnQLLuc', 'kqXuLy'];
+/** QC ghi mã bao bì mới vào Danh mục vật tư (nhóm Bao bì, không theo lô, không tồn đầu) ngay khi ghi bao bì về. */
+function webBBNew(a, it) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  if (!qaQC_(me) && [ROLES.QL, ROLES.KT].indexOf(me.vaiTro) < 0) throw new Error('Chỉ QC, Quản lý hoặc Kế toán ghi mã bao bì mới.');
+  it = it || {};
+  const ma = String(it.ma || '').trim().toUpperCase().replace(/\s+/g, ''), ten = String(it.ten || '').trim().slice(0, 200), dv = String(it.donVi || '').trim().slice(0, 20) || 'cái';
+  if (!/^BB\.[A-Z0-9][A-Z0-9._\-+]*$/.test(ma)) throw new Error('Mã bao bì bắt đầu bằng BB. (VD BB.NHAN.ALP-D7), chỉ gồm chữ, số, dấu chấm, gạch.');
+  if (!ten) throw new Error('Ghi tên bao bì.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_(SH.VT), codes = rows_(SH.VT).map(r => str_(r[0]).toLowerCase());
+    if (codes.indexOf(ma.toLowerCase()) >= 0) throw new Error('Mã ' + ma + ' đã có trong Danh mục vật tư.');
+    if (!str_(sh.getRange(1, 12).getValue())) sh.getRange(1, 12).setValue('Kho').setFontWeight('bold');
+    sh.appendRow([ma, ten, 'Bao bì', dv, 1, 0, 0, '', '', '', '', 'Kho bao bì']);
+    log_(me, 'Thêm vật tư (QC ghi bao bì về)', ma, ten);
+  } finally { lock.releaseLock(); }
+  return { ma, ten, nhom: 'Bao bì', donVi: dv, heSo: 1 };
+}
 function webQASave(a, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   if (!qaQC_(me)) throw new Error('Chỉ QC hoặc Quản lý ghi sổ QA/QC.');

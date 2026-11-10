@@ -819,7 +819,7 @@ small{font-size:max(12.5px,.85em)}
 .dgns .pick .pk{padding:6px 12px}
 .dgns .pick .pk b{font-weight:700}
 .pick .pk:has(input:disabled){opacity:.45;cursor:not-allowed}
-#dgNVHp.empty .pk{border-color:var(--need-line);background:var(--need-bg)}
+#dgNVHp.chua .pk{border-color:var(--need-line);background:var(--need-bg)}
 #dgSave.ok{background:#2e7d32;border-color:#2e7d32;color:#fff}
 #dglBox details.dgspec>summary{cursor:pointer}
 .dgkvs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
@@ -963,3 +963,67 @@ svg.wxi.wx-itmay,svg.wxi.wx-comay{color:#d08a00}svg.wxi:is(.wx-nhieumay,.wx-suon
 button.wxln{display:inline-flex;align-items:center;gap:4px;padding:1px 8px 1px 5px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:600 12.5px var(--font,inherit);cursor:pointer;vertical-align:middle;min-height:0}
 button.wxln svg{width:16px;height:16px}
 @media (max-width:600px){.who button.wxb{display:none!important}}
+/* ===== 4.5.3 · ghi bao bì về: mã bắt buộc theo Danh mục vật tư, người kiểm bấm chọn ===== */
+.qa-pkw{display:flex;flex-direction:column;gap:6px;font-size:14px;min-width:0}
+.qa-pkw .qa-pkl{font-weight:500}
+.qa-pk{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.qa-pk .pk{padding:6px 11px}.qa-pk .pkx{flex:1 1 170px;min-width:150px}
+.qa-ma{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 10px}
+.qa-ma>label{flex:1 1 320px;margin:0}
+.qa-ma>.btn{height:42px}
+.qa-ma .qa-mah{flex-basis:100%;margin:0}
+/* lệnh đang đóng gói: ô KL tồn cuối — "▼ Đóng xong: cân rồi điền" nhún nhảy + vòng sáng, tắt khi đã có số */
+#dgBtp label.dg-cuoi{color:var(--need-hot,#e67700)!important;font-weight:600}
+#dgBtp label.dg-cuoi::after{content:"▼ Đóng xong: cân rồi điền";order:1;margin-left:auto;align-self:center;flex:none;font:700 11px/13px var(--font,inherit);color:#fff;background:var(--need-hot,#e67700);border-radius:999px;padding:2px 8px;white-space:nowrap;box-shadow:0 2px 6px rgba(230,119,0,.35);animation:needBob 1s ease-in-out infinite}
+#dgBtp label.dg-cuoi>input:not(:focus){background:var(--need-bg)!important;border-color:var(--need-line)!important;outline:3px solid rgba(240,140,0,.95);outline-offset:0;animation:needPing 1.3s ease-out infinite}
+:root[data-theme=dark] #dgBtp label.dg-cuoi::after{color:#1d1300}
+@media (prefers-reduced-motion:reduce){#dgBtp label.dg-cuoi::after,#dgBtp label.dg-cuoi>input{animation:none!important}}
+/* ===== 4.5.3 · lệnh đóng gói: số lượng — ô điền / tự tính / không dùng rõ ràng ===== */
+#dglBox .dgq-mode{margin:2px 0 0}
+.dgtag{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;line-height:15px;padding:1px 7px;border-radius:999px;vertical-align:1px;white-space:nowrap}
+.dgtag.auto{background:#e3efe7;color:#2e5d3e}.dgtag.na{background:#eceff1;color:#6b7b86}.dgtag.opt{background:transparent;color:var(--muted);font-weight:600;padding:1px 2px}
+#dglBox label.dgf-na{color:var(--muted)}
+#dglBox label.dgf-na>input{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--line) 30%,var(--surface)) 0 6px,color-mix(in srgb,var(--line) 55%,var(--surface)) 6px 12px)!important;border-style:dashed!important;color:var(--muted)!important;-webkit-text-fill-color:var(--muted);cursor:not-allowed;opacity:.85}
+#dglBox label.dgf-auto>input{background:color-mix(in srgb,#2e7d32 9%,var(--surface))!important;border:1px dashed #6aa77a!important;font-weight:800;color:var(--ink)!important;cursor:default}
+.dgq-lg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin:-2px 0 0}
+.dgq-lg i{display:inline-block;width:14px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+.dgq-lg i.in{background:var(--need-bg);border-color:var(--need-line)}.dgq-lg i.opt{background:var(--surface)}.dgq-lg i.auto{background:color-mix(in srgb,#2e7d32 9%,var(--surface));border:1px dashed #6aa77a}
+.dgq-lg i.na{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--line) 30%,var(--surface)) 0 3px,color-mix(in srgb,var(--line) 60%,var(--surface)) 3px 6px);border-style:dashed}
+#dgQChk:empty{display:none}#dgQChk .dgchk{margin:0}
+#dglBox .two.dgqty{grid-template-columns:repeat(4,minmax(0,1fr))}
+/* ===== 4.5.3 · điện thoại: bớt chữ, bớt khoảng trống ===== */
+.inm{display:none}
+@media (max-width:600px){
+  /* thanh mục trên cùng: mỏng hơn */
+  body nav.side{padding:5px 8px!important;gap:6px!important}
+  body nav.side button[data-tab]{min-height:36px!important;padding:5px 11px!important;font-size:13.5px!important}
+  body nav.side button[data-tab] svg{width:16px!important;height:16px!important}
+  /* nút chuyển mục: 1 hàng, vuốt ngang thay vì xếp nhiều dòng */
+  html body .seg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;gap:6px;padding:2px 2px 5px}
+  html body .seg::-webkit-scrollbar{display:none}
+  html body .seg button{flex:0 0 auto!important;min-height:36px;padding:6px 12px;font-size:13px;white-space:nowrap;border-width:1.5px!important;box-shadow:0 1px 0 #0f6f64}
+  html body .seg .seg2-l{flex:0 0 auto;align-self:center;white-space:nowrap}
+  /* hàng công cụ: nút nằm cạnh nhau, không mỗi nút 1 dòng */
+  .tools>.btn,.tools>button{flex:0 1 auto!important;width:auto!important}
+  /* bản tin phiên bản mới: chỉ tiêu đề + nút */
+  #newsBox ul{display:none!important}#newsBox .nwh{flex-wrap:wrap;gap:6px}#newsBox .nwh b{font-size:13px}
+  /* lệnh đóng gói khi mở trên điện thoại */
+  .dgo-facts,.dgq-lg,.dg-pn,.dgchk-h small,#dgPlan .list .row .meta{display:none!important}
+  .dgstep{display:flex!important;gap:4px}.dgstep li{flex:0 0 auto;padding:5px 7px}.dgstep li span{display:none}
+  .dgstep li.cur{flex:1 1 auto}.dgstep li.cur span{display:inline;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dgchk{padding:8px 10px}.dgchk li{font-size:13.5px;padding:5px 8px 5px 28px}.dgchk li::before{left:7px;top:7px}
+  .dgf-bar{padding:8px!important;margin:4px 0 8px!important}.dgf-h{font-size:13.5px!important;margin-bottom:6px!important}.dgf-h small{display:none}
+  .dgf-g{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  .dgf-t{min-height:0!important;padding:7px 8px!important;flex-direction:column;align-items:flex-start!important;gap:3px!important}
+  .dgf-t svg,.dgf-x>span,.dgf-gap{display:none!important}.dgf-x b{font-size:14px!important}.dgf-s{font-size:10.5px!important;padding:1px 6px!important}
+  .fnm{display:none}.inm{display:inline}
+  .dgns .pick .pk{padding:5px 9px}
+  .dgo-sub{font-size:13.5px}
+  #dglBox details.dgspec{padding:8px 10px!important}
+}
+@media (max-width:600px){
+  #dglBox label.dgf-na{display:none!important}
+  .qc-bar .dl-open,.qc-bar .btn{font-size:13px!important;padding:6px 10px!important;min-height:36px!important}
+  .qc-bar .dl-open svg{width:16px!important;height:16px!important}
+  .tools input[type=month],.tools input[type=date]{flex:1 1 calc(50% - 4px)!important;width:auto!important}
+}

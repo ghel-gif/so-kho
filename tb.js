@@ -343,7 +343,7 @@
       return h; };
     const extra = () => tbs().filter(t => (t.d.kcSo === so || (/^cân/i.test(t.d.ten) && t.d.nhom === "Đo lường")) && !d.rows.some(x => x.tb === t.id)).sort(byMa);
     const w = dlg(`Sổ kiểm tra thiết bị đo (BM.02-QC-QT.01) — ${S0.ten}`, `<div class="two qa-g">
-        ${fld("Ngày", `<input data-h="ngay" type="date" value="${E(d.ngay)}" ${dis}>`)}${fld(S0.nv, sel("nguoi", d.nguoi, USERS.length ? USERS : [S.me.ten], "— chọn —").replace('data-k="nguoi"', `data-h="nguoi" ${dis}`))}</div>
+        ${fld("Ngày", `<input data-h="ngay" type="date" value="${E(d.ngay)}" ${dis}>`)}${window.kiemPick ? `<div class="qa-pkw" style="grid-column:1/-1"><span class="qa-pkl">${E(S0.nv)}</span>${kiemPick('data-h="nguoi"', d.nguoi, dis, USERS)}</div>` : fld(S0.nv, sel("nguoi", d.nguoi, USERS.length ? USERS : [S.me.ten], "— chọn —").replace('data-k="nguoi"', `data-h="nguoi" ${dis}`))}</div>
       <p class="note" style="margin:6px 0">PP kiểm tra: dùng quả cân, vật cân chuẩn để kiểm tra · thiết bị cân chuẩn: ${E(S0.chu)}. ${E(S0.luat)}</p>
       <div id="kcTbl">${tblH()}</div>
       ${ed ? `<div class="tools" style="margin-top:6px"><select id="kcAdd" style="width:auto;max-width:360px"><option value="">+ Thêm cân vào sổ…</option>${extra().map(t => `<option value="${E(t.id)}">${E(tenTB(t))}${t.d.tinhTrang !== "Đang sử dụng" ? " (" + E(t.d.tinhTrang) + ")" : ""}</option>`).join("")}</select></div>` : ""}
@@ -351,7 +351,7 @@
       ${fld("Ghi chú", `<input data-h="ghiChu" value="${E(d.ghiChu || "")}" ${dis}>`, true)}
       ${r ? `<p class="note">Ghi bởi ${E(r.nguoi)}${r.sua && r.sua !== r.nguoi ? " · sửa cuối " + E(r.sua) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</p>` : ""}
       <div class="actions">${r && (TP() || (ed && r.nguoi === S.me.ten)) ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span>${r ? '<button class="btn" type="button" data-a="pr">🖨 In</button>' : ""}<button class="btn" type="button" data-a="x">Đóng</button>${ed ? '<button class="btn primary" type="button" data-a="sv">Lưu</button>' : ""}</div>`, true);
-    const bx = w.querySelector(".cfm-box");
+    const bx = w.querySelector(".cfm-box"); if (window.kiemWire) kiemWire(bx);
     const reTbl = () => { bx.querySelector("#kcTbl").innerHTML = tblH(); bx.querySelector("#kcSum").innerHTML = sumH(); const a = bx.querySelector("#kcAdd"); if (a) a.innerHTML = `<option value="">+ Thêm cân vào sổ…</option>${extra().map(t => `<option value="${E(t.id)}">${E(tenTB(t))}${t.d.tinhTrang !== "Đang sử dụng" ? " (" + E(t.d.tinhTrang) + ")" : ""}</option>`).join("")}`; };
     bx.addEventListener("input", e => { const el = e.target; if (!el.classList.contains("kcv")) return; const i = +el.dataset.i, x = d.rows[i]; if (!x) return; x[el.dataset.f] = el.value.trim();
       const c = calc(x), L = bx.querySelector("#kcL" + i), Dd = bx.querySelector("#kcD" + i);
