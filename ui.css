@@ -1033,3 +1033,9 @@ button.wxln svg{width:16px;height:16px}
 details.kkng{margin:4px 0 8px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface)}
 details.kkng>summary{cursor:pointer;font-weight:700;color:var(--accent)}
 details.kkng .kkng-b{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+/* ===== 4.5.5 · mở từng lệnh SX BTP: đầu lệnh, tiến độ, việc cần làm ===== */
+#odView .dgo-hd{display:flex;flex-direction:column;gap:8px}
+#odView .dgo-hd h2{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px;line-height:1.25}
+#odView .dgo-hd h2 .st{font-size:12px;padding:3px 10px}
+#lsChk:empty{display:none}#lsChk{display:flex;flex-direction:column;gap:8px}
+#odView .dgf-bar{margin:0}

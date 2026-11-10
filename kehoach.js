@@ -237,7 +237,7 @@ function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true}
 /* BM.06 / BM.08 chỉ dùng cho lô sản xuất mã AHK.… */
 const isAHK=s=>/^AHK\./i.test(String(s||"").trim());
 window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm"||!isAHK(o.so))return;
-  const h2=v.querySelector("h2"),ins=d=>{(h2?h2.nextSibling:v.firstChild)?v.insertBefore(d,h2?h2.nextSibling:v.firstChild):v.appendChild(d)};
+  const h2=v.querySelector("h2"),ins=d=>{if(h2)h2.after(d);else v.prepend(d)};
   if(window.qcTiles){const IC=window.QC_IC,d=document.createElement("div"),emp=x=>x===undefined||x===null||String(x).trim()==="";
     qcTiles(d,[{f:"bb",code:"BM.06",name:"Biên bản sản xuất BTP",icon:IC.doc,open:()=>bbDlg(o.so)},{f:"hl",code:"BM.08",name:"Phiếu kiểm nghiệm hoá lý",icon:IC.flask,open:()=>hlForm(o.maSP,o.so)},{f:"vs",code:"BM.05",name:"Vệ sinh thiết bị khuấy trộn",icon:IC.home,open:()=>vsDlg(o.so)}],async()=>{
       const [B,H,V]=await Promise.all([api("webBBGet",S.auth,o.so).catch(()=>null),api("webHLGet",S.auth,o.maSP,o.so,"").catch(()=>null),api("webVSGet",S.auth,o.so,"").catch(()=>null)]);const R={};
