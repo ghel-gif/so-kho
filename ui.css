@@ -619,9 +619,9 @@ small{font-size:max(12.5px,.85em)}
 @media (max-width:600px){
   .pghead{flex-direction:row!important;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;text-align:left}
   .pghead h1{font-size:18px!important}
-  #tab-ton .tools #q{flex:1 1 0!important;width:auto!important}
-  #tab-ton .tools #reloadBtn{flex:0 0 auto}
-  #tab-ton .tools select{flex:1 1 calc(50% - 4px)!important;width:auto!important}
+  #tab-ton .tools #q{order:1;flex:1 1 60%!important;width:auto!important}
+  #tab-ton .tools #reloadBtn{order:2;flex:0 0 auto}
+  #tab-ton .tools select{order:3;flex:1 1 calc(50% - 4px)!important;width:auto!important}
   #impBox,#tab-ton>p.note,#lsxListView>p.note,#mvHint,#xnForm>p.note,#qrBox>p.note,label>small.note,.dgnote{display:none!important}
   .actions>.need-cnt small{max-width:150px}
 }
@@ -695,3 +695,16 @@ small{font-size:max(12.5px,.85em)}
   #qcFind,#qcEd,#qcAdd,.qc-bar .note,.qc-bar>div:nth-child(2){display:none!important}
   #kcBox>p.note{display:none}
 }
+/* Nghiên cứu sản phẩm: các bước làm việc · thẻ số liệu · nhóm phiếu */
+.rd-flow{list-style:none;counter-reset:rdf;display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px;padding:0}
+.rd-flow li{counter-increment:rdf;flex:1 1 220px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;line-height:1.35}
+.rd-flow li::before{content:counter(rdf);flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#1a5fb4;color:#fff;font-weight:800;font-size:13px}
+.summary.rd-sum{grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px}
+@media (max-width:600px){.summary.rd-sum{grid-template-columns:repeat(2,minmax(0,1fr))!important}.summary.rd-sum .stat:first-child{grid-column:auto}.rd-flow li{flex-basis:100%;padding:6px 10px}}
+.rd-list .row .name{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px}
+.rd-list .row .name .code{margin:0}
+.rd-list .row .name .tn{font-weight:600;color:var(--ink)}
+.rd-list .row.r-bad{box-shadow:inset 4px 0 0 #e11d48}
+.rd-list .row.r-wait{box-shadow:inset 4px 0 0 #7c3aed}
+.rd-list .grp small{margin-left:8px;font-weight:600;letter-spacing:0;text-transform:none;opacity:.8}
+@media (max-width:600px){.rd-flow{display:none}}
