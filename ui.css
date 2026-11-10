@@ -327,3 +327,14 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .rd-me{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 8px}.rd-me input{width:110px!important}.rd-me select{width:auto!important}.rd-me .note{margin:0}
 .rd-tb td.rd-can{text-align:right;font-variant-numeric:tabular-nums;color:#0f766e;font-weight:600;white-space:nowrap}
 .rd-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 6px}.rd-pick .note{margin:0}
+/* Phòng QA/QC */
+.qa-dlg .qa-fs{border:1px solid var(--line,#d0d7de);border-radius:10px;padding:8px 12px 10px;margin:0 0 10px}
+.qa-dlg .qa-fs legend{font-weight:700;padding:0 6px}
+.qa-dlg .qa-fs[disabled]{opacity:.85}
+.qa-dlg .qa-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 12px}
+.qa-dlg .qa-g label{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.qa-dlg .qa-g label.qa-chk,.qa-dlg label.qa-chk{flex-direction:row;align-items:center;gap:6px}
+.qa-dlg .qa-chk input{width:auto}
+.qa-dlg textarea{width:100%;resize:vertical}
+.qa-dlg .qa-kl .btn.ok{background:#2e7d32;color:#fff;border-color:#2e7d32}
+.qa-dlg .qa-kl .btn.bad{background:#c62828;color:#fff;border-color:#c62828}

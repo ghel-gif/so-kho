@@ -609,3 +609,65 @@ function webRDDel(a, id, khoiPhuc) {
   log_(me, khoiPhuc ? 'Khôi phục hồ sơ RD' : 'Xoá hồ sơ RD', String(id), '');
   return rdRows_();
 }
+
+/* ================= PHÒNG QA/QC: QC-QT.02 kiểm tra vật tư nhập kho (BM.01–05) · QC-QT.05 sổ theo dõi sự KPH (BM.01) =================
+   QC ghi vật tư về (phần Quản lý kho) và kết quả kiểm tra; TP. QA/QC (Nguyễn Ô Ghel) xác nhận; cột thu mua để trống, ký tay khi in. */
+const QA_SH = 'PhongQAQC', QA_HEAD = ['ID', 'Loại', 'Ngày', 'Dữ liệu (JSON)', 'Người lập', 'Lúc', 'Trạng thái', 'Người sửa cuối'], QA_VT = ['NHAN', 'TUI', 'CHAI', 'THUNG'], QA_LOAI = QA_VT.concat(['KH', 'KPH']);
+function qaRows_() { return (sheet_(QA_SH) ? rows_(QA_SH) : []).filter(r => str_(r[0])).map(r => { let d = {}; try { d = JSON.parse(str_(r[3]) || '{}'); } catch (e) {}
+  return { id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[2]), d, nguoi: str_(r[4]), luc: khTs_(r[5]), xoa: str_(r[6]) === 'Đã xoá' ? 1 : 0, sua: str_(r[7]) }; }); }
+function webQAAll(a) { auth_(a); return qaRows_(); }
+function qaTP_(me) { return me.vaiTro === ROLES.QL && me.ten === DL_EDITOR_; } /* TP. QA/QC xác nhận */
+function qaQC_(me) { return !!me.qc || me.vaiTro === ROLES.QL; }
+const QA_XN_ = ['xnQL', 'xnQLNguoi', 'xnQLLuc', 'kqXuLy'];
+function webQASave(a, o) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  if (!qaQC_(me)) throw new Error('Chỉ QC hoặc Quản lý ghi sổ QA/QC.');
+  o = o || {}; if (QA_LOAI.indexOf(o.loai) < 0) throw new Error('Loại sổ không hợp lệ.');
+  const tp = qaTP_(me), now = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(QA_SH, QA_HEAD), R = sheet_(QA_SH) ? rows_(QA_SH) : [];
+    let id = String(o.id || ''), i = id ? R.findIndex(r => str_(r[0]) === id) : -1;
+    if (id && i < 0) throw new Error('Không tìm thấy hồ sơ (có thể đã bị xoá).');
+    const cu = i >= 0 ? (() => { try { return JSON.parse(str_(R[i][3]) || '{}'); } catch (e) { return {}; } })() : null;
+    const d = Object.assign({}, o.d || {});
+    if (QA_VT.indexOf(o.loai) >= 0) {
+      if (!String(d.ten || '').trim()) throw new Error('Ghi tên vật tư.');
+      if (!isYmd_(d.ngayNhap)) throw new Error('Ghi ngày nhập (ngày vật tư về).');
+      if (cu && cu.xnQL && !tp) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không sửa được nữa.');
+      if (!tp) QA_XN_.forEach(k => { if (cu && k in cu) d[k] = cu[k]; else delete d[k]; }); /* QC không tự xác nhận */
+      else if (String(d.xnQL || '') !== String((cu && cu.xnQL) || '')) { d.xnQLNguoi = d.xnQL ? me.ten : ''; d.xnQLLuc = d.xnQL ? now : ''; }
+      if (d.ketLuan && ['Đạt', 'Không đạt'].indexOf(d.ketLuan) < 0) throw new Error('Kết luận chỉ Đạt / Không đạt.');
+      if (d.ketLuan && !d.nguoiKT) d.nguoiKT = me.ten;
+      if (d.ketLuan && !isYmd_(d.ngayKT)) d.ngayKT = now.slice(0, 10);
+      if (d.ketLuan && !(cu && cu.ketLuan)) d.kiemLuc = now;
+      d.tt = d.xnQL ? 'Đã xác nhận' : d.ketLuan ? 'Chờ xác nhận' : 'Chờ kiểm';
+    } else if (o.loai === 'KH') {
+      if (!String(d.ten || '').trim()) throw new Error('Ghi tên hàng dự kiến giao.');
+      if (!isYmd_(d.duKien)) throw new Error('Ghi ngày dự kiến giao.');
+    } else if (o.loai === 'KPH') {
+      if (!String(d.suKPH || '').trim()) throw new Error('Ghi sự không phù hợp.');
+      if (!isYmd_(d.ngay)) d.ngay = now.slice(0, 10);
+      if (!d.so) { const ym = d.ngay.slice(2, 4) + d.ngay.slice(5, 7), n = R.filter(r => str_(r[1]) === 'KPH' && (() => { try { return String(JSON.parse(str_(r[3]) || '{}').so || '').indexOf('KPH-' + ym) === 0; } catch (e) { return false; } })()).length + 1; d.so = 'KPH-' + ym + '-' + ('0' + n).slice(-2); }
+      if (d.dong && !(cu && cu.dong)) { d.dongNguoi = me.ten; d.dongLuc = now; }
+    }
+    const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
+    const ngay = o.loai === 'KH' ? d.duKien : o.loai === 'KPH' ? d.ngay : d.ngayNhap;
+    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    if (i >= 0) sh.getRange(i + 2, 1, 1, QA_HEAD.length).setValues([[id, o.loai, ngay, js, str_(R[i][4]), R[i][5], '', me.ten]]);
+    else sh.appendRow([id, o.loai, ngay, js, me.ten, new Date(), '', me.ten]);
+    log_(me, 'Phòng QA/QC ' + o.loai, id, String(d.ten || d.suKPH || '').slice(0, 120) + (d.tt ? ' · ' + d.tt : d.so ? ' · ' + d.so : ''));
+    return { id, d };
+  } finally { lock.releaseLock(); }
+}
+function webQADel(a, id, khoiPhuc) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  const R = sheet_(QA_SH) ? rows_(QA_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id));
+  if (i < 0) throw new Error('Không tìm thấy hồ sơ.');
+  if (!qaTP_(me) && str_(R[i][4]) !== me.ten) throw new Error('Chỉ người lập hoặc TP. QA/QC (' + DL_EDITOR_ + ') được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
+  let d = {}; try { d = JSON.parse(str_(R[i][3]) || '{}'); } catch (e) {}
+  if (!khoiPhuc && d.xnQL && !qaTP_(me)) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không xoá được.');
+  sheet_(QA_SH).getRange(i + 2, 7, 1, 2).setValues([[khoiPhuc ? '' : 'Đã xoá', me.ten]]);
+  log_(me, khoiPhuc ? 'Khôi phục hồ sơ QA/QC' : 'Xoá hồ sơ QA/QC', String(id), '');
+  return qaRows_();
+}
