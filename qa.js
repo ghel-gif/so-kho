@@ -385,5 +385,10 @@
     if (tp) live(R).filter(x => x.loai === "KPH" && !x.d.dong).forEach(k => out.push({ id: k.id, c: "#c62828", t: `⚠ <b>${E(k.d.so)}</b> · ${E(k.d.suKPH)} — chưa xử lý xong (${D(k.d.ngay)})` }));
     return out;
   };
+  /* tìm nhanh (ô tìm ở đầu trang): phiếu kiểm bao bì theo mã, tên, NCC, ngày */
+  window.qaSearch = async function (toks, fd) { try { if (!R.length) await load(); } catch (e) { return []; }
+    return vt().filter(r => { const d = r.d || {}, h = fd([d.ma, d.ten, d.ncc, d.loaiVT, d.npp, d.quyCach, D(d.ngayNhap), SO[r.loai].bm, SO[r.loai].ngan].join(" ")); return toks.every(t => h.includes(t)); })
+      .sort((a, c) => String(c.d.ngayNhap || "").localeCompare(String(a.d.ngayNhap || ""))).slice(0, 8)
+      .map(r => ({ id: r.id, ten: r.d.ten || "", ma: r.d.ma || "", bm: SO[r.loai].bm.slice(0, 5) + " · " + SO[r.loai].ngan, ngay: r.d.ngayNhap || "", ncc: r.d.ncc || "", tt: ttOf(r), kl: r.d.ketLuan || "" })); };
   window.qaOpen = function (id) { setTab("qa"); setTimeout(async () => { try { if (!R.length) await load(); const r = rec(id); if (!r) return; if (r.loai === "KPH") { view = "kph"; kphDlg(r); } else if (r.loai === "KH") khDlg(r); else vtDlg(r); } catch (e) {} }, 300); };
 })();

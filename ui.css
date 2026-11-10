@@ -1039,3 +1039,73 @@ details.kkng .kkng-b{display:flex;flex-direction:column;gap:10px;margin-top:10px
 #odView .dgo-hd h2 .st{font-size:12px;padding:3px 10px}
 #lsChk:empty{display:none}#lsChk{display:flex;flex-direction:column;gap:8px}
 #odView .dgf-bar{margin:0}
+/* ===== 4.5.6 · dải đầu trang chuyển động rõ hơn ===== */
+#skyFx .sk-g{background-size:230% 100%!important;animation:skFlow 28s ease-in-out infinite alternate}
+@keyframes skFlow{from{background-position:0% 50%}to{background-position:100% 50%}}
+/* mây trôi ngang qua cả dải, nối tiếp nhau */
+#skyFx .sk-cl{left:100%!important;animation:skCross 62s linear infinite}
+#skyFx .sk-cl.c1{animation-duration:58s;animation-delay:-8s;top:8px}
+#skyFx .sk-cl.c2{animation-duration:80s;animation-delay:-36s;top:16px}
+#skyFx .sk-cl.c3{animation-duration:104s;animation-delay:-70s;top:2px}
+@keyframes skCross{from{transform:translateX(0)}to{transform:translateX(calc(-100vw - 180px))}}
+/* nắng: tia xoay chậm + nhịp sáng */
+#skyFx .sk-sun::before{content:"";position:absolute;inset:-46%;border-radius:50%;background:repeating-conic-gradient(rgba(255,206,84,.38) 0 7deg,transparent 7deg 24deg);-webkit-mask:radial-gradient(circle,transparent 30%,#000 34%,#000 52%,transparent 70%);mask:radial-gradient(circle,transparent 30%,#000 34%,#000 52%,transparent 70%);animation:skSpin 36s linear infinite}
+#skyFx .sk-sun{animation:skGlow 4.5s ease-in-out infinite}
+@keyframes skSpin{to{transform:rotate(360deg)}}
+@keyframes skGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18) drop-shadow(0 0 10px rgba(255,200,80,.55))}}
+/* trăng sáng nhẹ, sao lấp lánh 2 lớp, sao băng */
+#skyFx .sk-moon{filter:drop-shadow(0 0 7px rgba(243,238,200,.75));animation:skMoon 6s ease-in-out infinite}
+@keyframes skMoon{0%,100%{filter:drop-shadow(0 0 5px rgba(243,238,200,.6))}50%{filter:drop-shadow(0 0 12px rgba(243,238,200,.95))}}
+#skyFx .sk-stars.s2{inset:0 18% 0 32%;background-image:radial-gradient(1.3px 1.3px at 12% 40%,#fff 60%,transparent 62%),radial-gradient(1.1px 1.1px at 28% 20%,#fff 60%,transparent 62%),radial-gradient(1.5px 1.5px at 47% 72%,#fff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 63% 30%,#fff 60%,transparent 62%),radial-gradient(1.4px 1.4px at 86% 58%,#fff 60%,transparent 62%);animation-delay:-3s!important;animation-duration:4.2s!important}
+:root[data-sky=dem]:is([data-wx=quang],[data-wx=itmay],[data-wx=x]) #skyFx .sk-stars.s2{opacity:.85;animation:skTw 4.2s ease-in-out infinite alternate}
+#skyFx .sk-shoot{width:110px;height:2px;left:58%;top:10px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff 70%,rgba(255,255,255,.95));transform:rotate(-16deg)}
+:root[data-sky=dem]:is([data-wx=quang],[data-wx=itmay],[data-wx=comay],[data-wx=x]) #skyFx .sk-shoot{animation:skShoot 11s ease-out infinite}
+@keyframes skShoot{0%,86%{opacity:0;transform:translate(0,0) rotate(-16deg)}88%{opacity:1}96%{opacity:0;transform:translate(-260px,74px) rotate(-16deg)}100%{opacity:0}}
+/* chim bay qua (ban ngày, trời không mưa) */
+#skyFx .sk-bird{width:60px;height:24px;left:-70px;top:14px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 24'%3E%3Cg fill='none' stroke='%23334b63' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M2 10q4-5 8 0q4-5 8 0'/%3E%3Cpath d='M26 5q3-4 6 0q3-4 6 0'/%3E%3Cpath d='M44 15q3-4 6 0q3-4 6 0'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat}
+:root:is([data-sky=sang],[data-sky=chieu],[data-sky=binhminh]):is([data-wx=quang],[data-wx=itmay],[data-wx=comay],[data-wx=x]) #skyFx .sk-bird{opacity:.75;animation:skBird 34s linear infinite}
+:root[data-theme=dark] #skyFx .sk-bird{filter:invert(1) brightness(.85)}
+@keyframes skBird{0%{transform:translate(0,0)}25%{transform:translate(27vw,-6px)}50%{transform:translate(54vw,4px)}75%{transform:translate(81vw,-5px)}100%{transform:translate(calc(100vw + 140px),2px)}}
+/* mưa rõ hơn */
+:root[data-wx=mua] #skyFx .sk-rain{opacity:.5}
+:root:is([data-wx=muato],[data-wx=giong]) #skyFx .sk-rain{opacity:.68}
+@media (prefers-reduced-motion:reduce){#skyFx i,#skyFx i::before{animation:none!important}}
+/* ===== 4.5.6 · cảnh báo chuyển động rõ hơn ===== */
+@keyframes chkPulse{0%{box-shadow:0 0 0 0 rgba(198,40,40,.45)}70%{box-shadow:0 0 0 9px rgba(198,40,40,0)}100%{box-shadow:0 0 0 0 rgba(198,40,40,0)}}
+@keyframes chkPulseA{0%{box-shadow:0 0 0 0 rgba(240,165,0,.45)}70%{box-shadow:0 0 0 8px rgba(240,165,0,0)}100%{box-shadow:0 0 0 0 rgba(240,165,0,0)}}
+@keyframes chkOk{0%,100%{box-shadow:0 0 0 0 rgba(46,125,50,.0)}50%{box-shadow:0 0 0 5px rgba(46,125,50,.18)}}
+@keyframes stepGlow{0%,100%{box-shadow:0 0 0 1px var(--accent) inset,0 0 0 0 color-mix(in srgb,var(--accent) 40%,transparent)}50%{box-shadow:0 0 0 1px var(--accent) inset,0 0 0 5px color-mix(in srgb,var(--accent) 0%,transparent)}}
+.dgchk{animation:chkPulseA 2.4s ease-out infinite}
+.dgchk:has(li.bad){animation:chkPulse 1.7s ease-out infinite}
+.dgchk.ok{animation:chkOk 2.4s ease-in-out infinite}
+.dgchk li.bad::before{animation:skDot 1s ease-in-out infinite}
+.dgchk li.warn::before{animation:skDot 1.8s ease-in-out infinite}
+.dgchk-h .bad{background:#c62828;color:#fff!important;padding:1px 9px;border-radius:999px;animation:skRing 1.6s ease-out infinite}
+.dgchk-h .warn{background:#f5a700;color:#2e1d00!important;padding:1px 9px;border-radius:999px}
+.dgchk.ok .btn{animation:needBob 1.2s ease-in-out infinite}
+.dgstep li.cur{animation:stepGlow 2s ease-in-out infinite}
+.dgton-bad{animation:chkPulse 1.7s ease-out infinite}
+@media (prefers-reduced-motion:reduce){.dgchk,.dgchk li::before,.dgchk-h .bad,.dgchk.ok .btn,.dgstep li.cur,.dgton-bad{animation:none!important}}
+/* ===== 4.5.6 · tìm nhanh ===== */
+.who button.timb{display:inline-flex;align-items:center;gap:6px;height:34px;min-height:34px;padding:0 12px!important;margin-right:8px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--ink);font:600 13px var(--font,inherit);cursor:pointer;vertical-align:middle}
+.who button.timb:hover{border-color:var(--accent)}
+.timb svg,.timh svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;flex:none}
+.timov{position:fixed;inset:0;z-index:95;background:rgba(10,22,36,.38);display:flex;justify-content:center;align-items:flex-start;padding:64px 12px 12px}
+.timov[hidden]{display:none}
+.timbox{width:min(720px,100%);max-height:min(76vh,720px);display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border-radius:14px;box-shadow:0 18px 48px rgba(0,0,0,.28);overflow:hidden;border:1px solid var(--line)}
+.timh{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.timh input{flex:1;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;font-size:16px;height:40px;padding:0!important;color:var(--ink)}
+.timx{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:8px;padding:4px 8px;font:600 12px var(--font,inherit);cursor:pointer}
+.timr{overflow:auto;padding:6px}
+.timg{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--water,var(--muted));padding:10px 10px 4px}
+.timi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);padding:8px 10px;border-radius:10px;cursor:pointer;font:inherit}
+.timi b{font-size:14.5px;font-weight:600}.timi small{font-size:12.5px;color:var(--muted)}.timi small b{font-size:12.5px}.timi small b.neg{color:#c62828}
+.timi.on{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.timn{padding:18px 12px;color:var(--muted);font-size:14px}
+.timf{padding:6px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+@media (max-width:600px){.who button.timb{padding:0 8px!important;margin-right:2px}.who button.timb span{display:none}.timov{padding:8px}.timbox{max-height:calc(100vh - 16px)}.timf{display:none}}
+.timx-m{display:none}
+@media (max-width:600px),(pointer:coarse){.timx-d{display:none}.timx-m{display:inline}}
+/* canvas: mây, mưa, nắng, trăng sao, chim vẽ như thật — thay các hình tĩnh bằng CSS */
+#skyFx .sk-cv{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+:root[data-skycv=on] #skyFx i:not(.sk-g){display:none!important}

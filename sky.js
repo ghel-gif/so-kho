@@ -100,7 +100,7 @@
   function layer() {
     const h = document.querySelector("#appView header"); if (!h) return null;
     let L = $("skyFx");
-    if (!L) { L = document.createElement("div"); L.id = "skyFx"; L.setAttribute("aria-hidden", "true"); L.innerHTML = '<i class="sk-g"></i><i class="sk-stars"></i><i class="sk-sun"></i><i class="sk-moon"></i><i class="sk-cl c1"></i><i class="sk-cl c2"></i><i class="sk-cl c3"></i><i class="sk-fog"></i><i class="sk-rain"></i><i class="sk-flash"></i>'; h.prepend(L); }
+    if (!L) { L = document.createElement("div"); L.id = "skyFx"; L.setAttribute("aria-hidden", "true"); L.innerHTML = '<i class="sk-g"></i><i class="sk-stars"></i><i class="sk-stars s2"></i><i class="sk-shoot"></i><i class="sk-sun"></i><i class="sk-moon"></i><i class="sk-bird"></i><i class="sk-cl c1"></i><i class="sk-cl c2"></i><i class="sk-cl c3"></i><i class="sk-fog"></i><i class="sk-rain"></i><i class="sk-flash"></i>'; h.prepend(L); }
     return L;
   }
   function chip() {
@@ -112,10 +112,127 @@
     }
     return b;
   }
+  /* ---------- hình động như thật: vẽ bằng canvas — mây nhiều lớp trôi, mưa theo gió, nắng có quầng và tia,
+     trăng sao lấp lánh, sao băng, chim vỗ cánh, chớp khi mưa giông, sương mù trôi ---------- */
+  const RM = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const K = { cv: null, x: null, w: 0, h: 0, r: 1, key: "", raf: 0, last: 0, ld: 0, t: 0, cl: [], dr: [], st: [], bd: null, nextBird: 0, sh: null, nextShoot: 0, fl: 0, bolt: null, boltT: 0, nextBolt: 0, fog: [], spr: {} };
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const dark = () => document.documentElement.dataset.theme === "dark";
+  const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
+  function cvEl() {
+    const L = $("skyFx"); if (!L) return null;
+    if (!K.cv || !K.cv.isConnected) {
+      K.cv = document.createElement("canvas"); K.cv.className = "sk-cv"; const g = L.querySelector(".sk-g"); if (g) g.after(K.cv); else L.prepend(K.cv); K.x = K.cv.getContext("2d");
+      if (window.ResizeObserver) new ResizeObserver(() => { cvSize(); if (RM()) draw(0); }).observe(L);
+    }
+    return K.cv;
+  }
+  function cvSize() {
+    if (!K.cv) return; const b = K.cv.parentElement.getBoundingClientRect(), r = Math.min(2, window.devicePixelRatio || 1), w = Math.max(1, Math.round(b.width)), h = Math.max(1, Math.round(b.height));
+    if (w === K.w && h === K.h && r === K.r) return; K.w = w; K.h = h; K.r = r; K.cv.width = w * r; K.cv.height = h * r; K.x.setTransform(r, 0, 0, r, 0, 0); K.spr = {}; seed(true);
+  }
+  /* một đám mây = nhiều cụm tròn mờ chồng lên nhau, đáy tối hơn — vẽ sẵn 1 lần rồi chỉ dời chỗ */
+  function cloudSprite(wd, ht, T, alpha) {
+    const c = document.createElement("canvas"), r = K.r; c.width = Math.ceil(wd * r); c.height = Math.ceil(ht * r); const g = c.getContext("2d"); g.scale(r, r);
+    const n = Math.round(rnd(8, 13)), cx = wd / 2, base = ht * .7;
+    for (let i = 0; i < n; i++) {
+      const px = rnd(wd * .14, wd * .86), k = 1 - Math.abs(px - cx) / wd * .95, pr = rnd(ht * .2, ht * .42) * (.55 + .45 * k), py = base - rnd(0, ht * .34) * k;
+      const gr = g.createRadialGradient(px, py - pr * .3, pr * .1, px, py, pr);
+      gr.addColorStop(0, `rgba(${T[0]},${T[1]},${T[2]},${alpha})`); gr.addColorStop(.62, `rgba(${T[0]},${T[1]},${T[2]},${alpha * .7})`); gr.addColorStop(1, `rgba(${T[0]},${T[1]},${T[2]},0)`);
+      g.fillStyle = gr; g.beginPath(); g.arc(px, py, pr, 0, 6.283); g.fill();
+    }
+    g.globalCompositeOperation = "source-atop"; const sh = g.createLinearGradient(0, ht * .3, 0, ht);
+    sh.addColorStop(0, "rgba(0,0,0,0)"); sh.addColorStop(1, `rgba(${T[3]},${T[4]},${T[5]},${T[6]})`); g.fillStyle = sh; g.fillRect(0, 0, wd, ht);
+    return c;
+  }
+  function seed(force) {
+    const R = document.documentElement, ph = R.dataset.sky || "sang", wx = R.dataset.wx || "x", dk = dark(), key = ph + "|" + wx + "|" + dk + "|" + K.w + "|" + K.h;
+    if ((!force && key === K.key) || !K.w || K.h < 8) return; K.key = key; const W = K.w, H = K.h;
+    const rainy = /^(muanho|mua|muato|giong)$/.test(wx), heavy = wx === "muato" || wx === "giong", night = ph === "dem";
+    const nCl = ({ quang: 1, x: 1, itmay: 3, comay: 5, nhieumay: 8, suongmu: 4, muanho: 8, mua: 9, muato: 11, giong: 11 })[wx] || 2;
+    const T = dk ? (rainy ? [118, 130, 148, 24, 30, 42, .5] : [146, 160, 180, 34, 42, 58, .42]) : rainy ? (heavy ? [170, 180, 195, 64, 74, 92, .5] : [204, 211, 222, 86, 98, 118, .42]) : night ? [214, 222, 238, 104, 116, 146, .32] : [255, 255, 255, 146, 162, 188, .3];
+    const aC = dk ? .55 : rainy ? .95 : (wx === "quang" || wx === "x") ? .5 : .92, big = rainy || wx === "nhieumay";
+    K.cl = [];
+    for (let i = 0; i < nCl; i++) {
+      const l = i % 3, sc = [.72, 1, 1.32][l] * rnd(.85, 1.2), wd = 150 * sc * (big ? 1.3 : 1), ht = Math.min(H * 1.3, 60 * sc * (big ? 1.15 : 1));
+      K.cl.push({ s: cloudSprite(wd, ht, T, aC * [.72, .88, 1][l]), w: wd, h: ht, x: rnd(-wd * .5, W), y: rnd(-ht * .4, H - ht * .72), v: [6, 10, 15][l] * (rainy ? 1.7 : 1) * rnd(.8, 1.25), l });
+    }
+    K.cl.sort((a, b) => a.l - b.l);
+    const nDr = ({ muanho: 80, mua: 190, muato: 330, giong: 330 })[wx] || 0; K.dr = [];
+    for (let i = 0; i < nDr; i++) K.dr.push({ x: rnd(-20, W + 40), y: rnd(-H, H), v: rnd(380, 640) * (heavy ? 1.25 : 1), l: rnd(7, 13) * (heavy ? 1.3 : 1), a: rnd(.25, .62) });
+    K.st = []; if (night) for (let i = 0; i < Math.round(W / 26); i++) K.st.push({ x: rnd(0, W), y: rnd(2, H - 5), r: rnd(.5, 1.45), p: rnd(0, 6.28), f: rnd(.7, 2.3) });
+    K.fog = wx === "suongmu" ? [0, 1, 2].map(i => ({ x: rnd(0, W), y: H * (.3 + i * .24), w: W * rnd(.45, .8), v: rnd(5, 10) * (i % 2 ? 1 : -1) })) : [];
+    K.bd = null; K.nextBird = K.t + rnd(2, 7); K.sh = null; K.nextShoot = K.t + rnd(3, 8); K.nextBolt = K.t + rnd(2, 5); K.fl = 0; K.boltT = 0;
+  }
+  const SUNPOS = { binhminh: [.29, .9, "#ff9d4a"], sang: [.37, .34, "#ffd25a"], trua: [.44, .04, "#ffe27a"], chieu: [.51, .3, "#ffc04d"], hoanghon: [.57, .92, "#ff7a45"] };
+  function drawSun(g, ph, wx, t) {
+    const p = SUNPOS[ph]; if (!p || !/^(quang|x|itmay|comay)$/.test(wx)) return;
+    const W = K.w, H = K.h, x = W * p[0], y = H * p[1], R0 = Math.min(H * .34, 21), a = wx === "comay" ? .68 : 1;
+    const glow = g.createRadialGradient(x, y, 0, x, y, R0 * 5.5); glow.addColorStop(0, hexA(p[2], .5 * a)); glow.addColorStop(.32, hexA(p[2], .18 * a)); glow.addColorStop(1, hexA(p[2], 0));
+    g.fillStyle = glow; g.beginPath(); g.arc(x, y, R0 * 5.5, 0, 6.283); g.fill();
+    g.save(); g.translate(x, y); g.rotate(t * .045);
+    for (let i = 0; i < 16; i++) { g.rotate(6.283 / 16); const L = R0 * (2.1 + .55 * Math.sin(t * 1.25 + i * 1.7)), gr = g.createLinearGradient(0, R0, 0, L);
+      gr.addColorStop(0, hexA(p[2], .3 * a)); gr.addColorStop(1, hexA(p[2], 0)); g.fillStyle = gr; g.beginPath(); g.moveTo(-R0 * .11, R0 * .95); g.lineTo(R0 * .11, R0 * .95); g.lineTo(0, L); g.closePath(); g.fill(); }
+    g.restore();
+    const core = g.createRadialGradient(x - R0 * .25, y - R0 * .25, R0 * .1, x, y, R0); core.addColorStop(0, `rgba(255,255,242,${a})`); core.addColorStop(.62, hexA(p[2], .96 * a)); core.addColorStop(1, hexA(p[2], 0));
+    g.fillStyle = core; g.beginPath(); g.arc(x, y, R0, 0, 6.283); g.fill();
+    if (wx === "quang" || wx === "x") { /* chấm loá ống kính dọc theo đường chéo, rất nhẹ */
+      [[.35, 4, .12], [.62, 7, .08], [.9, 3, .1]].forEach(([k, rr, al]) => { const fx = x + (W * .5 - x) * k * 1.6, fy = y + (H * .6 - y) * k; g.fillStyle = hexA(p[2], al * (.7 + .3 * Math.sin(t * .7 + k * 9))); g.beginPath(); g.arc(fx, fy, rr, 0, 6.283); g.fill(); });
+    }
+  }
+  function drawMoon(g, wx, t) {
+    if (!/^(quang|x|itmay|comay)$/.test(wx)) return; const W = K.w, H = K.h, x = W * .52, y = H * .4, r = Math.min(H * .2, 12);
+    const pu = .24 + .07 * Math.sin(t * .8), glow = g.createRadialGradient(x, y, r * .5, x, y, r * 4.6); glow.addColorStop(0, `rgba(245,240,205,${pu})`); glow.addColorStop(1, "rgba(245,240,205,0)");
+    g.fillStyle = glow; g.beginPath(); g.arc(x, y, r * 4.6, 0, 6.283); g.fill();
+    if (!K.spr.moon) { const c = document.createElement("canvas"), sz = Math.ceil(r * 2.4 * K.r); c.width = c.height = sz; const m = c.getContext("2d"); m.scale(K.r, K.r); const cx = r * 1.2;
+      const mg = m.createRadialGradient(cx - r * .3, cx - r * .3, r * .1, cx, cx, r); mg.addColorStop(0, "#fffbe6"); mg.addColorStop(1, "#ece4b8"); m.fillStyle = mg; m.beginPath(); m.arc(cx, cx, r, 0, 6.283); m.fill();
+      m.globalCompositeOperation = "destination-out"; m.beginPath(); m.arc(cx + r * .5, cx - r * .28, r * .88, 0, 6.283); m.fill(); K.spr.moon = c; }
+    g.drawImage(K.spr.moon, x - r * 1.2, y - r * 1.2, r * 2.4, r * 2.4);
+  }
+  function draw(dt) {
+    const g = K.x; if (!g || !K.w) return; const W = K.w, H = K.h, R = document.documentElement, ph = R.dataset.sky || "sang", wx = R.dataset.wx || "x", dk = dark(), night = ph === "dem", clearish = /^(quang|x|itmay|comay)$/.test(wx);
+    g.clearRect(0, 0, W, H);
+    if (night) {
+      const dim = wx === "comay" ? .5 : /^(quang|x|itmay)$/.test(wx) ? 1 : 0;
+      if (dim) for (const s of K.st) { g.fillStyle = `rgba(255,255,255,${(.3 + .6 * (.5 + .5 * Math.sin(K.t * s.f + s.p))) * dim})`; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.283); g.fill(); }
+      if (clearish) { if (!K.sh && K.t > K.nextShoot) K.sh = { x: rnd(W * .3, W * .8), y: rnd(2, H * .35), vx: -rnd(260, 380), vy: rnd(60, 110), life: 0 };
+        if (K.sh) { const s = K.sh; s.life += dt; s.x += s.vx * dt; s.y += s.vy * dt; const an = Math.atan2(s.vy, s.vx), tx = s.x - Math.cos(an) * 80, ty = s.y - Math.sin(an) * 80, fa = Math.max(0, 1 - s.life / .85), gr = g.createLinearGradient(s.x, s.y, tx, ty);
+          gr.addColorStop(0, `rgba(255,255,255,${.95 * fa})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.strokeStyle = gr; g.lineWidth = 1.6; g.lineCap = "round"; g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(tx, ty); g.stroke();
+          if (s.life > .85) { K.sh = null; K.nextShoot = K.t + rnd(7, 16); } } }
+      drawMoon(g, wx, K.t);
+    } else drawSun(g, ph, wx, K.t);
+    for (const c of K.cl) { c.x -= c.v * dt; if (c.x < -c.w) { c.x = W + rnd(10, 140); c.y = rnd(-c.h * .4, H - c.h * .72); } g.drawImage(c.s, c.x, c.y, c.w, c.h); }
+    if (!night && clearish && ph !== "hoanghon" && ph !== "trua" || (ph === "trua" && wx !== "quang" && clearish)) {
+      if (!K.bd && K.t > K.nextBird) { const n = Math.round(rnd(3, 5)); K.bd = { x: -30, y: rnd(H * .22, H * .55), v: rnd(36, 54), b: Array.from({ length: n }, (_, i) => ({ dx: -i * rnd(14, 22), dy: (i % 2 ? 1 : -1) * rnd(3, 8) * Math.ceil(i / 2), p: rnd(0, 6.28), f: rnd(7, 10), s: rnd(.8, 1.15) })) }; }
+      if (K.bd) { const B = K.bd; B.x += B.v * dt; B.y += Math.sin(K.t * .9) * 5 * dt; g.strokeStyle = dk ? "rgba(220,230,242,.8)" : "rgba(38,56,78,.75)"; g.lineWidth = 1.4; g.lineCap = "round";
+        for (const b of B.b) { const x = B.x + b.dx, y = B.y + b.dy, w = 6 * b.s, fl = Math.sin(K.t * b.f + b.p) * 3.3 * b.s; g.beginPath(); g.moveTo(x - w, y - fl); g.quadraticCurveTo(x - w * .45, y - fl * .3 - 1.4, x, y); g.quadraticCurveTo(x + w * .45, y - fl * .3 - 1.4, x + w, y - fl); g.stroke(); }
+        if (B.x + Math.min(...B.b.map(b => b.dx)) > W + 30) { K.bd = null; K.nextBird = K.t + rnd(16, 34); } }
+    }
+    for (const f of K.fog) { f.x += f.v * dt; if (f.x > W + f.w) f.x = -f.w; if (f.x < -f.w) f.x = W + f.w; g.save(); g.translate(f.x, f.y); g.scale(f.w / 60, H * .22 / 60);
+      const gr = g.createRadialGradient(0, 0, 0, 0, 0, 60); gr.addColorStop(0, dk ? "rgba(170,180,192,.22)" : "rgba(255,255,255,.6)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 60, 0, 6.283); g.fill(); g.restore(); }
+    if (K.dr.length) { const wind = -.26; g.lineCap = "round"; g.lineWidth = 1; const col = dk ? "180,205,240" : "62,100,160";
+      for (const d of K.dr) { d.y += d.v * dt; d.x += d.v * wind * dt; if (d.y > H + 8) { d.y = rnd(-28, -4); d.x = rnd(-10, W + 50); } g.strokeStyle = `rgba(${col},${d.a})`; g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x - d.l * wind, d.y - d.l); g.stroke(); } }
+    if (wx === "giong") {
+      if (K.t > K.nextBolt) { K.fl = 1; const P = [[rnd(W * .2, W * .75), -2]]; while (P[P.length - 1][1] < H) { const q = P[P.length - 1]; P.push([q[0] + rnd(-10, 10), q[1] + rnd(5, 11)]); } K.bolt = P; K.boltT = .24; K.nextBolt = K.t + rnd(5, 12); }
+      if (K.boltT > 0) { K.boltT -= dt; g.save(); g.strokeStyle = "rgba(255,255,255,.95)"; g.lineWidth = 1.8; g.shadowColor = "rgba(190,210,255,.95)"; g.shadowBlur = 10; g.beginPath(); K.bolt.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke(); g.restore(); }
+      if (K.fl > 0) { g.fillStyle = `rgba(255,255,255,${.42 * K.fl})`; g.fillRect(0, 0, W, H); K.fl = Math.max(0, K.fl - dt * 3.2); }
+    }
+  }
+  function frame(ts) {
+    K.raf = 0; if (!K.cv || document.visibilityState !== "visible" || document.documentElement.dataset.skyfx === "off" || RM()) return;
+    if (ts - K.ld < 30) { K.raf = requestAnimationFrame(frame); return; } /* ~30 khung hình/giây là đủ mượt, đỡ hao pin */
+    const dt = Math.min(.1, K.last ? (ts - K.last) / 1000 : .033); K.last = ts; K.ld = ts; K.t += dt; draw(dt);
+    K.raf = requestAnimationFrame(frame);
+  }
+  function cvSet() {
+    if (!cvEl()) return; cvSize(); seed(false); document.documentElement.dataset.skycv = "on";
+    if (RM()) { draw(0); return; } if (!K.raf) { K.last = 0; K.raf = requestAnimationFrame(frame); }
+  }
+  new MutationObserver(() => { if (K.cv) { seed(false); if (RM()) draw(0); } }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-sky", "data-wx"] });
   function apply() {
     const C = cur(), R = document.documentElement;
     R.dataset.sky = C.ph; R.dataset.wx = C.wx || "x"; R.dataset.skyfx = fxOn() ? "on" : "off";
-    layer();
+    layer(); try { cvSet(); } catch (e) { }
     const b = chip();
     if (b) {
       const t = C.d && C.d.temp != null ? Math.round(C.d.temp) + "°" : "";
