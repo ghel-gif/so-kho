@@ -666,11 +666,13 @@ function saveItem(a, it, isNew) {
   const heSo = num_(it.heSo);
   if (!ma || !ten || !dv) throw new Error('Điền đủ mã, tên và đơn vị.');
   if (heSo <= 0) throw new Error('Hệ số quy đổi phải lớn hơn 0.');
-  if (it.theoLo && num_(it.dauKy)) throw new Error('Hàng theo dõi lô: để tồn đầu kỳ = 0 và nhập tồn đầu bằng phiếu Nhập theo từng lô.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = sheet_(SH.VT), codes = rows_(SH.VT).map(r => str_(r[0]).toLowerCase());
     const idx = codes.indexOf(ma.toLowerCase());
+    // hàng theo lô: không cho đặt / đổi tồn đầu kỳ (mã cũ đã có tồn đầu thì vẫn sửa được tên, kho…)
+    const dkCu = idx >= 0 ? num_(sh.getRange(idx + 2, 6).getValue()) : 0;
+    if (it.theoLo && num_(it.dauKy) && (isNew || num_(it.dauKy) !== dkCu)) throw new Error('Hàng theo dõi lô: để tồn đầu kỳ = 0 và nhập tồn đầu bằng phiếu Nhập theo từng lô.');
     const chu = String(it.chuHang || '').trim() === 'Asata' ? '' : String(it.chuHang || '').trim().slice(0, 60);
     const row = [ma, ten, NHOM.indexOf(it.nhom) >= 0 ? it.nhom : 'Khác', dv, heSo, num_(it.dauKy), num_(it.toiThieu),
       it.theoLo ? 'Có' : '', num_(it.hanThang) || '', chu, String(it.hamLuong || '').trim().slice(0, 200), String(it.kho || '').trim().slice(0, 80)];
@@ -1563,7 +1565,7 @@ const BC_FOLDER = '1FslKkpj7SeSBBnHj9A1RpB34kGOSSKf0'; // Drive: "Báo cáo xu�
 const BC_TPL = '1HQqzRdho6z8xjwAV6mH6lMuuCD6F_dbhIT4gTgOZocA'; // file mẫu "_MẪU báo cáo xuất NVL (không xoá)"
 const BC_KHO = { 'Kho phân bón': 'Kho nguyên liệu phân bón', 'Kho nguyên liệu - dung môi nhũ': 'Kho nguyên liệu dung môi, nhũ', 'Kho nguyên liệu tech': 'Kho nguyên liệu tech' };
 function bcKho_(it) {
-  if (it.chuHang && it.chuHang !== 'Asata') return 'Kho GC Cty ' + it.chuHang;
+  if (it.chuHang && it.chuHang !== 'Asata') return it.kho || ('Kho GC Cty ' + it.chuHang);
   if (it.nhom === 'Bán thành phẩm') return 'Kho bán thành phẩm';
   return BC_KHO[it.kho] || it.kho || (it.nhom === 'Phân bón' ? 'Kho nguyên liệu phân bón' : '');
 }
