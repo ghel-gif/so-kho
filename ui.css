@@ -708,3 +708,6 @@ small{font-size:max(12.5px,.85em)}
 .rd-list .row.r-wait{box-shadow:inset 4px 0 0 #7c3aed}
 .rd-list .grp small{margin-left:8px;font-weight:600;letter-spacing:0;text-transform:none;opacity:.8}
 @media (max-width:600px){.rd-flow{display:none}}
+/* giao diện tối: ô nhập trong Lệnh đóng gói không bị ép nền trắng */
+:root[data-theme=dark] #dglBox input:not([disabled]):not([type=checkbox]):not(.need-in),:root[data-theme=dark] #dglBox select:not([disabled]):not(.need-in){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
+:root[data-theme=dark] #dglBox input[disabled],:root[data-theme=dark] #dglBox select[disabled]{background:#1c2630!important;color:#b9c6d3!important;-webkit-text-fill-color:#b9c6d3;border-color:#33465a!important}
