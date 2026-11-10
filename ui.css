@@ -465,3 +465,163 @@ html[data-theme="dark"] .blv-card.lv-bad .blv-h b{color:#fda4af}
 nav.side .cnt{background:#e11d48!important;color:#fff!important;font-weight:700;animation:skRing 1.8s ease-out infinite}
 #bellCnt:not([hidden]){animation:skRing 1.8s ease-out infinite}
 @media (prefers-reduced-motion:reduce){.blv-sum.bad,.blv-n,.blv-r::before,.blv-r>span::before,nav.side .cnt,#bellCnt{animation:none!important}}
+
+/* =====================================================================
+   4.4 — Ô cần điền rõ ràng · ô kế tiếp nhấp nháy · "Còn n ô cần điền" ·
+         cảnh báo có biểu tượng động · menu trái xanh dương nhạt · bảng tồn kho
+   ===================================================================== */
+/* ---------- Ô cần điền: vàng đậm hơn, viền cam, nhãn cùng màu ---------- */
+:root{--need-bg:#fff3c4;--need-line:#f0a000;--need-ink:#8a4b00;--need-hot:#e67700}
+:root[data-theme=dark]{--need-bg:#3d3010;--need-line:#e9a92a;--need-ink:#ffd27a;--need-hot:#ffa94d}
+html body input.need-in,html body select.need-in,html body textarea.need-in{background:var(--need-bg)!important;border-color:var(--need-line)!important;box-shadow:inset 5px 0 0 var(--need-line),0 0 0 1px var(--need-line)!important}
+label.need-lb{color:var(--need-ink)!important}
+/* lệnh đóng gói: nền ô bị ép trắng → vẫn tô vàng ô còn trống như ghi chú đầu trang */
+#dglBox input.need-in:not([disabled]):not([type=checkbox]),#dglBox select.need-in:not([disabled]){background:var(--need-bg)!important;border-color:var(--need-line)!important;color:var(--ink)!important}
+/* nhãn ô: chữ + ghi chú nhỏ trên cùng một dòng, ô nhập xuống dòng riêng */
+:is(.two,form,.card,.cfm-box,.box,.lines,details,.qa-g)>label:not(.btn):not(.pk):not([style*="display"]):has(>:is(input:not([type=checkbox]):not([type=radio]),select,textarea)){flex-flow:row wrap;align-items:baseline;column-gap:6px}
+:is(.two,form,.card,.cfm-box,.box,.lines,details,.qa-g)>label:not(.btn):not(.pk):not([style*="display"])>:is(input:not([type=checkbox]):not([type=radio]),select,textarea){flex:1 1 100%;min-width:0;order:2}
+:is(.two,form,.card,.cfm-box,.box,.lines,details,.qa-g)>label:not(.btn):not(.pk):not([style*="display"])>:is(input:not([type=checkbox]):not([type=radio]),select,textarea)~*{order:3}
+label>small.note{font-weight:500}
+/* ô vốn giới hạn 260px (số, ngày…): vẫn xuống dòng riêng dưới nhãn */
+:is(.two,form,.card,.cfm-box,.box,.lines,details,.qa-g)>label:not(.btn):not(.pk):not([style*="display"])>:is(input[type=number],input[type=date],input[type=month],#lnSo,#itCode,#mvLo,#mvRef,#lnLit,#itUnit,#cbNhomQC){margin-right:max(0px,calc(100% - 260px))}
+/* ô trong lưới 2–4 cột: rộng đều, đáy thẳng hàng */
+.two{align-items:end}
+.two>label>:is(input:not([type=checkbox]):not([type=radio]),select,textarea){max-width:none!important;width:100%;box-sizing:border-box;margin-right:0!important}
+/* ô kế tiếp cần điền: vòng sáng lan ra + nhãn "▼ Điền ô này" nhún nhảy */
+@keyframes needPing{0%{outline-color:rgba(240,140,0,.95);outline-offset:0}70%,100%{outline-color:rgba(240,140,0,0);outline-offset:8px}}
+@keyframes needBob{0%,100%{transform:translateY(-1px)}50%{transform:translateY(2px)}}
+html body .need-in.need-nx:not(:focus){outline:3px solid rgba(240,140,0,.95);outline-offset:0;animation:needPing 1.3s ease-out infinite}
+label.need-nxl{color:var(--need-hot)!important}
+label.need-nxl::after{content:"▼ Điền ô này";order:1;margin-left:auto;align-self:center;flex:none;font:700 11px/13px var(--font,inherit);letter-spacing:0;text-transform:none;color:#fff;background:var(--need-hot);border-radius:999px;padding:2px 8px;white-space:nowrap;box-shadow:0 2px 6px rgba(230,119,0,.35);animation:needBob 1s ease-in-out infinite}
+:root[data-theme=dark] label.need-nxl::after{color:#1d1300}
+.kh-dlg label.need-nxl::after,label[style*="display"].need-nxl::after{display:none}
+/* bấm "Còn n ô" → tới ô: rung + viền cam; lưu thiếu ô → ô rung + viền đỏ */
+html body .need-flash{outline:3px solid var(--need-hot)!important;outline-offset:2px!important;animation:skShake .6s ease-in-out 1!important}
+html body .in-miss{outline:3px solid #e11d48!important;outline-offset:2px!important;animation:skShake .6s ease-in-out 2!important}
+/* bộ đếm ở thanh nút */
+.actions>.need-cnt{margin-right:auto;display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:5px 16px 5px 12px;border-radius:999px;border:2px solid var(--need-line);background:var(--need-bg);color:var(--need-ink);font:inherit;text-align:left;cursor:pointer;line-height:1.2;max-width:100%;box-shadow:none}
+.need-cnt>span{display:flex;flex-direction:column;min-width:0}
+.need-cnt b{font-size:13.5px;font-weight:800}
+.need-cnt small{font-size:12px;font-weight:600;opacity:.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+.need-cnt>i{flex:none;width:12px;height:12px;border-radius:50%;background:var(--need-hot);animation:skRingA 1.6s ease-out infinite}
+.need-cnt:hover:not(.ok){border-color:var(--need-hot);background:color-mix(in srgb,var(--need-bg) 80%,var(--need-line))}
+.need-cnt.ok{border-color:#2e9d5b;background:#e6f4ec;color:#1e7a45;cursor:default}
+:root[data-theme=dark] .need-cnt.ok{background:#163a26;color:#9be6b4}
+.need-cnt.shake{animation:skShake .7s ease-in-out 1}
+/* thanh nút Lưu dính đáy màn hình khi phiếu / lệnh dài */
+:is(#lnForm,#ctForm,#itForm,#mvForm,#xnForm)>.actions:has(>.need-cnt){position:sticky;bottom:0;z-index:6;background:var(--surface);margin:0 -16px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);box-shadow:0 -10px 18px -16px rgba(16,40,70,.45)}
+:is(#htForm,#dglBox>.card)>.actions:has(>.need-cnt){position:sticky;bottom:0;z-index:6;background:var(--surface);padding:10px 0 calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);box-shadow:0 -10px 18px -16px rgba(16,40,70,.45)}
+.cfm .cfm-box>.actions:has(>.need-cnt){position:sticky;bottom:0;z-index:3;background:var(--surface);padding-top:10px;padding-bottom:10px}
+/* phiếu xuất: ẩn dòng tiêu đề cột khi chưa có vật tư */
+#xnForm .cthead:has(+#xnLines:empty){display:none}
+
+/* ---------- Hộp cảnh báo: chấm "!" nhấp nháy ---------- */
+.warnbox,.errbox{position:relative;padding-left:42px!important}
+.warnbox::before,.errbox::before{content:"!";position:absolute;left:12px;top:8px;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;color:#fff;font:900 13px/1 var(--font,inherit)}
+.warnbox::before{background:#e08600;animation:skRingA 1.6s ease-out infinite}
+.errbox::before{background:#d32f2f;animation:skRing 1.5s ease-out infinite}
+.alert-bad{animation:skRing 1.8s ease-out infinite}
+/* biểu mẫu QC chưa lập: đỏ, nhấp nháy */
+.dgf-s.no{background:#d32f2f!important;color:#fff!important;border:1px solid #b71c1c!important;animation:skRing 1.6s ease-out infinite}
+.dgf-s.no::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#fff;margin-right:6px;vertical-align:1px;animation:skDot 1.1s ease-in-out infinite}
+.dgf-t:has(.dgf-s.no){border-color:#d32f2f;box-shadow:0 2px 0 #d32f2f}
+.dgf-t:has(.dgf-s.no) svg{stroke:#d32f2f}
+:root[data-theme=dark] .dgf-s.no{background:#e5534b!important;border-color:#ff8a80!important}
+:root[data-theme=dark] .dgf-t:has(.dgf-s.no){border-color:#ff8a80;box-shadow:0 2px 0 #ff8a80}
+:root[data-theme=dark] .dgf-t:has(.dgf-s.no) svg{stroke:#ff8a80}
+
+/* ---------- Thanh menu trái: xanh dương nhạt (giao diện sáng) ---------- */
+:root:not([data-theme=dark]){--side-bg:#e2edfa;--side-line:#c5d7ee;--side-ink:#15345a;--side-mut:#5a7394;--side-hov:#cfe1f6;--side-act:#1a5fb4}
+:root:not([data-theme=dark]) nav.side{background:var(--side-bg)!important;border-right:1px solid var(--side-line);scrollbar-color:rgba(21,52,90,.3) transparent}
+:root:not([data-theme=dark]) nav.side .navh{color:var(--side-mut)!important;opacity:1!important}
+:root:not([data-theme=dark]) nav.side button[data-tab]{color:var(--side-ink)!important}
+:root:not([data-theme=dark]) nav.side button[data-tab]:hover{background:var(--side-hov)!important;color:#0c2745!important}
+:root:not([data-theme=dark]) nav.side button[data-tab][aria-selected="true"]{background:var(--side-act)!important;color:#fff!important;font-weight:700;box-shadow:0 2px 8px rgba(26,95,180,.32)!important}
+:root:not([data-theme=dark]) nav.side button[data-tab][aria-selected="true"] svg{stroke:#fff!important}
+:root:not([data-theme=dark]) nav.side button:focus-visible{outline-color:var(--side-act)!important}
+:root:not([data-theme=dark]) nav.side button[data-tab="blv"]{--tc:#c26a00}
+:root:not([data-theme=dark]) nav.side button[data-tab="ton"]{--tc:#00897b}
+:root:not([data-theme=dark]) nav.side button[data-tab="tb"]{--tc:#b45309}
+:root:not([data-theme=dark]) nav.side button[data-tab="nhap"]{--tc:#2e7d32}
+:root:not([data-theme=dark]) nav.side button[data-tab="xnb"]{--tc:#d84315}
+:root:not([data-theme=dark]) nav.side button[data-tab="kk"]{--tc:#6d28d9}
+:root:not([data-theme=dark]) nav.side button[data-tab="ls"]{--tc:#546e7a}
+:root:not([data-theme=dark]) nav.side button[data-tab="rd"]{--tc:#c2185b}
+:root:not([data-theme=dark]) nav.side button[data-tab="lsx"]{--tc:#5b3fd1}
+:root:not([data-theme=dark]) nav.side button[data-tab="qa"]{--tc:#0277bd}
+:root:not([data-theme=dark]) nav.side button[data-tab="qc"]{--tc:#9c27b0}
+:root:not([data-theme=dark]) nav.side button[data-tab="kc"]{--tc:#4d7c0f}
+:root:not([data-theme=dark]) nav.side button:is([data-tab="dg"],[data-tab="dgl"]){--tc:#00796b}
+:root:not([data-theme=dark]) nav.side button[data-tab="vt"]{--tc:#0369a1}
+:root:not([data-theme=dark]) nav.side button[data-tab="bc"]{--tc:#1d4ed8}
+:root:not([data-theme=dark]) nav.side .navuser{border-top-color:var(--side-line)!important}
+:root:not([data-theme=dark]) nav.side .navuser b{color:var(--side-ink)!important}
+:root:not([data-theme=dark]) nav.side .navuser small,:root:not([data-theme=dark]) nav.side .ver{color:var(--side-mut)!important}
+:root:not([data-theme=dark]) nav.side .ver b{color:var(--side-ink)!important}
+:root:not([data-theme=dark]) nav.side .navuser .av{background:var(--side-act);color:#fff}
+
+/* ---------- Tồn kho: bảng gọn, cột số thẳng hàng ---------- */
+#stockList{overflow:clip}
+#stockList .row,#stockList .row:nth-child(even){background:var(--surface)}
+#stockList .row.click:hover{background:color-mix(in srgb,#1a5fb4 6%,var(--surface))}
+#stockList .row.tkon{background:var(--accent-soft)}
+#stockList .row .name{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px;font-weight:500;line-height:1.35;min-width:0}
+#stockList .row .name .code{margin:0;flex:none}
+#stockList .row .name .tn{font-weight:600;color:var(--ink)}
+#stockList .chip{margin-left:0}
+#stockList .row .kg{font-weight:700;font-size:15px;text-align:right;white-space:nowrap;color:var(--ink)}
+#stockList .row .kg small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+#stockList .row .kg.ng,#stockList .lot .lq.ng{color:#c62828}
+#stockList .tkm{font-size:13px;color:var(--muted)}
+#stockList .tkm>span{white-space:nowrap}
+#stockList .tkm i{font-style:normal}
+#stockList .tkm .z{opacity:.4}
+#stockList .row.r-bad{box-shadow:inset 4px 0 0 #e11d48}
+#stockList .row.r-warn{box-shadow:inset 4px 0 0 #f59e0b}
+#stockList .grp small{margin-left:8px;font-weight:600;letter-spacing:0;text-transform:none;opacity:.8}
+#stockList .lots{margin-top:2px}
+#stockList .lot{font-size:12.5px}
+#stockList .lot .lq{white-space:nowrap;text-align:right}
+.chip.own{background:#efe9fb!important;color:#5b3aa6!important;box-shadow:inset 0 0 0 1px #c9b8ef!important}
+:root[data-theme=dark] .chip.own{background:#2a2142!important;color:#d6c8ff!important;box-shadow:inset 0 0 0 1px #5b4a8a!important}
+#stockList .tkh{display:none}
+@media (min-width:1200px){
+  #stockList .row,#stockList .tkh{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px 92px 80px 136px;column-gap:14px;align-items:center}
+  #stockList .tkh{position:sticky;top:var(--hdrH,60px);z-index:3;padding:9px 14px;background:color-mix(in srgb,#1a5fb4 7%,var(--surface));border-bottom:1px solid var(--line);font:700 11.5px/1.2 var(--font,inherit);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  #stockList .tkh>span:not(:first-child){text-align:right}
+  #stockList .row{padding:8px 14px;row-gap:2px}
+  #stockList .row .name{grid-column:1;grid-row:1}#stockList .row .kg{grid-column:6;grid-row:1}
+  #stockList .tkm{display:contents}
+  #stockList .tkm>span{grid-row:1}
+  #stockList .tkm>span{text-align:right;font-size:13.5px;color:var(--ink)}
+  #stockList .tkm>span.in{color:var(--in,#226b3c)}#stockList .tkm>span.out{color:var(--out,#a3301f)}#stockList .tkm>span.adj{color:var(--adj,#6d28d9)}
+  #stockList .tkm>span.z{color:var(--muted)}
+  #stockList .tkm i{display:none}
+  #stockList .lots{grid-column:1/-1}
+}
+@media (max-width:1199px){
+  #stockList .row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name kg" "num kg" "lots lots"}
+  #stockList .row .name{grid-area:name}#stockList .row .kg{grid-area:kg;align-self:start}#stockList .row .tkm{grid-area:num;display:flex;flex-wrap:wrap;gap:0 10px}#stockList .row .lots{grid-area:lots}
+  #stockList .tkm>span.z,#stockList .tkm>span:empty{display:none}
+  #stockList .tkm>span.in{color:var(--in,#226b3c)}#stockList .tkm>span.out{color:var(--out,#a3301f)}
+}
+@media (prefers-reduced-motion:reduce){.need-nx,label.need-nxl::after,.need-cnt>i,.need-flash,.in-miss,.warnbox::before,.errbox::before,.alert-bad,.dgf-s.no,.dgf-s.no::before{animation:none!important}}
+/* kiểm kê QR: chưa có lô nào trong đợt thì ẩn hàng nút Ghi đợt (đỡ một hàng trống) */
+#qrBox:has(#qrList:empty)>.actions{display:none}
+/* ---------- Chữ dễ đọc hơn: nhãn ô 14px, chữ phụ tối thiểu 12,5px ---------- */
+label{font-size:14px}
+.qa-dlg .qa-g label{font-size:13.5px}
+small{font-size:max(12.5px,.85em)}
+.grp{font-size:12px!important}
+#stockList .tkh{font-size:12px}
+#stockList .lot,#stockList .tkm{font-size:13px}
+/* ---------- Điện thoại: gọn hơn — tiêu đề và nút cùng hàng, bộ lọc 2 cột, ẩn hướng dẫn dài ---------- */
+@media (max-width:600px){
+  .pghead{flex-direction:row!important;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;text-align:left}
+  .pghead h1{font-size:18px!important}
+  #tab-ton .tools #q{flex:1 1 0!important;width:auto!important}
+  #tab-ton .tools #reloadBtn{flex:0 0 auto}
+  #tab-ton .tools select{flex:1 1 calc(50% - 4px)!important;width:auto!important}
+  #impBox,#tab-ton>p.note,#lsxListView>p.note,#mvHint,#xnForm>p.note,#qrBox>p.note,label>small.note,.dgnote{display:none!important}
+  .actions>.need-cnt small{max-width:150px}
+}

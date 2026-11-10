@@ -383,7 +383,7 @@
   }
 
   /* ================= BẢN IN ================= */
-  const PRCSS = `<style>.pq.tbp td,.pq.tbp th{font-size:9pt;padding:3px 4px;line-height:1.25}.pq.tbp th{font-size:8.5pt}.pq.tbp .hd .tt{font-size:14pt}.pq.tbp .hd td{font-size:9.5pt}.pq.tbp .sub{margin:5px 0;font-size:10pt}.pq.tbp td.c{text-align:center}.pq.tbp td.r{text-align:right}.pq.tbp table.kch td{border:0;padding:2px 0;font-size:10.5pt}.pq.tbp table.kv td{font-size:10pt;padding:4px 6px}.pq.tbp.kc td,.pq.tbp.kc th{font-size:10.5pt;padding:4px 5px}</style>`;
+  const PRCSS = `<style>.pq.tbp td,.pq.tbp th{font-size:9pt;padding:3px 4px;line-height:1.25}.pq.tbp th{font-size:8.5pt}.pq.tbp .hd .tt{font-size:14pt}.pq.tbp .hd td{font-size:9.5pt}.pq.tbp .sub{margin:5px 0;font-size:10pt}.pq.tbp td.c{text-align:center}.pq.tbp td.r{text-align:right}.pq.tbp table.kch td{border:0;padding:2px 0;font-size:10.5pt}.pq.tbp table.kv td{font-size:10pt;padding:4px 6px}.pq.tbp.kc td,.pq.tbp.kc th{font-size:10.5pt;padding:4px 5px}.pq.tbp td.xo{position:relative}.pq.tbp td.xo svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}.pq.tbp td.xo line{stroke:#000;stroke-width:1;vector-effect:non-scaling-stroke}</style>`;
   const BMK = () => window.BMK;
   const page = (title, meta, body, land) => { const B = BMK(); B.pr(`${B.PCSS}${PRCSS}<div class="pq tbp">${B.head(title, meta)}<div class="gap"></div>${body}</div>`, land); };
   const table = (cols, rows, pad) => `<table><colgroup>${cols.map(c => `<col style="width:${c[1]}%">`).join("")}</colgroup><thead><tr>${cols.map(c => `<th>${E(c[0])}</th>`).join("")}</tr></thead><tbody>${rows.join("")}${Array(Math.max(0, (pad || 0) - rows.length)).fill(`<tr>${cols.map(() => "<td>&nbsp;</td>").join("")}</tr>`).join("")}</tbody></table>`;
@@ -414,6 +414,15 @@
     page("HỒ SƠ THIẾT BỊ SẢN XUẤT", `Mã thiết bị: <b>${E(d.ma || "—")}</b><br>Ngày in: ${D(today())}`, `${kv}<div class="gap"></div><table><colgroup><col style="width:11%"><col style="width:30%"><col style="width:20%"><col style="width:12%"><col style="width:11%"><col style="width:16%"></colgroup>
       <thead><tr><th rowspan="2">Ngày</th><th rowspan="2">Nội dung công việc</th><th rowspan="2">Kết quả</th><th colspan="2">Kiểm tra</th><th rowspan="2">Ghi chú</th></tr><tr><th>Quyết định</th><th>Ký tên</th></tr></thead>
       <tbody>${rows}${Array(Math.max(0, 16 - L.length)).fill("<tr>" + "<td>&nbsp;</td>".repeat(6) + "</tr>").join("")}</tbody></table>`, false); }
+  /* dòng trống cuối sổ: gạch chéo một đường từ góc trên trái xuống góc dưới phải (ô không dùng) — mỗi ô vẽ đoạn của mình, nối liền nhau */
+  function xoaRows(n, W) {
+    if (!n) return "";
+    const tot = W.reduce((s, v) => s + v, 0), X = W.map((w, j) => W.slice(0, j).reduce((s, v) => s + v, 0) / tot);
+    return Array.from({ length: n }, (_, i) => "<tr>" + W.map((w, j) => { const a = X[j], b = a + w / tot, c = i / n, e = (i + 1) / n, x1 = Math.max(a, c), x2 = Math.min(b, e);
+      if (x2 - x1 < 1e-6) return "<td>&nbsp;</td>";
+      const u = x => ((x - a) / (b - a) * 100).toFixed(2), v = y => ((y - c) / (e - c) * 100).toFixed(2);
+      return `<td class="xo">&nbsp;<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="${u(x1)}" y1="${v(x1)}" x2="${u(x2)}" y2="${v(x2)}"/></svg></td>`; }).join("") + "</tr>").join("");
+  }
   function prKC(L) {
     if (!L.length) { toast("Chưa có sổ kiểm tra cân để in."); return; }
     const B = BMK(), html = L.map((k, j) => { const d = k.d, S0 = KC[d.so], seen = {};
@@ -423,7 +432,7 @@
         <table class="kch"><tr><td colspan="2"><b>Ngày:</b> ${D(d.ngay)}</td></tr><tr><td style="width:55%">PP kiểm tra: Dùng quả cân, vật cân chuẩn để kiểm tra</td><td>Thiết bị cân chuẩn: ${E(S0.chuan)}</td></tr></table><div class="gap"></div>
         <table><colgroup><col style="width:27%"><col style="width:12%"><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:11%"><col style="width:13%"></colgroup>
         <thead><tr><th rowspan="2">Tên thiết bị</th><th rowspan="2">Mã thiết bị</th><th rowspan="2">Quả cân chuẩn (g)</th><th colspan="4">${E(S0.nv)}</th></tr><tr><th colspan="2">Kết quả</th><th>Độ lệch</th><th>Đánh giá</th></tr></thead>
-        <tbody>${body}${Array(Math.max(0, 16 - (d.rows || []).length)).fill("<tr>" + "<td>&nbsp;</td>".repeat(7) + "</tr>").join("")}</tbody></table>
+        <tbody>${body}${xoaRows(Math.max(0, 16 - (d.rows || []).length), [27, 12, 13, 12, 12, 11, 13])}</tbody></table>
         ${d.ghiChu ? `<p class="sub">Ghi chú: ${E(d.ghiChu)}</p>` : ""}<p class="sub"><i>Thực hiện theo HD.01 - Hướng dẫn kiểm tra và hiệu chỉnh thiết bị cân</i></p>${B.sign(S0.ky.map(x => [x]))}</div>`; }).join("");
     B.pr(`${B.PCSS}${PRCSS}${html}`, false);
   }
