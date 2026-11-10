@@ -52,36 +52,38 @@
       if (miss.length) rows.push({ o, miss });
     }
     if (!rows.length) { el.innerHTML = `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">📦</span><b>Lệnh đóng gói đang làm: đủ thông tin</b><span class="blv-n">${L.length}</span></div></div>`; return; }
-    el.innerHTML = `<div class="blv-card" style="--c:#0f766e"><div class="blv-h"><span class="blv-i">📦</span><b>Lệnh đóng gói đang làm — còn thiếu</b><span class="blv-n">${rows.length}</span></div><div class="blv-l">${rows.map((r, i) => {
+    el.innerHTML = `<div class="blv-card ${rows.some(r => r.miss.some(m => m.bad)) ? "lv-bad" : "lv-warn"}" style="--c:#0f766e"><div class="blv-h"><span class="blv-i">📦</span><b>Lệnh đóng gói đang làm — còn thiếu</b><span class="blv-n">${rows.length}</span></div><div class="blv-l">${rows.map((r, i) => {
         const it = typeof itemBy === "function" ? itemBy(r.o.maSP) : null;
-        return `<div class="blv-r" style="cursor:default;flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;gap:8px"><span><b>${E(r.o.so)}</b> · ${E(it ? it.ten : r.o.maSP)} · ra lệnh ${D(r.o.ngay)}</span><button type="button" class="btn small" data-dgo="${i}">Mở lệnh ›</button></div>
+        return `<div class="blv-r${r.miss.some(m => m.bad) ? " r-bad" : ""}" style="cursor:default;flex-direction:column;align-items:stretch"><div style="display:flex;justify-content:space-between;gap:8px"><span><b>${E(r.o.so)}</b> · ${E(it ? it.ten : r.o.maSP)} · ra lệnh ${D(r.o.ngay)}</span><button type="button" class="btn small" data-dgo="${i}">Mở lệnh ›</button></div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${r.miss.map(m => `<button type="button" class="blv-chip${m.bad ? " bad" : ""}" data-dgo="${i}" data-f="${m.f}">${E(m.t)}</button>`).join("")}</div></div>`; }).join("")}</div></div>`;
     el.querySelectorAll("[data-dgo]").forEach(b => b.onclick = () => { const r = rows[+b.dataset.dgo], f = b.dataset.f; openDG(r.o.so); if (f && window.dgfOpen) setTimeout(() => { try { dgfOpen(r.o.so, f); } catch (e) {} }, 700); });
   }
 
+  /* cộng số việc vào ô "x việc cần chú ý" và huy hiệu trên menu Bàn làm việc */
+  const bump = (box, n) => { const sm = box.querySelector(".blv-sum"); if (!sm || !n) return; const t = (+sm.dataset.n || 0) + n; sm.dataset.n = t; sm.className = "blv-sum bad"; sm.innerHTML = `<b>${t}</b> việc cần chú ý`; navCnt(t);
+    const ok = [...box.querySelectorAll(".blv-card")].find(c => /Phần việc của bạn đang ổn/.test(c.textContent)); if (ok) ok.remove(); };
+  const navCnt = n => { const c = document.getElementById("navBlvCnt"); if (c) { c.hidden = !n; c.textContent = n || ""; } };
+  const lvOf = T => T.some(x => x.c === "#c62828") ? "lv-bad" : "lv-warn", rOf = x => x.c === "#c62828" ? " r-bad" : x.c === "#d97706" ? " r-warn" : "";
   async function rdCard(box) {
     const el = box.querySelector("#blvRd"); if (!el || !window.rdTasks) return;
     const T = await rdTasks(); if (!T.length) { el.innerHTML = ""; return; }
-    el.innerHTML = `<div class="blv-card" style="--c:#db2777"><div class="blv-h"><span class="blv-i">🧪</span><b>Phòng RD — thử nghiệm, yêu cầu</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r" data-rd="${i}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
+    el.innerHTML = `<div class="blv-card ${lvOf(T)}" style="--c:#db2777"><div class="blv-h"><span class="blv-i">🧪</span><b>Phòng RD — thử nghiệm, yêu cầu</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r${rOf(x)}" data-rd="${i}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
     el.querySelectorAll("[data-rd]").forEach(b => b.onclick = () => rdOpen(T[+b.dataset.rd].id));
-    const sm = box.querySelector(".blv-sum"); if (sm) { const n = (+sm.dataset.n || 0) + T.length; sm.dataset.n = n; sm.className = "blv-sum bad"; sm.innerHTML = `<b>${n}</b> việc cần chú ý`; }
-    const ok = [...box.querySelectorAll(".blv-card")].find(c => /Phần việc của bạn đang ổn/.test(c.textContent)); if (ok) ok.remove();
+    bump(box, T.length);
   }
   async function qaCard(box) {
     const el = box.querySelector("#blvQa"); if (!el || !window.qaTasks) return;
     const T = await qaTasks(); if (!T.length) { el.innerHTML = ""; return; }
-    el.innerHTML = `<div class="blv-card" style="--c:#0284c7"><div class="blv-h"><span class="blv-i">🔎</span><b>Phòng QC — kiểm vật tư nhập kho, sự không phù hợp</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r" data-qa="${i}" style="border-left:3px solid ${x.c}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
+    el.innerHTML = `<div class="blv-card ${lvOf(T)}" style="--c:#0284c7"><div class="blv-h"><span class="blv-i">🔎</span><b>Phòng QC — kiểm vật tư nhập kho, sự không phù hợp</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r${rOf(x)}" data-qa="${i}" style="border-left:3px solid ${x.c}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
     el.querySelectorAll("[data-qa]").forEach(b => b.onclick = () => qaOpen(T[+b.dataset.qa].id));
-    const sm = box.querySelector(".blv-sum"); if (sm) { const n = (+sm.dataset.n || 0) + T.length; sm.dataset.n = n; sm.className = "blv-sum bad"; sm.innerHTML = `<b>${n}</b> việc cần chú ý`; }
-    const ok = [...box.querySelectorAll(".blv-card")].find(c => /Phần việc của bạn đang ổn/.test(c.textContent)); if (ok) ok.remove();
+    bump(box, T.length);
   }
   async function tbCard(box) {
     const el = box.querySelector("#blvTb"); if (!el || !window.tbTasks) return;
     const T = await tbTasks(); if (!T.length) { el.innerHTML = ""; return; }
-    el.innerHTML = `<div class="blv-card" style="--c:#b45309"><div class="blv-h"><span class="blv-i">⚖</span><b>Thiết bị — kiểm tra cân, kiểm định / hiệu chuẩn</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r" data-tb="${i}" style="border-left:3px solid ${x.c}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
+    el.innerHTML = `<div class="blv-card ${lvOf(T)}" style="--c:#b45309"><div class="blv-h"><span class="blv-i">⚖</span><b>Thiết bị — kiểm tra cân, kiểm định / hiệu chuẩn</b><span class="blv-n">${T.length}</span></div><div class="blv-l">${T.map((x, i) => `<button type="button" class="blv-r${rOf(x)}" data-tb="${i}" style="border-left:3px solid ${x.c}"><span>${x.t}</span><span class="blv-go">Mở ›</span></button>`).join("")}</div></div>`;
     el.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => tbOpen(T[+b.dataset.tb]));
-    const sm = box.querySelector(".blv-sum"); if (sm) { const n = (+sm.dataset.n || 0) + T.length; sm.dataset.n = n; sm.className = "blv-sum bad"; sm.innerHTML = `<b>${n}</b> việc cần chú ý`; }
-    const ok = [...box.querySelectorAll(".blv-card")].find(c => /Phần việc của bạn đang ổn/.test(c.textContent)); if (ok) ok.remove();
+    bump(box, T.length);
   }
   window.blvRender = async function () {
     const box = document.getElementById("blvBox"); if (!box) return;
@@ -99,14 +101,16 @@
     R.sec = R.sec.filter(s => s.rows.length);
     const urgent = R.sec.filter(s => s.k !== "mine"), mine = R.sec.find(s => s.k === "mine");
     const h = new Date().getHours(), chao = h < 11 ? "Chào buổi sáng" : h < 14 ? "Chào buổi trưa" : h < 18 ? "Chào buổi chiều" : "Chào buổi tối";
-    const card = s => { const M = META[s.k], L = s.rows.slice(0, 30);
-      return `<div class="blv-card" style="--c:${M.c}"><div class="blv-h"><span class="blv-i">${M.i}</span><b>${E(s.t)}</b><span class="blv-n">${s.rows.length}</span></div>
-        <div class="blv-l">${L.map((x, i) => `<button type="button" class="blv-r" data-k="${s.k}" data-i="${i}"><span>${M.line(x)}</span><span class="blv-go">Mở ›</span></button>`).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
-    box.innerHTML = `<div class="blv-top"><div><h2 style="margin:0">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)} — chỉ hiện việc thuộc phần của bạn.</p></div>
+    const LV = { formMiss: "lv-bad", dgShort: "lv-bad", lsxShort: "lv-bad", low: "lv-bad", mine: "" };
+    const card = s => { const M = META[s.k], L = s.rows.slice(0, 30), lv = s.k in LV ? LV[s.k] : "lv-warn";
+      return `<div class="blv-card ${lv}" style="--c:${M.c}"><div class="blv-h"><span class="blv-i">${M.i}</span><b>${E(s.t)}</b><span class="blv-n">${s.rows.length}</span></div>
+        <div class="blv-l">${L.map((x, i) => { const ln = M.line(x); return `<button type="button" class="blv-r${/#c62828/.test(ln) ? " r-bad" : ""}" data-k="${s.k}" data-i="${i}"><span>${ln}</span><span class="blv-go">Mở ›</span></button>`; }).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
+    box.innerHTML = `<div class="blv-top"><div><h2 class="blv-hi">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)} — chỉ hiện việc thuộc phần của bạn.</p></div>
         <div class="blv-sum ${R.n ? "bad" : "ok"}" data-n="${R.n}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
-      <div id="blvDg"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
-      ${mine && mine.rows.length ? card(mine) : ""}
+      <div class="blv-grid"><div id="blvDg"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
+      ${mine && mine.rows.length ? card(mine) : ""}</div>
       <p class="note" style="margin-top:10px">Bàn làm việc tự cập nhật khi dữ liệu thay đổi. Bấm một dòng để mở đúng lệnh / lô.</p>`;
+    navCnt(R.n);
     box.querySelectorAll(".blv-r").forEach(b => b.onclick = () => { const s = R.sec.find(x => x.k === b.dataset.k); META[b.dataset.k].go(s.rows[+b.dataset.i]); });
     dgCheck(box, R);
     rdCard(box);
