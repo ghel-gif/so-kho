@@ -19,7 +19,7 @@ $$ begin
   left join ton on ton.ma = anh.ma and ton.lo = anh.lo
   left join dk on dk.ma = anh.ma
   where o.bucket_id = 'anh-nhap' and (
-        (anh.id like 'QA:%' and o.created_at < now() - make_interval(days => least(greatest(p_ngay, 0), 7)))
+        (anh.id like 'QA:%' and o.created_at < now() - interval '7 days')
      or (anh.id not like 'QA:%' and o.created_at < now() - make_interval(days => p_ngay)
          and coalesce(ton.t, 0) + case when anh.lo = '' then coalesce(dk.dau_ky, 0) else 0 end <= 0.001))
   order by o.created_at limit 200;
