@@ -54,6 +54,7 @@ window.dgfHook=function(box,so){if(!box||!so||box.querySelector(".dgf-bar"))retu
   const bar=document.createElement("div");
   qcTiles(bar,[["BM05","BM.05","Thông tin đóng gói",IC.box],["KT","BM.04/06","Kiểm tra quá trình",IC.chk],["BM07","BM.07","Vệ sinh thiết bị",IC.home]].map(([f,m,t,ic])=>({f,code:m,name:t,icon:ic,open:()=>dgfOpen(so,f)})),async()=>{const D=await getD(so),F=D.forms||[];const R={};
     ["BM05","KT","BM07"].forEach(f=>{const L=F.filter(x=>f==="KT"?/^BM0[46]$/.test(x.loai):x.loai===f);R[f]={n:L.length,gaps:[].concat(...L.map((x,i)=>dgfGap(D,x).map(g=>L.length>1?dmy(x.ngay)+": "+g:g)))}});return R});
+  /* lệnh trước ngày áp dụng biểu mẫu trên Sổ Kho: "Chưa lập" không báo đỏ */{const o=(S.lenh||[]).find(x=>x.so===so);if(o&&String(o.ngay||"")<"2026-11-05")bar.classList.add("old")}
   /* thứ tự: nút quay lại → tiêu đề lệnh → ô biểu mẫu */const h2=box.querySelector("h2"),bk=box.querySelector("#dgBack,button.back,[data-back]");if(h2)h2.after(bar);else if(bk)bk.after(bar);else box.prepend(bar);
 };
 async function dgfOpen(so,f){let D;try{D=await getD(so)}catch(e){return handleErr(e)}

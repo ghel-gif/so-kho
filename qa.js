@@ -22,6 +22,7 @@
     THUNG: n => n >= 26 && n <= 150 ? "3 mẫu (kích thước, ngoại quan: toàn bộ mẫu)" : n > 150 ? "5 mẫu (kích thước, ngoại quan: toàn bộ mẫu)" : ""
   };
   const DAT = ["Đạt", "Không đạt"];
+  const mauN = (so, sl) => { const m = /^(\d+)\s*mẫu/.exec(MAU[so] ? MAU[so](+sl || 0) : ""); return m ? +m[1] : 0; };
   const SO = {
     NHAN: { bm: "BM.01-QC-QT.02", ngan: "Nhãn", tieuDe: "SỔ KIỂM TRA NHÃN", hd: "QC-HD.04", nguong: 5, qc: "V (g/ml)", ten: "Tên nhãn", loaiTxt: "Loại nhãn",
       loai: ["Nhãn dán hồ", "Nhãn decal", "Nhãn phụ", "Dán thùng / dán hộp", "Túi", "Túi cuộn", "Hộp"],
@@ -153,31 +154,32 @@
       return `${isNew ? `<div class="seg subseg" style="margin-bottom:8px">${ORDER.map(k => `<button type="button" data-so="${k}" aria-pressed="${k === so}">${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</button>`).join("")}</div>` : `<p class="note" style="margin:0 0 6px"><b>${S0.bm}</b> · ${S0.tieuDe.toLowerCase()} · ghi bởi ${E(r.nguoi)}${r.sua && r.sua !== r.nguoi ? " · sửa cuối " + E(r.sua) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</p>`}
         ${locked ? `<p class="note" style="background:#e8f5e9;padding:6px 8px;border-radius:6px">✓ TP. QA/QC đã xác nhận (${E(d.xnQLNguoi || "")}${d.xnQLLuc ? " · " + E(d.xnQLLuc) : ""}) — chỉ xem.</p>` : ""}
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
-          ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}${fld("Giờ giao", inp("gioNhap", d.gioNhap, 'type="time"'))}
+          ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}${fld("Giờ giao", inp("gioNhap", d.gioNhap, 'type="time" data-opt'))}
           ${fld("Nhà cung cấp", inp("ncc", d.ncc, 'list="qaNcc"') + dl("qaNcc", A.map(x => x.d.ncc)))}
           ${fld(S0.loaiTxt, inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
           ${fld("Mã (theo danh mục quy cách)", inp("ma", d.ma, 'list="qaMa" placeholder="không bắt buộc"') + `<datalist id="qaMa">${C.map(c => `<option value="${E(c[0])}">${E(c[1])}</option>`).join("")}</datalist>`)}
           ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
-          ${fld(S0.qc, inp("quyCach", d.quyCach))}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
+          ${fld(S0.qc, inp("quyCach", d.quyCach))}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
           ${fld("Số lượng thực tế", inp("sl", d.sl, 'type="number" step="any" min="0"'))}${fld("Đơn vị", inp("dvt", d.dvt, 'list="qaDvt"') + dl("qaDvt", ["cái", "kg", "cuộn", "bó", "thùng"]))}
           ${fld("Tình trạng khi nhận", inp("tinhTrangKho", d.tinhTrangKho, 'list="qaTTK"') + dl("qaTTK", ["Bình thường", "Móp / méo", "Ướt", "Thiếu số lượng", "Rách bao gói"]))}
           <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
         </div></fieldset>
         <fieldset class="qa-fs" ${ro}><legend>Kiểm tra (${S0.hd})</legend><div class="two qa-g">
+          ${canEd ? `<div class="qa-quick" style="grid-column:1/-1"><button type="button" class="btn ok" data-a="all">✓ Đạt hết</button><span class="note">Bấm khi lô không có lỗi: điền tất cả tiêu chí đạt, 0 lỗi, cỡ mẫu theo ${S0.hd}, kết luận Đạt. Có lỗi thì sửa riêng ô đó.</span></div>` : ""}
           ${fld("Ngày kiểm tra", inp("ngayKT", d.ngayKT, 'type="date"'))}${fld("Người kiểm mẫu", userSel("nguoiKT", d.nguoiKT))}
           ${fld("Cỡ mẫu kiểm tra", inp("soMau", d.soMau, 'type="number" min="0" step="1"') + `<small class="note" id="qaMauG">${E(MAU[so](+d.sl || 0) ? "Theo " + S0.hd + ": " + MAU[so](+d.sl || 0) : (+d.sl ? "Cỡ lô " + N(d.sl) + ": ngoài bảng lấy mẫu của " + S0.hd : ""))}</small>`, true)}
           ${S0.ct.map(([k, t, o]) => fld(t, sel(k, d[k], o))).join("")}
           ${fld("Số lỗi nặng", inp("loiNang", d.loiNang, 'type="number" min="0" step="1"'))}${fld("Số lỗi nhẹ", inp("loiNhe", d.loiNhe, 'type="number" min="0" step="1"'))}
           <p class="note" style="grid-column:1/-1;margin:0">Lỗi nặng: ${E(S0.nang)}. · Lỗi nhẹ: ${E(S0.nhe)}.</p>
           ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="2">${E(d.ghiChu || "")}</textarea>`, true)}
-          ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}"`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
+          ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}" data-opt`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
           <div style="grid-column:1/-1"><b>Kết luận</b> <span class="qa-kl">${OKV.map(v => `<button type="button" class="btn small${d.ketLuan === v ? (v === "Đạt" ? " ok" : " bad") : ""}" data-kl="${v}" ${ro}>${v}</button>`).join(" ")}</span>
             <small class="note" id="qaGY">${g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý."}</small></div>
           ${fld(so === "NHAN" ? "Phiếu yêu cầu xử lý SPKPH" : so === "TUI" ? "Yêu cầu xử lý SP KPH" : "Phiếu yêu cầu xử lý SPKPH", inp("ycXuLy", d.ycXuLy, 'placeholder="số phiếu KPH (nếu có)"') + (r && canEd ? ` <button type="button" class="btn small" id="qaMkK">Lập phiếu KPH</button>` : ""), true)}
         </div></fieldset>
         <fieldset class="qa-fs" ${tp ? "" : "disabled"}><legend>Xác nhận</legend><div class="two qa-g">
-          ${fld("Xác nhận của quản lý phòng QC (TP. QA/QC)", inp("xnQL", d.xnQL, 'list="qaXN"') + dl("qaXN", XN))}
-          ${fld("Kết quả xử lý", inp("kqXuLy", d.kqXuLy))}
+          ${fld("Xác nhận của quản lý phòng QC (TP. QA/QC)", inp("xnQL", d.xnQL, 'list="qaXN" data-opt') + dl("qaXN", XN))}
+          ${fld("Kết quả xử lý", inp("kqXuLy", d.kqXuLy, "data-opt"))}
           <p class="note" style="grid-column:1/-1;margin:0">${d.xnQL ? "Đã xác nhận: " + E(d.xnQLNguoi || "") + (d.xnQLLuc ? " · " + E(d.xnQLLuc) : "") + ". " : ""}${tp ? "Xoá ô xác nhận rồi Lưu để mở lại cho QC sửa." : "Chỉ TP. QA/QC (Nguyễn Ô Ghel) xác nhận."} Xác nhận của bộ phận thu mua: ký tay trên bản in.</p>
         </div></fieldset>
         <div class="actions">${r && (tp || (canEd && r.nguoi === me)) ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button>${canEd || tp ? '<button class="btn primary" type="button" data-a="sv">Lưu</button>' : ""}</div>`;
@@ -193,6 +195,17 @@
       bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); }));
       const ma = bx.querySelector('[data-k="ma"]'); if (ma) ma.addEventListener("change", () => { const c = codesFor(so).find(x => x[0] === ma.value.trim()); if (!c) return; const t = bx.querySelector('[data-k="ten"]'), q = bx.querySelector('[data-k="quyCach"]'); if (t && !t.value.trim()) t.value = c[1]; if (q && !q.value.trim() && c[2]) q.value = c[2]; pull(); });
       bx.querySelectorAll("[data-kl]").forEach(x => x.onclick = () => { pull(); d.ketLuan = d.ketLuan === x.dataset.kl ? "" : x.dataset.kl; re(); });
+      const all = bx.querySelector('[data-a="all"]'); if (all) all.onclick = () => { pull(); const S0 = SO[so];
+        S0.ct.forEach(([k, , o]) => { d[k] = o[0]; }); d.loiNang = "0"; d.loiNhe = "0";
+        if (!d.soMau) { const n = mauN(so, d.sl); if (n) d.soMau = String(n); }
+        if (!d.ngayKT) d.ngayKT = today(); if (!d.nguoiKT) d.nguoiKT = me; if (so === "NHAN") d.tinhTrangQC = "Bình thường";
+        d.ketLuan = "Đạt"; re(); toast("Đã điền tất cả tiêu chí đạt — kiểm lại rồi bấm Lưu"); };
+      /* gõ / chọn tên đã từng kiểm: điền NCC, loại, quy cách, NPP, ĐVT, mã như lần gần nhất (chỉ điền ô còn trống) */
+      const tn = bx.querySelector('[data-k="ten"]'); if (tn) tn.addEventListener("change", () => { pull(); const t = String(d.ten || "").trim().toLowerCase(); if (!t) return;
+        const L = vt().filter(x => x.loai === so && x !== r && String(x.d.ten || "").trim().toLowerCase() === t).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap)))[0]; if (!L) return;
+        let n = 0; ["ncc", "loaiVT", "quyCach", "npp", "dvt", "ma"].forEach(k => { const el = bx.querySelector(`[data-k="${k}"]`), v = L.d[k]; if (!el || !v) return;
+          if (!el.value.trim() || (k === "dvt" && el.value.trim() === "cái" && v !== "cái")) { el.value = v; n++; } });
+        if (n) { pull(); hint(); toast("Đã điền theo lần kiểm gần nhất (" + D(L.d.ngayNhap) + "): NCC, loại, quy cách…"); } });
       const mk = bx.querySelector("#qaMkK"); if (mk) mk.onclick = async () => { pull(); try { const o = await save({ id: r.id, loai: so, d }, "Đã lưu lô vật tư"); Object.assign(d, o.d); w.remove(); kphDlg(null, { ngay: d.ngayKT || today(), suKPH: "Vật tư nhập không đạt: " + d.ten, nn: { vatTu: true }, hienTrang: d.ghiChu || "", moTa: [d.loaiVT, d.ncc ? "NCC " + d.ncc : "", d.ngayNhap ? "về " + D(d.ngayNhap) : ""].filter(Boolean).join(" · "), sanPham: [d.ten, d.npp, d.quyCach].filter(Boolean).join(" - "), slKPH: soLoi(d), slKT: d.soMau || "", mucDo: +d.loiNang > 0 ? "Nặng" : "Nhẹ", bpPhatHien: "Phòng QA/QC", bpLienQuan: "Thu mua", nguon: r.id }); } catch (e) { toast(e.message); } };
       bx.querySelector('[data-a="x"]').onclick = () => w.remove();
       const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá lô vật tư này khỏi sổ?"])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
@@ -200,7 +213,8 @@
         if (!d.ketQua && so === "NHAN" && d.ketLuan) d.ketQua = kqTxt(d); if (d.loiNang !== "" || d.loiNhe !== "") d.soLoi = soLoi(d);
         sv.disabled = true; try { await save({ id: r && r.id, loai: so, d }, d.xnQL && tp ? "Đã lưu và xác nhận" : d.ketLuan ? "Đã lưu kết quả kiểm tra — chờ TP. QA/QC xác nhận" : "Đã ghi vật tư về — chờ kiểm (hạn 48 giờ)"); w.remove(); renderQA(); } catch (e) { sv.disabled = false; toast(e.message); } };
     }
-    bx.addEventListener("input", () => { pull(); hint(); });
+    /* cỡ mẫu tự điền theo số lượng (chỉ khi ô còn trống hoặc vẫn là số tự điền) */
+    bx.addEventListener("input", e => { pull(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
     wire();
   }
 

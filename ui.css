@@ -625,3 +625,73 @@ small{font-size:max(12.5px,.85em)}
   #impBox,#tab-ton>p.note,#lsxListView>p.note,#mvHint,#xnForm>p.note,#qrBox>p.note,label>small.note,.dgnote{display:none!important}
   .actions>.need-cnt small{max-width:150px}
 }
+/* kiểm tra vật tư: nút "Đạt hết" điền nhanh */
+.qa-quick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border-radius:10px;background:#e8f5e9;border:1px dashed #66bb6a}
+.qa-quick .btn.ok{background:#2e7d32!important;color:#fff!important;border-color:#2e7d32!important;font-weight:800;min-height:40px;padding:8px 16px}
+.qa-quick .btn.ok:hover{background:#1b5e20!important}
+.qa-quick .note{margin:0;font-size:12.5px;flex:1 1 260px}
+:root[data-theme=dark] .qa-quick{background:#14301c;border-color:#3f8f52}
+
+/* =====================================================================
+   4.4.1 — mô tả trang cho người mới · danh sách lệnh đóng gói · bảng theo dõi tháng · báo cáo
+   ===================================================================== */
+/* mô tả ngắn dưới tiêu đề trang: người mới biết trang này để làm gì */
+#pgSub{margin:3px 0 0;color:var(--muted);font-size:13.5px;line-height:1.45;max-width:920px}
+#pgSub[hidden]{display:none}
+@media (max-width:600px){#pgSub{display:none}}
+/* nút lập mới chỉ để ở đầu trang (bỏ nút trùng trong thanh công cụ) */
+#lsxNewBtn,#dgNewBtn{display:none!important}
+/* danh sách lệnh đóng gói */
+.dgl-list .row .name{display:flex;flex-wrap:wrap;align-items:center;gap:3px 6px}
+.dgl-list .row .name .code{margin:0}
+.dgl-list .row .name .tn{font-weight:600;color:var(--ink)}
+.dgl-list .row .name .st{margin-left:2px}
+.dgnh{font-size:12.5px;color:var(--muted);font-weight:500}
+.dgl-list .row.r-run{box-shadow:inset 4px 0 0 #f59e0b}
+.dgl-list .row.r-bad{box-shadow:inset 4px 0 0 #e11d48}
+.dgl-list .grp small{margin-left:8px;font-weight:600;letter-spacing:0;text-transform:none;opacity:.8}
+.dgqs{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
+.dgq{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.dgq.ok{background:#e6f4ea;color:#1b5e20;border-color:#81c784}
+.dgq.bad{background:#d32f2f;color:#fff;border-color:#b71c1c;animation:skRing 1.6s ease-out infinite}
+.dgq.todo{background:#fff4d6;color:#7a4b00;border-color:#f0b429}
+.dgq.wait{color:var(--muted);font-weight:500}
+:root[data-theme=dark] .dgq.ok{background:#123b22;color:#b9f6ca;border-color:#2e7d32}
+:root[data-theme=dark] .dgq.todo{background:#3d2e00;color:#ffe08a;border-color:#a87b00}
+/* ô số liệu 4 thẻ */
+.summary.dgsum{grid-template-columns:repeat(4,minmax(0,1fr));margin:6px 0 10px}
+@media (max-width:600px){.summary.dgsum{grid-template-columns:repeat(2,minmax(0,1fr))!important}.summary.dgsum .stat:first-child{grid-column:auto}}
+/* bảng theo dõi tháng: nhóm cột, số canh phải, cột Số lệnh dính bên trái khi kéo ngang */
+.dgbang table{font-size:13px}
+.dgbang thead tr.grh th{background:color-mix(in srgb,#1a5fb4 12%,var(--surface));color:var(--ink);text-align:center;font-size:12px;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line)}
+.dgbang thead tr.grh th.g1,.dgbang thead tr.grh th.g3,.dgbang thead tr.grh th.g5{background:color-mix(in srgb,#14897c 12%,var(--surface))}
+.dgbang th.gs,.dgbang td.gs{border-left:2px solid color-mix(in srgb,var(--ink) 25%,transparent)}
+.dgbang thead tr:last-child th{font-size:12px;vertical-align:bottom}
+.dgbang tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--ink) 3%,var(--surface))}
+.dgbang tbody tr.run td{background:color-mix(in srgb,#f59e0b 10%,var(--surface))}
+.dgbang tbody tr:hover td{background:color-mix(in srgb,#1a5fb4 9%,var(--surface))}
+.dgbang tbody td{background:var(--surface)}
+.dgbang tbody td:nth-child(4),.dgbang thead tr:last-child th:nth-child(4){position:sticky;left:0;z-index:1;font-weight:700;box-shadow:2px 0 0 var(--line)}
+.dgbang thead tr:last-child th:nth-child(4){z-index:3}
+.dgbang td.hhp{color:#c62828;font-weight:700}
+.dgbang td.hhn{color:#1565c0;font-weight:700}
+.dgbc{max-width:720px}
+.dgbc td:first-child{font-weight:600}
+/* lệnh trước ngày áp dụng biểu mẫu trên Sổ Kho (05/11/2026): "Chưa lập" màu xám, không nhấp nháy */
+.dgf-bar.old .dgf-s.no{background:#eceff1!important;color:#546e7a!important;border-color:#b0bec5!important;animation:none!important}
+.dgf-bar.old .dgf-s.no::before{display:none}
+.dgf-bar.old .dgf-t:has(.dgf-s.no){border-color:#0f6f64;box-shadow:0 2px 0 #0f6f64}
+.dgf-bar.old .dgf-t:has(.dgf-s.no) svg{stroke:#0f6f64}
+/* ---------- Điện thoại (đợt 2): nút chọn mục gọn, bộ lọc 2 cột, tin cập nhật thu gọn ---------- */
+@media screen and (max-width:600px){
+  html body .seg:not(.seg2) button{flex:0 1 auto;min-height:40px;padding:7px 12px;font-size:13.5px;border-radius:9px}
+  html body .seg.seg2 .seg2-l{display:none}
+  html body .seg.seg2 button{min-height:38px;padding:5px 12px}
+  .tools select,.tools input[type=month],.tools input[type=date]{flex:1 1 calc(50% - 4px)!important;width:auto!important}
+  /* tin cập nhật: chỉ hiện 1 mục, tối đa 3 dòng (bấm "Xem tất cả" để mở) */
+  #newsBox:not(:has(#newsMore[data-o="1"])) li:nth-child(n+2){display:none}
+  #newsBox:not(:has(#newsMore[data-o="1"])) li:first-child{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  /* hộp quy cách: trên điện thoại chỉ giữ 2 nút tra cứu */
+  #qcFind,#qcEd,#qcAdd,.qc-bar .note,.qc-bar>div:nth-child(2){display:none!important}
+  #kcBox>p.note{display:none}
+}

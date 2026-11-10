@@ -244,6 +244,7 @@ window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thàn
       const b=B&&B.bb;R.bb={n:b?1:0,gaps:b?[emp(b.ketLuan)&&"kết luận",emp(b.may)&&"thiết bị",!b.tg&&"thời gian sản xuất"].filter(Boolean):[]};
       const h=H&&H.p,kq=(h&&h.kq)||{};R.hl={n:h?1:0,gaps:h?[!Object.keys(kq).some(k=>!/^[#_]/.test(k)&&!emp(kq[k]))&&"kết quả kiểm",emp(h.ketLuan)&&"kết luận"].filter(Boolean):[]};
       const x=V&&V.p&&V.p.lenh===o.so?V.p:null;R.vs={n:x?1:0,gaps:x?[!(x.tb||[]).length&&"thiết bị",emp(x.kq)&&"kết quả vệ sinh"].filter(Boolean):[]};return R});
+    if(String(o.ngay||"")<"2026-11-05")d.classList.add("old"); /* lệnh trước ngày áp dụng biểu mẫu: không báo đỏ */
     ins(d);return}
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
   d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button><button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button><button class="btn" type="button" data-vs>Vệ sinh thiết bị (BM.05)</button>`;
