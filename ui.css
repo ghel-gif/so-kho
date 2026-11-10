@@ -338,3 +338,27 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .qa-dlg textarea{width:100%;resize:vertical}
 .qa-dlg .qa-kl .btn.ok{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .qa-dlg .qa-kl .btn.bad{background:#c62828;color:#fff;border-color:#c62828}
+/* Thiết bị nhà xưởng + kiểm tra cân (QC-QT.01) */
+.tb-sum{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.tb-sum>div{flex:1 1 120px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;flex-direction:column;gap:2px}
+.tb-sum>div b{font-size:20px;line-height:1.1}
+.tb-sum>div small{color:var(--muted);font-size:12px}
+.tb-sum>div[data-go]{cursor:pointer}
+.tb-sum>div.warn{border-color:#f59e0b;background:rgba(245,158,11,.08)}
+.tb-sum>div.bad{border-color:#c62828;background:rgba(198,40,40,.07)}
+.tb-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.45);border-radius:10px;padding:8px 10px;margin:0 0 8px}
+.tb-bad{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+table.tb-kc input.kcv{width:96px;min-height:36px;padding:4px 8px;text-align:right}
+table.tb-kc td{vertical-align:middle}
+table.tb-kc td.r{text-align:right;white-space:nowrap}
+table.tb-kc .kma2{display:none}
+@media (max-width:640px){
+  table.tb-kc{font-size:13px}
+  table.tb-kc th,table.tb-kc td{padding:4px 5px}
+  table.tb-kc .kma,table.tb-kc .kgh{display:none}
+  table.tb-kc .kma2{display:block;color:var(--muted);font-size:12px}
+  table.tb-kc td.knm{min-width:84px;max-width:120px;white-space:normal;word-break:normal;overflow-wrap:anywhere}
+  table.tb-kc th{min-width:0}
+  table.tb-kc .klc{display:none}
+  table.tb-kc input.kcv{width:64px!important;min-width:0!important;padding:4px 5px}
+}

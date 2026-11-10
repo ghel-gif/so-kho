@@ -671,3 +671,77 @@ function webQADel(a, id, khoiPhuc) {
   log_(me, khoiPhuc ? 'Khôi phục hồ sơ QA/QC' : 'Xoá hồ sơ QA/QC', String(id), '');
   return qaRows_();
 }
+
+/* ================= THIẾT BỊ NHÀ XƯỞNG + KIỂM TRA CÂN — QC-QT.01 kiểm soát thiết bị đo lường (BM.01, BM.02) · QC-HD.01 =================
+   Loại: TB = thiết bị (danh mục + lịch kiểm định / hiệu chuẩn), NK = nhật ký bảo trì / sửa chữa / HCKĐ, KC = sổ kiểm tra cân (BM.02).
+   QC hoặc Quản lý ghi; người lập hoặc TP. QA/QC (Nguyễn Ô Ghel) được xoá. */
+const TB_SH = 'ThietBi', TB_HEAD = ['ID', 'Loại', 'Ngày', 'Dữ liệu (JSON)', 'Người lập', 'Lúc', 'Trạng thái', 'Người sửa cuối'], TB_LOAI = ['TB', 'NK', 'KC'];
+function tbRows_() { return (sheet_(TB_SH) ? rows_(TB_SH) : []).filter(r => str_(r[0])).map(r => { let d = {}; try { d = JSON.parse(str_(r[3]) || '{}'); } catch (e) {}
+  return { id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[2]), d, nguoi: str_(r[4]), luc: khTs_(r[5]), xoa: str_(r[6]) === 'Đã xoá' ? 1 : 0, sua: str_(r[7]) }; }); }
+function webTBAll(a) { auth_(a); return tbRows_(); }
+function tbCheck_(loai, d, R, id) {
+  if (TB_LOAI.indexOf(loai) < 0) throw new Error('Loại hồ sơ thiết bị không hợp lệ.');
+  if (loai === 'TB') {
+    if (!String(d.ten || '').trim()) throw new Error('Ghi tên thiết bị.');
+    ['hcNgay', 'denHan'].forEach(k => { if (d[k] && !isYmd_(d[k])) throw new Error('Ngày kiểm định / hiệu chuẩn không hợp lệ.'); });
+  } else if (loai === 'NK') {
+    if (!isYmd_(d.ngay)) throw new Error('Ghi ngày thực hiện.');
+    if (!String(d.noiDung || d.loaiCV || '').trim()) throw new Error('Ghi nội dung công việc.');
+    if (d.ngayTiep && !isYmd_(d.ngayTiep)) throw new Error('Ngày dự kiến tiếp theo không hợp lệ.');
+  } else {
+    if (!isYmd_(d.ngay)) throw new Error('Ghi ngày kiểm tra.');
+    if (['M1', 'F1'].indexOf(d.so) < 0) throw new Error('Sổ kiểm tra cân không hợp lệ.');
+    if (!d.khongSX && !(Array.isArray(d.rows) && d.rows.length)) throw new Error('Chưa có cân nào trong sổ kiểm tra.');
+    const trung = R.find(r => str_(r[1]) === 'KC' && str_(r[0]) !== String(id || '') && str_(r[6]) !== 'Đã xoá' && (() => { try { const x = JSON.parse(str_(r[3]) || '{}'); return x.so === d.so && x.ngay === d.ngay; } catch (e) { return false; } })());
+    if (trung) throw new Error('Ngày ' + d.ngay.split('-').reverse().join('/') + ' đã có sổ kiểm tra cân này — mở sổ đó để sửa.');
+  }
+}
+const tbNgay_ = (loai, d) => loai === 'TB' ? (d.denHan || '') : (d.ngay || '');
+function webTBSave(a, o) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  if (!qaQC_(me)) throw new Error('Chỉ QC hoặc Quản lý ghi thiết bị / sổ kiểm tra cân.');
+  o = o || {};
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(TB_SH, TB_HEAD), R = sheet_(TB_SH) ? rows_(TB_SH) : [];
+    let id = String(o.id || ''), i = id ? R.findIndex(r => str_(r[0]) === id) : -1;
+    if (id && i < 0) throw new Error('Không tìm thấy hồ sơ (có thể đã bị xoá).');
+    if (i >= 0 && str_(R[i][1]) !== o.loai) throw new Error('Sai loại hồ sơ.');
+    const d = Object.assign({}, o.d || {}); tbCheck_(o.loai, d, R, id);
+    const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
+    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    if (i >= 0) sh.getRange(i + 2, 1, 1, TB_HEAD.length).setValues([[id, o.loai, tbNgay_(o.loai, d), js, str_(R[i][4]), R[i][5], '', me.ten]]);
+    else sh.appendRow([id, o.loai, tbNgay_(o.loai, d), js, me.ten, new Date(), '', me.ten]);
+    log_(me, o.loai === 'KC' ? 'Kiểm tra cân ' + d.so : o.loai === 'NK' ? 'Nhật ký thiết bị' : 'Thiết bị', id, String(o.loai === 'KC' ? d.ngay + ' · ' + (d.khongSX ? 'không SX' : d.ketQua || '') : (d.ma ? d.ma + ' ' : '') + (d.ten || '') + (o.loai === 'NK' ? ' · ' + (d.loaiCV || '') : '')).slice(0, 150));
+    return { id, d };
+  } finally { lock.releaseLock(); }
+}
+/* nhập nhiều hồ sơ một lần (chuyển từ file Excel) — chỉ TP. QA/QC */
+function webTBNhap(a, L) {
+  const me = auth_(a, [ROLES.QL]);
+  if (!qaTP_(me)) throw new Error('Chỉ TP. QA/QC (' + DL_EDITOR_ + ') nhập danh sách thiết bị.');
+  if (!Array.isArray(L) || !L.length || L.length > 600) throw new Error('Danh sách nhập không hợp lệ.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(TB_SH, TB_HEAD), R = sheet_(TB_SH) ? rows_(TB_SH).slice() : [], have = new Set(R.map(r => str_(r[0]))), now = new Date(), out = [];
+    L.forEach((o, k) => {
+      const d = Object.assign({}, (o && o.d) || {}); tbCheck_(o.loai, d, R, o.id);
+      const id = String(o.id || (o.loai + '-' + Utilities.formatDate(now, tz_(), 'yyMMddHHmmss') + ('00' + k).slice(-3)));
+      if (have.has(id)) throw new Error('Trùng mã hồ sơ ' + id + '.');
+      const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài: ' + (d.ten || id));
+      const row = [id, o.loai, tbNgay_(o.loai, d), js, me.ten, now, '', me.ten]; have.add(id); R.push(row); out.push(row);
+    });
+    sh.getRange(sh.getLastRow() + 1, 1, out.length, TB_HEAD.length).setValues(out);
+    log_(me, 'Nhập danh sách thiết bị', String(out.length), out.length + ' hồ sơ');
+    return tbRows_().length;
+  } finally { lock.releaseLock(); }
+}
+function webTBDel(a, id, khoiPhuc) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  const R = sheet_(TB_SH) ? rows_(TB_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id));
+  if (i < 0) throw new Error('Không tìm thấy hồ sơ.');
+  if (!qaTP_(me) && str_(R[i][4]) !== me.ten) throw new Error('Chỉ người lập hoặc TP. QA/QC (' + DL_EDITOR_ + ') được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
+  sheet_(TB_SH).getRange(i + 2, 7, 1, 2).setValues([[khoiPhuc ? '' : 'Đã xoá', me.ten]]);
+  log_(me, khoiPhuc ? 'Khôi phục hồ sơ thiết bị' : 'Xoá hồ sơ thiết bị', String(id), '');
+  return tbRows_();
+}
