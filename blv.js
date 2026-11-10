@@ -100,12 +100,12 @@
     R.sec.forEach(s => { if (s.k === "formMiss") { s.rows = s.rows.filter(x => x.xong); s.t = "Lệnh đóng gói đã xong còn thiếu biểu mẫu QC"; } });
     R.sec = R.sec.filter(s => s.rows.length);
     const urgent = R.sec.filter(s => s.k !== "mine"), mine = R.sec.find(s => s.k === "mine");
-    const h = new Date().getHours(), chao = h < 11 ? "Chào buổi sáng" : h < 14 ? "Chào buổi trưa" : h < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+    const h = new Date().getHours(), chao = window.skyChao ? skyChao() : h < 11 ? "Chào buổi sáng" : h < 14 ? "Chào buổi trưa" : h < 18 ? "Chào buổi chiều" : "Chào buổi tối";
     const LV = { formMiss: "lv-bad", dgShort: "lv-bad", lsxShort: "lv-bad", low: "lv-bad", mine: "" };
     const card = s => { const M = META[s.k], L = s.rows.slice(0, 30), lv = s.k in LV ? LV[s.k] : "lv-warn";
       return `<div class="blv-card ${lv}" style="--c:${M.c}"><div class="blv-h"><span class="blv-i">${M.i}</span><b>${E(s.t)}</b><span class="blv-n">${s.rows.length}</span></div>
         <div class="blv-l">${L.map((x, i) => { const ln = M.line(x); return `<button type="button" class="blv-r${/#c62828/.test(ln) ? " r-bad" : ""}" data-k="${s.k}" data-i="${i}"><span>${ln}</span><span class="blv-go">Mở ›</span></button>`; }).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
-    box.innerHTML = `<div class="blv-top"><div><h2 class="blv-hi">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)} — chỉ hiện việc thuộc phần của bạn.</p></div>
+    box.innerHTML = `<div class="blv-top"><div><h2 class="blv-hi">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)}${window.skyLine ? " · " + skyLine() : ""} — chỉ hiện việc thuộc phần của bạn.</p></div>
         <div class="blv-sum ${R.n ? "bad" : "ok"}" data-n="${R.n}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
       <div class="blv-grid"><div id="blvDg"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
       ${mine && mine.rows.length ? card(mine) : ""}</div>
