@@ -853,3 +853,17 @@ small{font-size:max(12.5px,.85em)}
 .dgbt small{font-size:12.5px}
 @media (max-width:600px){.dgkvs{grid-template-columns:1fr}}
 :root:not([data-theme=dark]) .summary .stat:nth-child(5){background:#e3f4f7;border-color:#b5dde4 #b5dde4 #b5dde4 #0f8fa3}
+/* ===== 4.4.7 · ai đang online (chỉ Quản lý) ===== */
+.onlb{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;margin-right:8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:700 13px var(--font,inherit);cursor:pointer;vertical-align:middle}
+.onlb .onl-dot{width:9px;height:9px;border-radius:50%;background:#22a04b;box-shadow:0 0 0 3px rgba(34,160,75,.18)}
+.onlb.off .onl-dot{background:#9aa7b5;box-shadow:none}
+.onlb:hover{border-color:#22a04b}
+.onlpop .onl-i{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:10px}
+.onlpop .onl-i+.onl-i{border-top:1px solid var(--line)}
+.onlpop .onl-d{flex:0 0 10px;height:10px;margin-top:5px;border-radius:50%;background:#22a04b}
+.onlpop .onl-i.nen .onl-d{background:#c3ccd6}.onlpop .onl-i.nen{opacity:.75}
+.onlpop .onl-x{min-width:0;flex:1}.onlpop .onl-x small{color:var(--muted)}
+.onlpop .onl-m{font-size:13px;color:var(--muted);margin-top:2px}.onlpop .onl-m b{color:var(--ink);font-weight:600}
+.onlpop .onl-me{font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.onlpop .onl-n{font-size:12px;color:var(--muted);padding:8px 10px 4px;border-top:1px solid var(--line);margin-top:4px}
+@media (max-width:600px){.onlb{padding:0 9px;margin-right:4px;height:32px}}
