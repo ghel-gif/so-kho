@@ -74,8 +74,10 @@
   const rowsFor = (so, t, lai) => KC[so].qua.map(M => ({ tb: t.id, ma: t.d.ma || "", ten: t.d.ten, M, m1: "", m2: "", gh: KC[so].gh(t.d.kcDoc)[M], dp: KC[so].dp(t.d.kcDoc), lai: lai || 0 }));
   const ghOf = r => isFinite(parseFloat(r.gh)) ? +r.gh : ({ 500: 0.3, 1000: 0.5, 100: +r.dp >= 3 ? 0.002 : 0.02, 200: +r.dp >= 3 ? 0.005 : 0.05 })[+r.M];
   const calc = r => { const a = num(r.m1), b = num(r.m2), gh = ghOf(r); if (a == null || b == null || !(gh > 0)) return null; const M = +r.M, c1 = Math.abs(M - a), c2 = Math.abs(M - b), g = gh + 1e-9; return { c1, c2, lech: (c1 + c2) / 2, dat: c1 <= g && c2 <= g }; };
-  const fx = (v, dp) => num(v) == null ? "" : num(v).toFixed(dp);
-  const lechTxt = (v, dp) => { let s = v.toFixed(dp + 1); if (dp >= 2 && s.endsWith("0")) s = s.slice(0, -1); return s; };
+  /* số lẻ theo kiểu Việt Nam: dấu phẩy thập phân (500,0 · 0,25 · 1.000,0) — giống phần còn lại của Sổ Kho */
+  const vnf = (x, a, b) => x.toLocaleString("vi-VN", { minimumFractionDigits: a, maximumFractionDigits: b });
+  const fx = (v, dp) => num(v) == null ? "" : vnf(num(v), dp, dp);
+  const lechTxt = (v, dp) => vnf(v, dp >= 2 ? dp : dp + 1, dp + 1);
   const gkey = r => (r.tb || r.ma) + "|" + (+r.lai || 0);
   /* kết quả cuối của từng cân: lần kiểm tra lại sau cùng (nếu có) */
   const ketQuaTB = d => { const G = {}, O = []; (d.rows || []).forEach(r => { const k = r.tb || r.ma; if (!G[k]) { G[k] = []; O.push(k); } G[k].push(r); });

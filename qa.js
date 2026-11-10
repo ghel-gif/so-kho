@@ -67,7 +67,7 @@
     if (+d.loiNang > 0) return ["Không đạt", "có " + d.loiNang + " lỗi nặng"];
     if (bad.length) return ["Không đạt", "tiêu chí " + bad.join(", ") + " không đạt"];
     const n = +d.soMau || 0, b = +d.loiNhe || 0; if (!n) return b ? null : (S0.ct.some(([k]) => d[k]) ? ["Đạt", "không có lỗi"] : null);
-    const p = b / n * 100; return p > S0.nguong ? ["Không đạt", `lỗi nhẹ ${p.toFixed(1)} % > ${S0.nguong} %`] : ["Đạt", `lỗi nhẹ ${p.toFixed(1)} % ≤ ${S0.nguong} %`]; };
+    const p = b / n * 100, pt = p.toFixed(1).replace(".", ","); return p > S0.nguong ? ["Không đạt", `lỗi nhẹ ${pt} % > ${S0.nguong} %`] : ["Đạt", `lỗi nhẹ ${pt} % ≤ ${S0.nguong} %`]; };
 
   /* ---------------- danh sách ---------------- */
   window.renderQA = async function () {
@@ -255,7 +255,7 @@
 
   /* ---------------- QC-QT.05: sổ theo dõi sự không phù hợp ---------------- */
   const NN = [["thietBi", "Thiết bị"], ["vatTu", "Vật tư"], ["nguyenLieu", "Nguyên liệu"], ["quaTrinh", "Quá trình"], ["conNguoi", "Con người"]];
-  const tiLe = d => { const a = parseFloat(d.slKPH), b = parseFloat(d.slKT); return isFinite(a) && b > 0 ? (a / b * 100).toFixed(2).replace(/\.?0+$/, "") + " %" : ""; };
+  const tiLe = d => { const a = parseFloat(d.slKPH), b = parseFloat(d.slKT); return isFinite(a) && b > 0 ? (Math.round(a / b * 10000) / 100).toLocaleString("vi-VN") + " %" : ""; };
   function kphDlg(r, seed) {
     const d = r ? JSON.parse(JSON.stringify(r.d)) : Object.assign({ ngay: today(), nn: {}, bpPhatHien: "Phòng QA/QC" }, seed || {}), ed = QC() && !(r && r.xoa);
     if (!d.nn) d.nn = {};

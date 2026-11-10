@@ -27,10 +27,10 @@ window.QC_IC=IC;
 window.qcTiles=function(bar,T,stat,title){bar.className="dgf-bar";
   bar.innerHTML=`<div class="dgf-h">${title||"Biểu mẫu QC của lệnh này"} <small>bấm để mở / lập phiếu</small></div><div class="dgf-g">${T.map(t=>`<button type="button" class="dgf-t" data-f="${t.f}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${t.icon}"/></svg><span class="dgf-x"><b>${t.code}</b><span>${esc(t.name)}</span><small class="dgf-gap" data-g="${t.f}" hidden></small></span><em class="dgf-s" data-s="${t.f}">…</em></button>`).join("")}</div>`;
   T.forEach(t=>bar.querySelector(`[data-f="${t.f}"]`).onclick=t.open);
-  bar.upd=()=>stat().then(R=>T.forEach(t=>{const r=R[t.f]||{n:0,gaps:[]},b=bar.querySelector(`[data-f="${t.f}"]`),e=b.querySelector(".dgf-s"),g=b.querySelector(".dgf-gap");
+  bar.upd=()=>stat().then(R=>{T.forEach(t=>{const r=R[t.f]||{n:0,gaps:[]},b=bar.querySelector(`[data-f="${t.f}"]`),e=b.querySelector(".dgf-s"),g=b.querySelector(".dgf-gap");
     const st=!r.n?"no":r.gaps.length?"warn":"ok";b.classList.remove("done","need");if(st==="ok")b.classList.add("done");if(st==="warn")b.classList.add("need");
     e.className="dgf-s "+st;e.textContent=st==="no"?"Chưa lập":st==="warn"?"⚠ Cần bổ sung":"✓ Đủ thông tin"+(r.n>1?" · "+r.n+" phiếu":"");
-    g.hidden=!r.gaps.length;g.textContent=r.gaps.length?"Thiếu: "+r.gaps.join("; "):"";b.title=r.gaps.length?"Cần bổ sung: "+r.gaps.join("; "):""})).catch(()=>bar.querySelectorAll(".dgf-s").forEach(e=>e.textContent=""));
+    g.hidden=!r.gaps.length;g.textContent=r.gaps.length?"Thiếu: "+r.gaps.join("; "):"";b.title=r.gaps.length?"Cần bổ sung: "+r.gaps.join("; "):""});bar._st=R;bar.dispatchEvent(new CustomEvent("qcst",{detail:R}))}).catch(()=>bar.querySelectorAll(".dgf-s").forEach(e=>e.textContent=""));
   bar.upd();return bar};
 /* Phiếu đã lập nhưng còn thiếu gì */
 function dgfGap(D,f){const d=f.d||{},G=[],emp=v=>v===undefined||v===null||String(v).trim()==="",pos=v=>num(v)>0;

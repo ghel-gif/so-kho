@@ -276,7 +276,7 @@ function webDGFGet(a, so) {
 }
 function webDGFAll(a, tu, den) {
   auth_(a); // biểu mẫu đóng gói: ai đăng nhập cũng xem được
-  return dgfAll_().filter(x => (!tu || x.ngay >= tu) && (!den || x.ngay <= den)).map(x => ({ id: x.id, loai: x.loai, so: x.so, ngay: x.ngay, kl: x.kl, may: (x.d && (x.d.mayTen || x.d.may)) || '', maMay: (x.d && x.d.maMay) || '' }));
+  return dgfAll_().filter(x => (!tu || x.ngay >= tu) && (!den || x.ngay <= den)).map(x => ({ id: x.id, loai: x.loai, so: x.so, ngay: x.ngay, kl: x.kl, may: (x.d && (x.d.mayTen || x.d.may)) || '', maMay: (x.d && x.d.maMay) || '', dlSrc: (x.d && x.d.dlSrc) || '' }));
 }
 function webDGFSave(a, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
