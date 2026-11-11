@@ -52,7 +52,7 @@
       ct: [["dinhLuong", "Định lượng", DAT], ["ngoaiQuan", "Ngoại quan", DAT]],
       nang: "Không đủ định lượng, thủng, không seal, nổi bong bóng, trải nhựa không đều, chai bị biến dạng", nhe: "Miệng chai không phẳng, khó siết nắp" },
     THUNG: { bm: "BM.04-QC-QT.02", ngan: "Thùng / hộp", tieuDe: "SỔ KIỂM TRA THÙNG/HỘP", hd: "QC-HD.05", nguong: 2, qc: "Quy cách", ten: "Tên thùng/hộp", loaiTxt: "Loại vật tư",
-      loai: ["Thùng", "Hộp"],
+      loai: ["Thùng carton lớn", "Thùng carton nhỏ", "Hộp giấy trắng", "Hộp giấy đựng chai"], /* phiếu cũ ghi "Thùng" / "Hộp" vẫn giữ, sửa được */
       ct: [["kichThuoc", "Kích thước", DAT], ["ngoaiQuan", "Ngoại quan", DAT]],
       nang: "Kích thước, thiết kế không đúng, rách, bong màng, dính keo, rách giấy", nhe: "Trầy xước, biến dạng" }
   };
@@ -193,9 +193,9 @@
   }
 
   /* ---------------- ghi mã bao bì mới vào Danh mục vật tư ---------------- */
-  function bbNew(so, ma0, ten0, dv0, done) {
+  function bbNew(so, ma0, ten0, dv0, done, loai) {
     if (!QC() && !["Quản lý", "Kế toán"].includes(S.me.vaiTro)) { toast("Chỉ QC, Quản lý hoặc Kế toán ghi mã mới."); return; }
-    const pre = (BB_PRE[so] || ["BB."])[0], v0 = String(ma0 || "").trim().toUpperCase().replace(/\s+/g, ""), ma1 = !v0 ? pre : /^BB\./.test(v0) ? v0 : pre + v0;
+    const pre = so === "THUNG" && /^hộp/i.test(loai || "") ? "BB.HOP." : (BB_PRE[so] || ["BB."])[0], v0 = String(ma0 || "").trim().toUpperCase().replace(/\s+/g, ""), ma1 = !v0 ? pre : /^BB\./.test(v0) ? v0 : pre + v0;
     const w = dlg("Ghi mã bao bì mới", `<p class="note">Mã mới thêm vào <b>Danh mục vật tư</b> (nhóm Bao bì · đơn vị cái · Kho bao bì), dùng chung cho kho và sổ kiểm tra. Quy ước: <b>BB.NHAN.</b>… nhãn · <b>BB.GOI.</b>… gói / túi in · <b>BB.CHAI.</b>… chai / can · <b>BB.THUNG.</b>… thùng · <b>BB.HOP.</b>… hộp.</p>
       <div class="two"><label>Mã mới *<input id="bbMa" value="${E(ma1)}" autocomplete="off" spellcheck="false"></label><label>Đơn vị<input id="bbDv" value="${E(dv0 || "cái")}"></label></div>
       <label>Tên bao bì *<input id="bbTen" value="${E(ten0 || "")}" placeholder="VD Nhãn ALP-D7 – ALUPYR 250SC chai 150 ml"></label><p class="note" id="bbH" style="margin:4px 0 0"></p>
@@ -225,7 +225,7 @@
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}
           ${fld("Nhà cung cấp", inp("ncc", d.ncc, 'list="qaNcc"') + dl("qaNcc", A.map(x => x.d.ncc)))}
-          ${fld(S0.loaiTxt, so === "TUI" || so === "NHAN" ? sel("loaiVT", d.loaiVT, S0.loai, so === "NHAN" ? "— chọn loại nhãn —" : "— chọn loại bao bì —") : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
+          ${fld(S0.loaiTxt, so !== "CHAI" ? sel("loaiVT", d.loaiVT, S0.loai, { NHAN: "— chọn loại nhãn —", TUI: "— chọn loại bao bì —", THUNG: "— chọn loại thùng / hộp —" }[so]) : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
           <div class="qa-ma" style="grid-column:1/-1"><label>Mã bao bì (Danh mục vật tư) *${inp("ma", d.ma, `list="qaMa" autocomplete="off" placeholder="Gõ hoặc chọn mã, VD ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}</label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<datalist id="qaMa">${bbCodes(so).map(i => `<option value="${E(i.ma)}">${E(i.ten)}</option>`).join("")}</datalist><small class="note qa-mah" id="qaMaH"></small></div>
           ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
           ${fld(S0.qc, inp("quyCach", d.quyCach))}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
@@ -303,7 +303,7 @@
         h.innerHTML = !v ? "Bắt buộc. Chưa có mã trong Danh mục vật tư thì bấm <b>＋ Ghi mã mới</b> rồi chọn mã." : it ? `<span style="color:#2e7d32">✓ ${E(it.ten)}</span>` : mp ? `Mã cũ ${E(v)} → mã kho <b>${E(mp)}</b> <button type="button" class="btn small" id="qaMaMap">Dùng mã này</button>` : `<span style="color:#c62828">⚠ Mã ${E(v)} chưa có trong Danh mục vật tư — bấm <b>＋ Ghi mã mới</b> để tạo mã trước.</span>`;
         const mb = bx.querySelector("#qaMaMap"); if (mb) mb.onclick = () => { ma.value = mp; ma.dispatchEvent(new Event("change")); }; };
       if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi; } pull(); maH(); }); maH(); }
-      const mn = bx.querySelector("#qaMaNew"); if (mn) mn.onclick = () => { pull(); bbNew(so, d.ma, d.ten, d.dvt, m => { d.ma = m; re(); toast("Đã ghi mã mới " + m + " vào Danh mục vật tư"); }); };
+      const mn = bx.querySelector("#qaMaNew"); if (mn) mn.onclick = () => { pull(); bbNew(so, d.ma, d.ten, d.dvt, m => { d.ma = m; re(); toast("Đã ghi mã mới " + m + " vào Danh mục vật tư"); }, d.loaiVT); };
       bx.querySelectorAll("[data-kl]").forEach(x => x.onclick = () => { pull(); d.ketLuan = d.ketLuan === x.dataset.kl ? "" : x.dataset.kl; re(); });
       const all = bx.querySelector('[data-a="all"]'); if (all) all.onclick = () => { pull(); const S0 = SO[so];
         S0.ct.forEach(([k, , o]) => { d[k] = o[0]; }); d.loiNang = "0"; d.loiNhe = "0";
