@@ -98,7 +98,7 @@ body{-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility}
   /* bộ lọc: mỗi ô một hàng, đủ rộng */
   .filters select,.filters input,.tools select,.tools input{width:100%!important;flex:1 1 100%!important;min-width:0}
   /* hộp thoại toàn màn hình trên điện thoại, nút dưới cùng dễ bấm */
-  .cfm-box{max-height:calc(100dvh - 16px)}
+  .cfm{--cp:8px}
   .cfm .actions{position:sticky;bottom:0;background:var(--surface);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));z-index:3}
   /* không cuộn ngang cả trang */
   html,body{overflow-x:clip}
@@ -512,6 +512,10 @@ html body .in-miss{outline:3px solid #e11d48!important;outline-offset:2px!import
 :is(#lnForm,#ctForm,#itForm,#mvForm,#xnForm)>.actions:has(>.need-cnt){position:sticky;bottom:0;z-index:6;background:var(--surface);margin:0 -16px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);box-shadow:0 -10px 18px -16px rgba(16,40,70,.45)}
 :is(#htForm,#dglBox>.card)>.actions:has(>.need-cnt){position:sticky;bottom:0;z-index:6;background:var(--surface);padding:10px 0 calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);box-shadow:0 -10px 18px -16px rgba(16,40,70,.45)}
 .cfm .cfm-box>.actions:has(>.need-cnt){position:sticky;bottom:0;z-index:3;background:var(--surface);padding-top:10px;padding-bottom:10px}
+/* hộp thoại dài (cuộn trong lớp phủ .cfm): hàng nút cuối hộp bám sát đáy màn hình — bù khoảng đệm --cp của lớp phủ để không lộ khe hở bên dưới */
+.cfm .cfm-box>.actions:last-child{position:sticky;bottom:calc(-1*var(--cp,0px));z-index:3;background:var(--surface);padding-bottom:calc(max(var(--cp,0px),8px) + env(safe-area-inset-bottom,0px));margin-bottom:calc(-1*var(--cp,0px))}
+/* hộp tự cuộn bên trong (phiếu QC, kế hoạch): bám sát đáy hộp — bù khoảng đệm dưới 18px của hộp */
+.cfm .cfm-box:is(.rd-dlg,.kh-dlg)>.actions:last-child{bottom:-18px;margin-bottom:-18px;padding-bottom:18px}
 /* phiếu xuất: ẩn dòng tiêu đề cột khi chưa có vật tư */
 #xnForm .cthead:has(+#xnLines:empty){display:none}
 

@@ -50,7 +50,7 @@
   const kcs = () => live(R).filter(x => x.loai === "KC");
   async function load() { R = await api0("webTBAll", S.auth); try { if (!USERS.length) USERS = await api0("getUserNames"); } catch (e) {} }
   async function save(o, msg) { const r = await api("webTBSave", S.auth, o); if (msg) toast(msg); return r; }
-  const rer = () => { if (S.tab === "kc" && window.renderKC) renderKC(); else if (S.tab === "tb" && window.renderTB) renderTB(); else if (S.tab === "blv" && window.blvRender) blvRender(); };
+  const rer = () => { if (S.tab === "kc" && window.renderKC) renderKC(); else if (S.tab === "tb" && window.renderTB) renderTB(); else if (S.tab === "blv" && window.blvRender) blvRender(); setTimeout(() => window.kcBadge && kcBadge(), 400); };
   const maK = t => String(t.d.ma || "").trim().toUpperCase();
   const isDup = t => { const m = maK(t); return !!m && m !== "N/A" && tbs().some(x => x.id !== t.id && maK(x) === m); };
   const dupMa = () => { const c = {}; tbs().forEach(t => { const m = maK(t); if (m && m !== "N/A") (c[m] = c[m] || []).push(t); }); return Object.entries(c).filter(([, L]) => L.length > 1); };
@@ -294,7 +294,7 @@
     if (!fKCm) fKCm = today().slice(0, 7);
     if (!b.dataset.ok) b.innerHTML = '<div class="empty"><span class="ldg">Đang tải sổ kiểm tra cân…</span></div>';
     try { await load(); } catch (e) { b.innerHTML = `<div class="empty">${E(e.message)}</div>`; return; }
-    b.dataset.ok = 1;
+    b.dataset.ok = 1; if (QC()) kcBadgeSet(kcTodo(today()));
     const S0 = KC[vKC], td = today(), sc = scales(vKC), off = tbs().filter(t => t.d.kcSo === vKC && t.d.tinhTrang !== "Đang sử dụng").sort(byMa);
     const L = kcs().filter(k => k.d.so === vKC && (!fKCm || String(k.d.ngay).slice(0, 7) === fKCm)).sort((a, c) => String(c.d.ngay).localeCompare(String(a.d.ngay)));
     const kToday = kcs().find(x => x.d.so === vKC && x.d.ngay === td);
@@ -447,14 +447,28 @@
     tbs().forEach(t => { const h = hcTT(t.d); if (!h || h.n == null || h.n > 60) return;
       out.push({ id: t.id, n: h.n, c: h.n <= 15 ? "#c62828" : "#d97706", t: `${h.n < 0 ? "⛔" : "📅"} <b>${E(t.d.ma || "—")}</b> · ${E(t.d.ten)} — ${E(t.d.hcLoai.toLowerCase())} ${h.n < 0 ? `<b>quá hạn ${-h.n} ngày</b> (hạn ${D(t.d.denHan)})` : `đến hạn ${D(t.d.denHan)} (còn ${h.n} ngày)${h.n <= 15 ? " · <b>lập đề xuất HCKĐ ngay</b>" : " · đề xuất trước " + D(addD(t.d.denHan, -15))}`}` }); });
     out.sort((a, b) => a.n - b.n);
-    kcs().filter(k => k.d.ngay === td0 && !k.d.khongSX).forEach(k => { const bad = ketQuaTB(k.d).filter(x => x.bad && !(k.d.tamNgung || {})[x.k]);
-      if (bad.length) out.unshift({ kc: k.d.so, rid: k.id, c: "#c62828", t: `✗ Kiểm tra cân hôm nay <b>không đạt</b>: ${E(bad.map(x => x.ma || x.ten).join(", "))} — hiệu chỉnh, kiểm tra lại hoặc dán nhãn tạm ngưng` }); });
-    {
-      const dw = dow(td0), m1 = scales("M1"), f1 = scales("F1"), ws = wkStart(td0);
-      if (dw >= 1 && dw <= 6 && m1.length && !kcs().some(k => k.d.so === "M1" && k.d.ngay === td0)) out.unshift({ kc: "M1", c: "#d97706", t: `⚖ <b>Hôm nay chưa kiểm tra cân SX</b> (BM.02-QC-QT.01, quả cân M1) — ${m1.length} cân: ${E(m1.map(t => t.d.ma || t.d.ten).join(", "))}. Không sản xuất thì bấm “Hôm nay không sản xuất”.` });
-      if (f1.length && !kcs().some(k => k.d.so === "F1" && k.d.ngay >= ws && k.d.ngay <= addD(ws, 6))) out.push({ kc: "F1", c: "#d97706", t: `⚖ <b>Tuần này chưa kiểm tra cân kỹ thuật PTN</b> (BM.02-QC-QT.01, quả cân F1) — ${E(f1.map(t => t.d.ma || t.d.ten).join(", "))}` });
-    }
+    const K = kcTodo(td0); K.filter(x => x.dau).reverse().forEach(x => out.unshift(x)); K.filter(x => !x.dau).forEach(x => out.push(x));
+    kcBadgeSet(K);
     return out;
+  };
+  /* việc kiểm tra cân còn thiếu hôm nay: cân không đạt chưa xử lý, cân SX chưa kiểm (thứ 2 – thứ 7), cân PTN tuần này chưa kiểm */
+  function kcTodo(td0) {
+    const out = [];
+    kcs().filter(k => k.d.ngay === td0 && !k.d.khongSX).forEach(k => { const bad = ketQuaTB(k.d).filter(x => x.bad && !(k.d.tamNgung || {})[x.k]);
+      if (bad.length) out.push({ dau: 1, kc: k.d.so, rid: k.id, c: "#c62828", s: "cân không đạt: " + bad.map(x => x.ma || x.ten).join(", "), t: `✗ Kiểm tra cân hôm nay <b>không đạt</b>: ${E(bad.map(x => x.ma || x.ten).join(", "))} — hiệu chỉnh, kiểm tra lại hoặc dán nhãn tạm ngưng` }); });
+    const dw = dow(td0), m1 = scales("M1"), f1 = scales("F1"), ws = wkStart(td0);
+    if (dw >= 1 && dw <= 6 && m1.length && !kcs().some(k => k.d.so === "M1" && k.d.ngay === td0)) out.push({ dau: 1, kc: "M1", c: "#d97706", s: "hôm nay chưa kiểm tra cân SX", t: `⚖ <b>Hôm nay chưa kiểm tra cân SX</b> (BM.02-QC-QT.01, quả cân M1) — ${m1.length} cân: ${E(m1.map(t => t.d.ma || t.d.ten).join(", "))}. Không sản xuất thì bấm “Hôm nay không sản xuất”.` });
+    if (f1.length && !kcs().some(k => k.d.so === "F1" && k.d.ngay >= ws && k.d.ngay <= addD(ws, 6))) out.push({ kc: "F1", c: "#d97706", s: "tuần này chưa kiểm tra cân PTN", t: `⚖ <b>Tuần này chưa kiểm tra cân kỹ thuật PTN</b> (BM.02-QC-QT.01, quả cân F1) — ${E(f1.map(t => t.d.ma || t.d.ten).join(", "))}` });
+    return out;
+  }
+  function kcBadgeSet(K) { const c = document.getElementById("navKcCnt"); if (!c) return; const n = K.length, t = K.map(x => x.s).join(" · "); c.hidden = !n; c.textContent = n ? String(n) : ""; c.title = n ? t.charAt(0).toUpperCase() + t.slice(1) : ""; c.setAttribute("aria-label", c.title); }
+  /* huy hiệu nhấp nháy ở mục "Kiểm tra cân" trên menu trái — chỉ cho người kiểm được (QC / quản lý) */
+  let kcBusy = 0;
+  window.kcBadge = async function () {
+    const c = document.getElementById("navKcCnt"); if (!c) return;
+    if (!S.me || !QC()) { c.hidden = true; return; }
+    if (kcBusy) return; kcBusy = 1;
+    try { await load(); kcBadgeSet(kcTodo(today())); } catch (e) {} finally { kcBusy = 0; }
   };
   window.tbOpen = function (x) {
     if (!x) return;
