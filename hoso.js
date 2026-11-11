@@ -34,7 +34,7 @@
       <tr><td>Ngày sản xuất</td><td>${D(l.nsx) || "—"}</td><td>Hạn sử dụng</td><td>${D(l.hsd) || "—"}</td></tr>
       <tr><td>Kết quả QC</td><td><b>${QCC(l.qc)}</b>${l.qcNgay ? " · " + D(l.qcNgay) : ""}${l.qcNguoi ? " · " + E(l.qcNguoi) : ""}</td><td>Hàm lượng / tỷ trọng</td><td>${E(l.hl || "—")}${l.tt ? " · " + E(l.tt) + " g/ml" : ""}</td></tr>
       ${l.qcGhi ? `<tr><td>Ghi chú QC</td><td colspan="3">${E(l.qcGhi)}</td></tr>` : ""}
-      <tr><td>Hồ sơ đính kèm</td><td colspan="3">${l.hs.length ? l.hs.map(h => E(h.loai) + ": " + E(h.ten)).join("<br>") : "—"}</td></tr></table>
+      <tr><td>Hồ sơ đính kèm</td><td colspan="3">${l.hs.length ? l.hs.map(h => E(h.loai) + (h.so ? " số " + E(h.so) : "") + ": " + E(h.ten)).join("<br>") : "—"}</td></tr></table>
       <h3>2. Nguồn gốc (nguyên liệu, BTP, bao bì đã dùng)</h3>${nguon}
       <h3>3. Nơi sử dụng lô này</h3>${dung}
       <h3>4. Thẻ kho của lô</h3>${the}

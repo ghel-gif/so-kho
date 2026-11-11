@@ -53,7 +53,7 @@ function ensureSheets_() {
   };
   const vt = make(SH.VT, ['Mã', 'Tên', 'Nhóm', 'Đơn vị', 'Hệ số kg / đơn vị', 'Tồn đầu kỳ (kg)', 'Mức tối thiểu (kg)'], [1]);
   col(vt, 8, 'Theo dõi lô', true); col(vt, 9, 'Hạn dùng (tháng)'); col(vt, 10, 'Chủ hàng (trống = Asata)', true);
-  make(SH.HS, ['Mã', 'Số lô', 'Loại', 'Tên file', 'Link', 'Người', 'Thời điểm', 'File ID'], [1, 2]);
+  make(SH.HS, ['Mã', 'Số lô', 'Loại', 'Tên file', 'Link', 'Người', 'Thời điểm', 'File ID', 'Số phiếu'], [1, 2]);
   make(SH.TT, ['Mã', 'Số lô', 'Tỷ trọng (g/ml)', 'Ngày', 'Người', 'Thời điểm'], [1, 2, 4]);
   const ph = make(SH.PH, ['ID', 'Thời điểm lập', 'Ngày', 'Loại', 'Mã', 'Số lượng', 'Đơn vị', 'Kg', 'Chứng từ / Lệnh SX', 'Ghi chú', 'Người lập', 'Trạng thái'], [1, 3, 5]);
   col(ph, 13, 'Lệnh SX', true); col(ph, 14, 'Số lô', true); col(ph, 15, 'NSX', true); col(ph, 16, 'HSD', true);
@@ -217,7 +217,7 @@ function checkLotOut_(it, lo, L, ngay) {
   if (!x || dbOf_(it) === 'xl') return;
   const ten = it.ma + ' lô ' + (lo || '(chưa có lô)');
   if (x.qc && x.qc !== 'Đạt') throw new Error(ten + ' đang "' + x.qc + '" — QC chưa duyệt, không xuất được.');
-  if (x.hsd && x.hsd < ngay) throw new Error(ten + ' đã hết hạn (HSD ' + x.hsd.split('-').reverse().join('/') + '). Cần QC kiểm lại và gia hạn trước khi xuất.');
+  if (x.hsd && x.hsd < ngay) throw new Error(ten + ' đã hết hạn (HSD ' + x.hsd.split('-').reverse().join('/') + '), không xuất được. Cần xử lý thì chuyển lô sang Kho hàng xử lý (Thẻ kho → Chuyển kho).');
 }
 
 function items_() {
@@ -411,7 +411,7 @@ function getItemLog(a, ma) {
     return Object.assign(m, { tonSau: ton });
   });
   const hs = {};
-  if (sheet_(SH.HS)) rows_(SH.HS).forEach(r => { if (str_(r[0]) !== ma) return; const lo = str_(r[1]); (hs[lo] = hs[lo] || []).push({ loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]) }); });
+  if (sheet_(SH.HS)) rows_(SH.HS).forEach(r => { if (str_(r[0]) !== ma) return; const lo = str_(r[1]); (hs[lo] = hs[lo] || []).push({ loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]), so: hsSo_(r) }); });
   return { dauKy: it.dauKy, an: me.ct ? 0 : rows.filter(m => m.lenh && m.loai === 'Xuất').length, rows: rows.filter(m => me.ct || !(m.lenh && m.loai === 'Xuất')).reverse().slice(0, 500), hs };
 }
 
@@ -1536,8 +1536,8 @@ function hoSoOk_(it) { return !!it && it.theoLo && (it.nhom === 'Nguyên liệu'
 function getHoSo(a, ma, lo) {
   auth_(a);
   if (!sheet_(SH.HS)) return [];
-  return rows_(SH.HS).filter(r => str_(r[0]) === ma && str_(r[1]) === String(lo || '')).map(r => ({
-    loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]), nguoi: str_(r[5]),
+  return rows_(SH.HS).map((r, i) => [r, i]).filter(([r]) => str_(r[0]) === ma && str_(r[1]) === String(lo || '')).map(([r, i]) => ({
+    id: i + 2, so: hsSo_(r), loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]), nguoi: str_(r[5]),
     luc: r[6] instanceof Date ? Utilities.formatDate(r[6], tz_(), 'dd/MM/yyyy HH:mm') : str_(r[6]) })).reverse();
 }
 function coaFolder_() {
@@ -1549,13 +1549,28 @@ function coaFolder_() {
   if (i >= 0) sh.getRange(i + 2, 2).setValue(f.getId()); else sh.appendRow([k, f.getId(), 'Thư mục Drive lưu file COA / phiếu test hoá lý']);
   return f;
 }
-function uploadHoSo(a, ma, lo, loai, name, mime, b64) {
+/* số phiếu kiểm nghiệm của từng file hồ sơ (phiếu hoá lý, phiếu hàm lượng… mỗi phiếu một số); phiếu hoá lý lập trên phần mềm lấy theo link #hl:<số> */
+const hsSo_ = r => str_(r[8]) || ((/^#hl:(.+)$/.exec(str_(r[4])) || [])[1] || '');
+const HS_CAN_SO = ['Phiếu kiểm hoá lý', 'Phiếu kết quả hàm lượng'];
+function hsSoChk_(loai, so) { so = String(so == null ? '' : so).trim().slice(0, 60); if (!so && HS_CAN_SO.indexOf(loai) >= 0) throw new Error(loai + ': ghi số phiếu kiểm nghiệm.'); return so; }
+/** Ghi / sửa số phiếu kiểm nghiệm cho 1 file hồ sơ đã tải (QC). */
+function setHoSoSo(a, ma, lo, id, so) {
+  const me = auth_(a); if (!me.qc) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC.');
+  const R = sheet_(SH.HS) ? rows_(SH.HS) : [], r = R[Number(id) - 2]; lo = String(lo || '');
+  if (!r || str_(r[0]) !== ma || str_(r[1]) !== lo) throw new Error('Không tìm thấy file hồ sơ này — tải lại trang rồi thử lại.');
+  if (/^#hl:/.test(str_(r[4]))) throw new Error('Phiếu hoá lý lập trên phần mềm: sửa số ở chính phiếu đó.');
+  so = String(so == null ? '' : so).trim().slice(0, 60);
+  sheet_(SH.HS).getRange(Number(id), 9).setValue(so); HS_C = null;
+  log_(me, 'Số phiếu hồ sơ lô', ma + ' lô ' + (lo || '(chưa có lô)'), str_(r[2]) + ' · ' + str_(r[3]) + ' → ' + (so || '(bỏ trống)'));
+  return getHoSo(a, ma, lo);
+}
+function uploadHoSo(a, ma, lo, loai, name, mime, b64, so) {
   const me = auth_(a);
   if (!me.qc) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC.');
   const it = items_().find(i => i.ma === ma);
   if (!hoSoOk_(it)) throw new Error('Chỉ đính kèm hồ sơ cho nguyên liệu kỹ thuật và bán thành phẩm theo lô.');
   if ((HS_THEO_NHOM[it.nhom] || HS_LOAI).indexOf(loai) < 0) throw new Error('Loại hồ sơ "' + loai + '" không dùng cho nhóm ' + it.nhom + '.');
-  lo = String(lo || '');
+  lo = String(lo || ''); so = hsSoChk_(loai, so);
   const nhan = HS_NHAN[loai] || ['pdf', 'img'];
   if (!nhan.some(k => HS_MIME[k].test(String(mime || '')))) throw new Error(loai + ': chỉ nhận file ' + nhan.map(k => ({ pdf: 'PDF', img: 'ảnh', word: 'Word' })[k]).join(', ') + '.');
   const bytes = Utilities.base64Decode(String(b64 || ''));
@@ -1563,7 +1578,7 @@ function uploadHoSo(a, ma, lo, loai, name, mime, b64) {
   const ext = (String(name || '').match(/\.[A-Za-z0-9]{2,5}$/) || [mime === 'application/pdf' ? '.pdf' : /word/.test(mime) ? '.docx' : '.jpg'])[0];
   const fname = [HS_TEN[loai] || 'HS', ma, lo || 'chua-co-lo', Utilities.formatDate(new Date(), tz_(), 'yyyyMMdd-HHmm')].join('_').replace(/[\\/:*?"<>|]/g, '-') + ext;
   const file = coaFolder_().createFile(Utilities.newBlob(bytes, mime, fname));
-  HS_C = null; sheet_(SH.HS).appendRow([ma, lo, loai, fname, file.getUrl(), me.ten, new Date(), file.getId()]);
+  HS_C = null; sheet_(SH.HS).appendRow([ma, lo, loai, fname, file.getUrl(), me.ten, new Date(), file.getId(), so]);
   log_(me, 'Đính kèm ' + loai, ma + ' lô ' + (lo || '(chưa có lô)'), fname);
   return getHoSo(a, ma, lo);
 }

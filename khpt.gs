@@ -500,7 +500,7 @@ function webHoSoLo(a, ma, lo) {
     const x = (L[m] || {})[l] || {}, q = Q[lotKey_(m, l)] || {}, it = IM[m] || {};
     return { ma: m, ten: it.ten || '', nhom: it.nhom || '', lo: l, nsx: x.nsx || '', hsd: x.hsd || '', ton: Math.round((x.ton || 0) * 1000) / 1000,
       qc: q.tt || x.qc || '', qcNgay: q.ngay || '', qcNguoi: q.nguoi || '', qcGhi: q.ghiChu || '', hl: HL[lotKey_(m, l)] || '', tt: TT[lotKey_(m, l)] || '',
-      hs: HS.filter(r => str_(r[0]) === m && str_(r[1]) === l).map(r => ({ loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]) })) };
+      hs: HS.filter(r => str_(r[0]) === m && str_(r[1]) === l).map(r => ({ loai: str_(r[2]), ten: str_(r[3]), link: str_(r[4]), so: hsSo_(r) })) };
   };
   const ord = so => { const o = O[so]; if (!o) return null; const P = LD[so];
     return { so, ngay: o.ngay, ngayHT: o.ngayHT, maSP: o.maSP, tenSP: (IM[o.maSP] || {}).ten || '', sl: o.trangThai === 'Hoàn thành' ? o.slThucTe : o.slDuKien, trangThai: o.trangThai,

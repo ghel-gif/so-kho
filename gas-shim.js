@@ -189,8 +189,8 @@ function webThemAnhQA(a, id, fname, fid) {
   return (anMap_()['QA:' + r.id] || []).length;
 }
 function webAnhQA(a, id) { auth_(a); return (anMap_()['QA:' + String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi })); }
-function webKiemHoSo(a, ma, lo, loai, mime, size) {
-  const me = auth_(a);
+function webKiemHoSo(a, ma, lo, loai, mime, size, so) {
+  const me = auth_(a); hsSoChk_(loai, so); /* thiếu số phiếu thì dừng trước khi tải file */
   if (!me.qc) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC.');
   const it = items_().find(i => i.ma === ma);
   if (!hoSoOk_(it)) throw new Error('Chỉ đính kèm hồ sơ cho nguyên liệu kỹ thuật và bán thành phẩm theo lô.');
@@ -200,9 +200,9 @@ function webKiemHoSo(a, ma, lo, loai, mime, size) {
   if (size > 15 * 1024 * 1024) throw new Error('File lớn quá 15 MB.');
   return { tenFile: (HS_TEN[loai] || 'HS') + '_' + ma + '_' + (String(lo || '') || 'chua-co-lo') + '_' + Utilities.formatDate(new Date(), tz_(), 'yyyyMMdd-HHmm') };
 }
-function webThemHoSo(a, ma, lo, loai, fname, url, fid) {
-  const me = auth_(a); lo = String(lo || '');
-  HS_C = null; sheet_(SH.HS).appendRow([ma, lo, loai, fname, url, me.ten, new Date(), fid]);
+function webThemHoSo(a, ma, lo, loai, fname, url, fid, so) {
+  const me = auth_(a); lo = String(lo || ''); so = hsSoChk_(loai, so);
+  HS_C = null; sheet_(SH.HS).appendRow([ma, lo, loai, fname, url, me.ten, new Date(), fid, so]);
   log_(me, 'Đính kèm ' + loai, ma + ' lô ' + (lo || '(chưa có lô)'), fname);
   return getHoSo(a, ma, lo);
 }
@@ -376,17 +376,17 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
   /* ---------- hồ sơ lô (COA, phiếu kết quả…): lưu cố định trên Supabase Storage (bucket ho-so), mở nhanh cho mọi người đăng nhập;
      mỗi đêm Apps Script chép thêm 1 bản sang thư mục hồ sơ lô trên Drive ---------- */
   const HS_BUCKET = "ho-so";
-  async function uploadHoSoWeb(a, ma, lo, loai, name, mime, b64) {
+  async function uploadHoSoWeb(a, ma, lo, loai, name, mime, b64, so) {
     if (AO()) throw new Error("Kho thử: không tải hồ sơ lên.");
     const bin = atob(String(b64 || "")), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, bytes.length]);
+    const k = await run("webKiemHoSo", [a, ma, lo, loai, mime, bytes.length, so]);
     const ext = (String(name || "").match(/\.[A-Za-z0-9]{2,5}$/) || [mime === "application/pdf" ? ".pdf" : /word/.test(mime) ? ".docx" : ".jpg"])[0];
     const fname = k.tenFile.replace(/[\\/:*?"<>|]/g, "-") + ext;
     const safe = x => String(x || "_").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").replace(/[^A-Za-z0-9._-]/g, "_");
     const path = safe(ma) + "/" + safe(lo) + "/" + safe(fname.replace(/\.[^.]+$/, "")) + "-" + Math.random().toString(36).slice(2, 7) + ext.toLowerCase();
     const { error } = await sb.storage.from(HS_BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
     if (error) throw new Error("Không tải file lên được: " + error.message + (/bucket|not found|policy|security|mime/i.test(error.message) ? " (Quản lý cần chạy file 10_ho_so_lo.sql)" : ""));
-    return run("webThemHoSo", [a, ma, lo, loai, fname, "sbhs:" + path, ""]);
+    return run("webThemHoSo", [a, ma, lo, loai, fname, "sbhs:" + path, "", so]);
   }
   /* link "sbhs:…" → "#sbhs:…"; khi bấm mới xin link xem tạm (5 phút) nên không bao giờ hết hạn trên màn hình */
   function linkHoSo(v) {
