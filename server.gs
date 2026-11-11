@@ -11,7 +11,12 @@
  */
 
 const SH = { VT: 'VatTu', PH: 'Phieu', ND: 'NguoiDung', TK: 'TonKho', LX: 'LenhSX', CT: 'CongThuc', QC: 'QCLo', NK: 'NhatKy', CD: 'CaiDat', XNB: 'PhieuXNB', HS: 'HoSoLo', TT: 'TyTrongLo' };
-const CHU_HANG = ['Asata', 'Đồng Phát', 'Hitaka', 'Nông Trang', 'Phúc Trời', 'Heanal'];
+const CHU_HANG = ['Asata', 'Đồng Phát', 'Hitaka', 'Nông Trang', 'Phúc Trời', 'Nano Nhật Bản', 'Hanearl VN'];
+/* tên đầy đủ của kho từng công ty (chủ hàng) — hiện ở ô chuyển kho, ghi chú phiếu chuyển kho */
+const CHU_DAY = { 'Asata': 'Công ty CP BVTV Asata Hoa Kỳ', 'Đồng Phát': 'Công ty TNHH BVTV Đồng Phát', 'Hitaka': 'Công ty CP Hitaka', 'Nông Trang': 'Công ty TNHH TM DV Nông Trang',
+  'Nano Nhật Bản': 'Công ty CP QT CN Nano Nhật Bản', 'Hanearl VN': 'Công ty TNHH Hanearl VN' };
+const chuDay_ = c => CHU_DAY[c || 'Asata'] || c;
+const chuList_ = items => { const L = CHU_HANG.slice(); (items || []).forEach(i => { if (i.chuHang && L.indexOf(i.chuHang) < 0) L.push(i.chuHang); }); return L; };
 const LYDO_XNB = ['Rửa máy / vệ sinh thiết bị', 'Lấy mẫu QC / lưu mẫu', 'Hủy hàng hỏng, quá hạn', 'Xuất trả nhà cung cấp', 'Xuất bán / giao khách hàng', 'Khác'];
 const QC_TT = ['Chờ kiểm', 'Đạt', 'Không đạt'];
 const ROLES = { QL: 'Quản lý', KT: 'Kế toán', TK: 'Thủ kho', NV: 'Nhân viên', KTK: 'Kế toán kho', XEM: 'Chỉ xem' };
@@ -368,9 +373,9 @@ RC_ = {};
     vis.forEach(i => { b[i.ma] = bal[i.ma]; if (lots[i.ma]) l[i.ma] = lots[i.ma]; });
     return { me, items: vis, bal: b, lots: l, nhom: NHOM.filter(n => !me.nhom.length || me.nhom.indexOf(n) >= 0), nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, congThuc: {},
       lenh: lenh.map(o => ({ so: o.so, tenSP: (items.find(i => i.ma === o.maSP) || {}).ten || '', ngay: o.ngay, maSP: o.maSP, slDuKien: o.slDuKien, trangThai: o.trangThai, ngayHT: o.ngayHT, slThucTe: o.slThucTe, nguoiLap: o.nguoiLap, nguoiHT: o.nguoiHT, ghiChu: o.ghiChu, khachHang: o.khachHang, nguoiSX: o.nguoiSX, qcSX: o.qcSX, tyTrong: o.tyTrong })),
-      khoaSo: lockMonth_(), chuHang: CHU_HANG, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
+      khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
   }
-  return { me, items, bal, lots, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: CHU_HANG, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
+  return { me, items, bal, lots, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
 }
 
 /** Phiếu nhập 14 ngày gần nhất (Trang chủ: Hàng mới nhập; Tồn kho: đưa mã mới nhập lên đầu). */
@@ -478,45 +483,82 @@ function getAnhLo(a, ma, lo) {
   return rows_(AN_SH).filter(r => str_(r[1]) === ma && str_(r[2]) === String(lo || '')).map(r => ({ fid: str_(r[5]), ten: str_(r[3]), nguoi: str_(r[6]) }));
 }
 
-/* ===== CHUYỂN KHO GIỮA CHỦ HÀNG: cùng hoạt chất, khác chủ sở hữu (VD Hitaka → Asata). Xuất mã đi + nhập mã nhận, giữ lô, NSX, HSD, QC, tỷ trọng, hồ sơ lô. ===== */
+/* ===== CHUYỂN KHO: sang Kho hàng xử lý (mã "XL.<mã>": BTP quá hạn, tech dôi dư, hàng quá hạn, chưa đạt…) ·
+   sang Kho hàng bán Farm (mã "FARM.<mã>") · trả về kho cũ · sang kho công ty khác (chủ hàng khác, VD Hitaka → Asata).
+   Xuất mã đi + nhập mã nhận, giữ lô, NSX, HSD, QC, tỷ trọng, hồ sơ lô. Mã nhận chưa có thì tạo theo mã đi. ===== */
+const KHO_DB = { xl: { kho: 'Kho hàng xử lý', pre: 'XL' }, farm: { kho: 'Kho hàng bán Farm', pre: 'FARM' } };
+const dbOf_ = i => !i ? '' : (i.kho === KHO_DB.xl.kho || i.kho === 'Kho BTP xử lý') ? 'xl' : i.kho === KHO_DB.farm.kho ? 'farm' : '';
 function transferStock(a, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]);
   if (!isYmd_(d.ngay)) throw new Error('Ngày không hợp lệ.');
   const kg = Math.round(num_(d.kg) * 10000) / 10000;
   if (!(kg > 0)) throw new Error('Số kg chuyển phải lớn hơn 0.');
+  const kieu = ['xl', 'farm', 've', 'cty'].indexOf(d.kieu) >= 0 ? d.kieu : 'cty', DB = KHO_DB[kieu], note = String(d.ghiChu || '').trim().slice(0, 120);
+  if (kieu === 'xl' && !note) throw new Error('Ghi lý do đưa hàng vào Kho hàng xử lý.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     checkLock_(d.ngay);
-    const items = items_(), A = items.find(i => i.ma === d.maFrom), B = items.find(i => i.ma === d.maTo);
-    if (!A || !B) throw new Error('Chọn mã chuyển đi và mã nhận.');
+    let items = items_(), B = items.find(i => i.ma === d.maTo);
+    const A = items.find(i => i.ma === d.maFrom);
+    if (!A) throw new Error('Không tìm thấy mã chuyển đi.');
+    if (DB && dbOf_(A) === kieu) throw new Error(A.ma + ' đã ở ' + DB.kho + '.');
+    if (kieu === 've' && !dbOf_(A)) throw new Error('Chỉ trả về từ mã đang ở Kho hàng xử lý hoặc Kho hàng bán Farm.');
+    let taoMoi = '';
+    if (!B && d.taoMa) {
+      const t = d.taoMa, ma = String(t.ma || '').trim().toUpperCase(), ten = String(t.ten || '').trim().slice(0, 200);
+      if (!/^[A-Z0-9][A-Z0-9._-]{1,39}$/.test(ma)) throw new Error('Mã mới chỉ gồm chữ không dấu, số, dấu chấm, gạch ngang (2–40 ký tự).');
+      if (!ten) throw new Error('Nhập tên mã mới.');
+      if (items.some(i => i.ma.toLowerCase() === ma.toLowerCase())) throw new Error('Mã ' + ma + ' đã có — chọn mã đó trong danh sách.');
+      let chu = A.chuHang, kho = A.kho;
+      if (DB) kho = DB.kho;
+      else {
+        if (dbOf_(A)) kho = '';
+        if (kieu === 'cty') { const c = String(t.chuHang || '').trim().replace(/\s+/g, ' ').slice(0, 60); if (!c) throw new Error('Chọn công ty nhận.'); chu = c === 'Asata' ? '' : c; }
+      }
+      const vt = sheet_(SH.VT); if (!str_(vt.getRange(1, 12).getValue())) vt.getRange(1, 12).setValue('Kho').setFontWeight('bold');
+      vt.appendRow([ma, ten, A.nhom, A.donVi, A.heSo, 0, '', A.theoLo ? 'Có' : '', A.hanThang || '', chu, A.hamLuong, kho]);
+      log_(me, 'Thêm vật tư', ma, ten + ' · tạo khi chuyển kho từ ' + A.ma);
+      items = items_(); B = items.find(i => i.ma === ma); taoMoi = ma;
+    }
+    if (!B) throw new Error('Chọn mã nhận.');
     if (A.ma === B.ma) throw new Error('Mã nhận phải khác mã chuyển đi.');
     if (A.nhom !== B.nhom) throw new Error('Chỉ chuyển giữa hai mã cùng nhóm (' + A.nhom + ' / ' + B.nhom + ').');
+    if (DB && dbOf_(B) !== kieu) throw new Error(B.ma + ' không phải mã ở ' + DB.kho + '.');
+    if (!DB && dbOf_(B)) throw new Error(B.ma + ' là mã ở ' + KHO_DB[dbOf_(B)].kho + ' — chọn đúng hướng chuyển.');
     const cfg = settings_(), mv = moves_(), Q = qcMap_(), L = lots_(items, mv, cfg, Q);
     const lo = A.theoLo ? String(d.lo == null ? '' : d.lo) : '';
     const x = A.theoLo ? (L[A.ma] || {})[lo] : null;
     if (A.theoLo && !x) throw new Error('Chọn lô của ' + A.ma + '.');
-    const loB = B.theoLo ? (String(d.loMoi || '').trim() || lo) : '';
+    const loB = B.theoLo ? (String(d.loMoi || '').trim().slice(0, 60) || lo) : '';
     const xb = B.theoLo ? (L[B.ma] || {})[loB] : null;
     let nsx = '', hsd = '';
     if (B.theoLo) {
-      if (xb && xb.hsd) { nsx = xb.nsx; hsd = xb.hsd; }
-      else { nsx = (x && x.nsx) || ''; hsd = (x && x.hsd) || (nsx ? addMonths_(nsx, hanOf_(B)) : ''); }
+      if (xb && xb.hsd) { nsx = xb.nsx; hsd = xb.hsdGoc || xb.hsd; }
+      else { nsx = (x && x.nsx) || ''; hsd = (x && (x.hsdGoc || x.hsd)) || (nsx ? addMonths_(nsx, hanOf_(B)) : ''); }
     }
     const g = outGuard_(a); outWarn_(g, A, lo, kg, L, balances_(items, mv), d.ngay, true);
+    if (kieu === 'xl') Object.keys(g.msg).forEach(k => { if (k[0] === 'f') delete g.msg[k]; }); /* đưa đúng lô hỏng / quá hạn vào xử lý: không nhắc FEFO */
     outConfirm_(g, me, 'Chuyển kho ' + A.ma + ' → ' + B.ma + ' ' + kg + ' kg');
     const pre = 'CK-' + d.ngay.slice(2, 4) + d.ngay.slice(5, 7) + '-';
     const so = pre + ('00' + (new Set(mv.filter(m => m.chungTu.indexOf(pre) === 0).map(m => m.chungTu)).size + 1)).slice(-3);
-    const ts = Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss'), chu = i => i.chuHang || 'Asata', note = String(d.ghiChu || '').trim().slice(0, 120);
+    const ts = Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss'), KN = { 'Phụ gia / dung môi': 'Kho nguyên liệu - dung môi nhũ', 'Phân bón': 'Kho phân bón', 'Nguyên liệu': 'Kho nguyên liệu tech', 'Bán thành phẩm': 'Kho bán thành phẩm', 'Bao bì': 'Kho bao bì', 'Thành phẩm': 'Kho thành phẩm' };
+    /* chuyển giữa công ty: ghi tên kho công ty; chuyển trong nhà máy (xử lý / Farm / trả về): ghi tên kho chứa */
+    const noi = i => dbOf_(i) ? KHO_DB[dbOf_(i)].kho : (i.chuHang || kieu === 'cty') ? 'Kho ' + chuDay_(i.chuHang) : (i.kho || KN[i.nhom] || 'kho');
     const ph = sheet_(SH.PH); nccHead_();
     ph.appendRow([ts + 'CK1', new Date(), d.ngay, 'Xuất', A.ma, Math.round(kg / (A.heSo || 1) * 10000) / 10000, A.donVi, kg, so,
-      ('Chuyển kho → ' + B.ma + ' (' + chu(B) + ')' + (note ? ' · ' + note : '')).slice(0, 200), me.ten, '', '', lo, x ? x.nsx : '', x ? x.hsd : '', '']);
+      ((kieu === 've' ? 'Trả về ' : 'Chuyển kho → ') + B.ma + ' (' + noi(B) + ')' + (note ? ' · ' + note : '')).slice(0, 200), me.ten, '', '', lo, x ? x.nsx : '', x ? (x.hsdGoc || x.hsd) : '', '']);
     ph.appendRow([ts + 'CK2', new Date(), d.ngay, 'Nhập', B.ma, Math.round(kg / (B.heSo || 1) * 10000) / 10000, B.donVi, kg, so,
-      ('Chuyển kho ← ' + A.ma + ' (' + chu(A) + ')' + (note ? ' · ' + note : '')).slice(0, 200), me.ten, '', '', loB, nsx, hsd, 'Chuyển kho từ ' + chu(A)]);
+      ((kieu === 've' ? 'Nhận lại từ ' : 'Chuyển kho ← ') + A.ma + ' (' + noi(A) + ')' + (loB !== lo ? ' · lô cũ ' + (lo || '(chưa có lô)') : '') + (note ? ' · ' + note : '')).slice(0, 200), me.ten, '', '', loB, nsx, hsd, kieu === 'cty' ? chuDay_(A.chuHang) : '']);
+    let qcVe = '';
     if (B.theoLo) {
-      const qa = Q[lotKey_(A.ma, lo)], hasB = !!Q[lotKey_(B.ma, loB)];
-      if (needQC_(B, cfg) && !hasB) {
-        const tt = A.theoLo && x.qc ? x.qc : (qa ? qa.tt : 'Chờ kiểm');
-        sheet_(SH.QC).appendRow([B.ma, loB, tt, d.ngay, me.ten, 'Theo QC lô ' + (lo || '(chưa có lô)') + ' của ' + A.ma + ' (chuyển kho ' + so + ')', qa && qa.hsdMoi ? qa.hsdMoi : '', new Date()]);
+      const qa = Q[lotKey_(A.ma, lo)], qb = Q[lotKey_(B.ma, loB)], ttA = A.theoLo && x.qc ? x.qc : (qa ? qa.tt : 'Chờ kiểm');
+      if (needQC_(B, cfg)) {
+        if (kieu === 've' && d.qcLai !== false) {
+          sheet_(SH.QC).appendRow([B.ma, loB, 'Chờ kiểm', d.ngay, me.ten, 'Trả về từ ' + noi(A) + ' (' + so + ') — QC kiểm lại trước khi dùng', x && x.hsdGoc ? x.hsd : '', new Date()]);
+          qcVe = 'Chờ kiểm';
+        } else if (!qb || (kieu !== 'cty' && qb.tt !== ttA)) {
+          sheet_(SH.QC).appendRow([B.ma, loB, ttA, d.ngay, me.ten, 'Theo QC lô ' + (lo || '(chưa có lô)') + ' của ' + A.ma + ' (chuyển kho ' + so + ')', qa && qa.hsdMoi ? qa.hsdMoi : '', new Date()]);
+        }
       }
       if (x && x.tyTrong && !(xb && xb.tyTrong)) sheet_(SH.TT).appendRow([B.ma, loB, x.tyTrong, d.ngay, me.ten, new Date()]);
       HS_C = null; if (sheet_(SH.HS) && A.theoLo) {
@@ -524,18 +566,18 @@ function transferStock(a, d) {
         rows_(SH.HS).filter(r => str_(r[0]) === A.ma && str_(r[1]) === lo && !da[str_(r[4])]).forEach(r => { const c = r.slice(); c[0] = B.ma; c[1] = loB; sheet_(SH.HS).appendRow(c); });
       }
     }
-    log_(me, 'Chuyển kho', so, A.ma + (lo ? ' lô ' + lo : '') + ' (' + chu(A) + ') → ' + B.ma + (loB ? ' lô ' + loB : '') + ' (' + chu(B) + ') · ' + kg + ' kg' + (note ? ' · ' + note : ''));
-    return { so };
+    log_(me, kieu === 'xl' ? 'Chuyển vào kho hàng xử lý' : kieu === 'farm' ? 'Chuyển ra kho hàng bán Farm' : kieu === 've' ? 'Trả về kho cũ' : 'Chuyển kho', so, A.ma + (lo ? ' lô ' + lo : '') + ' (' + noi(A) + ') → ' + B.ma + (loB ? ' lô ' + loB : '') + ' (' + noi(B) + ') · ' + kg + ' kg' + (note ? ' · ' + note : '') + (taoMoi ? ' · tạo mã ' + taoMoi : ''));
+    return { so, maTo: B.ma, taoMoi, qc: qcVe };
   } finally { lock.releaseLock(); }
 }
 
 /** Cột Q của trang Phieu: tên nhà cung cấp (phiếu nhập mua). */
 function nccHead_() { const ph = sheet_(SH.PH); if (!str_(ph.getRange(1, 17).getValue())) ph.getRange(1, 17).setValue('Nhà cung cấp').setFontWeight('bold'); }
 function nccList_(moves) {
-  const c = {}; moves.forEach(m => { if (m.ncc && m.loai === 'Nhập' && !m.trangThai) c[m.ncc] = (c[m.ncc] || 0) + 1; });
+  const c = {}; moves.forEach(m => { if (m.ncc && m.loai === 'Nhập' && !m.trangThai && m.chungTu.indexOf('CK-') !== 0) c[m.ncc] = (c[m.ncc] || 0) + 1; });
   return Object.keys(c).sort((p, q) => c[q] - c[p] || p.localeCompare(q)).slice(0, 300);
 }
-function nccMa_(moves) { const o = {}; moves.forEach(m => { if (m.ncc && m.loai === 'Nhập' && !m.trangThai && (!o[m.ma] || m.ngay >= o[m.ma].d)) o[m.ma] = { d: m.ngay, n: m.ncc }; }); const r = {}; Object.keys(o).forEach(k => r[k] = o[k].n); return r; }
+function nccMa_(moves) { const o = {}; moves.forEach(m => { if (m.ncc && m.loai === 'Nhập' && !m.trangThai && m.chungTu.indexOf('CK-') !== 0 && (!o[m.ma] || m.ngay >= o[m.ma].d)) o[m.ma] = { d: m.ngay, n: m.ncc }; }); const r = {}; Object.keys(o).forEach(k => r[k] = o[k].n); return r; }
 function saveMove(a, p) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   if (LOAI.indexOf(p.loai) < 0) throw new Error('Loại phiếu không hợp lệ.');
