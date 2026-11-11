@@ -509,11 +509,12 @@ function transferStock(a, d) {
       if (!/^[A-Z0-9][A-Z0-9._-]{1,39}$/.test(ma)) throw new Error('Mã mới chỉ gồm chữ không dấu, số, dấu chấm, gạch ngang (2–40 ký tự).');
       if (!ten) throw new Error('Nhập tên mã mới.');
       if (items.some(i => i.ma.toLowerCase() === ma.toLowerCase())) throw new Error('Mã ' + ma + ' đã có — chọn mã đó trong danh sách.');
-      let chu = A.chuHang, kho = A.kho;
+      /* hàng của công ty khác nằm ở "Kho <tên công ty đầy đủ>"; tên mã không kèm "(Kho …)" */
+      let chu = A.chuHang, kho;
       if (DB) kho = DB.kho;
       else {
-        if (dbOf_(A)) kho = '';
         if (kieu === 'cty') { const c = String(t.chuHang || '').trim().replace(/\s+/g, ' ').slice(0, 60); if (!c) throw new Error('Chọn công ty nhận.'); chu = c === 'Asata' ? '' : c; }
+        kho = chu ? 'Kho ' + chuDay_(chu) : (A.chuHang || dbOf_(A) ? '' : A.kho);
       }
       const vt = sheet_(SH.VT); if (!str_(vt.getRange(1, 12).getValue())) vt.getRange(1, 12).setValue('Kho').setFontWeight('bold');
       vt.appendRow([ma, ten, A.nhom, A.donVi, A.heSo, 0, '', A.theoLo ? 'Có' : '', A.hanThang || '', chu, A.hamLuong, kho]);
