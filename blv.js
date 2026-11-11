@@ -15,7 +15,8 @@
   /* mỗi mục: màu, biểu tượng, nội dung 1 dòng, bấm thì mở đúng chỗ */
   const META = {
     formMiss: { c: "#c62828", i: "📋", line: x => `<b>${E(x.so)}</b> · ${E(x.sp)} — còn thiếu <b style="color:#c62828">${E(x.miss.join(", "))}</b>${x.xong ? " (lệnh đã xong)" : ""}`, go: x => openDG(x.so) },
-    cho: { c: "#7c3aed", i: "🧪", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} · lô <b>${E(x.lo || "—")}</b> · ${N(x.ton)} kg · chờ từ ${D(x.ngay)}`, go: x => window.lotCard ? lotCard(x.ma, x.lo) : setTab("qc") },
+    cho: { c: "#7c3aed", i: "🧪", line: x => { const han = Math.max(1, +((S.nguong || {}).qcHan) || 3), n = /^\d{4}-\d{2}-\d{2}/.test(x.ngay || "") && S.today ? Math.round((new Date(S.today + "T00:00:00Z") - new Date(String(x.ngay).slice(0, 10) + "T00:00:00Z")) / 864e5) : 0;
+      return `<b>${E(x.ma)}</b> ${E(x.ten)} · lô <b>${E(x.lo || "—")}</b> · ${N(x.ton)} kg · chờ từ ${D(x.ngay)}${n > han ? ` — <b style="color:#c62828">quá hạn QC ${n - han} ngày</b>` : ""}`; }, go: x => window.lotCard ? lotCard(x.ma, x.lo) : setTab("qc") },
     dgShort: { c: "#c62828", i: "⚠", line: x => `<b>${E(x.so)}</b> · ${E(x.ma)} lô ${E(x.lots.join(", "))} — cần ${N(x.need)} kg, <b style="color:#c62828">thiếu ${N(x.short)} kg</b>`, go: x => openDG(x.so) },
     lsxShort: { c: "#c62828", i: "⚠", line: x => `<b>${E(x.so)}</b> — thiếu ${x.sh.map(s => E(s.ma) + " " + N(s.short) + " kg").join("; ")}`, go: x => openLSX(x.so) },
     low: { c: "#e5484d", i: "📉", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} — tồn <b style="color:${x.am ? "#c62828" : "inherit"}">${N(x.ton)} kg</b>${x.min ? " / tối thiểu " + N(x.min) : ""}`, go: () => bellTon("am") },

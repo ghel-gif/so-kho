@@ -204,7 +204,7 @@ function qcMap_() {
   if (!sheet_(SH.QC)) return Q;
   rows_(SH.QC).forEach(r => {
     const ma = str_(r[0]); if (!ma) return;
-    Q[lotKey_(ma, str_(r[1]))] = { tt: str_(r[2]), ngay: str_(r[3]), nguoi: str_(r[4]), ghiChu: str_(r[5]), hsdMoi: str_(r[6]) };
+    Q[lotKey_(ma, str_(r[1]))] = { tt: str_(r[2]), ngay: str_(r[3]), nguoi: str_(r[4]), ghiChu: str_(r[5]), hsdMoi: str_(r[6]), luc: r[7] instanceof Date ? Utilities.formatDate(r[7], tz_(), 'yyyy-MM-dd') : '' };
   });
   return Q;
 }
@@ -291,7 +291,7 @@ function lots_(items, moves, cfg, Q) {
     const q = Q[lotKey_(ma, x.lo)];
     if (q && q.hsdMoi) { x.hsdGoc = x.hsd; x.hsd = q.hsdMoi; }
     x.qc = need[ma] ? (q ? q.tt : 'Đạt') : '';
-    if (q) { x.qcNgay = q.ngay; x.qcNguoi = q.nguoi; x.qcGhiChu = q.ghiChu; }
+    if (q) { x.qcNgay = q.ngay; x.qcNguoi = q.nguoi; x.qcGhiChu = q.ghiChu; if (q.luc) x.qcLuc = q.luc; /* ngày dòng QC được ghi vào sổ (phiếu ghi lùi ngày thì hạn QC tính từ ngày này) */ }
     x.tyTrong = T[lotKey_(ma, x.lo)] || 0;
     if (!x.hsd && x.nsx && IM[ma]) x.hsd = addMonths_(x.nsx, hanOf_(IM[ma]));
   }));
@@ -1128,6 +1128,29 @@ function getQCHistory(a, ma, lo) {
     .map(r => ({ tt: str_(r[2]), ngay: str_(r[3]), nguoi: str_(r[4]), ghiChu: str_(r[5]), hsdMoi: str_(r[6]) })).reverse();
 }
 
+/** Thời gian QC duyệt lô: mỗi lần lô chuyển từ "Chờ kiểm" sang Đạt / Không đạt là 1 dòng (ngày chờ, ngày duyệt, số ngày, số giờ nếu có giờ ghi).
+    Dùng cho thống kê theo tháng ở tab QC lô. Lô còn đang chờ không nằm ở đây (máy đã có trong danh sách lô). */
+function getQCStats(a) {
+  const me = auth_(a);
+  if (!(me.vaiTro === ROLES.QL || me.qc || me.ct)) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền xem thống kê QC.');
+  const IM = {}; items_().forEach(i => { IM[i.ma] = i; });
+  const G = {}, out = [], dd = (x, y) => Math.round((new Date(x + 'T00:00:00Z') - new Date(y + 'T00:00:00Z')) / 864e5);
+  if (!sheet_(SH.QC)) return out;
+  rows_(SH.QC).forEach(r => { const ma = str_(r[0]), ngay = str_(r[3]); if (!ma || !IM[ma] || !isYmd_(ngay)) return;
+    const k = lotKey_(ma, str_(r[1])); (G[k] = G[k] || { ma: ma, lo: str_(r[1]), R: [] }).R.push({ tt: str_(r[2]), ngay: ngay, nguoi: str_(r[4]), t: r[7] instanceof Date ? r[7].getTime() : 0, luc: r[7] instanceof Date ? Utilities.formatDate(r[7], tz_(), 'yyyy-MM-dd') : '' }); });
+  Object.keys(G).forEach(k => { const g = G[k], it = IM[g.ma]; let cho = null;
+    g.R.forEach(x => {
+      if (x.tt === 'Chờ kiểm') { if (!cho) cho = x; return; }
+      if (!cho) return; /* duyệt thẳng, không qua chờ kiểm: không tính */
+      /* đồng hồ QC chạy từ khi lô vừa về (ngày phiếu) vừa có trong sổ (ngày ghi) — phiếu ghi lùi ngày không bị tính oan cho QC */
+      const tu = cho.luc && cho.luc > cho.ngay ? cho.luc : cho.ngay, den = x.luc && x.luc > x.ngay ? x.luc : x.ngay, n = dd(den, tu);
+      out.push({ ma: g.ma, lo: g.lo, ten: it.ten, nhom: it.nhom, cho: tu, duyet: den, tt: x.tt, nguoi: x.nguoi, ngay: n < 0 ? 0 : n, gio: cho.t && x.t && x.t >= cho.t ? Math.round((x.t - cho.t) / 36e5 * 10) / 10 : null });
+      cho = null;
+    });
+  });
+  return out.sort((p, q) => q.duyet.localeCompare(p.duyet) || q.ngay - p.ngay);
+}
+
 /* ================= TRUY XUẤT NGUỒN GỐC ================= */
 function needTrace_(a) { const me = auth_(a); if (!(me.vaiTro === ROLES.QL || me.qc || me.ct)) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC để truy xuất lô.'); return me; }
 function getLotList(a, ma) {
@@ -1268,7 +1291,7 @@ function alertData_() {
     if (x.ton <= 1e-6) return;
     const it = items.find(i => i.ma === ma) || {};
     if (x.hsd && dbOf_(it) !== 'xl') { const d = dd(x.hsd, today); if (d <= cfg.hetHan) exp.push({ ma, ten: it.ten, lo: x.lo, hsd: x.hsd, con: d, ton: x.ton }); } /* hàng ở Kho hàng xử lý: không nhắc hạn */
-    if (x.qc === 'Chờ kiểm') cho.push({ ma, ten: it.ten, lo: x.lo, ton: x.ton, ngay: x.qcNgay });
+    if (x.qc === 'Chờ kiểm') cho.push({ ma, ten: it.ten, lo: x.lo, ton: x.ton, ngay: x.qcLuc && x.qcLuc > String(x.qcNgay || '') ? x.qcLuc : x.qcNgay }); /* ngày bắt đầu chờ QC */
   }));
   orders_().forEach(o => { if (o.trangThai === 'Đang SX' && o.ngay && dd(today, o.ngay) > cfg.treo) treo.push({ so: o.so, maSP: o.maSP, ngay: o.ngay, ngayTreo: dd(today, o.ngay) }); });
   exp.sort((p, q) => p.con - q.con);

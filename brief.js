@@ -95,12 +95,15 @@
     const exp30 = A.exp.filter(x => x.con <= 30);
     const open = orders.filter(o => o.trangThai === "Đang SX" && recent(o)).sort(byDate).map(o => ({ so: o.so, ngay: o.ngay, nguoi: o.nguoiLap, sx: o.nguoiSX || "", qcSX: o.qcSX || "", dg: isTP(o), sp: (IM[o.maSP] || {}).ten || o.maSP, sl: o.slDuKien }));
     const xl = new Set(items.filter(i => i.kho === "Kho hàng xử lý" || i.kho === "Kho BTP xử lý").map(i => i.ma)); /* Kho hàng xử lý: chỉ anh Ghel thấy */
+    const qcHan = Math.max(1, +cfg.qcHan || 3); /* hạn QC duyệt lô (ngày): lô chờ quá hạn ghi đỏ, xếp trước */
+    A.cho.forEach(x => { x.cho = /^\d{4}-\d{2}-\d{2}/.test(x.ngay || "") ? Math.max(0, days(today, String(x.ngay).slice(0, 10))) : null; x.tre = x.cho != null && x.cho > qcHan ? x.cho - qcHan : 0; });
+    A.cho.sort((p, q) => (q.cho || 0) - (p.cho || 0));
     return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP, xl };
   }
 
   /* ---------- bản tin riêng từng người ---------- */
   const SEC = {
-    cho: { t: "Lô chờ QC", h: ["Mã", "Tên", "Lô", "Từ ngày", "Tồn (kg)"], row: x => [e(x.ma), e(x.ten), e(x.lo || "—"), dmy(x.ngay), f(x.ton)] },
+    cho: { t: "Lô chờ QC", h: ["Mã", "Tên", "Lô", "Từ ngày", "Đã chờ", "Tồn (kg)"], row: x => [e(x.ma), e(x.ten), e(x.lo || "—"), dmy(x.ngay), x.cho == null ? "" : x.tre > 0 ? "<b style='color:#c62828'>" + x.cho + " ngày · quá hạn " + x.tre + " ngày</b>" : x.cho + " ngày", f(x.ton)] },
     formMiss: { t: "Lệnh đóng gói còn thiếu biểu mẫu QC", h: ["Lệnh", "Sản phẩm", "Trạng thái", "Còn thiếu"], row: x => [e(x.so), e(x.sp), x.xong ? "Đã xong" : "Đang đóng gói", "<b style='color:#c62828'>" + x.miss.join(", ") + "</b>"] },
     exp: { t: "Lô sắp hết hạn / quá hạn", h: ["Mã", "Tên", "Lô", "HSD", "Còn", "Tồn (kg)"], row: x => [e(x.ma), e(x.ten), e(x.lo || "—"), dmy(x.hsd), x.con < 0 ? "<b style='color:#c62828'>quá " + (-x.con) + " ngày</b>" : x.con + " ngày", f(x.ton)] },
     dgShort: { t: "Lệnh đóng gói thiếu tồn BTP", h: ["Lệnh", "BTP", "Lô đã chọn", "Cần (kg)", "Thiếu (kg)"], row: x => [e(x.so), e(x.ma), e(x.lots.join(", ")), f(x.need), "<b style='color:#c62828'>" + f(x.short) + "</b>"] },
