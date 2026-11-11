@@ -336,6 +336,14 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .qa-dlg .qa-g label.qa-chk,.qa-dlg label.qa-chk{flex-direction:row;align-items:center;gap:6px}
 .qa-dlg .qa-chk input{width:auto}
 .qa-dlg textarea{width:100%;resize:vertical;min-height:6.8em;max-height:60vh;field-sizing:content;font:inherit;line-height:1.45}
+/* BM.02 túi ép 3 biên: cân túi rỗng → khối lượng bao bì cho phiếu thông tin đóng gói */
+.qa-can{border:1.5px solid #0284c7;background:rgba(2,132,199,.07);border-radius:12px;padding:10px 12px;display:grid;gap:8px}.qa-can[hidden]{display:none!important}
+.qa-can-h{display:flex;flex-direction:column;gap:3px}.qa-can-h b{color:#0369a1;font-size:15px}.qa-can-h small{color:var(--muted);line-height:1.4}
+.qa-can-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end}
+.qa-can-tb{display:flex;flex-direction:column;align-items:flex-end;min-width:104px;padding:6px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.qa-can-tb span{font-size:12px;color:var(--muted)}.qa-can-tb b{font-size:20px;color:#0369a1;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:600px){.qa-can-g{grid-template-columns:1fr 1fr}.qa-can-tb{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center}}
+:root[data-theme="dark"] .qa-can-h b,:root[data-theme="dark"] .qa-can-tb b{color:#7dd3fc}
 .qa-dlg .qa-kl .btn.ok{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .qa-dlg .qa-kl .btn.bad{background:#c62828;color:#fff;border-color:#c62828}
 /* Thiết bị nhà xưởng + kiểm tra cân (QC-QT.01) */

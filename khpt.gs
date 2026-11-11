@@ -677,8 +677,28 @@ function webQASave(a, o) {
     if (i >= 0) sh.getRange(i + 2, 1, 1, QA_HEAD.length).setValues([[id, o.loai, ngay, js, str_(R[i][4]), R[i][5], '', me.ten]]);
     else sh.appendRow([id, o.loai, ngay, js, me.ten, new Date(), '', me.ten]);
     log_(me, 'Phòng QA/QC ' + o.loai, id, String(d.ten || d.suKPH || '').slice(0, 120) + (d.tt ? ' · ' + d.tt : d.so ? ' · ' + d.so : ''));
-    return { id, d };
+    const ct = o.loai === 'TUI' ? qaCanTui_(me, id, d) : null; /* túi ép 3 biên: số cân túi rỗng → khối lượng bao bì theo mã hàng */
+    return { id, d, canQC: ct ? ct.qcs : [], cbb: ct && ct.ch ? cbbRows_() : null };
   } finally { lock.releaseLock(); }
+}
+/* BM.02 túi ép 3 biên: QC cân túi rỗng → khối lượng bao bì (klBB, g) cho mọi mã quy cách đóng gói dùng túi này
+   (mã bao bì BB.GOI.<mã nhãn> ↔ cột Mã nhãn của QuyCachDG). Phiếu BM.05 lấy lần cân mới nhất của mã hàng làm mặc định.
+   Mỗi phiếu giữ dòng cân riêng (cột Số lệnh = 'QA:<id>'): sửa phiếu thì sửa dòng đó, bỏ cân / đổi loại / xoá phiếu thì xoá mềm. */
+function qaCanTui_(me, id, d) {
+  d = d || {}; const so = 'QA:' + id, v = Math.round(num_(d.tlTui) * 1000) / 1000;
+  const cd = s => String(s || '').trim().toUpperCase().replace(/·/g, '.').replace(/\s+/g, '').replace(/[^A-Z0-9_.+\-]/g, '');
+  const m = /^BB\.(?:GOI|TUI|BAO)\.(.+)$/.exec(cd(d.ma)), on = d.loaiVT === 'Túi ép 3 biên' && v > 0 && v <= 2000 && !!m;
+  const qcs = on ? qcRows_().filter(q => cd(q.nhan) === m[1]).map(q => q.qc).filter((x, k, A) => x && A.indexOf(x) === k) : [];
+  const R = sheet_(CBB_SH) ? rows_(CBB_SH) : [];
+  if (!qcs.length && !R.some(r => str_(r[6]) === so)) return { qcs, ch: false };
+  const ngay = isYmd_(d.ngayKT) ? d.ngayKT : isYmd_(d.ngayNhap) ? d.ngayNhap : Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd');
+  const nguoi = String(d.nguoiKT || me.ten).slice(0, 80), sh = shX_(CBB_SH, CBB_HEAD_), co = {}; let ch = false;
+  R.forEach((r, i) => { if (str_(r[6]) !== so || str_(r[1]) !== 'klBB') return; const q = str_(r[0]), del = str_(r[9]) === 'Đã xoá';
+    if (qcs.indexOf(q) >= 0 && !co[q]) { co[q] = 1;
+      if (del || Math.abs(num_(r[2]) - v) > 1e-9 || str_(r[4]).slice(0, 10) !== ngay || str_(r[5]) !== nguoi) { sh.getRange(i + 2, 1, 1, CBB_HEAD_.length).setValues([[q, 'klBB', v, 'g', ngay, nguoi, so, new Date(), 'Gói thuốc', '', '', '']]); ch = true; } }
+    else if (!del) { sh.getRange(i + 2, 10, 1, 3).setValues([['Đã xoá', me.ten, new Date()]]); ch = true; } });
+  qcs.forEach(q => { if (!co[q]) { sh.appendRow([q, 'klBB', v, 'g', ngay, nguoi, so, new Date(), 'Gói thuốc', '', '', '']); ch = true; } });
+  return { qcs, ch };
 }
 function webQADel(a, id, khoiPhuc) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
@@ -688,6 +708,7 @@ function webQADel(a, id, khoiPhuc) {
   let d = {}; try { d = JSON.parse(str_(R[i][3]) || '{}'); } catch (e) {}
   if (!khoiPhuc && d.xnQL && !qaTP_(me)) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không xoá được.');
   sheet_(QA_SH).getRange(i + 2, 7, 1, 2).setValues([[khoiPhuc ? '' : 'Đã xoá', me.ten]]);
+  if (str_(R[i][1]) === 'TUI') qaCanTui_(me, String(id), khoiPhuc ? d : {}); /* xoá phiếu thì bỏ số cân túi của phiếu; khôi phục thì ghi lại */
   log_(me, khoiPhuc ? 'Khôi phục hồ sơ QA/QC' : 'Xoá hồ sơ QA/QC', String(id), '');
   return qaRows_();
 }

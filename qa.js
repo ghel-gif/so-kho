@@ -44,7 +44,7 @@
       ct: [["chinhTa", "Chính tả", ["Đúng", "Sai"]], ["kichThuoc", "Kích thước", DAT], ["dinhLuong", "Định lượng", DAT], ["ngoaiQuan", "Ngoại quan", ["Bình thường", "Không đạt"]]],
       nang: "Sai font, sai kích thước, sai nội dung, sai vị trí hình ảnh so với file thiết kế (decal: không đứt bế, giấy lót đứt rời; dán thùng/hộp: cắt phạm)", nhe: "Nhòe màu nhưng vẫn đọc được nội dung, nhãn bị cắt xéo chiều rộng" },
     TUI: { bm: "BM.02-QC-QT.02", ngan: "Túi / cuộn màng", tieuDe: "SỔ KIỂM TRA TÚI/CUỘN MÀNG", hd: "QC-HD.02", nguong: 5, qc: "Quy cách", ten: "Tên thương phẩm", loaiTxt: "Loại bao bì",
-      loai: ["Túi", "Túi cuộn", "Cuộn màng", "Túi không in (bạc / nhôm)", "Túi MPET"],
+      loai: ["Túi ép 3 biên", "Cuộn màng", "Túi nhôm không in", "Túi PE"], /* chỉ 4 loại này (phiếu cũ ghi loại khác vẫn giữ, sửa được) */
       ct: [["kichThuoc", "Kích thước", DAT], ["dinhLuong", "Định lượng", DAT], ["ngoaiQuan", "Ngoại quan", DAT]],
       nang: "Ngoại quan và nội dung sai với thiết kế, độ dày không đạt, sai kích thước, đường hàn bong tróc, lẫn túi lạ, rách túi", nhe: "Lệch màu, lệch khung chữ, nhòe màu nhưng không mất nội dung, nhăn nhúm, cắt sát biên" },
     CHAI: { bm: "BM.03-QC-QT.02", ngan: "Chai / nắp", tieuDe: "SỔ KIỂM TRA CHAI - NẮP", hd: "QC-HD.03", nguong: 5, qc: "Quy cách", ten: "Tên sản phẩm", loaiTxt: "Loại vật tư",
@@ -107,7 +107,7 @@
         <p class="note" style="margin:0 0 8px">${cho.length ? `<b style="color:#d97706">${cho.length} lô chờ kiểm</b> (hạn 48 giờ, hàng gấp 60 phút)` : "Không có lô chờ kiểm"} · ${cxn.length ? `<b style="color:#7c3aed">${cxn.length} lô chờ TP. QA/QC xác nhận</b>` : "không có lô chờ xác nhận"}. Lô chưa xác nhận luôn hiện, không theo tháng.</p>
         <div class="list">${L.length ? L.map(r => { const d = r.d, t = ttOf(r);
           return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh chụp khi nhận hàng">📷 ${r.anh}</span>` : ""}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
-          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
+          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${d.tlTui ? " · ⚖ " + N(d.tlTui) + " g/túi" : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
           : `<div class="empty"><b>Chưa có lô bao bì nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi bao bì về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>
         ${delBox(R.filter(x => x.xoa && SO[x.loai]).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap))), "data-id", x => `<b>${SO[x.loai].bm.slice(0, 5)}</b> · ${E(x.d.ten || "")} · về ${D(x.d.ngayNhap)}`)}`;
     } else if (view === "ngay") {
@@ -225,7 +225,7 @@
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}
           ${fld("Nhà cung cấp", inp("ncc", d.ncc, 'list="qaNcc"') + dl("qaNcc", A.map(x => x.d.ncc)))}
-          ${fld(S0.loaiTxt, inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
+          ${fld(S0.loaiTxt, so === "TUI" ? sel("loaiVT", d.loaiVT, S0.loai, "— chọn loại bao bì —") : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
           <div class="qa-ma" style="grid-column:1/-1"><label>Mã bao bì (Danh mục vật tư) *${inp("ma", d.ma, `list="qaMa" autocomplete="off" placeholder="Gõ hoặc chọn mã, VD ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}</label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<datalist id="qaMa">${bbCodes(so).map(i => `<option value="${E(i.ma)}">${E(i.ten)}</option>`).join("")}</datalist><small class="note qa-mah" id="qaMaH"></small></div>
           ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
           ${fld(S0.qc, inp("quyCach", d.quyCach))}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
@@ -242,6 +242,9 @@
           ${S0.ct.map(([k, t, o]) => fld(t, sel(k, d[k], o))).join("")}
           ${fld("Số lỗi nặng", inp("loiNang", d.loiNang, 'type="number" min="0" step="1"'))}${fld("Số lỗi nhẹ", inp("loiNhe", d.loiNhe, 'type="number" min="0" step="1"'))}
           <p class="note" style="grid-column:1/-1;margin:0">Lỗi nặng: ${E(S0.nang)}. · Lỗi nhẹ: ${E(S0.nhe)}.</p>
+          ${so === "TUI" ? `<div class="qa-can" id="qaCan" style="grid-column:1/-1"${d.loaiVT === "Túi ép 3 biên" ? "" : " hidden"}><div class="qa-can-h"><b>⚖ Cân túi rỗng</b><small>Túi ép 3 biên: cân vài túi rỗng, ghi tổng khối lượng. Số trung bình 1 túi được dùng sẵn làm <b>khối lượng bao bì</b> ở phiếu thông tin đóng gói (BM.05) của các mã hàng dùng túi này.</small></div>
+            <div class="qa-can-g">${fld("Số túi cân", inp("canSo", d.canSo || "10", 'type="number" min="1" step="1" inputmode="numeric"'))}${fld("Tổng khối lượng cân (g)", inp("canKL", d.canKL, 'type="number" min="0" step="any" inputmode="decimal" placeholder="VD 123,5"'))}<div class="qa-can-tb"><span>TB 1 túi</span><b id="qaTlTui">—</b></div></div>
+            <small class="note" id="qaCanQC"></small></div>` : ""}
           ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="5" placeholder="Mô tả lỗi: lỗi gì, ở đâu, bao nhiêu cái, mức độ… — ô tự giãn khi ghi dài">${E(d.ghiChu || "")}</textarea>`, true)}
           ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}" data-opt`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
           <div style="grid-column:1/-1"><b>Kết luận</b> <span class="qa-kl">${OKV.map(v => `<button type="button" class="btn small${d.ketLuan === v ? (v === "Đạt" ? " ok" : " bad") : ""}" data-kl="${v}" ${ro}>${v}</button>`).join(" ")}</span>
@@ -264,11 +267,24 @@
       L.hidden = !A.length && !pend.length;
       if (A.length && typeof anhLoad === "function") anhLoad(L);
       L.querySelectorAll("[data-px]").forEach(b => b.onclick = e => { e.stopPropagation(); const p = pend.splice(+b.dataset.px, 1)[0]; if (p) URL.revokeObjectURL(p.url); anhPaint(); });
-      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để phóng to. Ảnh lưu trên máy chủ 7 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
-        : pend.length ? `<b>${pend.length} ảnh</b> sẽ tải lên khi bấm <b>Lưu</b>.` : "Chụp xong, ảnh tải lên khi bấm Lưu.";
+      /* ảnh vừa chụp (chưa lưu) cũng bấm vào để xem lớn, phóng to, xoay */
+      L.querySelectorAll(".qa-pend img").forEach(im => im.onclick = e => { e.stopPropagation(); if (typeof anhZoom === "function") anhZoom(im.src, [...L.querySelectorAll("img")].map(x => x.src)); });
+      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để xem lớn, phóng to, xoay. Ảnh lưu trên máy chủ 7 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
+        : pend.length ? `<b>${pend.length} ảnh</b> sẽ tải lên khi bấm <b>Lưu</b> · bấm ảnh để xem lớn.` : "Chụp xong, ảnh tải lên khi bấm Lưu.";
     };
     const anhGet = async () => { if (!r || !r.id) return; try { anh = await api("webAnhQA", S.auth, r.id); } catch (e) { anh = anh || []; } if (bx.isConnected) anhPaint(); };
-    const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; d[k] = el.type === "checkbox" ? el.checked : el.value.trim(); }); };
+    const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; d[k] = el.type === "checkbox" ? el.checked : el.value.trim(); });
+      if (so === "TUI") { const n = +String(d.canSo || "").replace(",", "."), t = +String(d.canKL || "").replace(",", "."); d.tlTui = d.loaiVT === "Túi ép 3 biên" && n > 0 && t > 0 ? Math.round(t / n * 1000) / 1000 : ""; } };
+    /* túi ép 3 biên: hiện khối cân, tính TB 1 túi, cho biết số cân sẽ dùng cho mã hàng nào (mã bao bì BB.GOI.<mã nhãn> ↔ quy cách đóng gói) */
+    let dgAsk = 0;
+    const canUp = () => { const c = bx.querySelector("#qaCan"); if (!c) return; const on = d.loaiVT === "Túi ép 3 biên"; c.hidden = !on; if (!on) return;
+      const tb = bx.querySelector("#qaTlTui"); if (tb) tb.textContent = d.tlTui ? N(d.tlTui) + " g" : "—";
+      const n = bx.querySelector("#qaCanQC"); if (!n) return; const m = /^BB\.(?:GOI|TUI|BAO)\.(.+)$/i.exec(String(d.ma || "").trim());
+      if (!m) { n.innerHTML = "Chọn <b>mã bao bì</b> dạng BB.GOI.&lt;mã nhãn&gt; (VD BB.GOI.DFZ-D6) để số cân gắn đúng mã hàng."; return; }
+      if (!S.dg || !S.dg.qc) { n.textContent = "Đang tìm mã hàng dùng túi này…"; if (!dgAsk && typeof dgLoad === "function") { dgAsk = 1; dgLoad().then(() => { if (bx.isConnected) canUp(); }).catch(() => { n.textContent = ""; }); } return; }
+      const cd = x => typeof dgCode === "function" ? dgCode(x) : String(x || "").trim().toUpperCase(), Q = S.dg.qc.filter(q => cd(q.nhan) === cd(m[1]));
+      n.innerHTML = Q.length ? `Dùng cho ${Q.length} mã hàng: ${Q.slice(0, 4).map(q => `<b>${E(q.qc)}</b> (${E(q.sp)}${q.quyCach ? " " + E(q.quyCach) : ""})`).join(", ")}${Q.length > 4 ? "…" : ""} — lưu xong, BM.05 của các mã này lấy sẵn ${d.tlTui ? "<b>" + N(d.tlTui) + " g</b>" : "số cân"} làm khối lượng bao bì.`
+        : `<span style="color:#b45309">Mã ${E(m[1])} chưa có trong quy cách đóng gói (QuyCachDG) — số cân vẫn lưu trong sổ, nhưng BM.05 chưa lấy được.</span>`; };
     const re = () => { const y = bx.scrollTop; bx.innerHTML = `<h2>${(isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm}</h2>` + draw(); wire(); bx.scrollTop = y; };
     const hint = () => { const g = goiY(so, d), el = bx.querySelector("#qaGY"), S0 = SO[so]; if (el) el.innerHTML = g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý.";
       const m = bx.querySelector("#qaMauG"), t = MAU[so](+d.sl || 0); if (m) m.textContent = t ? "Theo " + S0.hd + ": " + t : (+d.sl ? "Cỡ lô " + N(d.sl) + ": ngoài bảng lấy mẫu của " + S0.hd : "");
@@ -280,7 +296,8 @@
         if (r && r.id) { if (await upQA(r.id, fs)) { await anhGet(); renderQA(); } }
         else { fs.forEach(f => pend.push({ f, url: URL.createObjectURL(f) })); anhPaint(); } });
       anhPaint();
-      bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); }));
+      bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); canUp(); }));
+      canUp();
       kiemWire(bx);
       const ma = bx.querySelector('[data-k="ma"]'), maH = () => { const h = bx.querySelector("#qaMaH"); if (!h || !ma) return; const v = ma.value.trim(), it = bbBy(v), mp = !it && bbMap(v, so);
         h.innerHTML = !v ? "Bắt buộc. Chưa có mã trong Danh mục vật tư thì bấm <b>＋ Ghi mã mới</b> rồi chọn mã." : it ? `<span style="color:#2e7d32">✓ ${E(it.ten)}</span>` : mp ? `Mã cũ ${E(v)} → mã kho <b>${E(mp)}</b> <button type="button" class="btn small" id="qaMaMap">Dùng mã này</button>` : `<span style="color:#c62828">⚠ Mã ${E(v)} chưa có trong Danh mục vật tư — bấm <b>＋ Ghi mã mới</b> để tạo mã trước.</span>`;
@@ -313,12 +330,13 @@
         try { const o = await save({ id: r && r.id, loai: so, d }, d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô bao bì");
           const P = moi ? pend.splice(0) : []; if (moi) anh = [];
           Object.assign(d, o.d); r = Object.assign(r || { loai: so, nguoi: me, xoa: 0 }, { id: o.id, d: JSON.parse(JSON.stringify(o.d)), sua: me }); isNew = false; st(); re(); renderQA();
+          if (o.cbb && S.dg) S.dg.cbb = o.cbb; if (o.canQC && o.canQC.length && d.tlTui) toast("⚖ Đã ghi " + N(d.tlTui) + " g/túi làm khối lượng bao bì cho " + o.canQC.join(", ") + " — BM.05 lấy sẵn");
           if (P.length) { await upQA(r.id, P.map(p => p.f)); P.forEach(p => URL.revokeObjectURL(p.url)); await anhGet(); renderQA(); } } catch (e) { btn.disabled = false; toast(e.message); } };
       ["sv", "up"].forEach(k => { const b0 = bx.querySelector(`[data-a="${k}"]`); if (b0) b0.onclick = () => doSave(b0); });
     }
     /* cỡ mẫu tự điền theo số lượng (chỉ khi ô còn trống hoặc vẫn là số tự điền) */
     if (r && r.id) anhGet();
-    bx.addEventListener("input", e => { pull(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
+    bx.addEventListener("input", e => { pull(); canUp(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
     wire();
   }
 
@@ -382,7 +400,7 @@
       ["Kiểm tra", [["Ngày kiểm tra", r => D(r.d.ngayKT), 16, "nw c"], ["Người kiểm mẫu", r => r.d.nguoiKT, 14], ["Chính tả", r => r.d.chinhTa, 10, "c"], ["Kích thước", r => r.d.kichThuoc, 9, "c"], ["Định lượng", r => r.d.dinhLuong, 9, "c"], ["Ngoại quan", r => r.d.ngoaiQuan, 11, "c"], ["Số lượng lỗi", r => soLoi(r.d), 9.5, "c"], ["Ghi chú", r => r.d.ghiChu, 31], ["Kết quả", r => r.d.ketQua || (r.d.ketLuan ? kqTxt(r.d) : ""), 14], ["Tình trạng", r => r.d.tinhTrangQC || (r.d.ketLuan ? "Bình thường" : ""), 11, "c"]]],
       ["Xác nhận", [["Xác nhận của quản lý phòng QC", r => r.d.xnQL, 15], ["Xác nhận của bộ phận thu mua", () => "", 11], ["Kết quả xử lý", r => r.d.kqXuLy, 11]]]],
     TUI: [["Quản lý kho", [["Ngày nhập vật tư", r => D(r.d.ngayNhap), 16, "nw c"], ["Nhà cung cấp", r => r.d.ncc, 12], ["Loại bao bì", r => r.d.loaiVT, 12], ["Tên thương phẩm", r => r.d.ten, 32], ["Quy cách", r => r.d.quyCach, 11, "c"], ["Số lượng", r => N(r.d.sl), 11, "nw r"], ["Phân phối", r => r.d.npp, 10], ["Tình trạng", r => r.d.tinhTrangKho, 11, "c"]]],
-      ["Kiểm tra", [["Ngày kiểm tra", r => D(r.d.ngayKT), 16, "nw c"], ["Người kiểm tra", r => r.d.nguoiKT, 14], ["Kích thước", r => r.d.kichThuoc, 9, "c"], ["Định lượng", r => r.d.dinhLuong, 9, "c"], ["Ngoại quan", r => r.d.ngoaiQuan, 11, "c"], ["Kết luận", r => r.d.ketLuan, 10, "c"], ["Ghi chú", r => r.d.ghiChu, 34], ["Yêu cầu xử lý SP KPH", r => r.d.ycXuLy, 13]]],
+      ["Kiểm tra", [["Ngày kiểm tra", r => D(r.d.ngayKT), 16, "nw c"], ["Người kiểm tra", r => r.d.nguoiKT, 14], ["Kích thước", r => r.d.kichThuoc, 9, "c"], ["Định lượng", r => r.d.dinhLuong, 9, "c"], ["Ngoại quan", r => r.d.ngoaiQuan, 11, "c"], ["Kết luận", r => r.d.ketLuan, 10, "c"], ["Ghi chú", r => [r.d.tlTui ? "Cân " + (r.d.canSo || "") + " túi rỗng: TB " + N(r.d.tlTui) + " g/túi" : "", r.d.ghiChu].filter(Boolean).join(" · "), 34], ["Yêu cầu xử lý SP KPH", r => r.d.ycXuLy, 13]]],
       ["Xác nhận", [["Xác nhận quản lý phòng QC", r => r.d.xnQL, 16], ["Xác nhận của bộ phận thu mua", () => "", 12], ["Kết quả xử lý", r => r.d.kqXuLy, 12]]]],
     CHAI: [["Quản lý kho", [["Ngày nhập", r => D(r.d.ngayNhap), 16, "nw c"], ["Nhà cung cấp", r => r.d.ncc, 13], ["Loại vật tư", r => r.d.loaiVT, 12], ["Tên sản phẩm", r => r.d.ten, 34], ["Quy cách", r => r.d.quyCach, 12, "c"], ["Số lượng", r => N(r.d.sl), 11, "nw r"], ["Tình trạng", r => r.d.tinhTrangKho, 11, "c"]]],
       ["Kiểm tra", [["Ngày kiểm tra", r => D(r.d.ngayKT), 16, "nw c"], ["Người kiểm tra", r => r.d.nguoiKT, 14], ["Định lượng", r => r.d.dinhLuong, 10, "c"], ["Ngoại quan", r => r.d.ngoaiQuan, 11, "c"], ["Ghi chú", r => r.d.ghiChu, 36], ["Kết luận", r => r.d.ketLuan, 10, "c"], ["Phiếu yêu cầu xử lý SPKPH", r => r.d.ycXuLy, 14]]],
