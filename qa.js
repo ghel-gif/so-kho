@@ -143,7 +143,15 @@
   function dlg(title, body, wide) {
     const w = document.createElement("div"); w.className = "cfm";
     w.innerHTML = `<div class="cfm-box rd-dlg qa-dlg" style="max-width:min(${wide ? 980 : 720}px,97vw);width:${wide ? 980 : 720}px"><h2>${title}</h2>${body}</div>`;
-    document.body.appendChild(w); return w;
+    document.body.appendChild(w); taGrow(w); return w;
+  }
+  /* ô ghi chú nhiều dòng: tự giãn theo nội dung (trình duyệt chưa hỗ trợ field-sizing thì giãn bằng JS) */
+  function taGrow(w) {
+    if (window.CSS && CSS.supports && CSS.supports("field-sizing", "content")) return;
+    const g = t => { t.style.height = "auto"; t.style.height = (t.scrollHeight + 2) + "px"; };
+    w.addEventListener("input", e => { if (e.target.tagName === "TEXTAREA") g(e.target); });
+    w.addEventListener("focusin", e => { if (e.target.tagName === "TEXTAREA") g(e.target); });
+    setTimeout(() => w.querySelectorAll("textarea").forEach(g), 30);
   }
   const dl = (id, L) => `<datalist id="${id}">${[...new Set(L.filter(Boolean).map(x => String(x).trim()).filter(Boolean))].map(x => `<option value="${E(x)}">`).join("")}</datalist>`;
   const fld = (lab, html, full) => `<label${full ? ' style="grid-column:1/-1"' : ""}>${lab}${html}</label>`;
@@ -234,7 +242,7 @@
           ${S0.ct.map(([k, t, o]) => fld(t, sel(k, d[k], o))).join("")}
           ${fld("Số lỗi nặng", inp("loiNang", d.loiNang, 'type="number" min="0" step="1"'))}${fld("Số lỗi nhẹ", inp("loiNhe", d.loiNhe, 'type="number" min="0" step="1"'))}
           <p class="note" style="grid-column:1/-1;margin:0">Lỗi nặng: ${E(S0.nang)}. · Lỗi nhẹ: ${E(S0.nhe)}.</p>
-          ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="2">${E(d.ghiChu || "")}</textarea>`, true)}
+          ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="5" placeholder="Mô tả lỗi: lỗi gì, ở đâu, bao nhiêu cái, mức độ… — ô tự giãn khi ghi dài">${E(d.ghiChu || "")}</textarea>`, true)}
           ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}" data-opt`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
           <div style="grid-column:1/-1"><b>Kết luận</b> <span class="qa-kl">${OKV.map(v => `<button type="button" class="btn small${d.ketLuan === v ? (v === "Đạt" ? " ok" : " bad") : ""}" data-kl="${v}" ${ro}>${v}</button>`).join(" ")}</span>
             <small class="note" id="qaGY">${g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý."}</small></div>
@@ -341,12 +349,12 @@
       ${fld("Ngày", inp("ngay", d.ngay, 'type="date"'))}${fld("Số phiếu", inp("so", d.so, 'placeholder="tự đánh số KPH-yyMM-nn"'))}
       ${fld("Sự không phù hợp", inp("suKPH", d.suKPH), true)}
       <div style="grid-column:1/-1"><b>Nguyên nhân</b> ${NN.map(([k, t]) => `<label class="qa-chk" style="display:inline-flex;margin-right:12px"><input type="checkbox" data-nn="${k}"${d.nn[k] ? " checked" : ""}> ${t}</label>`).join("")}</div>
-      ${fld("Hiện trạng lỗi", `<textarea data-k="hienTrang" rows="2">${E(d.hienTrang || "")}</textarea>`)}${fld("Mô tả chi tiết", `<textarea data-k="moTa" rows="2">${E(d.moTa || "")}</textarea>`)}
+      ${fld("Hiện trạng lỗi", `<textarea data-k="hienTrang" rows="3">${E(d.hienTrang || "")}</textarea>`)}${fld("Mô tả chi tiết", `<textarea data-k="moTa" rows="3">${E(d.moTa || "")}</textarea>`)}
       ${fld("Sản phẩm - Nhà phân phối - Ngày sản xuất - Quy cách", inp("sanPham", d.sanPham), true)}
       ${fld("Số lượng sản phẩm KPH", inp("slKPH", d.slKPH, 'type="number" step="any" min="0"'))}${fld("Số lượng thùng có sản phẩm KPH", inp("slThung", d.slThung, 'type="number" step="any" min="0"'))}
       ${fld("Số lượng đvsp kiểm tra", inp("slKT", d.slKT, 'type="number" step="any" min="0"'))}${fld("Tỉ lệ KPH", `<input id="qaTL" value="${E(tiLe(d))}" disabled>`)}
       ${fld("Mức độ lỗi", sel("mucDo", d.mucDo, ["Nhẹ", "Nặng"]))}${fld("Bộ phận phát hiện", inp("bpPhatHien", d.bpPhatHien))}
-      ${fld("Sự khắc phục", `<textarea data-k="khacPhuc" rows="2">${E(d.khacPhuc || "")}</textarea>`)}${fld("Hành động khắc phục", `<textarea data-k="hanhDong" rows="2">${E(d.hanhDong || "")}</textarea>`)}
+      ${fld("Sự khắc phục", `<textarea data-k="khacPhuc" rows="3">${E(d.khacPhuc || "")}</textarea>`)}${fld("Hành động khắc phục", `<textarea data-k="hanhDong" rows="3">${E(d.hanhDong || "")}</textarea>`)}
       ${fld("Bộ phận liên quan", inp("bpLienQuan", d.bpLienQuan))}
       <label class="qa-chk"><input type="checkbox" data-k="dong"${d.dong ? " checked" : ""}> Đã xử lý xong${d.dongNguoi ? " (" + E(d.dongNguoi) + (d.dongLuc ? " · " + E(d.dongLuc) : "") + ")" : ""}</label>
       </div></fieldset>
