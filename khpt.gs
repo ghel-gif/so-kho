@@ -671,14 +671,18 @@ function webQASave(a, o) {
       if (!d.so) { const ym = d.ngay.slice(2, 4) + d.ngay.slice(5, 7), n = R.filter(r => str_(r[1]) === 'KPH' && (() => { try { return String(JSON.parse(str_(r[3]) || '{}').so || '').indexOf('KPH-' + ym) === 0; } catch (e) { return false; } })()).length + 1; d.so = 'KPH-' + ym + '-' + ('0' + n).slice(-2); }
       if (d.dong && !(cu && cu.dong)) { d.dongNguoi = me.ten; d.dongLuc = now; }
     }
+    if (i >= 0 && str_(R[i][6]) === 'Đã xoá') throw new Error('Phiếu đã xoá — khôi phục trước rồi mới sửa.');
+    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    /* QC nhập kho bao bì luôn khi ghi sổ kiểm: phiếu nhập đi kèm (máy chủ giữ mã phiếu, máy không tự ghi được) */
+    let pn = null;
+    if (QA_VT.indexOf(o.loai) >= 0) { QA_PN_K_.forEach(k => { if (cu && cu[k] !== undefined && cu[k] !== '') d[k] = cu[k]; else delete d[k]; }); pn = qaPN_(me, id, o.loai, d, false); }
     const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
     const ngay = o.loai === 'KH' ? d.duKien : o.loai === 'KPH' ? d.ngay : d.ngayNhap;
-    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
     if (i >= 0) sh.getRange(i + 2, 1, 1, QA_HEAD.length).setValues([[id, o.loai, ngay, js, str_(R[i][4]), R[i][5], '', me.ten]]);
     else sh.appendRow([id, o.loai, ngay, js, me.ten, new Date(), '', me.ten]);
     log_(me, 'Phòng QA/QC ' + o.loai, id, String(d.ten || d.suKPH || '').slice(0, 120) + (d.tt ? ' · ' + d.tt : d.so ? ' · ' + d.so : ''));
     const ct = o.loai === 'TUI' ? qaCanTui_(me, id, d) : null; /* túi ép 3 biên: số cân túi rỗng → khối lượng bao bì theo mã hàng */
-    return { id, d, canQC: ct ? ct.qcs : [], cbb: ct && ct.ch ? cbbRows_() : null };
+    return { id, d, canQC: ct ? ct.qcs : [], cbb: ct && ct.ch ? cbbRows_() : null, pn: pn ? pn.doi : '' };
   } finally { lock.releaseLock(); }
 }
 /* BM.02 túi ép 3 biên: QC cân túi rỗng → khối lượng bao bì (klBB, g) cho mọi mã quy cách đóng gói dùng túi này
@@ -700,15 +704,98 @@ function qaCanTui_(me, id, d) {
   qcs.forEach(q => { if (!co[q]) { sh.appendRow([q, 'klBB', v, 'g', ngay, nguoi, so, new Date(), 'Gói thuốc', '', '', '']); ch = true; } });
   return { qcs, ch };
 }
+/* ---- QC nhập kho bao bì ngay khi ghi sổ kiểm (BM.01–04): phiếu nhập (sheet Phieu) đi kèm phiếu kiểm, 2 sổ luôn khớp ----
+   d.nhapKho: có nhập kho · d.pnId: ID phiếu nhập đi kèm (máy chủ tự ghi, máy không gửi lên được) · d.pnSl/pnDv/pnNgay/pnMa/pnNguoi: phiếu đã ghi (để hiện).
+   Sửa số lượng / ngày / NCC / chứng từ / mã ở phiếu kiểm → phiếu nhập sửa theo; bỏ chọn hoặc xoá phiếu kiểm → phiếu nhập xoá (mềm), khôi phục thì ghi lại.
+   Ngược lại: phiếu nhập bao bì lập ở tab Phiếu nhập vật tư → tự có phiếu kiểm "Chờ kiểm" đi kèm (qaAutoPN_); sửa / xoá phiếu nhập ở Lịch sử → phiếu kiểm theo (qaPNSync_, qaPNUnlink_). */
+const QA_BM_ = { NHAN: 'BM.01', TUI: 'BM.02', CHAI: 'BM.03', THUNG: 'BM.04' }, QA_PN_K_ = ['pnId', 'pnSl', 'pnDv', 'pnNgay', 'pnMa', 'pnNguoi'];
+function qaSoOf_(ma) { const m = String(ma || '').toUpperCase();
+  return /^BB\.(GOI|TUI|BAO)\./.test(m) ? 'TUI' : /^BB\.(CHAI|CAN|XO|NAP|HU)\./.test(m) ? 'CHAI' : /^BB\.(THUNG|HOP|DAI)/.test(m) ? 'THUNG' : 'NHAN'; }
+const qaDvEq_ = (x, y) => String(x || '').trim().toLowerCase() === String(y || '').trim().toLowerCase();
+function qaPNRow_(pid) {
+  pid = String(pid || ''); if (!pid || !sheet_(SH.PH)) return null; const sh = sheet_(SH.PH), n = sh.getLastRow() - 1; if (n < 1) return null;
+  const i = sh.getRange(2, 1, n, 1).getValues().findIndex(r => str_(r[0]) === pid); if (i < 0) return null;
+  const r = sh.getRange(i + 2, 1, 1, 17).getValues()[0];
+  return { id: pid, row: i + 2, ngay: str_(r[2]), loai: str_(r[3]), ma: str_(r[4]), sl: num_(r[5]), dv: str_(r[6]), ct: str_(r[8]), gc: str_(r[9]), nguoi: str_(r[10]), tt: str_(r[11]), lenh: str_(r[12]), ncc: str_(r[16]) };
+}
+function qaPNDel_(me, P, why) {
+  checkLock_(P.ngay);
+  sheet_(SH.PH).getRange(P.row, 12).setValue('Đã xoá bởi ' + me.ten + ' lúc ' + Utilities.formatDate(new Date(), tz_(), 'dd/MM/yyyy HH:mm') + ' (' + why + ')');
+  log_(me, 'Xoá phiếu', P.id, ['Nhập', P.ma, P.sl + ' ' + P.dv, 'ngày ' + P.ngay, 'người lập ' + P.nguoi, why].join(' · '));
+}
+function qaPN_(me, id, so, d, del) {
+  const want = !del && !!d.nhapKho, P = qaPNRow_(d.pnId), live = !!P && !P.tt && P.loai === 'Nhập' && !P.lenh, bm = QA_BM_[so] || so;
+  const clr = () => QA_PN_K_.forEach(k => { delete d[k]; });
+  if (!want) { if (live) { qaPNDel_(me, P, (del ? 'xoá phiếu kiểm ' : 'bỏ nhập kho ở phiếu kiểm ') + bm + ' ' + id); clr(); return { doi: 'xoa' }; } clr(); return { doi: '' }; }
+  const it = items_().find(x => x.ma.toLowerCase() === String(d.ma || '').trim().toLowerCase());
+  if (!it) throw new Error('Mã bao bì "' + (d.ma || '') + '" chưa có trong Danh mục vật tư — chọn đúng mã, hoặc bỏ chọn “Nhập kho luôn”.');
+  if (it.nhom !== 'Bao bì') throw new Error(it.ma + ' thuộc nhóm "' + it.nhom + '", không phải bao bì — nhập ở tab Phiếu nhập vật tư.');
+  const cung = qaDvEq_(d.dvt || it.donVi, it.donVi), sl = Math.round(num_(cung ? d.sl : d.slKho) * 10000) / 10000;
+  if (!(sl > 0)) throw new Error(cung ? 'Ghi số lượng thực tế để nhập kho (hoặc bỏ chọn “Nhập kho luôn”).' : 'Sổ kiểm ghi đơn vị "' + d.dvt + '", kho tính ' + it.ma + ' theo "' + it.donVi + '": ghi Số lượng nhập kho theo ' + it.donVi + '.');
+  if (!isYmd_(d.ngayNhap)) throw new Error('Ghi ngày nhập.');
+  const kg = Math.round(sl * it.heSo * 10000) / 10000, ncc = String(d.ncc || '').trim().slice(0, 100), ct = String(d.chungTu || '').trim().slice(0, 100), sh = sheet_(SH.PH);
+  if (live && P.ma === it.ma) {
+    const doi = [['Ngày', P.ngay, d.ngayNhap], ['SL', P.sl, sl], ['NCC', P.ncc, ncc], ['CT', P.ct, ct]].filter(x => String(x[1]) !== String(x[2]));
+    if (doi.length) {
+      checkLock_(P.ngay); checkLock_(d.ngayNhap); if (ncc) nccHead_();
+      sh.getRange(P.row, 3).setValue(d.ngayNhap); sh.getRange(P.row, 6, 1, 5).setValues([[sl, it.donVi, kg, ct, P.gc]]); sh.getRange(P.row, 17).setValue(ncc);
+      log_(me, 'Sửa phiếu nhập (theo sổ kiểm bao bì ' + bm + ')', it.ma + ' · ' + P.id, doi.map(x => x[0] + ': ' + x[1] + ' → ' + x[2]).join(' · '));
+    }
+    Object.assign(d, { pnId: P.id, pnSl: sl, pnDv: it.donVi, pnNgay: d.ngayNhap, pnMa: it.ma, pnNguoi: P.nguoi });
+    return { doi: doi.length ? 'sua' : '' };
+  }
+  if (live) qaPNDel_(me, P, 'đổi mã ở phiếu kiểm ' + bm + ' ' + id + ': ' + P.ma + ' → ' + it.ma);
+  checkLock_(d.ngayNhap); if (ncc) nccHead_();
+  const pid = Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 900 + 100);
+  sh.appendRow([pid, new Date(), d.ngayNhap, 'Nhập', it.ma, sl, it.donVi, kg, ct, ('Sổ kiểm bao bì ' + bm + ' · ' + id).slice(0, 200), me.ten, '', '', '', '', '', ncc]);
+  log_(me, 'Nhập kho bao bì (QC, sổ kiểm ' + bm + ')', it.ma + ' · ' + pid, sl + ' ' + it.donVi + ' · ngày ' + d.ngayNhap + (ncc ? ' · NCC ' + ncc : '') + ' · phiếu kiểm ' + id);
+  Object.assign(d, { pnId: pid, pnSl: sl, pnDv: it.donVi, pnNgay: d.ngayNhap, pnMa: it.ma, pnNguoi: me.ten });
+  return { doi: live ? 'doima' : 'moi' };
+}
+/** Phiếu nhập bao bì lập ở tab Phiếu nhập vật tư (không qua sổ kiểm) → tự tạo phiếu kiểm "Chờ kiểm" đi kèm, QC thấy số nhấp nháy ở menu. */
+function qaAutoPN_(me, pid, it, p, sl, ncc) {
+  if (!it || it.nhom !== 'Bao bì') return '';
+  const so = qaSoOf_(it.ma), id = so + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+  const d = { ngayNhap: p.ngay, ncc: ncc || '', ma: it.ma, ten: it.ten, sl: String(sl), dvt: it.donVi, tinhTrangKho: 'Bình thường', nhapKho: true, chungTu: String(p.chungTu || '').trim().slice(0, 100),
+    pnId: pid, pnSl: sl, pnDv: it.donVi, pnNgay: p.ngay, pnMa: it.ma, pnNguoi: me.ten, tuPN: 1, nguon: 'tự tạo từ phiếu nhập kho của ' + me.ten, tt: 'Chờ kiểm' };
+  shX_(QA_SH, QA_HEAD).appendRow([id, so, p.ngay, JSON.stringify(d), me.ten, new Date(), '', me.ten]);
+  log_(me, 'Phòng QA/QC ' + so, id, 'Tự tạo phiếu kiểm (chờ kiểm) từ phiếu nhập bao bì ' + pid + ' · ' + it.ma);
+  return id;
+}
+/* phiếu kiểm đang gắn với phiếu nhập pid (bỏ qua phiếu kiểm đã xoá) */
+function qaByPN_(pid) { const R = sheet_(QA_SH) ? rows_(QA_SH) : []; for (let i = 0; i < R.length; i++) { if (QA_VT.indexOf(str_(R[i][1])) < 0 || str_(R[i][6]) === 'Đã xoá') continue;
+  let d; try { d = JSON.parse(str_(R[i][3]) || '{}'); } catch (e) { continue; } if (String(d.pnId || '') === String(pid)) return { i, id: str_(R[i][0]), so: str_(R[i][1]), d }; } return null; }
+/** Sửa phiếu nhập ở Lịch sử → phiếu kiểm đi kèm sửa theo (ngày, số lượng, NCC, chứng từ). */
+function qaPNSync_(me, pid, v) {
+  const q = qaByPN_(pid); if (!q) return; const d = q.d, it = items_().find(x => x.ma === d.pnMa || x.ma === d.ma);
+  if (it && qaDvEq_(d.dvt || it.donVi, it.donVi)) d.sl = String(v.sl); else d.slKho = String(v.sl);
+  Object.assign(d, { ngayNhap: v.ngay, ncc: v.ncc, chungTu: v.ct, pnSl: v.sl, pnNgay: v.ngay });
+  sheet_(QA_SH).getRange(q.i + 2, 3, 1, 2).setValues([[v.ngay, JSON.stringify(d)]]);
+  log_(me, 'Phòng QA/QC ' + q.so, q.id, 'Sửa theo phiếu nhập ' + pid + ': ' + v.sl + ' · ngày ' + v.ngay);
+}
+/** Xoá phiếu nhập ở Lịch sử → phiếu kiểm tự tạo còn chờ kiểm thì xoá theo; phiếu kiểm QC đã ghi thì giữ, chỉ bỏ "nhập kho". */
+function qaPNUnlink_(me, pid) {
+  const q = qaByPN_(pid); if (!q) return; const d = q.d, bo = d.tuPN && !d.ketLuan && !d.xnQL;
+  d.nhapKho = false; QA_PN_K_.forEach(k => { delete d[k]; });
+  sheet_(QA_SH).getRange(q.i + 2, 4).setValue(JSON.stringify(d));
+  if (bo) sheet_(QA_SH).getRange(q.i + 2, 7, 1, 2).setValues([['Đã xoá', me.ten]]);
+  log_(me, bo ? 'Xoá hồ sơ QA/QC' : 'Phòng QA/QC ' + q.so, q.id, (bo ? 'Xoá theo' : 'Bỏ nhập kho theo') + ' phiếu nhập ' + pid + ' đã xoá');
+}
 function webQADel(a, id, khoiPhuc) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   const R = sheet_(QA_SH) ? rows_(QA_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id));
   if (i < 0) throw new Error('Không tìm thấy hồ sơ.');
-  if (!qaTP_(me) && str_(R[i][4]) !== me.ten) throw new Error('Chỉ người lập hoặc TP. QA/QC (' + DL_EDITOR_ + ') được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
   let d = {}; try { d = JSON.parse(str_(R[i][3]) || '{}'); } catch (e) {}
+  /* phiếu kiểm tự tạo từ phiếu nhập kho: QC nào cũng xoá được (VD ghi trùng) */
+  if (!qaTP_(me) && str_(R[i][4]) !== me.ten && !(d.tuPN && qaQC_(me))) throw new Error('Chỉ người lập hoặc TP. QA/QC (' + DL_EDITOR_ + ') được ' + (khoiPhuc ? 'khôi phục.' : 'xoá.'));
   if (!khoiPhuc && d.xnQL && !qaTP_(me)) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không xoá được.');
+  const so = str_(R[i][1]);
+  if (QA_VT.indexOf(so) >= 0 && (d.nhapKho || d.pnId)) { /* phiếu nhập kho đi kèm: xoá theo; khôi phục thì ghi lại */
+    const pn = qaPN_(me, String(id), so, d, !khoiPhuc);
+    if (pn.doi) sheet_(QA_SH).getRange(i + 2, 4).setValue(JSON.stringify(d));
+  }
   sheet_(QA_SH).getRange(i + 2, 7, 1, 2).setValues([[khoiPhuc ? '' : 'Đã xoá', me.ten]]);
-  if (str_(R[i][1]) === 'TUI') qaCanTui_(me, String(id), khoiPhuc ? d : {}); /* xoá phiếu thì bỏ số cân túi của phiếu; khôi phục thì ghi lại */
+  if (so === 'TUI') qaCanTui_(me, String(id), khoiPhuc ? d : {}); /* xoá phiếu thì bỏ số cân túi của phiếu; khôi phục thì ghi lại */
   log_(me, khoiPhuc ? 'Khôi phục hồ sơ QA/QC' : 'Xoá hồ sơ QA/QC', String(id), '');
   return qaRows_();
 }

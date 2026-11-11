@@ -11,7 +11,7 @@
   const E = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const D = s => { s = String(s || "").slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split("-").reverse().join("/") : s; };
   const DM = s => { s = String(s || "").slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.slice(8, 10) + "/" + s.slice(5, 7) : s; };
-  const today = () => (window.S && S.today) || new Date().toISOString().slice(0, 10);
+  const today = () => (typeof S !== "undefined" && S.today) || new Date().toISOString().slice(0, 10);
   const QC = () => !!(S.me && (S.me.qc || S.me.vaiTro === "Quản lý"));
   const TP = () => !!(S.me && S.me.vaiTro === "Quản lý" && S.me.ten === "Nguyễn Ô Ghel");
   const isYmd = s => /^\d{4}-\d{2}-\d{2}$/.test(s || "");

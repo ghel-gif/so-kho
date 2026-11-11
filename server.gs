@@ -615,7 +615,9 @@ function saveMove(a, p) {
       sheet_(SH.QC).appendRow([it.ma, lot[0], 'Chờ kiểm', p.ngay, me.ten, 'Tự tạo khi nhập kho', '', new Date()]);
       cho = true;
     }
-    return { id, kg, loai: p.loai, choKiem: cho };
+    /* bao bì nhập ở đây (không qua sổ kiểm của QC) → tự có phiếu kiểm "Chờ kiểm" đi kèm */
+    const qa = p.loai === 'Nhập' && it.nhom === 'Bao bì' && typeof qaAutoPN_ === 'function' ? qaAutoPN_(me, id, it, p, sl, ncc) : '';
+    return { id, kg, loai: p.loai, choKiem: cho, qa };
   } finally { lock.releaseLock(); }
 }
 
@@ -630,6 +632,7 @@ function deleteMove(a, id) {
     sh.getRange(i + 2, 12).setValue('Đã xoá bởi ' + me.ten + ' lúc ' + Utilities.formatDate(new Date(), tz_(), 'dd/MM/yyyy HH:mm'));
     const r = sh.getRange(i + 2, 1, 1, 14).getValues()[0];
     log_(me, 'Xoá phiếu', id, [str_(r[3]), str_(r[4]), num_(r[5]) + ' ' + str_(r[6]), 'ngày ' + str_(r[2]), r[13] ? 'lô ' + str_(r[13]) : '', r[8] ? 'CT ' + str_(r[8]) : '', 'người lập ' + str_(r[10])].filter(String).join(' · '));
+    if (str_(r[3]) === 'Nhập' && typeof qaPNUnlink_ === 'function') qaPNUnlink_(me, String(id)); /* bao bì: phiếu kiểm đi kèm theo */
     return true;
   } finally { lock.releaseLock(); }
 }
@@ -724,6 +727,7 @@ function updateMove(a, id, d) {
     const doi = [['Ngày', m.ngay, ngay], ['SL', m.soLuong, sl], ['Lô', m.lo, lo], ['NSX', m.nsx, nsx], ['NCC', m.ncc, ncc], ['CT', m.chungTu, ct], ['Ghi chú', m.ghiChu, gc]]
       .filter(x => String(x[1]) !== String(x[2])).map(x => x[0] + ': ' + x[1] + ' → ' + x[2]);
     log_(me, 'Sửa phiếu nhập', it.ma + ' · ' + id, doi.join(' · ') || 'không đổi');
+    if (it.nhom === 'Bao bì' && doi.length && typeof qaPNSync_ === 'function') qaPNSync_(me, String(id), { ngay, sl, ncc, ct }); /* phiếu kiểm bao bì đi kèm sửa theo */
     return true;
   } finally { lock.releaseLock(); }
 }

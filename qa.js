@@ -9,7 +9,7 @@
   const D = s => { s = String(s || "").slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split("-").reverse().join("/") : s; };
   const DM = s => { s = String(s || "").slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.slice(8, 10) + "/" + s.slice(5, 7) : s; };
   const N = v => { const x = parseFloat(String(v ?? "").replace(",", ".")); return isFinite(x) ? (Math.round(x * 1000) / 1000).toLocaleString("vi-VN") : ""; };
-  const today = () => (window.S && S.today) || new Date().toISOString().slice(0, 10);
+  const today = () => (typeof S !== "undefined" && S.today) || new Date().toISOString().slice(0, 10);
   const TP = () => !!(S.me && S.me.vaiTro === "Quản lý" && S.me.ten === "Nguyễn Ô Ghel"); /* TP. QA/QC xác nhận */
   const QC = () => !!(S.me && (S.me.qc || S.me.vaiTro === "Quản lý"));
   /* người kiểm (bao bì, cân): bấm chọn Nhi · Tiên · Ghel; người khác gõ tên */
@@ -23,6 +23,8 @@
   /* mã bao bì = mã kho trong Danh mục vật tư (nhóm Bao bì) */
   const BB_PRE = { NHAN: ["BB.NHAN.", "BB.NP.", "BB.TEMCHAI.", "BB.TEMTHUNG.", "BB.TCG.", "BB.TCB"], TUI: ["BB.GOI.", "BB.TUI.", "BB.BAO."], CHAI: ["BB.CHAI.", "BB.CAN.", "BB.XO.", "BB.NAP.", "BB.HU."], THUNG: ["BB.THUNG.", "BB.HOP.", "BB.DAI"] };
   const bbAll = () => ((typeof S !== "undefined" && S.items) || []).filter(i => i.nhom === "Bao bì");
+  const dvEq = (x, y) => String(x || "").trim().toLowerCase() === String(y || "").trim().toLowerCase();
+  const dayDiff = (x, y) => (new Date(String(x || "").slice(0, 10)) - new Date(String(y || "").slice(0, 10))) / 864e5;
   const bbBy = ma => { const m = String(ma || "").trim().toLowerCase(); return m ? bbAll().find(i => i.ma.toLowerCase() === m) : null; };
   const bbCodes = so => { const P = BB_PRE[so] || [], A = bbAll(), f = i => P.some(p => i.ma.toUpperCase().startsWith(p)); return A.filter(f).concat(A.filter(i => !f(i))); };
   /* mã cũ theo danh mục quy cách (VD ALP-D7) → mã kho BB.NHAN.ALP-D7 … nếu chỉ có 1 mã khớp */
@@ -63,7 +65,7 @@
   let R = [], USERS = [], view = "vt", fSo = "", fTT = "", fThang = "", ngay5 = "", thangK = "";
   const live = L => L.filter(x => !x.xoa);
   const rec = id => R.find(x => x.id === id);
-  async function load() { R = await api0("webQAAll", S.auth); try { if (!USERS.length) USERS = await api0("getUserNames"); } catch (e) {} }
+  async function load() { R = await api0("webQAAll", S.auth); qaT = Date.now(); try { qaBadgeSet(); } catch (e) {} try { if (!USERS.length) USERS = await api0("getUserNames"); } catch (e) {} }
   const box = () => document.getElementById("qaBox");
   const vt = () => live(R).filter(x => SO[x.loai]);
   /* hạn kiểm: 48 giờ từ lúc vật tư về (hàng gấp: 60 phút) */
@@ -107,7 +109,7 @@
         <p class="note" style="margin:0 0 8px">${cho.length ? `<b style="color:#d97706">${cho.length} lô chờ kiểm</b> (hạn 48 giờ, hàng gấp 60 phút)` : "Không có lô chờ kiểm"} · ${cxn.length ? `<b style="color:#7c3aed">${cxn.length} lô chờ TP. QA/QC xác nhận</b>` : "không có lô chờ xác nhận"}. Lô chưa xác nhận luôn hiện, không theo tháng.</p>
         <div class="list">${L.length ? L.map(r => { const d = r.d, t = ttOf(r);
           return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh chụp khi nhận hàng">📷 ${r.anh}</span>` : ""}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
-          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${d.tlTui ? " · ⚖ " + N(d.tlTui) + " g/túi" : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
+          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${d.tlTui ? " · ⚖ " + N(d.tlTui) + " g/túi" : ""}${d.pnId ? ` · <span class="qa-pn" title="Phiếu nhập ${E(d.pnId)}${d.pnNguoi ? " · " + E(d.pnNguoi) : ""}">📥 nhập kho ${N(d.pnSl)} ${E(d.pnDv || "")}${d.tuPN ? " (phiếu của " + E(d.pnNguoi || "kho") + ")" : ""}</span>` : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
           : `<div class="empty"><b>Chưa có lô bao bì nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi bao bì về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>
         ${delBox(R.filter(x => x.xoa && SO[x.loai]).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap))), "data-id", x => `<b>${SO[x.loai].bm.slice(0, 5)}</b> · ${E(x.d.ten || "")} · về ${D(x.d.ngayNhap)}`)}`;
     } else if (view === "ngay") {
@@ -172,9 +174,9 @@
     }
     if (n) toast(`Đã đính kèm ${n} ảnh vào lô bao bì`); return n;
   }
-  async function save(o, msg) { const r = await api("webQASave", S.auth, o); toast(msg || "Đã lưu"); return r; }
+  async function save(o, msg) { const r = await api("webQASave", S.auth, o); if (msg !== false) toast(msg || "Đã lưu"); return r; }
   /* thanh nút chung của phiếu QA/QC (giống BM.06 / BM.08): Lưu = phiếu mới · Cập nhật = phiếu đã lưu · Xoá · Khôi phục (phiếu đã xoá) */
-  const canRes = r => !!r && (TP() || r.nguoi === S.me.ten);
+  const canRes = r => !!r && (TP() || r.nguoi === S.me.ten || !!(r.d && r.d.tuPN && QC())); /* phiếu kiểm tự tạo từ phiếu nhập kho: QC nào cũng xoá / khôi phục được */
   const acts = (r, canW, canDel) => r && r.xoa
     ? `<div class="actions">${canRes(r) ? '<button class="btn ok qa-res" type="button" data-a="res">↺ Khôi phục</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button></div>`
     : `<div class="actions">${r && canDel ? '<button class="btn danger" type="button" data-a="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button>${canW ? `<button class="btn${r ? "" : " primary"}" type="button" data-a="sv"${r ? ' disabled title="Phiếu đã lưu — sửa xong bấm Cập nhật"' : ""}>Lưu</button><button class="btn${r ? " primary" : ""}" type="button" data-a="up"${r ? "" : ' disabled title="Lưu phiếu mới trước"'}>Cập nhật</button>` : ""}</div>`;
@@ -231,10 +233,15 @@
   }
   /* ---------------- sổ kiểm tra vật tư (BM.01–04) ---------------- */
   function vtDlg(r, so0) {
-    let isNew = !r; const me = S.me.ten, d = r ? JSON.parse(JSON.stringify(r.d)) : { ngayNhap: today(), tinhTrangKho: "Bình thường", ngayKT: today(), nguoiKT: me, dvt: "cái" };
+    let isNew = !r; const me = S.me.ten, d = r ? JSON.parse(JSON.stringify(r.d)) : { ngayNhap: today(), tinhTrangKho: "Bình thường", ngayKT: today(), nguoiKT: me, dvt: "cái", nhapKho: true };
     let so = r ? r.loai : (so0 || fSo || "NHAN");
     const tp = TP(); let locked, canEd; const st = () => { locked = !!(r && r.d.xnQL && !tp); canEd = QC() && !locked && !(r && r.xoa); }; st();
     if (!d.nguoiKT) d.nguoiKT = me;
+    /* QC nhập kho bao bì luôn khi ghi sổ kiểm: máy ghi phiếu nhập đi kèm (khác đơn vị kho thì ghi thêm số lượng theo đơn vị kho) */
+    const nkHtml = () => { const it = bbBy(d.ma), khac = !!(it && d.dvt && !dvEq(d.dvt, it.donVi));
+      return `<div class="qa-nk" id="qaNk" style="grid-column:1/-1"><label class="qa-chk qa-nk-c"><input type="checkbox" data-k="nhapKho"${d.nhapKho ? " checked" : ""}> <b>📥 Nhập kho luôn</b> <span>— ghi phiếu nhập vào kho bao bì cùng lúc lưu sổ kiểm</span></label>
+        <div class="qa-nk-g qa-g"${d.nhapKho ? "" : " hidden"}>${fld("Số chứng từ (hoá đơn / phiếu giao hàng)", inp("chungTu", d.chungTu, 'placeholder="nếu có"'))}<label id="qaSlKhoL"${khac ? "" : " hidden"}>Số lượng nhập kho (<span id="qaSlKhoDv">${E(it ? it.donVi : "")}</span>)${inp("slKho", d.slKho, 'type="number" step="any" min="0" inputmode="decimal" data-need')}</label></div>
+        <small class="note" id="qaNkH"></small></div>`; };
     const draw = () => {
       const S0 = SO[so], A = vt(), C = codesFor(so), ro = canEd ? "" : "disabled";
       const g = goiY(so, d);
@@ -250,6 +257,7 @@
           ${fld("Số lượng thực tế", inp("sl", d.sl, 'type="number" step="any" min="0"'))}${fld("Đơn vị", inp("dvt", d.dvt, 'list="qaDvt"') + dl("qaDvt", ["cái", "kg", "cuộn", "bó", "thùng"]))}
           ${fld("Tình trạng khi nhận", inp("tinhTrangKho", d.tinhTrangKho, 'list="qaTTK"') + dl("qaTTK", ["Bình thường", "Móp / méo", "Ướt", "Thiếu số lượng", "Rách bao gói"]))}
           <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
+          ${nkHtml()}
         </div></fieldset>
         <div class="qa-anh"><div class="qa-anh-h"><b>📷 Ảnh bao bì</b><small>không bắt buộc · chụp nhãn, số lô, thùng hàng, lỗi thấy được</small></div><div class="anhs" id="qaAnhL" hidden></div>
           ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Chụp ảnh</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label></div>` : ""}<small class="note" id="qaAnhN"></small></div>
@@ -274,7 +282,7 @@
           ${fld("Kết quả xử lý", inp("kqXuLy", d.kqXuLy, "data-opt"))}
           <p class="note" style="grid-column:1/-1;margin:0">${d.xnQL ? "Đã xác nhận: " + E(d.xnQLNguoi || "") + (d.xnQLLuc ? " · " + E(d.xnQLLuc) : "") + ". " : ""}${tp ? "Xoá ô xác nhận rồi bấm Cập nhật để mở lại cho QC sửa." : "Chỉ TP. QA/QC (Nguyễn Ô Ghel) xác nhận."} Xác nhận của bộ phận thu mua: ký tay trên bản in.</p>
         </div></fieldset>
-        ${acts(r, canEd || (tp && !(r && r.xoa)), r && (tp || (canEd && r.nguoi === me)))}`;
+        ${acts(r, canEd || (tp && !(r && r.xoa)), r && (tp || (canEd && (r.nguoi === me || !!r.d.tuPN))))}`;
     };
     let anh = null, pend = []; /* anh: ảnh đã lưu của phiếu · pend: ảnh chụp khi phiếu chưa lưu, tải lên ngay sau khi bấm Lưu */
     const w = dlg((isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm, draw(), true), bx = w.querySelector(".cfm-box");
@@ -293,6 +301,23 @@
     const anhGet = async () => { if (!r || !r.id) return; try { anh = await api("webAnhQA", S.auth, r.id); } catch (e) { anh = anh || []; } if (bx.isConnected) anhPaint(); };
     const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; d[k] = el.type === "checkbox" ? el.checked : el.value.trim(); });
       if (so === "TUI") { const n = +String(d.canSo || "").replace(",", "."), t = +String(d.canKL || "").replace(",", "."); d.tlTui = d.loaiVT === "Túi ép 3 biên" && n > 0 && t > 0 ? Math.round(t / n * 1000) / 1000 : ""; } };
+    const setD = x => { Object.keys(d).forEach(k => { delete d[k]; }); Object.assign(d, x || {}); }; /* thay hẳn bằng bản máy chủ trả về (bỏ các ô máy chủ đã xoá, VD phiếu nhập) */
+    /* khối "Nhập kho luôn": phiếu nhập đã ghi / sẽ ghi gì, cảnh báo trùng chuyến hàng (tồn cộng 2 lần), lô không đạt */
+    const nkUp = () => { const c = bx.querySelector("#qaNk"); if (!c) return; const on = !!d.nhapKho, it = bbBy(d.ma), g = c.querySelector(".qa-nk-g"), L = c.querySelector("#qaSlKhoL"), h = c.querySelector("#qaNkH");
+      const khac = !!(it && d.dvt && !dvEq(d.dvt, it.donVi)), sl = khac ? d.slKho : d.sl, dv = it ? it.donVi : d.dvt || "", tra = /trả NCC/i.test(d.xnQL || "");
+      if (g) g.hidden = !on; if (L) { L.hidden = !on || !khac; const u = L.querySelector("#qaSlKhoDv"); if (u) u.textContent = dv; }
+      let t;
+      if (d.pnId) { const miss = on && khac && !(+sl > 0), doi = !miss && on && it && (String(d.pnMa || "") !== it.ma || +d.pnSl !== +sl || d.pnNgay !== d.ngayNhap);
+        t = on ? `✓ <b>Đã nhập kho ${N(d.pnSl)} ${E(d.pnDv || "")}</b> ngày ${D(d.pnNgay)} · phiếu nhập ${E(d.pnId)}${d.pnNguoi ? " (" + E(d.pnNguoi) + ")" : ""}.${miss ? ` <b style="color:#b45309">Sổ kiểm ghi đơn vị ${E(d.dvt)}, kho tính theo ${E(dv)}: ghi Số lượng nhập kho theo ${E(dv)}.</b>` : doi ? ` <b style="color:#b45309">Bấm Cập nhật để sửa phiếu nhập theo: ${N(sl)} ${E(dv)} ngày ${D(d.ngayNhap)}${it && d.pnMa !== it.ma ? ", mã " + E(it.ma) : ""}.</b>` : " Sửa số lượng, ngày, NCC ở đây thì phiếu nhập tự sửa theo."}`
+          : `<b style="color:#c62828">Bấm Cập nhật: phiếu nhập ${E(d.pnId)} (${N(d.pnSl)} ${E(d.pnDv || "")}) bị xoá, tồn bao bì giảm theo.</b>`; }
+      else if (on) t = !it ? (d.ma ? `<span style="color:#c62828">Mã ${E(d.ma)} chưa có trong Danh mục vật tư — chưa nhập kho được.</span>` : "Chọn mã bao bì để nhập kho.")
+        : +sl > 0 ? `Bấm <b>${r ? "Cập nhật" : "Lưu"}</b>: máy ghi phiếu nhập <b>${N(sl)} ${E(dv)}</b> mã <b>${E(it.ma)}</b> vào ${E(it.kho || "Kho bao bì")}, ngày ${D(d.ngayNhap)} — tồn tăng ngay, không cần lập phiếu nhập riêng.`
+        : `Ghi ${khac ? "<b>số lượng nhập kho</b> theo " + E(dv) + " (sổ kiểm ghi " + E(d.dvt) + ")" : "số lượng thực tế"} để nhập kho.`;
+      else t = r && r.d && r.d.pnId ? "" : "Không nhập kho — chỉ ghi sổ kiểm.";
+      if (on && (d.ketLuan === "Không đạt" || tra)) t += `<br><b style="color:#c62828">Lô không đạt${tra ? ", trả NCC" : ""}: trả cả lô thì bỏ chọn “Nhập kho luôn” rồi Cập nhật (phiếu nhập tự xoá); trả một phần thì lập phiếu xuất trả NCC.</b>`;
+      const M = String(d.ma || "").trim().toUpperCase(), dup = on && M ? vt().filter(x => x !== r && !(r && x.id === r.id) && String(x.d.ma || "").trim().toUpperCase() === M && Math.abs(dayDiff(x.d.ngayNhap, d.ngayNhap)) <= 3 && (x.d.pnId || ttOf(x) === "Chờ kiểm")) : [];
+      if (dup.length) { const x = dup[0]; t += `<br><span class="qa-nk-dup">⚠ Đã có lô cùng mã về ${D(x.d.ngayNhap)} (${E(SO[x.loai].bm.slice(0, 5))}, ${E(ttOf(x).toLowerCase())}${x.d.pnId ? ", đã nhập kho " + N(x.d.pnSl) + " " + E(x.d.pnDv || "") : ""}${x.d.tuPN ? ", từ phiếu nhập của " + E(x.d.pnNguoi || "kho") : ""}). Cùng 1 chuyến hàng thì mở lô đó, đừng ghi thêm — tồn sẽ bị cộng 2 lần. <button type="button" class="btn small" data-dup="${E(x.id)}">Mở lô đó</button></span>`; }
+      if (h) { h.innerHTML = t; h.hidden = !t; const b = h.querySelector("[data-dup]"); if (b) b.onclick = () => { const x = rec(b.dataset.dup); if (x) { w.remove(); vtDlg(x); } }; } };
     /* quy cách theo mã bao bì: lần ghi trước của cùng mã → quy cách đóng gói (QuyCachDG) của mã nhãn / chai / hộp / thùng → các quy cách đã dùng trong sổ.
        Ô còn trống (hoặc vẫn là số tự gợi ý) thì tự điền gợi ý đầu tiên; luôn sửa tay được. */
     let qcAsk = 0;
@@ -323,13 +348,13 @@
         if (r && r.id) { if (await upQA(r.id, fs)) { await anhGet(); renderQA(); } }
         else { fs.forEach(f => pend.push({ f, url: URL.createObjectURL(f) })); anhPaint(); } });
       anhPaint();
-      bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); canUp(); }));
-      canUp();
+      bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); canUp(); nkUp(); }));
+      canUp(); nkUp();
       kiemWire(bx);
       const ma = bx.querySelector('[data-k="ma"]'), maH = () => { const h = bx.querySelector("#qaMaH"); if (!h || !ma) return; const v = ma.value.trim(), it = bbBy(v), mp = !it && bbMap(v, so);
         h.innerHTML = !v ? "Bắt buộc. Chưa có mã trong Danh mục vật tư thì bấm <b>＋ Ghi mã mới</b> rồi chọn mã." : it ? `<span style="color:#2e7d32">✓ ${E(it.ten)}</span>` : mp ? `Mã cũ ${E(v)} → mã kho <b>${E(mp)}</b> <button type="button" class="btn small" id="qaMaMap">Dùng mã này</button>` : `<span style="color:#c62828">⚠ Mã ${E(v)} chưa có trong Danh mục vật tư — bấm <b>＋ Ghi mã mới</b> để tạo mã trước.</span>`;
         const mb = bx.querySelector("#qaMaMap"); if (mb) mb.onclick = () => { ma.value = mp; ma.dispatchEvent(new Event("change")); }; };
-      if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi; } pull(); maH(); qcSug(true); }); maH(); qcSug(false); }
+      if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi; } pull(); maH(); qcSug(true); nkUp(); }); maH(); qcSug(false); }
       const mn = bx.querySelector("#qaMaNew"); if (mn) mn.onclick = () => { pull(); bbNew(so, d.ma, d.ten, d.dvt, m => { d.ma = m; re(); toast("Đã ghi mã mới " + m + " vào Danh mục vật tư"); }, d.loaiVT); };
       bx.querySelectorAll("[data-kl]").forEach(x => x.onclick = () => { pull(); d.ketLuan = d.ketLuan === x.dataset.kl ? "" : x.dataset.kl; re(); });
       const all = bx.querySelector('[data-a="all"]'); if (all) all.onclick = () => { pull(); const S0 = SO[so];
@@ -343,10 +368,14 @@
         let n = 0; ["ncc", "loaiVT", "quyCach", "npp", "dvt", "ma"].forEach(k => { const el = bx.querySelector(`[data-k="${k}"]`), v = L.d[k]; if (!el || !v) return;
           if (!el.value.trim() || (k === "dvt" && el.value.trim() === "cái" && v !== "cái")) { el.value = v; n++; } });
         if (n) { pull(); hint(); maH(); toast("Đã điền theo lần kiểm gần nhất (" + D(L.d.ngayNhap) + "): NCC, loại, quy cách…"); } });
-      const mk = bx.querySelector("#qaMkK"); if (mk) mk.onclick = async () => { pull(); try { const o = await save({ id: r.id, loai: so, d }, "Đã lưu lô bao bì"); Object.assign(d, o.d); w.remove(); kphDlg(null, { ngay: d.ngayKT || today(), suKPH: "Vật tư nhập không đạt: " + d.ten, nn: { vatTu: true }, hienTrang: d.ghiChu || "", moTa: [d.loaiVT, d.ncc ? "NCC " + d.ncc : "", d.ngayNhap ? "về " + D(d.ngayNhap) : ""].filter(Boolean).join(" · "), sanPham: [d.ten, d.npp, d.quyCach].filter(Boolean).join(" - "), slKPH: soLoi(d), slKT: d.soMau || "", mucDo: +d.loiNang > 0 ? "Nặng" : "Nhẹ", bpPhatHien: "Phòng QA/QC", bpLienQuan: "Thu mua", nguon: r.id }); } catch (e) { toast(e.message); } };
+      const mk = bx.querySelector("#qaMkK"); if (mk) mk.onclick = async () => { pull(); try { const o = await save({ id: r.id, loai: so, d }, "Đã lưu lô bao bì"); setD(o.d); if (o.pn && typeof refresh === "function") refresh(); w.remove(); kphDlg(null, { ngay: d.ngayKT || today(), suKPH: "Vật tư nhập không đạt: " + d.ten, nn: { vatTu: true }, hienTrang: d.ghiChu || "", moTa: [d.loaiVT, d.ncc ? "NCC " + d.ncc : "", d.ngayNhap ? "về " + D(d.ngayNhap) : ""].filter(Boolean).join(" · "), sanPham: [d.ten, d.npp, d.quyCach].filter(Boolean).join(" - "), slKPH: soLoi(d), slKT: d.soMau || "", mucDo: +d.loiNang > 0 ? "Nặng" : "Nhẹ", bpPhatHien: "Phòng QA/QC", bpLienQuan: "Thu mua", nguon: r.id }); } catch (e) { toast(e.message); } };
       bx.querySelector('[data-a="x"]').onclick = () => w.remove();
-      const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { if (!await askConfirm(["Xoá lô bao bì này khỏi sổ? Khôi phục được ở mục “Phiếu đã xoá” cuối danh sách."])) return; try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá — khôi phục được ở mục “Phiếu đã xoá”"); w.remove(); renderQA(); } catch (e) { toast(e.message); } };
-      const rs = bx.querySelector('[data-a="res"]'); if (rs) rs.onclick = async () => { rs.disabled = true; try { await api("webQADel", S.auth, r.id, true); r.xoa = 0; toast("Đã khôi phục lô bao bì vào sổ"); st(); re(); renderQA(); } catch (e) { rs.disabled = false; toast(e.message); } };
+      const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { const pn = r.d.pnId ? r.d : null, L0 = ["Xoá lô bao bì này khỏi sổ? Khôi phục được ở mục “Phiếu đã xoá” cuối danh sách."];
+        if (pn) L0.push("⚠ Phiếu nhập kho đi kèm (" + N(pn.pnSl) + " " + (pn.pnDv || "") + ", ngày " + D(pn.pnNgay) + ") cũng bị xoá — tồn bao bì giảm theo. Khôi phục lô thì phiếu nhập được ghi lại.");
+        if (!await askConfirm(L0, { t: "Xoá lô bao bì?", ok: "Xoá", n: "" })) return;
+        try { await api("webQADel", S.auth, r.id, false); toast("Đã xoá" + (pn ? " lô và phiếu nhập kho đi kèm" : "") + " — khôi phục được ở mục “Phiếu đã xoá”"); w.remove(); renderQA(); if (pn && typeof refresh === "function") refresh(); } catch (e) { toast(e.message); } };
+      const rs = bx.querySelector('[data-a="res"]'); if (rs) rs.onclick = async () => { rs.disabled = true; try { const A = await api("webQADel", S.auth, r.id, true), x = (A || []).find(y => y.id === r.id); r.xoa = 0; if (x) { r.d = x.d; setD(JSON.parse(JSON.stringify(x.d))); }
+          toast("Đã khôi phục lô bao bì vào sổ" + (d.pnId ? " · phiếu nhập kho ghi lại " + N(d.pnSl) + " " + (d.pnDv || "") : "")); st(); re(); renderQA(); if (d.pnId && typeof refresh === "function") refresh(); } catch (e) { rs.disabled = false; toast(e.message); } };
       /* Lưu (phiếu mới) và Cập nhật (phiếu đã lưu): lưu xong vẫn mở phiếu để ghi tiếp, bấm Đóng khi xong */
       const doSave = async btn => { pull(); if (!r) { const it = bbBy(d.ma), f = () => { const e = bx.querySelector('[data-k="ma"]'); if (e) { e.focus(); e.scrollIntoView({ block: "center" }); } };
           if (!d.ma) { toast("Ghi mã bao bì (theo Danh mục vật tư). Chưa có mã thì bấm “＋ Ghi mã mới”."); f(); return; }
@@ -354,16 +383,20 @@
         if (!d.ten) { toast("Ghi " + SO[so].ten.toLowerCase() + "."); return; }
         if (!d.ketQua && so === "NHAN" && d.ketLuan) d.ketQua = kqTxt(d); if (d.loiNang !== "" || d.loiNhe !== "") d.soLoi = soLoi(d);
         btn.disabled = true; const moi = !r;
-        try { const o = await save({ id: r && r.id, loai: so, d }, d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô bao bì");
+        const m0 = d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô bao bì";
+        try { const o = await save({ id: r && r.id, loai: so, d }, false);
           const P = moi ? pend.splice(0) : []; if (moi) anh = [];
-          Object.assign(d, o.d); r = Object.assign(r || { loai: so, nguoi: me, xoa: 0 }, { id: o.id, d: JSON.parse(JSON.stringify(o.d)), sua: me }); isNew = false; st(); re(); renderQA();
-          if (o.cbb && S.dg) S.dg.cbb = o.cbb; if (o.canQC && o.canQC.length && d.tlTui) toast("⚖ Đã ghi " + N(d.tlTui) + " g/túi làm khối lượng bao bì cho " + o.canQC.join(", ") + " — BM.05 lấy sẵn");
+          setD(o.d); r = Object.assign(r || { loai: so, nguoi: me, xoa: 0 }, { id: o.id, d: JSON.parse(JSON.stringify(o.d)), sua: me }); isNew = false; st(); re(); renderQA();
+          const pnT = { moi: "📥 đã nhập kho " + N(d.pnSl) + " " + (d.pnDv || ""), sua: "📥 phiếu nhập kho sửa theo (" + N(d.pnSl) + " " + (d.pnDv || "") + ")", xoa: "đã xoá phiếu nhập kho đi kèm", doima: "📥 phiếu nhập kho ghi lại theo mã " + (d.pnMa || "") }[o.pn] || "";
+          if (o.cbb && S.dg) S.dg.cbb = o.cbb;
+          toast(o.canQC && o.canQC.length && d.tlTui ? "⚖ Đã ghi " + N(d.tlTui) + " g/túi làm khối lượng bao bì cho " + o.canQC.join(", ") + " — BM.05 lấy sẵn" + (pnT ? " · " + pnT : "") : m0 + (pnT ? " · " + pnT : ""));
+          if (o.pn && typeof refresh === "function") refresh();
           if (P.length) { await upQA(r.id, P.map(p => p.f)); P.forEach(p => URL.revokeObjectURL(p.url)); await anhGet(); renderQA(); } } catch (e) { btn.disabled = false; toast(e.message); } };
       ["sv", "up"].forEach(k => { const b0 = bx.querySelector(`[data-a="${k}"]`); if (b0) b0.onclick = () => doSave(b0); });
     }
     /* cỡ mẫu tự điền theo số lượng (chỉ khi ô còn trống hoặc vẫn là số tự điền) */
     if (r && r.id) anhGet();
-    bx.addEventListener("input", e => { pull(); canUp(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
+    bx.addEventListener("input", e => { pull(); canUp(); nkUp(); if (e.target.dataset && e.target.dataset.k === "sl") { const sm = bx.querySelector('[data-k="soMau"]'), n = mauN(so, d.sl); if (sm && (!sm.value || sm.value === sm.dataset.auto)) { sm.value = n ? String(n) : ""; sm.dataset.auto = sm.value; pull(); } } hint(); });
     wire();
   }
 
@@ -474,6 +507,15 @@
     if (tp) live(R).filter(x => x.loai === "KPH" && !x.d.dong).forEach(k => out.push({ id: k.id, c: "#c62828", t: `⚠ <b>${E(k.d.so)}</b> · ${E(k.d.suKPH)} — chưa xử lý xong (${D(k.d.ngay)})` }));
     return out;
   };
+  /* số nhấp nháy ở mục "Kiểm bao bì nhập kho" (menu trái): lô chờ kiểm (QC) + lô chờ TP. QA/QC xác nhận — gồm cả phiếu kiểm tự tạo khi kho lập phiếu nhập bao bì */
+  function qaBadgeSet() { const c = document.getElementById("navQaCnt"); if (!c) return; if (!S.me || !QC()) { c.hidden = true; return; }
+    const A = vt(), cho = A.filter(r => ttOf(r) === "Chờ kiểm"), tre = cho.filter(r => hanT(r) < Date.now()), xn = TP() ? A.filter(r => ttOf(r) === "Chờ xác nhận") : [], n = cho.length + xn.length;
+    const t = [cho.length ? cho.length + " lô bao bì chờ kiểm" + (tre.length ? " (" + tre.length + " quá hạn 48 giờ)" : "") : "", xn.length ? xn.length + " lô chờ TP. QA/QC xác nhận" : ""].filter(Boolean).join(" · ");
+    c.hidden = !n; c.textContent = n > 99 ? "99+" : n ? String(n) : ""; c.title = t; c.setAttribute("aria-label", t || ""); }
+  let qaBusy = 0, qaT = 0;
+  window.qaBadge = async function (force) { if (!S.me || !QC()) { qaBadgeSet(); return; } if (qaBusy) return;
+    if (!force && qaT && Date.now() - qaT < 60e3) { qaBadgeSet(); return; }
+    qaBusy = 1; try { await load(); } catch (e) {} finally { qaBusy = 0; } };
   /* tìm nhanh (ô tìm ở đầu trang): phiếu kiểm bao bì theo mã, tên, NCC, ngày */
   window.qaSearch = async function (toks, fd) { try { if (!R.length) await load(); } catch (e) { return []; }
     return vt().filter(r => { const d = r.d || {}, h = fd([d.ma, d.ten, d.ncc, d.loaiVT, d.npp, d.quyCach, D(d.ngayNhap), SO[r.loai].bm, SO[r.loai].ngan].join(" ")); return toks.every(t => h.includes(t)); })

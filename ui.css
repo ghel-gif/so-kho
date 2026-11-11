@@ -344,6 +344,13 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .qa-can-tb span{font-size:12px;color:var(--muted)}.qa-can-tb b{font-size:20px;color:#0369a1;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:600px){.qa-can-g{grid-template-columns:1fr 1fr}.qa-can-tb{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center}}
 :root[data-theme="dark"] .qa-can-h b,:root[data-theme="dark"] .qa-can-tb b{color:#7dd3fc}
+/* Kiểm bao bì: "Nhập kho luôn" — QC ghi sổ kiểm và phiếu nhập kho cùng 1 lần */
+.qa-nk{border:1.5px solid #16a34a;background:rgba(22,163,74,.06);border-radius:12px;padding:10px 12px;display:grid;gap:8px}
+.qa-dlg label.qa-nk-c{flex-wrap:wrap;font-size:14px}.qa-nk-c b{color:#15803d}.qa-nk-c span{color:var(--muted);font-size:13px}
+.qa-dlg .qa-nk-g[hidden],.qa-dlg .qa-nk label[hidden],.qa-nk small[hidden]{display:none!important}
+.qa-nk small{line-height:1.5}.qa-nk-dup{display:inline-block;margin-top:4px;color:#b45309}.qa-nk-dup .btn{margin-left:4px}
+.qa-pn{color:#15803d;white-space:nowrap}
+:root[data-theme="dark"] .qa-nk-c b,:root[data-theme="dark"] .qa-pn{color:#86efac}:root[data-theme="dark"] .qa-nk-dup{color:#fbbf24}
 .qa-dlg .qa-kl .btn.ok{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .qa-dlg .qa-kl .btn.bad{background:#c62828;color:#fff;border-color:#c62828}
 /* Thiết bị nhà xưởng + kiểm tra cân (QC-QT.01) */
