@@ -734,6 +734,64 @@ small{font-size:max(12.5px,.85em)}
 .rd-list .row.r-wait{box-shadow:inset 4px 0 0 #7c3aed}
 .rd-list .grp small{margin-left:8px;font-weight:600;letter-spacing:0;text-transform:none;opacity:.8}
 @media (max-width:600px){.rd-flow{display:none}}
+/* ===== 4.8.0 · Thử nghiệm: quy trình 5 bước + 3 khu Đang làm / Đang theo dõi / Đã xong ===== */
+.rd-how{margin:2px 0 6px;font-size:13.5px;color:var(--muted)}.rd-how>b{color:var(--ink)}
+.rd-my{display:inline-block;padding:1px 8px;border-radius:999px;background:#e11d48;color:#fff;font-size:11.5px;font-weight:700;white-space:nowrap;vertical-align:1px}
+.rd-steps{list-style:none;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0 0 10px;padding:0;align-items:stretch}.rd-steps li{display:flex}
+.rd-steps button{position:relative;display:flex;align-items:center;gap:8px;width:100%;height:100%;min-height:54px;padding:7px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--muted);font:inherit;text-align:left;cursor:pointer}
+.rd-steps button>i{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--muted) 22%,transparent);color:var(--ink);font:800 12.5px/1 inherit;font-style:normal}
+.rd-steps button>span{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.rd-steps button b{font-size:13px;line-height:1.2;color:var(--ink)}.rd-steps button small{font-size:11.5px;line-height:1.25}
+.rd-steps button>em{flex:none;min-width:24px;text-align:center;font:800 17px/1 inherit;font-style:normal;color:var(--muted);opacity:.55}
+.rd-steps button.has{border-color:#1a5fb4;background:color-mix(in srgb,#1a5fb4 7%,var(--surface))}
+.rd-steps button.has>i{background:#1a5fb4;color:#fff}.rd-steps button.has>em{color:#1a5fb4;opacity:1}
+.rd-steps button.bad{border-color:#e11d48;background:color-mix(in srgb,#e11d48 8%,var(--surface))}.rd-steps button.bad>i{background:#e11d48}.rd-steps button.bad>em,.rd-steps button.bad small{color:#e11d48}
+.rd-steps li:last-child button.has{border-color:#2e7d32;background:color-mix(in srgb,#2e7d32 7%,var(--surface))}.rd-steps li:last-child button.has>i{background:#2e7d32}.rd-steps li:last-child button.has>em{color:#2e7d32}
+.rd-steps button.on{outline:3px solid color-mix(in srgb,#1a5fb4 45%,transparent);outline-offset:1px}
+.rd-steps li:not(:last-child) button::after{content:"›";position:absolute;right:-7px;top:50%;transform:translateY(-52%);z-index:1;font-size:15px;font-weight:800;color:var(--muted)}
+.rd-fnote{margin:0 0 8px;font-size:13.5px}
+.rd-zone{display:block!important;margin:0 0 14px}
+.rd-zone>h3{display:flex;align-items:center;gap:10px;margin:0!important;padding:8px 12px;border-radius:12px 12px 0 0;border:1px solid var(--zc);border-bottom:0;background:color-mix(in srgb,var(--zc) 13%,var(--surface));font-size:15px}
+.rd-zone>h3>span{font-weight:800;color:var(--zt);white-space:nowrap}.rd-zone>h3>small{flex:1;min-width:0;font-size:12.5px;font-weight:500;color:var(--muted)}
+.rd-zone>h3>em{flex:none;min-width:26px;padding:2px 8px;border-radius:999px;background:var(--zc);color:#fff;font:800 13px/1.4 inherit;font-style:normal;text-align:center}
+.rd-zone>.list{border:1px solid var(--zc)!important;border-top:0!important;border-radius:0 0 12px 12px!important;overflow:hidden;margin:0!important;box-shadow:none!important}
+.rd-zone>.list>.row:first-child{border-top:0}
+.rd-list .row .meta{grid-column:1/-1}
+.rd-zone>.rd-zempty{margin:0;padding:10px 12px;border:1px dashed var(--zc);border-top:0;border-radius:0 0 12px 12px;font-size:13px;color:var(--muted)}
+.rd-zone.z-lam{--zc:#d97706;--zt:#b45309}.rd-zone.z-theodoi{--zc:#2563eb;--zt:#1d4ed8}.rd-zone.z-xong{--zc:#2e7d32;--zt:#1b5e20}
+.rd-zone.z-xong .row{opacity:.92}
+.rd-list .row .rd-next{grid-column:1/-1;margin:3px 0 1px;padding:5px 9px;border-radius:8px;font-size:13.5px;line-height:1.4;background:color-mix(in srgb,#d97706 10%,transparent);color:var(--ink)}
+.rd-list .row .rd-next.my{background:color-mix(in srgb,#e11d48 10%,transparent);box-shadow:inset 3px 0 0 #e11d48}
+.rd-list .row .rd-next.bad{background:color-mix(in srgb,#e11d48 12%,transparent);color:#b91c1c}
+.rd-list .row .rd-next.wait{background:color-mix(in srgb,#2563eb 9%,transparent);display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.rd-list .row .rd-next.wait.sub{background:none;padding:0 9px;font-size:12.5px;color:var(--muted)}
+.rd-list .row .rd-next.done{background:none;padding:0;color:#2e7d32}
+.rd-bar{flex:1 1 90px;min-width:70px;max-width:220px;height:7px;border-radius:99px;background:color-mix(in srgb,#2563eb 20%,transparent);overflow:hidden}.rd-bar>i{display:block;height:100%;border-radius:99px;background:#2563eb}
+.rd-more{display:block;width:100%;padding:9px;border:0;border-top:1px solid var(--line);background:none;color:var(--accent);font:600 13.5px inherit;cursor:pointer}
+/* đầu phiếu thử: đang ở bước nào, ai làm gì tiếp */
+.rd-dlg .grp{scroll-margin-top:64px}.rd-guide .rd-goto{margin-left:4px;vertical-align:1px}
+.rd-guide{margin:0 0 10px;padding:9px 12px;border-radius:12px;border:1.5px solid var(--zc);background:color-mix(in srgb,var(--zc) 9%,var(--surface))}
+.rd-guide.z-lam{--zc:#d97706}.rd-guide.z-theodoi{--zc:#2563eb}.rd-guide.z-xong{--zc:#2e7d32}.rd-guide.bad{--zc:#e11d48}
+.rd-guide p{margin:6px 0 0;font-size:14px;line-height:1.45}.rd-guide p.note{font-size:12.5px;margin-top:3px}
+.rd-stepper{list-style:none;display:flex;gap:4px;margin:0;padding:0}
+.rd-stepper li{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:color-mix(in srgb,var(--muted) 10%,transparent);font-size:12.5px;color:var(--muted)}
+.rd-stepper li i{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:color-mix(in srgb,var(--muted) 30%,transparent);color:var(--ink);font:800 11.5px/1 inherit;font-style:normal}
+.rd-stepper li span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-stepper li.done{color:#2e7d32}.rd-stepper li.done i{background:#2e7d32;color:#fff}
+.rd-stepper li.cur{background:var(--zc);color:#fff;font-weight:700}.rd-stepper li.cur i{background:#fff;color:var(--zc)}
+:root[data-theme=dark] .rd-zone.z-lam{--zt:#fbbf24}:root[data-theme=dark] .rd-zone.z-theodoi{--zt:#93c5fd}:root[data-theme=dark] .rd-zone.z-xong{--zt:#86efac}
+:root[data-theme=dark] .rd-list .row .rd-next.bad{color:#fca5a5}:root[data-theme=dark] .rd-list .row .rd-next.done{color:#86efac}
+:root[data-theme=dark] .rd-steps button.has>em{color:#93c5fd}:root[data-theme=dark] .rd-steps li:last-child button.has>em{color:#86efac}:root[data-theme=dark] .rd-stepper li.done{color:#86efac}
+@media (max-width:1100px){.rd-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.rd-steps li:nth-child(3) button::after{content:none}}
+@media (max-width:640px){
+  .rd-how>span{display:none}
+  .rd-steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  .rd-steps button{min-height:0;padding:6px 7px;gap:5px;border-radius:10px}.rd-steps button small,.rd-steps li button::after{display:none!important}
+  .rd-steps button>i{width:20px;height:20px;font-size:11.5px}.rd-steps button b{font-size:12px}.rd-steps button>em{min-width:0;font-size:15px}
+  .rd-zone>h3{flex-wrap:wrap;gap:2px 8px;padding:7px 10px;font-size:14.5px}.rd-zone>h3>small{order:3;flex-basis:100%;font-size:12px}.rd-zone>h3>span{flex:1}
+  .rd-stepper li span{display:none}.rd-stepper li.cur span{display:inline}.rd-stepper li{flex:0 0 auto}.rd-stepper li.cur{flex:1 1 auto}
+  .rd-guide p{font-size:13.5px}
+}
 /* giao diện tối: ô nhập trong Lệnh đóng gói không bị ép nền trắng */
 :root[data-theme=dark] #dglBox input:not([disabled]):not([type=checkbox]):not(.need-in),:root[data-theme=dark] #dglBox select:not([disabled]):not(.need-in){background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important}
 :root[data-theme=dark] #dglBox input[disabled],:root[data-theme=dark] #dglBox select[disabled]{background:#1c2630!important;color:#b9c6d3!important;-webkit-text-fill-color:#b9c6d3;border-color:#33465a!important}

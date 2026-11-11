@@ -105,8 +105,35 @@
   const rec = id => R.find(x => x.id === id);
   const ptSt = p => p.d.tt === "Đã duyệt" ? "Đã duyệt · " + (p.d.danhGia || "") : p.d.tt || "Đang thử";
   const chip = p => { if (p.d.hong && p.d.tt !== "Đã duyệt") return `<span class="st" style="background:#c62828;color:#fff;border-color:#c62828">⛔ Mẫu hỏng · ${E(p.d.tt || "")}</span>`; const t = p.d.tt || "Đang thử", c = p.d.tt === "Đã duyệt" ? (p.d.danhGia === "Đạt" ? "#2e7d32" : "#c62828") : TTC[t] || "#607d8b"; return `<span class="st" style="background:${c};color:#fff;border-color:${c}">${E(ptSt(p))}</span>`; };
-  const doc54 = p => { if (p.d.t54 === false || p.d.hong) return ""; const n = add(p.d.ngayBD, 14), done = (p.d.kq || []).some(r => String(r.b || "").trim()); return n && !done && p.d.tt !== "Đã duyệt" ? n : ""; };
   const ycSt = y => y.d.ngayKT ? "Xong" : y.d.han && y.d.han < today() ? "Quá hạn" : "Đang làm";
+  /* ----- BƯỚC CÔNG VIỆC của 1 phiếu thử (dùng chung: danh sách, đầu phiếu, Bàn làm việc) -----
+     z = khu: "lam" (cần người làm ngay) · "theodoi" (đang lưu mẫu, chưa đến ngày đọc) · "xong" (đã duyệt)
+     k = bước: giao (chờ bắt đầu) → kq0 (ghi kết quả điều kiện thường) → luu (đang lưu mẫu) / doc (đến ngày đọc mẫu) → bao (báo kết quả) → duyet (chờ Quản lý) → xong */
+  const BUOC = [["giao", "Pha mẫu", "chờ bắt đầu"], ["kq0", "Ghi kết quả ban đầu", "điều kiện thường"], ["luu", "Lưu mẫu · theo dõi", "54 °C · 0 °C"], ["bao", "Báo kết quả", "tự đánh giá"], ["duyet", "Duyệt", "Quản lý đánh giá"], ["xong", "Đã xong", "in BM.02 để ký"]];
+  const fil = v => String(v == null ? "" : v).trim() !== "";
+  const wRow = r => r.w != null ? r.w : (r.n28 ? "a" : (catOf(r.ct) || {}).w || (/t[ỷỉ] tr[ọo]ng|density/i.test(r.ct || "") ? "a" : "abc"));
+  const dDiff = (x, y) => Math.round((new Date(String(x).slice(0, 10) + "T00:00:00Z") - new Date(String(y).slice(0, 10) + "T00:00:00Z")) / 864e5);
+  function buoc(d) {
+    const td = today(), K = (d.kq || []).filter(r => fil(r.ct)), t54 = d.t54 !== false, t0 = d.t0 != null ? !!d.t0 : K.some(r => fil(r.c)), th = d.nguoiTH || "";
+    const pr = k => { const N = K.filter(r => wRow(r).includes(k)); return [N.filter(r => fil(r[k])).length, N.length]; };
+    const P = { a: pr("a"), b: t54 ? pr("b") : null, c: t0 ? pr("c") : null };
+    /* các điều kiện lưu mẫu còn chưa ghi đủ kết quả, kèm ngày đọc */
+    const luu = d.ngayBD && !d.hong ? [["b", "54 °C", 14], ["c", "0 °C", 7]].filter(([k]) => P[k] && P[k][1] > 0 && P[k][0] < P[k][1]).map(([k, ten, n]) => ({ k, ten, tong: n, ngay: add(d.ngayBD, n), da: Math.max(0, Math.min(n, dDiff(td, d.ngayBD))) })).sort((x, y) => x.ngay.localeCompare(y.ngay)) : [];
+    const o = { P, luu, th, t54, t0 }, set = x => Object.assign(o, x);
+    if (d.tt === "Đã duyệt") return set({ z: "xong", k: "xong", i: 5 });
+    if (d.tt === "Đã báo KQ" || d.hong) return set({ z: "lam", k: "duyet", i: 4, who: "Quản lý", ql: 1, viec: d.hong ? "mẫu hỏng — đánh giá, chọn hướng xử lý rồi bấm Lưu để duyệt" : "xem kết quả, chọn Đạt / Không đạt rồi bấm Lưu để duyệt" });
+    if (!d.ngayBD) return set({ z: "lam", k: "giao", i: 0, who: th || "Quản lý", ql: th ? 0 : 1, cho: dDiff(td, d.ngayLap || td), viec: th ? "pha mẫu theo cột Cân, ghi Ngày bắt đầu" : "chọn người thực hiện để giao việc" });
+    if (P.a[0] < P.a[1]) return set({ z: "lam", k: "kq0", i: 1, who: th || "Quản lý", ql: th ? 0 : 1, viec: "ghi kết quả điều kiện thường (đã ghi " + P.a[0] + "/" + P.a[1] + " chỉ tiêu)" });
+    const due = luu.filter(x => x.ngay <= td);
+    if (due.length) { const tre = dDiff(td, due[0].ngay); return set({ z: "lam", k: "doc", i: 2, who: th || "Quản lý", ql: th ? 0 : 1, han: due[0].ngay, tre, viec: (tre > 0 ? "quá " + tre + " ngày" : "hôm nay đến ngày") + " đọc mẫu " + due.map(x => x.ten).join(", ") + " — ghi kết quả lưu mẫu" }); }
+    if (luu.length) return set({ z: "theodoi", k: "luu", i: 2, who: th || "Quản lý", ql: th ? 0 : 1, han: luu[0].ngay, con: dDiff(luu[0].ngay, td) });
+    return set({ z: "lam", k: "bao", i: 3, who: th || "Quản lý", ql: th ? 0 : 1, viec: th ? "chọn kết luận Đạt / Không đạt, bấm Báo kết quả" : "chọn kết luận Đạt / Không đạt rồi bấm Lưu" });
+  }
+  const cuaToi = b => !!S.me && (b.ql ? QL() : b.who === S.me.ten);
+  const luuTxt = x => `${x.ten}: ngày ${x.da}/${x.tong} · đọc ${D(x.ngay)}`;
+  let fB = "", doneAll = false; /* lọc theo bước · xem hết phiếu đã xong */
+  /* khu trong danh sách: tiêu đề màu + số phiếu; khu trống vẫn hiện 1 dòng để thấy đủ 3 khu */
+  const zone = (cls, ic, ten, sub, n, body, empty) => `<section class="rd-zone z-${cls}"><h3><span>${ic} ${ten}</span><small>${sub}</small><em>${n}</em></h3>${n ? `<div class="list rd-list">${body}</div>` : `<p class="rd-zempty">${empty}</p>`}</section>`;
 
   /* ---------------- danh sách ---------------- */
   window.renderRD = async function () {
@@ -119,32 +146,55 @@
     let h = `<div class="seg subseg" style="margin-bottom:10px">${seg.map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${t}</button>`).join("")}</div>`;
     if (view === "pt") {
       const L = live(R).filter(x => x.loai === "PT").sort((a, b) => String(b.d.so || "").localeCompare(String(a.d.so || ""), "vi", { numeric: true }));
-      /* nhóm theo bước công việc: đang làm → chờ đánh giá → đã duyệt */
-      const G = [["Đang làm (được giao / đang thử)", L.filter(p => p.d.tt !== "Đã báo KQ" && p.d.tt !== "Đã duyệt")], ["Chờ Quản lý đánh giá", L.filter(p => p.d.tt === "Đã báo KQ")], ["Đã duyệt", L.filter(p => p.d.tt === "Đã duyệt")]];
-      const late54 = L.filter(p => { const n = doc54(p); return n && n <= today(); }).length, dat = G[2][1].filter(p => p.d.danhGia === "Đạt").length;
-      const row = p => { const n54 = doc54(p), lv = p.d.hong && p.d.tt !== "Đã duyệt" ? " r-bad" : n54 && n54 <= today() ? " r-bad" : p.d.tt === "Đã báo KQ" ? " r-wait" : ""; return `<div class="row click${lv}" data-id="${E(p.id)}"><div class="name"><span class="code">${E(p.d.so || "")}</span><span class="tn">${E(p.d.sp || "")}</span> ${chip(p)}${p.d.tt === "Đã duyệt" || p.d.tt === "Đã báo KQ" ? ` <button type="button" class="btn small" data-prpt="${E(p.id)}" title="In BM.02 để ký">🖨 In</button>` : ""}</div><div class="kg">${E(p.d.maCT || "")}<small>${E(p.d.hl || "")}</small></div>
-          <div class="meta">Lập ${D(p.d.ngayLap || p.ngay)} · ${p.d.ngayBD ? "bắt đầu " + D(p.d.ngayBD) : "<b>chưa bắt đầu</b>"} · người thực hiện: <b>${E(p.d.nguoiTH || "—")}</b>${n54 ? ` · <b style="color:${n54 <= today() ? "#c62828" : "inherit"}">đọc mẫu 54 °C ngày ${D(n54)}</b>` : ""}${p.d.baoLuc && p.d.tt === "Đã báo KQ" ? " · báo KQ " + E(p.d.baoLuc) : ""}</div></div>`; };
+      const B = new Map(L.map(p => [p, buoc(p.d)])), bo = p => B.get(p), td = today();
+      /* 3 khu: đang làm (việc của mình và việc gấp lên trước) · đang theo dõi (sắp đến ngày đọc lên trước) · đã xong (mới duyệt lên trước) */
+      const UT = { doc: 0, duyet: 1, bao: 2, kq0: 3, giao: 4 };
+      const F = p => !fB || (fB === "luu" ? bo(p).i === 2 : bo(p).k === fB);
+      const Zl = L.filter(p => bo(p).z === "lam" && F(p)).sort((x, y) => (cuaToi(bo(y)) - cuaToi(bo(x))) || (UT[bo(x).k] - UT[bo(y).k]) || ((bo(y).tre || 0) - (bo(x).tre || 0)));
+      const Zt = L.filter(p => bo(p).z === "theodoi" && F(p)).sort((x, y) => String(bo(x).han).localeCompare(String(bo(y).han)));
+      const Zx = L.filter(p => bo(p).z === "xong" && F(p)).sort((x, y) => String(y.d.duyetLuc || "").localeCompare(String(x.d.duyetLuc || "")));
+      const cnt = k => L.filter(p => k === "luu" ? bo(p).i === 2 : bo(p).k === k).length, tre = L.filter(p => bo(p).k === "doc").length, my = L.filter(p => bo(p).z === "lam" && cuaToi(bo(p))).length, dat = L.filter(p => bo(p).z === "xong" && p.d.danhGia === "Đạt").length, nx = L.filter(p => bo(p).z === "xong").length;
+      const row = p => { const d = p.d, b = bo(p), mine = cuaToi(b), lv = b.k === "doc" || (d.hong && b.k !== "xong") ? " r-bad" : b.k === "duyet" ? " r-wait" : "";
+        const next = b.z === "xong" ? `<div class="rd-next done">✓ <b>${E(d.danhGia || "Đã duyệt")}</b>${d.xuLy ? " · " + E(d.xuLy) : ""}${d.duyetLuc ? " · duyệt " + D(d.duyetLuc) : ""}${d.hong ? " · mẫu hỏng" : ""}</div>`
+          : b.z === "theodoi" ? b.luu.map(x => `<div class="rd-next wait">⏳ Lưu mẫu ${E(luuTxt(x))} <b>(còn ${dDiff(x.ngay, td)} ngày)</b><span class="rd-bar"><i style="width:${Math.round(x.da / x.tong * 100)}%"></i></span></div>`).join("")
+          : `<div class="rd-next${mine ? " my" : ""}${b.k === "doc" || d.hong ? " bad" : ""}">👉 <b>${E(mine ? "Bạn" : b.who)}</b>: ${E(b.viec)}${mine ? ' <span class="rd-my">việc của bạn</span>' : ""}</div>`
+            + (b.k !== "doc" && b.k !== "duyet" ? b.luu.filter(x => x.ngay > td).map(x => `<div class="rd-next wait sub">⏳ Đang lưu mẫu ${E(luuTxt(x))} (còn ${dDiff(x.ngay, td)} ngày)</div>`).join("") : "");
+        return `<div class="row click${lv}" data-id="${E(p.id)}"><div class="name"><span class="code">${E(d.so || "")}</span><span class="tn">${E(d.sp || "")}</span> ${chip(p)}${b.k === "xong" || b.k === "duyet" ? ` <button type="button" class="btn small" data-prpt="${E(p.id)}" title="In BM.02 để ký">🖨 In</button>` : ""}</div><div class="kg">${E(d.maCT || "")}<small>${E(d.hl || "")}</small></div>
+          ${next}<div class="meta">Lập ${D(d.ngayLap || p.ngay)} · ${d.ngayBD ? "bắt đầu " + D(d.ngayBD) : b.k === "giao" && b.cho >= 3 ? `<b style="color:#b45309">giao ${b.cho} ngày chưa bắt đầu</b>` : "chưa bắt đầu"} · thực hiện: <b>${E(d.nguoiTH || "—")}</b>${d.ngayBD && b.z !== "xong" && b.P.a[1] ? ` · KQ thường ${b.P.a[0]}/${b.P.a[1]}` : ""}${d.baoLuc && b.k === "duyet" ? " · báo KQ " + D(d.baoLuc) : ""}</div></div>`; };
+      const XN = 8, Xs = doneAll || fB ? Zx : Zx.slice(0, XN);
       h += `<div class="tools">${QL() ? '<button class="btn primary" type="button" id="rdNewPT">+ Lập công thức thử &amp; giao việc</button>' : ""}</div>
-        <ol class="rd-flow"><li><span><b>Quản lý</b> lập công thức thử, giao người thực hiện</span></li><li><span><b>Người thực hiện</b> pha mẫu, ghi kết quả, bấm <b>Báo kết quả</b></span></li><li><span><b>Quản lý</b> đánh giá Đạt / Không đạt và duyệt</span></li></ol>
-        ${L.length ? `<div class="summary rd-sum"><div class="stat"><b>${G[0][1].length}</b><span>Đang làm</span></div><div class="stat"><b>${G[1][1].length}</b><span>Chờ đánh giá</span></div><div class="stat"><b>${G[2][1].length}</b><span>Đã duyệt · ${dat} đạt</span></div><div class="stat"><b>${late54}</b><span>Đến / quá ngày đọc mẫu 54 °C</span></div></div>` : ""}
-        <div class="list rd-list">${L.length ? G.filter(g => g[1].length).map(([t, A]) => `<div class="grp">${t} <small>${A.length} phiếu</small></div>` + A.map(row).join("")).join("") : '<div class="empty"><b>Chưa có phiếu thử nghiệm</b>Quản lý bấm “Lập công thức thử &amp; giao việc”.</div>'}</div>`;
+        <div class="rd-how"><b>Quy trình 5 bước</b> <span>— số trên mỗi bước là số phiếu đang ở bước đó; bấm vào bước để chỉ xem các phiếu ấy.${my ? ` <b class="rd-my">Bạn có ${my} việc</b>` : ""}</span></div>
+        <ol class="rd-steps">${BUOC.map(([k, t, sub], i) => { const n = cnt(k), bad = k === "luu" && tre; return `<li><button type="button" data-b="${k}" class="${fB === k ? "on " : ""}${n ? "has " : ""}${bad ? "bad" : ""}" aria-pressed="${fB === k}"><i>${i < 5 ? i + 1 : "✓"}</i><span><b>${t}</b><small>${k === "luu" && tre ? tre + " phiếu đến ngày đọc" : sub}</small></span><em>${n}</em></button></li>`; }).join("")}</ol>
+        ${fB ? `<p class="rd-fnote">Đang chỉ xem bước <b>${E((BUOC.find(x => x[0] === fB) || [])[1] || "")}</b> · <button type="button" class="btn small" id="rdFAll">Xem tất cả</button></p>` : ""}
+        ${L.length ? zone("lam", "🛠", "Đang làm", "cần người làm ngay — dòng 👉 ghi rõ ai làm gì", Zl.length, Zl.map(row).join(""), fB ? "Không có phiếu nào ở bước này." : "Không có phiếu nào đang cần làm.")
+          + zone("theodoi", "⏳", "Đang theo dõi", "mẫu đang lưu, chưa đến ngày đọc — chưa phải làm gì", Zt.length, Zt.map(row).join(""), "Không có mẫu nào đang lưu chờ ngày đọc.")
+          + zone("xong", "✅", "Đã xong", nx ? `${dat} đạt · ${nx - dat} không đạt` : "đã duyệt", Zx.length, Xs.map(row).join("") + (Zx.length > Xs.length ? `<button type="button" class="rd-more" id="rdDoneAll">Xem hết ${Zx.length} phiếu đã xong</button>` : ""), "Chưa có phiếu nào được duyệt.")
+          : '<div class="empty"><b>Chưa có phiếu thử nghiệm</b>Quản lý bấm “Lập công thức thử &amp; giao việc”.</div>'}`;
     } else if (view === "yc") {
       const L = live(R).filter(x => x.loai === "YC").sort((a, b) => String(b.ngay).localeCompare(String(a.ngay)));
       h += `<div class="tools">${QL() ? '<button class="btn primary" type="button" id="rdNewYC">+ Ghi yêu cầu nghiên cứu</button>' : ""}<button class="btn" type="button" id="rdPrYC">🖨 In sổ BM.04</button></div>
-        <div class="list">${L.length ? L.map(y => { const st = ycSt(y), c = st === "Xong" ? "#2e7d32" : st === "Quá hạn" ? "#c62828" : "#d97706", np = live(R).filter(p => p.loai === "PT" && p.d.yc === y.id).length;
-          return `<div class="row click" data-id="${E(y.id)}"><div class="name">${E(y.d.noiDung || "")} <span class="st" style="background:${c};color:#fff;border-color:${c}">${st}</span></div><div class="kg">${np}<small>phiếu thử</small></div>
-          <div class="meta">Yêu cầu ${D(y.ngay)} · ${E(y.d.donVi || "")} · cần kết quả ${D(y.d.han) || "—"} · thực hiện: ${E(y.d.nguoiTH || "—")}${y.d.ngayKT ? " · kết thúc " + D(y.d.ngayKT) : ""}</div></div>`; }).join("") : '<div class="empty"><b>Chưa có yêu cầu nào</b></div>'}</div>`;
+        ${(() => { if (!L.length) return '<div class="empty"><b>Chưa có yêu cầu nào</b></div>';
+          const yr = y => { const st = ycSt(y), c = st === "Xong" ? "#2e7d32" : st === "Quá hạn" ? "#c62828" : "#d97706", np = live(R).filter(p => p.loai === "PT" && p.d.yc === y.id).length;
+            return `<div class="row click${st === "Quá hạn" ? " r-bad" : ""}" data-id="${E(y.id)}"><div class="name">${E(y.d.noiDung || "")} <span class="st" style="background:${c};color:#fff;border-color:${c}">${st}</span></div><div class="kg">${np}<small>phiếu thử</small></div>
+            <div class="meta">Yêu cầu ${D(y.ngay)} · ${E(y.d.donVi || "")} · cần kết quả ${D(y.d.han) || "—"} · thực hiện: ${E(y.d.nguoiTH || "—")}${y.d.ngayKT ? " · kết thúc " + D(y.d.ngayKT) : ""}</div></div>`; };
+          const A = L.filter(y => ycSt(y) !== "Xong").sort((a, b) => String(a.d.han || "9").localeCompare(String(b.d.han || "9"))), X = L.filter(y => ycSt(y) === "Xong"), q = A.filter(y => ycSt(y) === "Quá hạn").length;
+          return zone("lam", "🛠", "Đang làm", q ? q + " yêu cầu quá hạn" : "chưa ghi ngày kết thúc", A.length, A.map(yr).join(""), "Không có yêu cầu nào đang làm.") + zone("xong", "✅", "Đã xong", "đã ghi ngày kết thúc", X.length, X.map(yr).join(""), "Chưa có yêu cầu nào kết thúc."); })()}`;
     } else if (view === "gm") {
       const L = live(R).filter(x => x.loai === "GM").sort((a, b) => String(b.ngay).localeCompare(String(a.ngay)));
       h += `<div class="tools"><button class="btn primary" type="button" id="rdNewGM">+ Ghi giao mẫu</button><button class="btn" type="button" id="rdPrGM">🖨 In sổ BM.03</button>${!L.length ? '<button class="btn" type="button" id="rdImpGM">Chuyển 4 dòng từ sổ BM.03 trên Drive</button>' : ""}</div>
-        <div class="list">${L.length ? L.map(g => `<div class="row click" data-id="${E(g.id)}"><div class="name">${E(g.d.ten || "")} <span class="st ${g.d.ngayTra ? "done" : "run"}">${g.d.ngayTra ? "Đã có kết quả" : "Chờ kết quả"}</span></div><div class="kg">${E(g.d.sl || "")}<small>${E(g.d.dvt || "")} ${E(g.d.ttl || "")}</small></div>
-          <div class="meta">Gửi ${D(g.ngay)} · ${E(g.d.phong || "R&D")} → ${E(g.d.nguoiNhan || "—")}${g.d.maMau ? " · mã mẫu " + E(g.d.maMau) : ""}${g.d.ngayTra ? " · trả KQ " + D(g.d.ngayTra) : ""}</div></div>`).join("") : '<div class="empty"><b>Chưa có mẫu giao khảo nghiệm</b></div>'}</div>`;
+        ${(() => { if (!L.length) return '<div class="empty"><b>Chưa có mẫu giao khảo nghiệm</b></div>';
+          const gr = g => `<div class="row click" data-id="${E(g.id)}"><div class="name">${E(g.d.ten || "")} <span class="st ${g.d.ngayTra ? "done" : "run"}">${g.d.ngayTra ? "Đã có kết quả" : "Chờ kết quả"}</span></div><div class="kg">${E(g.d.sl || "")}<small>${E(g.d.dvt || "")} ${E(g.d.ttl || "")}</small></div>
+            <div class="meta">Gửi ${D(g.ngay)}${g.d.ngayTra ? "" : " · đã " + Math.max(0, dDiff(today(), g.ngay)) + " ngày"} · ${E(g.d.phong || "R&D")} → ${E(g.d.nguoiNhan || "—")}${g.d.maMau ? " · mã mẫu " + E(g.d.maMau) : ""}${g.d.ngayTra ? " · trả KQ " + D(g.d.ngayTra) : ""}</div></div>`;
+          const A = L.filter(g => !g.d.ngayTra), X = L.filter(g => g.d.ngayTra);
+          return zone("theodoi", "⏳", "Đang theo dõi", "mẫu đã gửi, chờ kết quả khảo nghiệm", A.length, A.map(gr).join(""), "Không có mẫu nào đang chờ kết quả.") + zone("xong", "✅", "Đã xong", "đã có kết quả", X.length, X.map(gr).join(""), "Chưa có mẫu nào trả kết quả."); })()}`;
     } else {
       h += `<div class="tools"><button class="btn" type="button" id="rdPrSO">🖨 In sổ BM.01</button><span class="note">Sổ tự tổng hợp từ yêu cầu (BM.04) và phiếu thử nghiệm (BM.02).</span></div>${soTable(false)}`;
     }
     b.innerHTML = h;
     b.querySelectorAll(".seg [data-v]").forEach(x => x.onclick = () => { view = x.dataset.v; renderRD(); });
     b.querySelectorAll("[data-prpt]").forEach(x => x.onclick = ev => { ev.stopPropagation(); const r = rec(x.dataset.prpt); if (r) prPT(r, r.d); });
+    b.querySelectorAll(".rd-steps [data-b]").forEach(x => x.onclick = () => { fB = fB === x.dataset.b ? "" : x.dataset.b; renderRD(); });
+    { const fa = b.querySelector("#rdFAll"); if (fa) fa.onclick = () => { fB = ""; renderRD(); }; const da = b.querySelector("#rdDoneAll"); if (da) da.onclick = () => { doneAll = true; renderRD(); }; }
     b.querySelectorAll(".row.click").forEach(x => x.onclick = () => { const r = rec(x.dataset.id); if (!r) return; r.loai === "PT" ? ptDlg(r) : r.loai === "YC" ? ycDlg(r) : gmDlg(r); });
     const on = (id, f) => { const el = document.getElementById(id); if (el) el.onclick = f; };
     on("rdNewPT", () => ptDlg(null)); on("rdNewYC", () => ycDlg(null)); on("rdNewGM", () => gmDlg(null));
@@ -183,7 +233,7 @@
       <td><input data-nl="${i}" data-k="pct" type="number" step="any" inputmode="decimal" value="${E(r.pct === "" || r.pct == null ? "" : F3(r.pct, NDP(d.nl)))}" ${ro} style="text-align:right;font-weight:700"></td>
       <td class="rd-can" data-can="${i}">${canOf(r, d)}</td>
       <td class="c"><input type="radio" name="ptBu" data-bu="${i}" ${r.bu ? "checked" : ""} ${ro} title="Dung môi nền: tự bù cho đủ 100%"></td>
-      <td><b class="rd-hl" data-hl="${i}">${E(HLtxt(r, d))}</b><input data-nl="${i}" data-k="gc" value="${E(r.gc || "")}" ${ro} placeholder="" title="${E(r.gc || "")}"></td>
+      <td><b class="rd-hl" data-hl="${i}">${E(HLtxt(r, d))}</b><input data-nl="${i}" data-k="gc" value="${E(r.gc || "")}" ${ro} data-opt placeholder="" title="${E(r.gc || "")}"></td>
       ${ql ? `<td class="rd-act"><button type="button" class="rd-mv rd-x" data-rmnl="${i}" title="Xoá dòng">✕</button></td>` : ""}</tr>`).join("");
     /* mức yêu cầu: "5-7", "5 – 7", "≥ 90", ">= 90", "≤ 3", "< 3" → kiểm số đo, tô xanh / đỏ */
     const inYc = (yc, v) => { const x = parseFloat(String(v || "").replace(",", ".")); if (!isFinite(x) || !String(v).trim().match(/^[\d.,\s]+$/)) return null; const t = String(yc || "").replace(/,/g, ".");
@@ -198,38 +248,52 @@
       return `<tr><td><input data-kq="${i}" data-k="ct" list="rdCtDl" value="${E(r.ct || "")}" ${ql ? "" : "disabled"} placeholder="Chọn hoặc gõ chỉ tiêu" title="${E(r.ct || "")}">
         <div class="rd-w">${[["a", "28°"], ["b", "54°"], ["c", "0°"]].map(([k, t]) => `<label title="Đo ở điều kiện này"><input type="checkbox" data-w="${i}" data-c="${k}" ${wv.includes(k) ? "checked" : ""} ${ql ? "" : "disabled"}>${t}</label>`).join("")}<textarea data-kq="${i}" data-k="pp" rows="1" ${ql ? "" : "disabled"} placeholder="phương pháp" class="rd-pp rd-ta" title="Phương pháp thử">${E(r.pp || "")}</textarea>${r.nb ? '<span class="rd-nb">nội bộ</span>' : ""}</div></td>
         <td><textarea data-kq="${i}" data-k="yc" rows="1" class="rd-ta" ${ql ? "" : "disabled"} placeholder="Mức yêu cầu">${E(r.yc || "")}</textarea></td>
-        ${cols().map(k => !wv.includes(k) ? `<td class="c note">—</td>` : `<td><textarea data-kq="${i}" data-k="${k}" rows="1" class="rd-ta rd-kqv" ${ghiKQ ? "" : "disabled"} placeholder="${ghiKQ ? "Nhập kết quả" : ""}">${E(r[k] || "")}</textarea></td>`).join("")}
+        ${cols().map(k => !wv.includes(k) ? `<td class="c note">—</td>` : `<td><textarea data-kq="${i}" data-k="${k}" rows="1" class="rd-ta rd-kqv" ${ghiKQ ? "" : "disabled"}${kqOpt(k)} placeholder="${ghiKQ ? (k !== "a" && d.ngayBD && add(d.ngayBD, k === "b" ? 14 : 7) > today() ? "đọc ngày " + D(add(d.ngayBD, k === "b" ? 14 : 7)) : "Nhập kết quả") : ""}">${E(r[k] || "")}</textarea></td>`).join("")}
         ${ql ? `<td><button type="button" class="btn small" data-rmkq="${i}">✕</button></td>` : ""}</tr>`; }).join("");
     const kqMark = () => w.querySelectorAll('[data-kq]').forEach(el => { const k = el.dataset.k; if (!"abc".includes(k)) return; const r = d.kq[+el.dataset.kq], ok = inYc(r.yc, r[k]); el.style.boxShadow = ok === null ? "" : ok ? "inset 0 0 0 2px #2e7d32" : "inset 0 0 0 2px #c62828"; el.title = ok === null ? "" : ok ? "Đạt mức yêu cầu" : "Ngoài mức yêu cầu " + r.yc; });
+    /* đầu phiếu: 5 bước, đang ở bước nào, ai làm gì tiếp (theo bản đã lưu) */
+    const guide = () => { const ST = BUOC.slice(0, 5).map(x => x[1]);
+      const st = i0 => `<ol class="rd-stepper">${ST.map((t, i) => `<li class="${i < i0 ? "done" : i === i0 ? "cur" : ""}"><i>${i < i0 ? "✓" : i + 1}</i><span>${t}</span></li>`).join("")}</ol>`;
+      if (!p) return `<div class="rd-guide z-lam">${st(-1)}<p>👉 <b>Chuẩn bị — bạn (Quản lý):</b> ghi tên sản phẩm, dạng, công thức %w/w (mục 2), quy trình pha chế (mục 3), chọn <b>Người thực hiện</b> rồi bấm <b>Lưu &amp; giao việc</b>.</p><p class="note">Mục 4 (kết quả) và mục 5 (đánh giá) để người thực hiện ghi sau — chưa cần điền bây giờ.</p></div>`;
+      const b = buoc(p.d), mine = cuaToi(b), td = today(), i0 = b.i; /* 0–4 = đang ở bước đó · 5 = xong cả 5 bước */
+      const luu = b.luu.map(x => `Lưu mẫu ${E(luuTxt(x))} ${x.ngay > td ? "(còn " + dDiff(x.ngay, td) + " ngày)" : x.ngay === td ? "<b>(hôm nay)</b>" : `<b style="color:#c62828">(quá ${dDiff(td, x.ngay)} ngày)</b>`}`).join(" · ");
+      const CHO = { giao: "mở mục 2 xem công thức và cột <b>Cân</b>, pha mẫu, rồi ghi <b>Ngày bắt đầu</b> ở mục 4 và bấm Lưu kết quả.", kq0: "ghi kết quả cột <b>Điều kiện thường</b> ở mục 4 (đã ghi " + b.P.a[0] + "/" + b.P.a[1] + " chỉ tiêu), bấm Lưu kết quả.", doc: "đã đến ngày đọc mẫu — ghi kết quả cột <b>Lưu mẫu</b> ở mục 4, bấm Lưu kết quả.", bao: "đã đủ kết quả — chọn <b>Đạt / Không đạt</b> ở mục 5 rồi bấm <b>📨 Báo kết quả</b>.", duyet: p.d.hong ? "mẫu hỏng — xem mục 4, chọn kết luận và hướng xử lý ở mục 5 rồi bấm <b>Lưu</b> để duyệt." : "xem kết quả mục 4, chọn <b>Đạt / Không đạt</b> ở mục 5 rồi bấm <b>Lưu</b> để duyệt." };
+      const body = b.z === "xong" ? `<p>✅ <b>Đã xong</b> — kết luận <b>${E(p.d.danhGia || "")}</b>${p.d.xuLy ? " · " + E(p.d.xuLy) : ""}${p.d.duyetBoi ? " · duyệt: " + E(p.d.duyetBoi) + " " + E(p.d.duyetLuc || "") : ""}. In BM.02 để ký${ql && p.d.xuLy === "Thử nghiệm lại" ? "; cần thử lại thì bấm <b>↻ Thử lại (phiếu mới)</b>" : ""}.</p>`
+        : b.z === "theodoi" ? `<p>⏳ <b>Đang theo dõi — chưa phải làm gì.</b> ${luu}. Đến ngày, máy nhắc <b>${E(b.who)}</b> ghi kết quả lưu mẫu.</p>`
+        : `<p>👉 <b>Việc tiếp theo — ${mine ? "bạn" : E(b.who)}:</b> ${CHO[b.k] || E(b.viec)}${mine ? ` <button type="button" class="btn small rd-goto" data-goto="${b.k === "bao" || b.k === "duyet" ? "ptS5" : "ptS4"}">Tới mục ${b.k === "bao" || b.k === "duyet" ? 5 : 4} ↓</button>` : ""}</p>${luu && b.k !== "duyet" ? `<p class="note">${luu}</p>` : ""}${!mine && b.k !== "duyet" && ql ? '<p class="note">Bạn là Quản lý: xem được tiến độ; các ô kết quả do người thực hiện ghi.</p>' : ""}`;
+      return `<div class="rd-guide z-${b.z}${b.k === "doc" || p.d.hong ? " bad" : ""}">${st(i0)}${body}</div>`; };
+    /* ô kết quả chưa tới lượt (Quản lý xem phiếu giao người khác · cột lưu mẫu chưa đến ngày đọc): không tính là "ô cần điền" */
+    const kqOpt = k => { if (ql && d.nguoiTH && d.nguoiTH !== S.me.ten) return " data-opt"; if (k === "b" || k === "c") { const n = d.ngayBD ? add(d.ngayBD, k === "b" ? 14 : 7) : ""; if (!n || n > today()) return " data-opt"; } return ""; };
     const w = dlg(p ? `Phiếu thử nghiệm ${E(d.so || "")}` : "Lập công thức thử nghiệm", `
+      ${guide()}
       ${p && (d.tt === "Đã duyệt" || d.tt === "Đã báo KQ") ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px;padding:9px 12px;border-radius:10px;background:rgba(46,125,50,.08);border:1.5px solid rgba(46,125,50,.4)"><b style="color:#2e7d32">${d.tt === "Đã duyệt" ? "✓ Phiếu đã hoàn thành — in ra để ký" : "Đã báo kết quả — có thể in ra trình ký"}</b><button class="btn primary small" type="button" id="ptPrTop">🖨 In BM.02 (ký: Phòng R&amp;D · Nhân viên thực hiện)</button></div>` : ""}
       <p class="note" style="margin:0 0 8px">BM.02-RD-QT.01 · ${p ? chip(p) : ""} ${d.baoLuc ? " · báo kết quả " + E(d.baoLuc) : ""}${d.duyetBoi ? " · duyệt: " + E(d.duyetBoi) + " " + E(d.duyetLuc || "") : ""}</p>
       <div class="grp">1. Thông tin chung ${ql ? "" : '<small class="note">(do TP. LAB/RD lập)</small>'}</div>
       <div class="two"><label>Tên sản phẩm *<input id="ptSp" value="${E(d.sp || "")}" ${ro} placeholder="VD Pymetrozine 20% + Nitenpyram 15% OD"></label><label>Mã công thức<input id="ptMa" value="${E(d.maCT || "")}" ${ro} placeholder="VD PN35OD-03"></label></div>
       <div class="two"><label>Hàm lượng<input id="ptHl" value="${E(d.hl || "")}" ${ro}></label><label>Loại thử nghiệm<select id="ptLoai" ${ro}>${LOAI_TN.map(x => `<option ${x === (d.loaiTN || LOAI_TN[0]) ? "selected" : ""}>${x}</option>`).join("")}</select></label></div>
-      <div><label>Thuộc yêu cầu nghiên cứu (sổ BM.04)<select id="ptYc" ${ro}><option value="">— Để trống: tự ghi 1 dòng mới vào sổ BM.04 —</option>${YC.map(y => `<option value="${E(y.id)}" ${y.id === d.yc ? "selected" : ""}>${E(D(y.ngay) + " · " + (y.d.noiDung || "").slice(0, 60))}</option>`).join("")}</select></label></div>
+      <div><label>Thuộc yêu cầu nghiên cứu (sổ BM.04)<select id="ptYc" ${ro} data-opt><option value="">— Để trống: tự ghi 1 dòng mới vào sổ BM.04 —</option>${YC.map(y => `<option value="${E(y.id)}" ${y.id === d.yc ? "selected" : ""}>${E(D(y.ngay) + " · " + (y.d.noiDung || "").slice(0, 60))}</option>`).join("")}</select></label></div>
       <div class="two"><label>Ngày lập phiếu<input id="ptLap" type="date" value="${E(d.ngayLap || "")}" ${ro}></label><label>Người thực hiện<select id="ptNg" ${ro}>${userOpts(d.nguoiTH)}</select></label></div>
       <div class="two"><label>Dạng sản phẩm *<select id="ptDang" ${ro}><option value="">— chọn dạng —</option>${DANGS.map(x => `<option ${x === d.dang ? "selected" : ""}>${x}</option>`).join("")}</select></label><span></span></div>
       <div class="two" id="ptTTRow" ${liq() ? "" : "hidden"}><label>Tỷ trọng dự kiến (g/ml) *<input id="ptTT" type="number" step="any" inputmode="decimal" value="${E(d.tyTrong || "")}" ${ro} placeholder="VD 1.10 — để quy g/L ra %w/w"></label><span></span></div>
-      ${ql ? `<div class="tools" style="margin:4px 0"><select id="ptFrom" style="max-width:420px"><option value="">📋 Chép công thức từ…</option><optgroup label="Phiếu thử trước">${live(R).filter(x => x.loai === "PT" && (!p || x.id !== p.id)).map(x => `<option value="pt:${E(x.id)}">${E((x.d.so || "") + " · " + (x.d.sp || "") + (x.d.maCT ? " · " + x.d.maCT : "") + (x.d.danhGia ? " · " + x.d.danhGia : ""))}</option>`).join("")}</optgroup><optgroup label="Công thức sản xuất đang dùng">${Object.keys(S.congThuc || {}).map(m => `<option value="ct:${E(m)}">${E(m + " · " + ((itemBy && itemBy(m) || {}).ten || ""))}</option>`).join("")}</optgroup></select></div>` : ""}
+      ${ql ? `<div class="tools" style="margin:4px 0"><select id="ptFrom" style="max-width:420px" data-opt><option value="">📋 Chép công thức từ…</option><optgroup label="Phiếu thử trước">${live(R).filter(x => x.loai === "PT" && (!p || x.id !== p.id)).map(x => `<option value="pt:${E(x.id)}">${E((x.d.so || "") + " · " + (x.d.sp || "") + (x.d.maCT ? " · " + x.d.maCT : "") + (x.d.danhGia ? " · " + x.d.danhGia : ""))}</option>`).join("")}</optgroup><optgroup label="Công thức sản xuất đang dùng">${Object.keys(S.congThuc || {}).map(m => `<option value="ct:${E(m)}">${E(m + " · " + ((itemBy && itemBy(m) || {}).ten || ""))}</option>`).join("")}</optgroup></select></div>` : ""}
       <div class="grp">2. Công thức sản phẩm</div>
       <datalist id="rdNlDl">${nlList}</datalist>
       <p class="note" style="margin:0 0 6px"><span class="rd-leg"><i style="--lc:#7c3aed">Tech</i><i style="--lc:#0277bd">Dung môi</i><i style="--lc:#d97706">Phụ gia</i><i style="--lc:#2e7d32">Phân bón</i></span> Ghi %w/w từng nguyên liệu. Chọn ô <b>Up to</b> ở dòng <b>dung môi nền</b> (nước, dầu, chất mang…) để tự bù cho đủ 100%.</p>
-      <div class="rd-me"><b>Mẻ thử</b> <input id="ptMeSL" type="number" step="any" inputmode="decimal" min="0" value="${E(d.meSL || "")}" ${ghiKQ ? "" : "disabled"} placeholder="Số lượng"> <select id="ptMeDV" ${ghiKQ ? "" : "disabled"}>${MEDV.map(u => `<option ${u === (d.meDV || "g") ? "selected" : ""}>${u}</option>`).join("")}</select> <span class="note" id="ptMeNote">→ cột <b>Cân</b> tự tính lượng từng nguyên liệu, khỏi tính tay.</span></div>
+      <div class="rd-me"><b>Mẻ thử</b> <input id="ptMeSL" type="number" step="any" inputmode="decimal" min="0" value="${E(d.meSL || "")}" ${ghiKQ ? "" : "disabled"}${ql && d.nguoiTH && d.nguoiTH !== S.me.ten ? " data-opt" : ""} placeholder="Số lượng"> <select id="ptMeDV" ${ghiKQ ? "" : "disabled"}>${MEDV.map(u => `<option ${u === (d.meDV || "g") ? "selected" : ""}>${u}</option>`).join("")}</select> <span class="note" id="ptMeNote">→ cột <b>Cân</b> tự tính lượng từng nguyên liệu, khỏi tính tay.</span></div>
       <div class="dgx rd-tb"><table><colgroup><col style="width:${ql ? 46 : 30}px"><col style="width:132px"><col><col style="width:96px"><col style="width:84px"><col style="width:46px"><col style="width:16%">${ql ? '<col style="width:40px">' : ""}</colgroup><thead><tr><th>#</th><th>Mã VT</th><th>Tên nguyên liệu</th><th>%w/w</th><th id="ptCanH" title="Lượng cân theo mẻ thử">Cân (g)</th><th title="Dung môi nền / nước / chất mang: tự bù cho đủ 100%">Up to</th><th>Hàm lượng <select id="ptDvHL" class="rd-dvhl" title="Đơn vị hàm lượng hoạt chất" ${ql ? "" : "disabled"}>${["g/L", "g/kg", "%"].map(u => `<option ${u === DVHL(d) ? "selected" : ""}>${u}</option>`).join("")}</select> / Ghi chú</th>${ql ? '<th></th>' : ""}</tr></thead><tbody id="ptNl">${nlRows()}</tbody>
       <tfoot><tr><td></td><td></td><td><b>Tổng cộng</b> ${ql ? '<button type="button" class="btn small" id="ptAddNl">+ dòng</button>' : ""}</td><td id="ptSum" style="text-align:right;font-weight:700"></td><td id="ptCanSum" class="rd-can" style="font-weight:700"></td><td colspan="${ql ? 3 : 2}"></td></tr></tfoot></table></div>
       <div class="grp">3. Quy trình pha chế</div>
       <textarea id="ptQT" rows="5" ${ro} style="width:100%" placeholder="Các bước pha chế, thứ tự cho nguyên liệu, tốc độ khuấy, thời gian, nhiệt độ…">${E(d.quyTrinh || "")}</textarea>
-      <div class="grp">4. Kết quả thực hiện ${toi && !ql ? '<small class="note" style="color:#2563eb">(phần của bạn)</small>' : ""}</div>
+      <div class="grp" id="ptS4">4. Kết quả thực hiện ${toi && !ql ? '<small class="note" style="color:#2563eb">(phần của bạn)</small>' : ""}</div>
       ${d.hong ? `<div style="margin:6px 0;padding:9px 12px;border-radius:10px;border:1.5px solid #c62828;background:rgba(198,40,40,.08);color:#c62828"><b>⛔ Mẫu hỏng – dừng theo dõi</b> · ${E(d.hong.gd)} · ngày ${D(d.hong.ngay)}${d.hong.nd != null && d.hong.nd !== "" ? " (sau " + d.hong.nd + " ngày)" : ""}<br>Hiện tượng: ${E(d.hong.hien || "")}${ghiKQ && d.tt !== "Đã duyệt" ? ' <button type="button" class="btn small" id="ptHongX" style="margin-left:6px">Bỏ ghi hỏng</button>' : ""}</div>` : ""}
-      <label style="max-width:300px">Ngày bắt đầu pha chế, lưu mẫu (người thực hiện ghi)<input id="ptBD" type="date" value="${E(d.ngayBD || "")}" ${ghiKQ ? "" : "disabled"}></label>
+      <label style="max-width:300px">Ngày bắt đầu pha chế, lưu mẫu (người thực hiện ghi)<input id="ptBD" type="date" value="${E(d.ngayBD || "")}" ${ghiKQ ? "" : "disabled"}${ql && d.nguoiTH && d.nguoiTH !== S.me.ten ? " data-opt" : ""}></label>
       <div class="rd-dgr" style="align-items:center"><span class="rd-dgl" style="padding:0">Lưu mẫu thử</span><label class="pk"><input type="checkbox" id="pt54" ${d.t54 ? "checked" : ""} ${ro}> 54±2 °C, 14 ngày</label><label class="pk"><input type="checkbox" id="pt0" ${d.t0 ? "checked" : ""} ${ro}> 0±2 °C, 7 ngày</label><span class="note">(luôn theo dõi ở điều kiện thường 28±2 °C)</span></div>
       ${ctDl}${ql ? `<div class="tools" style="margin:4px 0"><button type="button" class="btn small" id="ptQcvn">📋 Lấy chỉ tiêu theo QCVN 01-188 cho dạng <span class="ptDg2">${E(d.dang || "…")}</span></button><span class="note">Chọn chỉ tiêu từ danh sách để tự điền mức yêu cầu (QCVN) và phương pháp (QC-HD nội bộ).</span></div>` : ""}
       <div class="dgx rd-tb"><table><thead id="ptKqH">${kqHead()}</thead><tbody id="ptKq">${kqRows()}</tbody></table></div>
       ${ghiKQ ? '<button type="button" class="btn small" id="ptAddKq" style="margin-top:6px">+ chỉ tiêu</button>' : ""}
       <div class="two" style="margin-top:8px"><label>Kết quả ban đầu (tóm tắt — ghi vào Sổ BM.01)<textarea id="ptKqbd" rows="2" ${ghiKQ ? "" : "disabled"}>${E(d.kqbd || "")}</textarea></label><label>Đề xuất của người thực hiện<textarea id="ptDx" rows="2" ${ghiKQ ? "" : "disabled"}>${E(d.deXuat || "")}</textarea></label></div>
-      <label style="max-width:300px">Ngày kết thúc (người thực hiện ghi)<input id="ptKT" type="date" value="${E(d.ngayKT || "")}" ${ghiKQ ? "" : "disabled"}></label>
-      <div class="grp">5. Đánh giá <small class="note">(người thực hiện đánh giá, TP. LAB/RD duyệt)</small></div>
+      <label style="max-width:300px">Ngày kết thúc (người thực hiện ghi)<input id="ptKT" type="date" value="${E(d.ngayKT || "")}" ${ghiKQ ? "" : "disabled"} data-opt title="Để trống: tự ghi ngày bấm Báo kết quả"></label>
+      <div class="grp" id="ptS5">5. Đánh giá <small class="note">(người thực hiện đánh giá, TP. LAB/RD duyệt)</small></div>
       <div class="rd-dg">
         ${d.tt === "Đã báo KQ" && ql ? `<div class="rd-wait">📨 ${E(d.nguoiTH || "")} đã báo kết quả${d.baoLuc ? " lúc " + E(d.baoLuc) : ""} — xem phần 4, 5 rồi bấm Lưu để duyệt.</div>` : ""}
         <div class="rd-dgr"><span class="rd-dgl">Kết luận</span><div class="rd-opts">
@@ -241,9 +305,10 @@
       </div>
       <div class="actions" style="flex-wrap:wrap">
         ${ql ? `<button class="btn primary" type="button" id="ptSave">${p ? "Lưu" : "Lưu & giao việc"}</button>` : ""}
-        ${!ql && toi && d.tt !== "Đã duyệt" ? '<button class="btn" type="button" id="ptDraft">Lưu kết quả</button><button class="btn primary" type="button" id="ptBao">📨 Báo kết quả</button>' : ""}
-        ${(toi || ql) && d.tt !== "Đã duyệt" && !d.hong ? '<button class="btn danger" type="button" id="ptHong">⛔ Mẫu hỏng – dừng theo dõi</button>' : ""}
-        ${p ? '<button class="btn" type="button" id="ptPr">🖨 In BM.02</button>' : ""}${p && ql ? '<button class="btn" type="button" id="ptLai">↻ Thử lại (phiếu mới)</button>' : ""}${p && ql && d.tt === "Đã duyệt" ? '<button class="btn" type="button" id="ptMo">🔓 Mở lại để sửa</button>' : ""}
+        ${!ql && toi && d.tt !== "Đã duyệt" ? (() => { const bao = p && buoc(p.d).k === "bao"; /* nút chính = việc của bước hiện tại */
+          return `<button class="btn${bao ? "" : " primary"}" type="button" id="ptDraft">Lưu kết quả</button><button class="btn${bao ? " primary" : ""}" type="button" id="ptBao">📨 Báo kết quả</button>`; })() : ""}
+        ${(toi || ql) && d.tt !== "Đã duyệt" && !d.hong ? '<button class="btn danger" type="button" id="ptHong">⛔ Mẫu hỏng<span class="fnm"> – dừng theo dõi</span></button>' : ""}
+        ${p ? '<button class="btn" type="button" id="ptPr">🖨 In<span class="fnm"> BM.02</span></button>' : ""}${p && ql ? '<button class="btn" type="button" id="ptLai">↻ Thử lại<span class="fnm"> (phiếu mới)</span></button>' : ""}${p && ql && d.tt === "Đã duyệt" ? '<button class="btn" type="button" id="ptMo">🔓 Mở lại để sửa</button>' : ""}
         ${p && ql ? '<button class="btn danger" type="button" id="ptDel">Xoá</button>' : ""}
         <span style="flex:1"></span><button class="btn" type="button" data-x>Đóng</button></div>`, true);
     const q = s => w.querySelector(s);
@@ -325,6 +390,7 @@
     if (q("#ptAddNl")) q("#ptAddNl").onclick = () => { d.nl.push({}); q("#ptNl").innerHTML = nlRows(); wire(); };
     if (q("#ptAddKq")) q("#ptAddKq").onclick = () => { d.kq.push({}); q("#ptKq").innerHTML = kqRows(); wire(); };
     q("[data-x]").onclick = () => w.remove();
+    w.querySelectorAll(".rd-goto").forEach(g => g.onclick = () => { const el = q("#" + g.dataset.goto); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
     const collect = () => {
       if (ql) Object.assign(d, { loaiTN: q("#ptLoai").value, sp: q("#ptSp").value.trim(), maCT: q("#ptMa").value.trim(), hl: q("#ptHl").value.trim(), yc: q("#ptYc").value, ngayLap: q("#ptLap").value, nguoiTH: q("#ptNg").value, t54: q("#pt54").checked, t0: q("#pt0").checked, tyTrong: q("#ptTT").value.trim(), quyTrinh: q("#ptQT").value, dang: q("#ptDang").value,
       });
@@ -468,10 +534,12 @@
     try { await load(); } catch (e) { return []; }
     const me = S.me.ten, ql = QL(), t = today(), out = [];
     live(R).filter(x => x.loai === "PT").forEach(p => {
-      const d = p.d, n54 = d.t54 === false || d.hong ? "" : add(d.ngayBD, 14), b54 = !(d.kq || []).some(r => String(r.b || "").trim());
-      if (d.nguoiTH === me && (d.tt === "Giao" || d.tt === "Đang thử")) out.push({ id: p.id, c: "#2563eb", t: `🧪 <b>${E(d.so)}</b> · ${E(d.sp)} — ${!d.ngayBD ? "<b>được giao, chưa bắt đầu</b>" : "đang thử"}${n54 && b54 ? ` · đọc mẫu 54 °C ngày <b style="color:${n54 <= t ? "#c62828" : "inherit"}">${D(n54)}</b>` : ""}` });
-      if (ql && d.tt === "Đã báo KQ") out.push({ id: p.id, c: "#7c3aed", t: `📨 <b>${E(d.so)}</b> · ${E(d.sp)} — ${E(d.nguoiTH)} đã báo kết quả, <b>chờ anh đánh giá</b>` });
-      if (ql && (d.tt === "Giao" || d.tt === "Đang thử") && n54 && n54 < t && b54) out.push({ id: p.id, c: "#c62828", t: `⏰ <b>${E(d.so)}</b> · ${E(d.sp)} — quá ngày đọc mẫu 54 °C (${D(n54)}), ${E(d.nguoiTH || "chưa giao")} chưa ghi` });
+      const d = p.d, b = buoc(d), mine = cuaToi(b), hd = `<b>${E(d.so)}</b> · ${E(d.sp)}`;
+      if (b.z === "lam" && mine) out.push({ id: p.id, c: b.k === "doc" && b.tre > 0 ? "#c62828" : b.k === "duyet" ? "#7c3aed" : b.k === "doc" ? "#d97706" : "#2563eb", t: b.k === "duyet" ? `📨 ${hd} — ${d.hong ? "mẫu hỏng" : E(d.nguoiTH || "") + " đã báo kết quả"}, <b>chờ anh đánh giá</b>` : `🧪 ${hd} — <b>${E(b.viec)}</b>` });
+      else if (b.z === "theodoi" && b.who === me) out.push({ id: p.id, c: "#64748b", t: `⏳ ${hd} — đang lưu mẫu, đọc ${E(b.luu[0].ten)} ngày <b>${D(b.han)}</b> (còn ${b.con} ngày)` });
+      /* Quản lý theo dõi việc của người khác: quá ngày đọc mẫu · giao lâu chưa bắt đầu */
+      if (ql && !mine && b.k === "doc" && b.tre > 0) out.push({ id: p.id, c: "#c62828", t: `⏰ ${hd} — quá ngày đọc mẫu ${b.tre} ngày (${D(b.han)}), ${E(d.nguoiTH || "chưa giao")} chưa ghi` });
+      if (ql && !mine && b.k === "giao" && b.cho >= 7) out.push({ id: p.id, c: "#d97706", t: `🕒 ${hd} — giao ${E(d.nguoiTH || "")} đã <b>${b.cho} ngày</b>, chưa bắt đầu` });
     });
     live(R).filter(x => x.loai === "YC" && !x.d.ngayKT && (ql || x.d.nguoiTH === me)).forEach(y => { if (y.d.han && y.d.han <= add(t, 3)) out.push({ id: y.id, c: y.d.han < t ? "#c62828" : "#d97706", t: `📝 Yêu cầu: ${E((y.d.noiDung || "").slice(0, 80))} — cần kết quả <b>${D(y.d.han)}</b>${y.d.han < t ? " (quá hạn)" : ""}` }); });
     return out;
