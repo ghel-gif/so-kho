@@ -186,9 +186,14 @@ function settings_() {
     hetHan: num_(o['Báo trước hết hạn (ngày)']) || 90,
     treo: num_(o['Báo lệnh SX treo quá (ngày)']) || 7,
     nhomQC: o['Nhóm cần QC theo lô'] === undefined ? ['Nguyên liệu', 'Bán thành phẩm'] : list(o['Nhóm cần QC theo lô']),
-    gio: o['Giờ gửi cảnh báo'] === undefined || o['Giờ gửi cảnh báo'] === '' ? 7 : Math.min(23, Math.max(0, Math.round(num_(o['Giờ gửi cảnh báo']))))
+    gio: o['Giờ gửi cảnh báo'] === undefined || o['Giờ gửi cảnh báo'] === '' ? 7 : Math.min(23, Math.max(0, Math.round(num_(o['Giờ gửi cảnh báo'])))),
+    /* ngưỡng cảnh báo (Quản lý sửa ở Báo cáo → Cảnh báo): hao hụt BTP khi đóng gói, hạn QC duyệt lô, cân túi rỗng lệch */
+    hhLong: ngPct_(o[NG_K_.hhLong], 5), hhRan: ngPct_(o[NG_K_.hhRan], 3), qcHan: Math.max(1, Math.round(num_(o[NG_K_.qcHan])) || 3), canLech: ngPct_(o[NG_K_.canLech], 5)
   };
 }
+const NG_K_ = { hhLong: 'Ngưỡng hao hụt đóng gói dạng lỏng (%)', hhRan: 'Ngưỡng hao hụt đóng gói dạng rắn (%)', qcHan: 'Hạn QC duyệt lô (ngày)', canLech: 'Cân túi rỗng lệch quá (%)' };
+function ngPct_(v, macDinh) { const n = num_(v); return n > 0 && n <= 100 ? Math.round(n * 100) / 100 : macDinh; }
+const nguong_ = cfg => ({ hhLong: cfg.hhLong, hhRan: cfg.hhRan, qcHan: cfg.qcHan, canLech: cfg.canLech });
 function log_(me, act, obj, detail) {
   try { sheet_(SH.NK).appendRow([new Date(), me.ten, act, String(obj || ''), String(detail || '').slice(0, 500)]); } catch (e) {}
 }
@@ -379,11 +384,11 @@ RC_ = {};
   if (!me.ct) {
     const vis = items, b = {}, l = {};
     vis.forEach(i => { b[i.ma] = bal[i.ma]; if (lots[i.ma]) l[i.ma] = lots[i.ma]; });
-    return { me, items: vis, bal: b, lots: l, nhom: NHOM.filter(n => !me.nhom.length || me.nhom.indexOf(n) >= 0), nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, congThuc: {},
+    return { me, items: vis, bal: b, lots: l, nhom: NHOM.filter(n => !me.nhom.length || me.nhom.indexOf(n) >= 0), nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: {},
       lenh: lenh.map(o => ({ so: o.so, tenSP: (items.find(i => i.ma === o.maSP) || {}).ten || '', ngay: o.ngay, maSP: o.maSP, slDuKien: o.slDuKien, trangThai: o.trangThai, ngayHT: o.ngayHT, slThucTe: o.slThucTe, nguoiLap: o.nguoiLap, nguoiHT: o.nguoiHT, ghiChu: o.ghiChu, khachHang: o.khachHang, nguoiSX: o.nguoiSX, qcSX: o.qcSX, tyTrong: o.tyTrong, loGC: o.loGC, nsxGC: o.nsxGC, loSP: o.loSP, nsxSP: o.nsxSP })),
       khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
   }
-  return { me, items, bal, lots, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
+  return { me, items, bal, lots, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
 }
 
 /** Phiếu nhập 14 ngày gần nhất (Trang chủ: Hàng mới nhập; Tồn kho: đưa mã mới nhập lên đầu). */
@@ -1211,7 +1216,7 @@ function getLog(a, thang) {
 function getAlertSettings(a) {
   auth_(a, [ROLES.QL]);
   const c = settings_(), on = ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'dailyAlert');
-  return { email: c.email, hetHan: c.hetHan, treo: c.treo, gio: c.gio, nhomQC: c.nhomQC.join(', '), bat: on };
+  return { email: c.email, hetHan: c.hetHan, treo: c.treo, gio: c.gio, nhomQC: c.nhomQC.join(', '), bat: on, hhLong: c.hhLong, hhRan: c.hhRan, qcHan: c.qcHan, canLech: c.canLech };
 }
 
 function saveAlertSettings(a, p) {
@@ -1227,6 +1232,9 @@ function saveAlertSettings(a, p) {
   const nq = String(p.nhomQC || '').split(',').map(x => x.trim()).filter(String);
   nq.forEach(n => { if (NHOM.indexOf(n) < 0) throw new Error('Không có nhóm "' + n + '".'); });
   put('Nhóm cần QC theo lô', nq.join(', '));
+  /* ngưỡng: chỉ ghi khi máy gửi lên (bản cũ không gửi thì giữ nguyên) */
+  ['hhLong', 'hhRan', 'canLech'].forEach(k => { if (p[k] !== undefined && p[k] !== '') { const v = num_(p[k]); if (!(v > 0 && v <= 100)) throw new Error('Ngưỡng % phải từ 0,1 đến 100.'); put(NG_K_[k], Math.round(v * 100) / 100); } });
+  if (p.qcHan !== undefined && p.qcHan !== '') { const v = Math.round(num_(p.qcHan)); if (!(v >= 1 && v <= 60)) throw new Error('Hạn QC duyệt lô: từ 1 đến 60 ngày.'); put(NG_K_.qcHan, v); }
   installTrigger_(p.bat && emails.length > 0);
   log_(me, 'Sửa cài đặt cảnh báo', '', 'Email: ' + (emails.join(', ') || '(trống)') + ' · bật: ' + (p.bat ? 'có' : 'không'));
   return getAlertSettings(a);
@@ -1905,10 +1913,28 @@ function packDone(a, o) {
 function savePack(a, o) {
   const so = String(o.so || '').trim(); if (!so) throw new Error('Nhập số lệnh đóng gói.');
   const ex = orders_().find(x => x.so === so && x.trangThai === 'Đang SX');
+  if (o.hoanThanh && o.x && o.x.hhVuot && !String(o.x.hhLyDo || '').trim()) throw new Error('Hao hụt BTP vượt ngưỡng: ghi lý do hao hụt trước khi hoàn thành lệnh.');
   if (ex && ldgMap_()[so]) updatePack_(a, so, o); else createPackOrder(a, o);
   if (!o.hoanThanh) return { so: so };
   const r = completePackOrder(a, so, { ngay: o.ngayHT || o.ngay, dv: o.dv, lo: o.loTP, nsx: o.ngayHT || o.ngay, nguoiSX: o.nguoiSX || '', lines: o.xuat || [] });
   return { so: so, xuat: r.xuat };
+}
+/** Ghi / sửa lý do hao hụt BTP vượt ngưỡng của lệnh đóng gói (kể cả lệnh đã hoàn thành trước khi có ngưỡng). */
+function setPackHH(a, so, lyDo) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  so = String(so || '').trim(); lyDo = String(lyDo || '').trim().slice(0, 300);
+  if (!lyDo) throw new Error('Ghi lý do hao hụt.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = ldgSheet_(), v = sh.getRange(1, 1, sh.getLastRow(), 3).getValues(); let r = -1;
+    for (let i = v.length - 1; i >= 1; i--) if (str_(v[i][0]) === so) { r = i; break; }
+    if (r < 0) throw new Error('Không tìm thấy lệnh đóng gói ' + so + '.');
+    let P = {}; try { P = JSON.parse(str_(v[r][2]) || '{}'); } catch (e) {}
+    P.x = Object.assign({}, P.x || {}, { hhLyDo: lyDo, hhNguoi: me.ten, hhLuc: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm') });
+    sh.getRange(r + 1, 3).setValue(JSON.stringify(P));
+    log_(me, 'Lý do hao hụt đóng gói', so, lyDo);
+    return { so: so, x: P.x };
+  } finally { lock.releaseLock(); }
 }
 function updatePack_(a, so, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
