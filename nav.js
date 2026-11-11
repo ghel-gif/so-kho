@@ -98,3 +98,20 @@ try{const T=document.getElementById("toast");if(T){new MutationObserver(()=>{if(
     document.querySelectorAll(".need-cnt:not(.ok)").forEach(c=>{c.classList.remove("shake");void c.offsetWidth;c.classList.add("shake");setTimeout(()=>c.classList.remove("shake"),900)})}
   }).observe(T,{attributes:true,attributeFilter:["hidden"],childList:true,characterData:true,subtree:true})}}catch(_){}
 }catch(e){}})();
+
+/* ---------- Thanh bên trái có ảnh động (máy tính): lớp nền chuyển động nhẹ theo trời — đêm / nền tối có sao lấp lánh, sao băng;
+   ngày có ánh sáng trôi, hạt sáng bay lên; trời mưa có vệt mưa. Biểu tượng mục lắc nhẹ khi rê chuột, mục đang mở "thở".
+   Chỉ dùng transform / opacity (nhẹ máy). Tắt theo "giảm chuyển động" của máy và theo nút tắt hiệu ứng ở ô thời tiết. ---------- */
+(function(){try{
+  const nav=document.querySelector("nav.side");if(!nav||document.getElementById("sideFx"))return;
+  const L=document.createElement("div");L.id="sideFx";L.setAttribute("aria-hidden","true");
+  L.innerHTML='<i class="sf-tint"></i><i class="sf-glow g1"></i><i class="sf-glow g2"></i><i class="sf-st s1"></i><i class="sf-st s2"></i><i class="sf-shoot"></i>'
+    +Array.from({length:7},(_,i)=>'<i class="sf-mote m'+(i+1)+'"></i>').join("")+'<i class="sf-rain r1"></i><i class="sf-rain r2"></i>';
+  nav.appendChild(L); /* đặt cuối để không đổi :first-child của menu; position:fixed nên không chiếm chỗ */
+  /* lớp nền bám đúng khung menu (menu tự cuộn riêng nên lớp nền đặt cố định theo màn hình) */
+  const fit=()=>{const r=nav.getBoundingClientRect();L.style.left=r.left+"px";L.style.top=Math.max(0,r.top)+"px";L.style.width=r.width+"px";L.style.height=Math.max(0,Math.min(innerHeight,r.bottom)-Math.max(0,r.top))+"px"};
+  fit();addEventListener("resize",fit);addEventListener("scroll",fit,{passive:true});try{new ResizeObserver(fit).observe(nav);const h=document.querySelector("#appView header");if(h)new ResizeObserver(fit).observe(h)}catch(e){}
+  try{const a=document.getElementById("appView");if(a)new MutationObserver(()=>setTimeout(fit,0)).observe(a,{attributes:true,attributeFilter:["hidden"]})}catch(e){}
+  /* các mục trượt vào lần lượt khi mở app */
+  [...nav.querySelectorAll("button[data-tab],.navh")].forEach((b,i)=>b.style.setProperty("--si",i));
+}catch(e){}})();

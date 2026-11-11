@@ -1287,3 +1287,67 @@ nav.side .navuser a.nupw{text-decoration:none}
 .pw-lk{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.pw-lk h3{margin:0 0 8px;font-size:14.5px}
 .pw-lkr{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;font-size:13.5px}.pw-lkr>span{flex:1;min-width:0}
 .pw-lkr.bad{border-color:#e11d48;background:color-mix(in srgb,#e11d48 8%,transparent)}
+
+/* ===== 4.8.2 · thanh bên trái có ảnh động (≥ 901px) ===== */
+#sideFx{display:none}
+@media (min-width:901px){
+  body nav.side{isolation:isolate}
+  #sideFx{display:block;position:fixed;z-index:-1;overflow:hidden;pointer-events:none;contain:strict}
+  :root[data-skyfx=off] #sideFx{display:none}
+  #sideFx i{position:absolute;display:block}
+  /* màu trời theo giờ: phủ rất nhẹ từ trên xuống */
+  #sideFx .sf-tint{inset:0;opacity:.55;transition:background 1.5s ease;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 45%)}
+  :root:not([data-theme=dark])[data-sky=binhminh] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(255,196,150,.5),rgba(255,236,214,.18) 40%,rgba(255,255,255,0) 75%)}
+  :root:not([data-theme=dark])[data-sky=hoanghon] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(255,170,120,.5),rgba(255,214,190,.2) 42%,rgba(255,255,255,0) 78%)}
+  :root:not([data-theme=dark])[data-sky=trua] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(255,255,255,.75),rgba(255,255,255,0) 50%)}
+  :root:not([data-theme=dark])[data-sky=dem] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(120,150,210,.3),rgba(120,150,210,0) 60%)}
+  :root[data-theme=dark] #sideFx .sf-tint{opacity:.9;background:linear-gradient(180deg,rgba(40,90,160,.28),rgba(10,40,70,0) 55%)}
+  :root[data-theme=dark][data-sky=binhminh] #sideFx .sf-tint,:root[data-theme=dark][data-sky=hoanghon] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(190,100,60,.26),rgba(60,40,80,.1) 45%,rgba(10,40,70,0) 75%)}
+  /* quầng sáng trôi chậm */
+  #sideFx .sf-glow{width:260px;height:260px;border-radius:50%;filter:blur(34px);will-change:transform;opacity:.5}
+  #sideFx .g1{left:-90px;top:6%;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,255,255,0) 68%);animation:sfDrift1 38s ease-in-out infinite alternate}
+  #sideFx .g2{right:-120px;bottom:10%;background:radial-gradient(circle,rgba(120,180,255,.75),rgba(120,180,255,0) 68%);animation:sfDrift2 52s ease-in-out infinite alternate}
+  :root[data-theme=dark] #sideFx .g1{background:radial-gradient(circle,rgba(60,200,170,.5),rgba(60,200,170,0) 68%);opacity:.42}
+  :root[data-theme=dark] #sideFx .g2{background:radial-gradient(circle,rgba(70,120,230,.55),rgba(70,120,230,0) 68%);opacity:.42}
+  @keyframes sfDrift1{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(70px,22vh,0) scale(1.15)}100%{transform:translate3d(10px,46vh,0) scale(.95)}}
+  @keyframes sfDrift2{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(-80px,-20vh,0) scale(1.2)}100%{transform:translate3d(-20px,-44vh,0) scale(1)}}
+  /* sao lấp lánh + sao băng: nền tối */
+  #sideFx .sf-st,#sideFx .sf-shoot{display:none}
+  :root[data-theme=dark] #sideFx .sf-st{display:block;inset:0;background-repeat:no-repeat}
+  :root[data-theme=dark] #sideFx .s1{background-image:radial-gradient(1.6px 1.6px at 14% 7%,#fff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 71% 12%,#fff 60%,transparent 62%),radial-gradient(1.4px 1.4px at 38% 23%,#cfe7ff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 86% 34%,#fff 60%,transparent 62%),radial-gradient(1.6px 1.6px at 22% 46%,#fff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 63% 55%,#ffeccc 60%,transparent 62%),radial-gradient(1.4px 1.4px at 9% 68%,#fff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 78% 77%,#fff 60%,transparent 62%),radial-gradient(1.5px 1.5px at 45% 88%,#cfe7ff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 91% 94%,#fff 60%,transparent 62%);animation:sfTw 3.8s ease-in-out infinite alternate}
+  :root[data-theme=dark] #sideFx .s2{background-image:radial-gradient(1.2px 1.2px at 52% 4%,#fff 60%,transparent 62%),radial-gradient(1.5px 1.5px at 27% 15%,#fff 60%,transparent 62%),radial-gradient(1.1px 1.1px at 90% 21%,#cfe7ff 60%,transparent 62%),radial-gradient(1.3px 1.3px at 6% 31%,#fff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 57% 39%,#fff 60%,transparent 62%),radial-gradient(1.5px 1.5px at 81% 50%,#fff 60%,transparent 62%),radial-gradient(1.1px 1.1px at 33% 62%,#ffeccc 60%,transparent 62%),radial-gradient(1.4px 1.4px at 68% 70%,#fff 60%,transparent 62%),radial-gradient(1.2px 1.2px at 18% 82%,#fff 60%,transparent 62%),radial-gradient(1.3px 1.3px at 60% 96%,#fff 60%,transparent 62%);animation:sfTw 5.2s ease-in-out -2s infinite alternate}
+  @keyframes sfTw{0%{opacity:.15}100%{opacity:.75}}
+  :root[data-theme=dark] #sideFx .sf-shoot{display:block;width:90px;height:1.5px;left:60%;top:8%;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform:rotate(-24deg);opacity:0;animation:sfShoot 17s linear 4s infinite}
+  @keyframes sfShoot{0%,91%{opacity:0;transform:translate3d(120px,-40px,0) rotate(-24deg)}92%{opacity:.9}100%{opacity:0;transform:translate3d(-190px,95px,0) rotate(-24deg)}}
+  /* hạt sáng bay lên chậm: nền sáng ban ngày; nền tối thì thành đom đóm */
+  #sideFx .sf-mote{bottom:-14px;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,255,255,.15) 70%);box-shadow:0 0 8px rgba(255,255,255,.7);opacity:0;will-change:transform;animation:sfRise 26s linear infinite}
+  :root[data-theme=dark] #sideFx .sf-mote{width:5px;height:5px;background:radial-gradient(circle,#d9ffb0,rgba(180,255,120,.1) 70%);box-shadow:0 0 9px rgba(190,255,120,.75)}
+  #sideFx .m1{left:10%;animation-duration:24s;animation-delay:-3s}#sideFx .m2{left:28%;animation-duration:31s;animation-delay:-14s;width:6px;height:6px}
+  #sideFx .m3{left:47%;animation-duration:27s;animation-delay:-8s}#sideFx .m4{left:63%;animation-duration:35s;animation-delay:-21s;width:12px;height:12px}
+  #sideFx .m5{left:79%;animation-duration:29s;animation-delay:-11s;width:6px;height:6px}#sideFx .m6{left:90%;animation-duration:33s;animation-delay:-26s}#sideFx .m7{left:36%;animation-duration:38s;animation-delay:-30s;width:5px;height:5px}
+  @keyframes sfRise{0%{transform:translate3d(0,0,0);opacity:0}8%{opacity:.75}50%{transform:translate3d(16px,-52vh,0);opacity:.55}92%{opacity:.5}100%{transform:translate3d(-10px,-104vh,0);opacity:0}}
+  /* vệt mưa khi trời mưa */
+  #sideFx .sf-rain{display:none;left:0;right:0;top:-200px;height:calc(100% + 400px);background-image:repeating-linear-gradient(100deg,transparent 0 17px,rgba(60,110,170,.32) 17px 18px,transparent 18px 43px);animation:sfRain 1.1s linear infinite;opacity:.55}
+  #sideFx .r2{background-image:repeating-linear-gradient(100deg,transparent 0 31px,rgba(60,110,170,.22) 31px 32px,transparent 32px 67px);animation-duration:1.7s;opacity:.45}
+  :root[data-theme=dark] #sideFx .sf-rain{background-image:repeating-linear-gradient(100deg,transparent 0 17px,rgba(200,225,255,.3) 17px 18px,transparent 18px 43px)}
+  :root:is([data-wx=muanho],[data-wx=mua],[data-wx=muato],[data-wx=giong]) #sideFx .sf-rain{display:block}
+  :root[data-wx=muanho] #sideFx .r2{display:none}:root[data-wx=muanho] #sideFx .r1{opacity:.35;animation-duration:1.5s}
+  :root:is([data-wx=muato],[data-wx=giong]) #sideFx .sf-rain{animation-duration:.75s;opacity:.7}
+  :root:is([data-wx=muanho],[data-wx=mua],[data-wx=muato],[data-wx=giong]) #sideFx .sf-mote{display:none}
+  @keyframes sfRain{from{transform:translate3d(0,0,0)}to{transform:translate3d(-35px,200px,0)}}
+  /* biểu tượng: lắc nhẹ khi rê chuột, mục đang mở thì "thở" + vệt sáng lướt qua */
+  body nav.side button[data-tab]{position:relative;animation:sfIn .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--si,0)*28ms)}
+  body nav.side .navh{animation:sfIn .42s ease both;animation-delay:calc(var(--si,0)*28ms)}
+  @keyframes sfIn{from{opacity:0;transform:translate3d(-14px,0,0)}to{opacity:1;transform:none}}
+  body nav.side button[data-tab] svg{transition:transform .2s ease;transform-origin:50% 60%}
+  body nav.side button[data-tab]:hover svg{animation:sfWig .55s ease}
+  @keyframes sfWig{0%{transform:scale(1) rotate(0)}30%{transform:scale(1.22) rotate(-11deg)}60%{transform:scale(1.18) rotate(9deg)}100%{transform:scale(1.1) rotate(0)}}
+  body nav.side button[data-tab][aria-selected="true"] svg{animation:sfBreath 2.6s ease-in-out infinite}
+  @keyframes sfBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+  /* vệt sáng: nền trượt trong khung bo tròn của mục (không dùng overflow:hidden để vòng nhấp nháy của số đỏ không bị cắt) */
+  body nav.side button[data-tab][aria-selected="true"]::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.4) 50%,transparent 58%) no-repeat;background-size:320% 100%;background-position:130% 0;animation:sfSheen 5.5s ease-in-out infinite;pointer-events:none}
+  :root[data-theme=dark] body nav.side button[data-tab][aria-selected="true"]::after{background-image:linear-gradient(105deg,transparent 42%,rgba(20,137,124,.22) 50%,transparent 58%)}
+  @keyframes sfSheen{0%,64%{background-position:130% 0}100%{background-position:-30% 0}}
+  body nav.side button[data-tab]:active svg{transform:scale(.9)}
+}
+@media (prefers-reduced-motion:reduce){#sideFx{display:none!important}body nav.side button[data-tab],body nav.side .navh,body nav.side button[data-tab] svg,body nav.side button[data-tab]::after{animation:none!important}}
