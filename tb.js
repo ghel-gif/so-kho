@@ -287,7 +287,7 @@
   let vKC = "M1", fKCm = "";
   const kcRow = k => { const d = k.d, K = ketQuaTB(d), bad = K.filter(x => x.bad);
     return `<div class="row click" data-kc="${E(k.id)}"><div class="name">${THU[dow(d.ngay)]} ${D(d.ngay)} ${kqChip(d)}</div><div class="kg">${d.khongSX ? "" : K.length}<small>${d.khongSX ? "" : "cân"}</small></div>
-      <div class="meta">${d.khongSX ? "Không sản xuất — không kiểm tra cân" : E(K.map(x => x.ma || x.ten).join(", "))}${d.nguoi ? " · " + E(d.nguoi) : ""}${bad.length ? ` · <b style="color:#c62828">không đạt: ${E(bad.map(x => x.ma || x.ten).join(", "))}</b>` : ""}${d.tamNgung && Object.values(d.tamNgung).some(Boolean) ? " · đã dán nhãn tạm ngưng" : ""}${d.ghiChu ? " · " + E(d.ghiChu) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</div></div>`; };
+      <div class="meta">${d.khongSX ? "Không sử dụng cân để đóng gói — không kiểm tra cân" + (d.lyDo ? " · lý do: " + E(d.lyDo) : "") : E(K.map(x => x.ma || x.ten).join(", "))}${d.nguoi ? " · " + E(d.nguoi) : ""}${bad.length ? ` · <b style="color:#c62828">không đạt: ${E(bad.map(x => x.ma || x.ten).join(", "))}</b>` : ""}${d.tamNgung && Object.values(d.tamNgung).some(Boolean) ? " · đã dán nhãn tạm ngưng" : ""}${d.ghiChu ? " · " + E(d.ghiChu) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</div></div>`; };
   window.renderKC = async function () {
     const b = document.getElementById("kcBox"); if (!b) return;
     if (!S.me) { b.innerHTML = '<div class="empty">Vui lòng đăng nhập.</div>'; return; }
@@ -299,12 +299,12 @@
     const L = kcs().filter(k => k.d.so === vKC && (!fKCm || String(k.d.ngay).slice(0, 7) === fKCm)).sort((a, c) => String(c.d.ngay).localeCompare(String(a.d.ngay)));
     const kToday = kcs().find(x => x.d.so === vKC && x.d.ngay === td);
     let st;
-    if (vKC === "M1") { const dw = dow(td); st = `${THU[dw]} ${D(td)}: ${kToday ? (kToday.d.khongSX ? "<b>không sản xuất</b>" : "đã kiểm tra" + (kToday.d.nguoi ? " — " + E(kToday.d.nguoi) : "") + " " + kqChip(kToday.d)) : dw === 0 ? "chủ nhật" : '<b style="color:#d97706">chưa kiểm tra cân</b>'}`; }
+    if (vKC === "M1") { const dw = dow(td); st = `${THU[dw]} ${D(td)}: ${kToday ? (kToday.d.khongSX ? "<b>không sử dụng cân để đóng gói</b>" + (kToday.d.lyDo ? " (" + E(kToday.d.lyDo) + ")" : "") : "đã kiểm tra" + (kToday.d.nguoi ? " — " + E(kToday.d.nguoi) : "") + " " + kqChip(kToday.d)) : dw === 0 ? "chủ nhật" : '<b style="color:#d97706">chưa kiểm tra cân</b>'}`; }
     else { const ws = wkStart(td), we = addD(ws, 6), k = kcs().filter(x => x.d.so === "F1" && x.d.ngay >= ws && x.d.ngay <= we).sort((a, c) => String(c.d.ngay).localeCompare(String(a.d.ngay)))[0];
       st = `Tuần ${DM(ws)} – ${D(we)}: ${k ? "đã kiểm tra ngày " + D(k.d.ngay) + (k.d.nguoi ? " — " + E(k.d.nguoi) : "") + " " + kqChip(k.d) : '<b style="color:#d97706">chưa kiểm tra cân</b>'}`; }
     b.innerHTML = `<div class="seg subseg" style="margin-bottom:10px">${[["M1", "Cân SX ≤3 kg — hằng ngày (quả cân M1)"], ["F1", "Cân kỹ thuật PTN — hằng tuần (quả cân F1)"]].map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === vKC}">${t}</button>`).join("")}</div>
       <p style="margin:0 0 8px;font-size:15px">${st}</p>
-      <div class="tools">${QC() ? `<button class="btn primary" type="button" id="kcNew">${kToday && !kToday.d.khongSX ? "Mở sổ hôm nay" : "+ Kiểm tra cân hôm nay"}</button>${vKC === "M1" && !kToday ? '<button class="btn" type="button" id="kcOff">Hôm nay không sản xuất</button>' : ""}` : ""}
+      <div class="tools">${QC() ? `<button class="btn primary" type="button" id="kcNew">${kToday && !kToday.d.khongSX ? "Mở sổ hôm nay" : "+ Kiểm tra cân hôm nay"}</button>${vKC === "M1" && !kToday ? '<button class="btn" type="button" id="kcOff">Hôm nay không sử dụng cân để đóng gói</button>' : ""}` : ""}
         <input type="month" id="kcM" value="${E(fKCm)}" style="width:auto" title="Tháng (trống = tất cả)"><button class="btn" type="button" id="kcPr">🖨 In BM.02${fKCm ? " tháng " + fKCm.slice(5) + "/" + fKCm.slice(0, 4) : ""}</button></div>
       <p class="note" style="margin:0 0 8px">${E(S0.luat)} Cân trong sổ: ${sc.length ? E(sc.map(t => t.d.ma || t.d.ten).join(", ")) : "<b>chưa có cân nào</b>"}${off.length ? " · không kiểm (không ở trạng thái Đang sử dụng): " + E(off.map(t => (t.d.ma || t.d.ten) + " – " + t.d.tinhTrang).join(", ")) : ""}. Đổi danh sách: Thiết bị → mở thiết bị → Kiểm tra nội bộ.</p>
       <div class="list">${L.length ? L.map(kcRow).join("") : `<div class="empty"><b>Chưa có sổ kiểm tra cân${fKCm ? " trong tháng " + fKCm.slice(5) + "/" + fKCm.slice(0, 4) : ""}.</b></div>`}</div>`;
@@ -312,7 +312,18 @@
     b.querySelectorAll("[data-kc]").forEach(x => x.onclick = () => { const k = rec(x.dataset.kc); if (k) kcDlg(k); });
     const on = (id, ev, f) => { const el = document.getElementById(id); if (el) el[ev] = f; };
     on("kcNew", "onclick", () => kToday && !kToday.d.khongSX ? kcDlg(kToday) : kcDlg(null, vKC, td, kToday));
-    on("kcOff", "onclick", async e => { e.target.disabled = true; try { await save({ loai: "KC", d: { ngay: td, so: "M1", khongSX: true, nguoi: S.me.ten, rows: [], ketQua: "Không SX" } }, "Đã ghi: hôm nay không sản xuất"); rer(); } catch (x) { e.target.disabled = false; toast(x.message); } });
+    on("kcOff", "onclick", () => { /* phải xác nhận + ghi lý do */
+      const LD = ["Không có lệnh đóng gói", "Chỉ sản xuất BTP, không đóng gói", "Nghỉ sản xuất / nghỉ lễ", "Bảo trì, vệ sinh xưởng"];
+      const w = dlg("Hôm nay không sử dụng cân để đóng gói", `<p style="margin:0 0 8px">${THU[dow(td)]} <b>${D(td)}</b> — ghi nhận <b>không sử dụng cân SX (quả cân M1) để đóng gói</b>, nên không kiểm tra cân hôm nay.</p>
+        <label>Lý do *<textarea id="kcLd" rows="3" placeholder="VD: không có lệnh đóng gói" data-need></textarea></label>
+        <div class="pick" style="margin:6px 0">${LD.map(x => `<button type="button" class="btn small" data-ld="${E(x)}">${E(x)}</button>`).join("")}</div>
+        <label class="qa-chk" style="display:flex;gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="kcXn" style="width:22px;height:22px;flex:none;margin:1px 0 0"> <span>Tôi (<b>${E(S.me.ten)}</b>) xác nhận hôm nay không dùng cân để đóng gói. Nếu sau đó có đóng gói, phải kiểm tra cân trước khi dùng.</span></label>
+        <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button><button class="btn primary" type="button" data-a="ok">Xác nhận</button></div>`);
+      const bx = w.querySelector(".cfm-box"), ta = bx.querySelector("#kcLd"); bx.querySelector('[data-a="x"]').onclick = () => w.remove();
+      bx.querySelectorAll("[data-ld]").forEach(b => b.onclick = () => { ta.value = b.dataset.ld; ta.dispatchEvent(new Event("input", { bubbles: true })); });
+      bx.querySelector('[data-a="ok"]').onclick = async e => { const ly = ta.value.trim();
+        if (!ly) { toast("Ghi lý do không sử dụng cân."); ta.focus(); return; } if (!bx.querySelector("#kcXn").checked) { toast("Đánh dấu ô xác nhận."); return; }
+        e.target.disabled = true; try { await save({ loai: "KC", d: { ngay: td, so: "M1", khongSX: true, lyDo: ly, xacNhan: S.me.ten, nguoi: S.me.ten, rows: [], ketQua: "Không SX" } }, "Đã ghi: hôm nay không sử dụng cân để đóng gói"); w.remove(); rer(); } catch (x) { e.target.disabled = false; toast(x.message); } }; });
     on("kcM", "onchange", e => { fKCm = e.target.value; renderKC(); });
     on("kcPr", "onclick", () => prKC(L.filter(k => !k.d.khongSX).sort((a, c) => String(a.d.ngay).localeCompare(String(c.d.ngay)))));
   };
@@ -320,7 +331,7 @@
   function kcDlg(r, so0, ngay0, reuse) { /* reuse: bản ghi "không sản xuất" cùng ngày → ghi đè thành sổ kiểm tra */
     const ed = QC(), so = r ? r.d.so : so0, S0 = KC[so];
     if (r && r.d.khongSX) {
-      const w = dlg("Kiểm tra cân — " + THU[dow(r.d.ngay)] + " " + D(r.d.ngay), `<p>Đã ghi <b>không sản xuất</b>${r.nguoi ? " (" + E(r.nguoi) + ")" : ""} — ngày này không kiểm tra cân SX.</p>
+      const w = dlg("Kiểm tra cân — " + THU[dow(r.d.ngay)] + " " + D(r.d.ngay), `<p>Đã ghi <b>không sử dụng cân để đóng gói</b>${r.nguoi ? " (" + E(r.nguoi) + " xác nhận)" : ""} — ngày này không kiểm tra cân SX.</p>${r.d.lyDo ? `<p><b>Lý do:</b> ${E(r.d.lyDo)}</p>` : ""}
         <div class="actions">${TP() || (ed && r.nguoi === S.me.ten) ? '<button class="btn danger" type="button" data-a="del">Bỏ ghi nhận</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-a="x">Đóng</button></div>`);
       const bx = w.querySelector(".cfm-box"); bx.querySelector('[data-a="x"]').onclick = () => w.remove();
       const dv = bx.querySelector('[data-a="del"]'); if (dv) dv.onclick = async () => { try { await api("webTBDel", S.auth, r.id, false); toast("Đã bỏ ghi nhận"); w.remove(); rer(); } catch (e) { toast(e.message); } };
@@ -457,7 +468,7 @@
     kcs().filter(k => k.d.ngay === td0 && !k.d.khongSX).forEach(k => { const bad = ketQuaTB(k.d).filter(x => x.bad && !(k.d.tamNgung || {})[x.k]);
       if (bad.length) out.push({ dau: 1, kc: k.d.so, rid: k.id, c: "#c62828", s: "cân không đạt: " + bad.map(x => x.ma || x.ten).join(", "), t: `✗ Kiểm tra cân hôm nay <b>không đạt</b>: ${E(bad.map(x => x.ma || x.ten).join(", "))} — hiệu chỉnh, kiểm tra lại hoặc dán nhãn tạm ngưng` }); });
     const dw = dow(td0), m1 = scales("M1"), f1 = scales("F1"), ws = wkStart(td0);
-    if (dw >= 1 && dw <= 6 && m1.length && !kcs().some(k => k.d.so === "M1" && k.d.ngay === td0)) out.push({ dau: 1, kc: "M1", c: "#d97706", s: "hôm nay chưa kiểm tra cân SX", t: `⚖ <b>Hôm nay chưa kiểm tra cân SX</b> (BM.02-QC-QT.01, quả cân M1) — ${m1.length} cân: ${E(m1.map(t => t.d.ma || t.d.ten).join(", "))}. Không sản xuất thì bấm “Hôm nay không sản xuất”.` });
+    if (dw >= 1 && dw <= 6 && m1.length && !kcs().some(k => k.d.so === "M1" && k.d.ngay === td0)) out.push({ dau: 1, kc: "M1", c: "#d97706", s: "hôm nay chưa kiểm tra cân SX", t: `⚖ <b>Hôm nay chưa kiểm tra cân SX</b> (BM.02-QC-QT.01, quả cân M1) — ${m1.length} cân: ${E(m1.map(t => t.d.ma || t.d.ten).join(", "))}. Không dùng cân để đóng gói thì bấm “Hôm nay không sử dụng cân để đóng gói” (ghi lý do).` });
     if (f1.length && !kcs().some(k => k.d.so === "F1" && k.d.ngay >= ws && k.d.ngay <= addD(ws, 6))) out.push({ kc: "F1", c: "#d97706", s: "tuần này chưa kiểm tra cân PTN", t: `⚖ <b>Tuần này chưa kiểm tra cân kỹ thuật PTN</b> (BM.02-QC-QT.01, quả cân F1) — ${E(f1.map(t => t.d.ma || t.d.ten).join(", "))}` });
     return out;
   }

@@ -820,6 +820,7 @@ function tbCheck_(loai, d, R, id) {
     if (!isYmd_(d.ngay)) throw new Error('Ghi ngày kiểm tra.');
     if (['M1', 'F1'].indexOf(d.so) < 0) throw new Error('Sổ kiểm tra cân không hợp lệ.');
     if (!d.khongSX && !(Array.isArray(d.rows) && d.rows.length)) throw new Error('Chưa có cân nào trong sổ kiểm tra.');
+    if (loai === 'KC' && d.khongSX && !String(d.lyDo || '').trim()) throw new Error('Ghi lý do hôm nay không sử dụng cân để đóng gói.');
     const trung = R.find(r => str_(r[1]) === 'KC' && str_(r[0]) !== String(id || '') && str_(r[6]) !== 'Đã xoá' && (() => { try { const x = JSON.parse(str_(r[3]) || '{}'); return x.so === d.so && x.ngay === d.ngay; } catch (e) { return false; } })());
     if (trung) throw new Error('Ngày ' + d.ngay.split('-').reverse().join('/') + ' đã có sổ kiểm tra cân này — mở sổ đó để sửa.');
   }
