@@ -192,6 +192,24 @@
     const seen = new Set(); return out.filter(x => !seen.has(x[0]) && seen.add(x[0]));
   }
 
+  /* ---------------- quy cách: gợi ý mẫu theo sổ, gợi ý theo mã bao bì ---------------- */
+  const QC_PH = { NHAN: "VD 100ml, 450ml, 1L, 1kg (dung tích / khối lượng sản phẩm)", TUI: "VD túi 350 × 250 mm · 1kg · cuộn màng 90 × 128 mm · 20ml", CHAI: "VD chai 100ml HDPE · nắp 24mm", THUNG: "VD 375 × 280 × 210 mm · 5 lớp · đựng 100 chai × 100ml" };
+  function qcGoiY(so, ma) {
+    const out = [], add = v => { v = String(v || "").replace(/\s+/g, " ").trim(); if (v && !out.some(x => x.toLowerCase() === v.toLowerCase())) out.push(v); };
+    const M = String(ma || "").trim().toUpperCase(), A = vt();
+    if (M) A.filter(x => x.loai === so && String(x.d.ma || "").toUpperCase() === M && x.d.quyCach).sort((a, b) => String(b.d.ngayNhap).localeCompare(String(a.d.ngayNhap))).forEach(x => add(x.d.quyCach));
+    const m = /^BB\.([A-Z]+)\.(.+)$/.exec(M), Q = (S.dg && S.dg.qc) || [], cd = x => typeof dgCode === "function" ? dgCode(x) : String(x || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (m && Q.length) { const k = m[1], c = cd(m[2]), by = f => Q.filter(q => cd(q[f]) === c);
+      const sz = q => { const l = +q.luong, u = String(q.dvl || "").toLowerCase(); if (!(l > 0)) return String(q.quyCach || "").replace(/^(chai|gói|can|xô|bao|hũ|túi)\s+/i, "");
+        return u === "ml" && l >= 1000 && l % 1000 === 0 ? l / 1000 + "L" : u === "g" && l >= 1000 && l % 1000 === 0 ? l / 1000 + "kg" : l + u; };
+      if (["NHAN", "NP", "TEMCHAI", "TEMTHUNG", "GOI", "TUI", "BAO"].includes(k)) by("nhan").forEach(q => add(so === "NHAN" ? sz(q) : (q.loai ? q.loai + " " : "") + sz(q)));
+      if (["CHAI", "CAN", "XO", "HU", "NAP"].includes(k)) by("chai").forEach(q => add((q.loai || "chai") + " " + sz(q))); by("chai").forEach(q => { if (q.moTaChai) add((q.loai || "chai") + " " + sz(q) + " · " + q.moTaChai); });
+      if (k === "HOP") by("hop").forEach(q => add(q.dvHop ? `đựng ${q.dvHop} ${q.loai || "chai"} × ${sz(q)}` : `hộp ${sz(q)}`));
+      if (k === "THUNG") by("thung").forEach(q => add(q.dvThung ? `đựng ${q.dvThung} ${q.loai || "chai"} × ${sz(q)}` : `thùng ${sz(q)}`)); }
+    const F = {}; A.filter(x => x.loai === so && x.d.quyCach).forEach(x => { const v = String(x.d.quyCach).trim(); F[v] = (F[v] || 0) + 1; });
+    Object.keys(F).sort((a, b) => F[b] - F[a]).forEach(add);
+    return out.slice(0, 14);
+  }
   /* ---------------- ghi mã bao bì mới vào Danh mục vật tư ---------------- */
   function bbNew(so, ma0, ten0, dv0, done, loai) {
     if (!QC() && !["Quản lý", "Kế toán"].includes(S.me.vaiTro)) { toast("Chỉ QC, Quản lý hoặc Kế toán ghi mã mới."); return; }
@@ -228,7 +246,7 @@
           ${fld(S0.loaiTxt, so !== "CHAI" ? sel("loaiVT", d.loaiVT, S0.loai, { NHAN: "— chọn loại nhãn —", TUI: "— chọn loại bao bì —", THUNG: "— chọn loại thùng / hộp —" }[so]) : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
           <div class="qa-ma" style="grid-column:1/-1"><label>Mã bao bì (Danh mục vật tư) *${inp("ma", d.ma, `list="qaMa" autocomplete="off" placeholder="Gõ hoặc chọn mã, VD ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}</label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<datalist id="qaMa">${bbCodes(so).map(i => `<option value="${E(i.ma)}">${E(i.ten)}</option>`).join("")}</datalist><small class="note qa-mah" id="qaMaH"></small></div>
           ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
-          ${fld(S0.qc, inp("quyCach", d.quyCach))}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
+          ${fld(S0.qc, inp("quyCach", d.quyCach, `list="qaQc" autocomplete="off" placeholder="${E(QC_PH[so] || "")}"`) + `<datalist id="qaQc">${qcGoiY(so, d.ma).map(v => `<option value="${E(v)}">`).join("")}</datalist><small class="note" id="qaQcH"></small>`)}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
           ${fld("Số lượng thực tế", inp("sl", d.sl, 'type="number" step="any" min="0"'))}${fld("Đơn vị", inp("dvt", d.dvt, 'list="qaDvt"') + dl("qaDvt", ["cái", "kg", "cuộn", "bó", "thùng"]))}
           ${fld("Tình trạng khi nhận", inp("tinhTrangKho", d.tinhTrangKho, 'list="qaTTK"') + dl("qaTTK", ["Bình thường", "Móp / méo", "Ướt", "Thiếu số lượng", "Rách bao gói"]))}
           <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
@@ -275,6 +293,15 @@
     const anhGet = async () => { if (!r || !r.id) return; try { anh = await api("webAnhQA", S.auth, r.id); } catch (e) { anh = anh || []; } if (bx.isConnected) anhPaint(); };
     const pull = () => { bx.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; d[k] = el.type === "checkbox" ? el.checked : el.value.trim(); });
       if (so === "TUI") { const n = +String(d.canSo || "").replace(",", "."), t = +String(d.canKL || "").replace(",", "."); d.tlTui = d.loaiVT === "Túi ép 3 biên" && n > 0 && t > 0 ? Math.round(t / n * 1000) / 1000 : ""; } };
+    /* quy cách theo mã bao bì: lần ghi trước của cùng mã → quy cách đóng gói (QuyCachDG) của mã nhãn / chai / hộp / thùng → các quy cách đã dùng trong sổ.
+       Ô còn trống (hoặc vẫn là số tự gợi ý) thì tự điền gợi ý đầu tiên; luôn sửa tay được. */
+    let qcAsk = 0;
+    const qcSug = fill => { const q = bx.querySelector('[data-k="quyCach"]'), L = bx.querySelector("#qaQc"), h = bx.querySelector("#qaQcH"); if (!q || !L) return;
+      if (!S.dg && !qcAsk && typeof dgLoad === "function" && /^BB\./i.test(String(d.ma || ""))) { qcAsk = 1; dgLoad().then(() => { if (bx.isConnected) qcSug(fill); }).catch(() => {}); }
+      const G = qcGoiY(so, d.ma); L.innerHTML = G.map(v => `<option value="${E(v)}">`).join("");
+      const first = G.length && d.ma ? G[0] : "", auto = q.dataset.auto || "";
+      if (fill && first && (!q.value.trim() || q.value === auto)) { q.value = first; q.dataset.auto = first; pull(); }
+      if (h) h.innerHTML = first && q.value === q.dataset.auto ? `Gợi ý theo mã <b>${E(String(d.ma || "").toUpperCase())}</b> — sửa được. Bấm vào ô để xem các quy cách khác.` : G.length ? "Bấm vào ô để chọn quy cách gợi ý." : ""; };
     /* túi ép 3 biên: hiện khối cân, tính TB 1 túi, cho biết số cân sẽ dùng cho mã hàng nào (mã bao bì BB.GOI.<mã nhãn> ↔ quy cách đóng gói) */
     let dgAsk = 0;
     const canUp = () => { const c = bx.querySelector("#qaCan"); if (!c) return; const on = d.loaiVT === "Túi ép 3 biên"; c.hidden = !on; if (!on) return;
@@ -302,7 +329,7 @@
       const ma = bx.querySelector('[data-k="ma"]'), maH = () => { const h = bx.querySelector("#qaMaH"); if (!h || !ma) return; const v = ma.value.trim(), it = bbBy(v), mp = !it && bbMap(v, so);
         h.innerHTML = !v ? "Bắt buộc. Chưa có mã trong Danh mục vật tư thì bấm <b>＋ Ghi mã mới</b> rồi chọn mã." : it ? `<span style="color:#2e7d32">✓ ${E(it.ten)}</span>` : mp ? `Mã cũ ${E(v)} → mã kho <b>${E(mp)}</b> <button type="button" class="btn small" id="qaMaMap">Dùng mã này</button>` : `<span style="color:#c62828">⚠ Mã ${E(v)} chưa có trong Danh mục vật tư — bấm <b>＋ Ghi mã mới</b> để tạo mã trước.</span>`;
         const mb = bx.querySelector("#qaMaMap"); if (mb) mb.onclick = () => { ma.value = mp; ma.dispatchEvent(new Event("change")); }; };
-      if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi; } pull(); maH(); }); maH(); }
+      if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi; } pull(); maH(); qcSug(true); }); maH(); qcSug(false); }
       const mn = bx.querySelector("#qaMaNew"); if (mn) mn.onclick = () => { pull(); bbNew(so, d.ma, d.ten, d.dvt, m => { d.ma = m; re(); toast("Đã ghi mã mới " + m + " vào Danh mục vật tư"); }, d.loaiVT); };
       bx.querySelectorAll("[data-kl]").forEach(x => x.onclick = () => { pull(); d.ketLuan = d.ketLuan === x.dataset.kl ? "" : x.dataset.kl; re(); });
       const all = bx.querySelector('[data-a="all"]'); if (all) all.onclick = () => { pull(); const S0 = SO[so];
