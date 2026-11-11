@@ -210,10 +210,11 @@ function ttMap_() {
   return T;
 }
 const needQC_ = (it, cfg) => !!it && it.theoLo && cfg.nhomQC.indexOf(it.nhom) >= 0;
-/** Chặn xuất lô chưa QC đạt hoặc đã hết hạn. */
+/** Chặn xuất lô chưa QC đạt hoặc đã hết hạn. Hàng ở Kho hàng xử lý (quá hạn, chưa đạt… đang chờ xử lý) thì không chặn:
+    xuất đi hủy, trả nhà cung cấp hay đưa vào lệnh phối lại đều được. */
 function checkLotOut_(it, lo, L, ngay) {
   const x = L[it.ma] && L[it.ma][lo];
-  if (!x) return;
+  if (!x || dbOf_(it) === 'xl') return;
   const ten = it.ma + ' lô ' + (lo || '(chưa có lô)');
   if (x.qc && x.qc !== 'Đạt') throw new Error(ten + ' đang "' + x.qc + '" — QC chưa duyệt, không xuất được.');
   if (x.hsd && x.hsd < ngay) throw new Error(ten + ' đã hết hạn (HSD ' + x.hsd.split('-').reverse().join('/') + '). Cần QC kiểm lại và gia hạn trước khi xuất.');
@@ -299,7 +300,7 @@ function outWarn_(g, it, lo, kg, L, bal, ngay, noAcc) {
     const x = (L[it.ma] || {})[lo];
     const ton = x ? x.ton : 0;
     if (used > ton + 1e-6) g.msg['v' + k] = ten + ': xuất ' + f(used) + ' kg nhưng sổ chỉ còn ' + f(Math.max(ton, 0)) + ' kg → lô sẽ âm ' + f(used - Math.max(ton, 0)) + ' kg.';
-    if (x && x.hsd) {
+    if (x && x.hsd && dbOf_(it) !== 'xl') {
       const o = Object.values(L[it.ma] || {}).filter(y => y.lo !== lo && y.ton > 1e-6 && y.hsd && y.hsd >= ngay && y.hsd < x.hsd && (!y.qc || y.qc === 'Đạt'))
         .sort((p, q) => p.hsd.localeCompare(q.hsd))[0];
       if (o) g.msg['f' + k] = ten + ' (HSD ' + dmy(x.hsd) + '): còn lô ' + (o.lo || '(chưa có lô)') + ' hết hạn sớm hơn (HSD ' + dmy(o.hsd) + ', tồn ' + f(o.ton) + ' kg), nên xuất lô đó trước.';
@@ -1203,7 +1204,7 @@ function alertData_() {
   Object.keys(L).forEach(ma => Object.values(L[ma]).forEach(x => {
     if (x.ton <= 1e-6) return;
     const it = items.find(i => i.ma === ma) || {};
-    if (x.hsd) { const d = dd(x.hsd, today); if (d <= cfg.hetHan) exp.push({ ma, ten: it.ten, lo: x.lo, hsd: x.hsd, con: d, ton: x.ton }); }
+    if (x.hsd && dbOf_(it) !== 'xl') { const d = dd(x.hsd, today); if (d <= cfg.hetHan) exp.push({ ma, ten: it.ten, lo: x.lo, hsd: x.hsd, con: d, ton: x.ton }); } /* hàng ở Kho hàng xử lý: không nhắc hạn */
     if (x.qc === 'Chờ kiểm') cho.push({ ma, ten: it.ten, lo: x.lo, ton: x.ton, ngay: x.qcNgay });
   }));
   orders_().forEach(o => { if (o.trangThai === 'Đang SX' && o.ngay && dd(today, o.ngay) > cfg.treo) treo.push({ so: o.so, maSP: o.maSP, ngay: o.ngay, ngayTreo: dd(today, o.ngay) }); });
