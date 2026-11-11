@@ -743,6 +743,7 @@ function webQASave(a, o) {
     if (i >= 0 && str_(R[i][6]) === 'Đã xoá') throw new Error('Phiếu đã xoá — khôi phục trước rồi mới sửa.');
     if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
     /* QC nhập kho bao bì luôn khi ghi sổ kiểm: phiếu nhập đi kèm (máy chủ giữ mã phiếu, máy không tự ghi được) */
+    if (o.loai === 'TUI') qaCanLech_(R, id, d); /* cân túi rỗng lệch quá ngưỡng so với lần cân trước cùng mã → ghi d.canLech */
     let pn = null;
     if (QA_VT.indexOf(o.loai) >= 0) { QA_PN_K_.forEach(k => { if (cu && cu[k] !== undefined && cu[k] !== '') d[k] = cu[k]; else delete d[k]; }); pn = qaPN_(me, id, o.loai, d, false); }
     const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
@@ -753,6 +754,25 @@ function webQASave(a, o) {
     const ct = o.loai === 'TUI' ? qaCanTui_(me, id, d) : null; /* túi ép 3 biên: số cân túi rỗng → khối lượng bao bì theo mã hàng */
     return { id, d, canQC: ct ? ct.qcs : [], cbb: ct && ct.ch ? cbbRows_() : null, pn: pn ? pn.doi : '' };
   } finally { lock.releaseLock(); }
+}
+/* BM.02 túi ép 3 biên: so khối lượng trung bình 1 túi rỗng với LẦN CÂN TRƯỚC của cùng mã bao bì.
+   Lệch quá ngưỡng (Báo cáo → Cảnh báo: "Cân túi rỗng lệch quá (%)", mặc định 5 %) → d.canLech = { p: % lệch, tb: g lần trước, ngay, ncc, ng: ngưỡng }
+   để phiếu, danh sách và thông báo cảnh báo. Trong ngưỡng / chưa có lần trước / không phải túi ép 3 biên → bỏ d.canLech. */
+function qaCanLech_(R, id, d) {
+  delete d.canLech;
+  const v = num_(d.tlTui), ma = String(d.ma || '').trim().toUpperCase();
+  if (d.loaiVT !== 'Túi ép 3 biên' || !(v > 0) || !ma) return;
+  const ngay = isYmd_(d.ngayKT) ? d.ngayKT : (isYmd_(d.ngayNhap) ? d.ngayNhap : '');
+  let p = null;
+  (R || []).forEach(r => { const rid = str_(r[0]); if (str_(r[1]) !== 'TUI' || rid === id || str_(r[6]) === 'Đã xoá') return;
+    let x; try { x = JSON.parse(str_(r[3]) || '{}'); } catch (e) { return; }
+    if (x.loaiVT !== 'Túi ép 3 biên' || !(num_(x.tlTui) > 0) || String(x.ma || '').trim().toUpperCase() !== ma) return;
+    const n = isYmd_(x.ngayKT) ? x.ngayKT : (isYmd_(x.ngayNhap) ? x.ngayNhap : '');
+    if (ngay && n && n > ngay) return; if (ngay && n === ngay && rid > id) return; /* chỉ so với lần cân trước đó */
+    if (!p || n > p.ngay || (n === p.ngay && rid > p.id)) p = { id: rid, ngay: n, tb: num_(x.tlTui), ncc: String(x.ncc || '') }; });
+  if (!p) return;
+  const ng = settings_().canLech || 5, pct = Math.round((v - p.tb) / p.tb * 10000) / 100;
+  if (Math.abs(pct) > ng) d.canLech = { p: pct, tb: p.tb, ngay: p.ngay, ncc: p.ncc.slice(0, 80), ng: ng };
 }
 /* BM.02 túi ép 3 biên: QC cân túi rỗng → khối lượng bao bì (klBB, g) cho mọi mã quy cách đóng gói dùng túi này
    (mã bao bì BB.GOI.<mã nhãn> ↔ cột Mã nhãn của QuyCachDG). Phiếu BM.05 lấy lần cân mới nhất của mã hàng làm mặc định.

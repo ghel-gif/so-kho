@@ -350,6 +350,9 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .qa-dlg .qa-nk-g[hidden],.qa-dlg .qa-nk label[hidden],.qa-nk small[hidden]{display:none!important}
 .qa-nk small{line-height:1.5}.qa-nk-dup{display:inline-block;margin-top:4px;color:#b45309}.qa-nk-dup .btn{margin-left:4px}
 .qa-pn{color:#15803d;white-space:nowrap}
+/* cân túi rỗng lệch quá ngưỡng so với lần cân trước */
+.qa-can-ss{display:block}.qa-can-ss:empty{display:none}.qa-can-ss.bad{color:#c62828;padding:6px 10px;border-radius:8px;background:rgba(198,40,40,.08);border:1.5px solid rgba(198,40,40,.45)}
+.qa-lech{color:#c62828;white-space:nowrap}:root[data-theme="dark"] .qa-can-ss.bad,:root[data-theme="dark"] .qa-lech{color:#fca5a5}
 :root[data-theme="dark"] .qa-nk-c b,:root[data-theme="dark"] .qa-pn{color:#86efac}:root[data-theme="dark"] .qa-nk-dup{color:#fbbf24}
 .qa-dlg .qa-kl .btn.ok{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .qa-dlg .qa-kl .btn.bad{background:#c62828;color:#fff;border-color:#c62828}

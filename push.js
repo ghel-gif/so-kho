@@ -57,6 +57,8 @@
       } catch (e) {} }, 1500);
       else if (fn === "createPackOrder") send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.sp, "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
       else if (fn === "setQC" && (args[3] === "Đạt" || args[3] === "Không đạt")) send((args[3] === "Đạt" ? "✅ QC Đạt: " : "⛔ QC Không đạt: ") + args[1], "Lô " + args[2] + (args[4] ? " · " + args[4] : "") + " · " + me(), { roles: KHO, ten: ["Phan Thị Cẩm Tiên"] }, "qc-" + args[1] + args[2]);
+      else if (fn === "webQASave" && o.loai === "TUI" && r && r.d && r.d.canLech && !(o.d && o.d.canLech && o.d.canLech.p === r.d.canLech.p)) { const c = r.d.canLech, f = v => String(v).replace(".", ",");
+        send("⚖ Cân túi rỗng lệch " + (c.p > 0 ? "+" : "") + f(c.p) + " %: " + (r.d.ma || ""), [(r.d.ten || ""), f(r.d.tlTui) + " g/túi, lần trước " + f(c.tb) + " g", "ngưỡng " + f(c.ng) + " %", "cân bởi " + (r.d.nguoiKT || me())].filter(Boolean).join(" · "), { roles: QL }, "canlech-" + r.id); }
       else if (fn === "saveMove" && o.loai === "Nhập" && r && r.qa) send("📦 Bao bì về — chờ QC kiểm: " + (o.ma || ""), [o.soLuong ? o.soLuong + " " + ((((typeof S !== "undefined" && S.items) || []).find(i => i.ma === o.ma) || {}).donVi || "") : "", o.ncc ? "NCC " + o.ncc : "", "nhập bởi " + me(), "mở IQC bao bì"].filter(Boolean).join(" · "), { qc: true }, "bb-" + r.qa);
       else if (fn === "saveMove" && o.loai === "Nhập") send("Nhập kho: " + (o.ma || ""), [o.lo ? "Lô " + o.lo : "", o.soLuong ? o.soLuong + " kg" : "", "nhập bởi " + me(), "kiểm QC nếu cần"].filter(Boolean).join(" · "), { qc: true }, "nhap-" + o.ma + o.lo);
     } catch (e) {}

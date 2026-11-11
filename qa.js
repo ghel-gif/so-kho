@@ -109,7 +109,7 @@
         <p class="note" style="margin:0 0 8px">${cho.length ? `<b style="color:#d97706">${cho.length} lô chờ kiểm</b> (hạn 48 giờ, hàng gấp 60 phút)` : "Không có lô chờ kiểm"} · ${cxn.length ? `<b style="color:#7c3aed">${cxn.length} lô chờ TP. QA/QC xác nhận</b>` : "không có lô chờ xác nhận"}. Lô chưa xác nhận luôn hiện, không theo tháng.</p>
         <div class="list">${L.length ? L.map(r => { const d = r.d, t = ttOf(r);
           return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh chụp khi nhận hàng">📷 ${r.anh}</span>` : ""}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
-          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${d.tlTui ? " · ⚖ " + N(d.tlTui) + " g/túi" : ""}${d.pnId ? ` · <span class="qa-pn" title="Phiếu nhập ${E(d.pnId)}${d.pnNguoi ? " · " + E(d.pnNguoi) : ""}">📥 nhập kho ${N(d.pnSl)} ${E(d.pnDv || "")}${d.tuPN ? " (phiếu của " + E(d.pnNguoi || "kho") + ")" : ""}</span>` : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
+          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${d.tlTui ? " · ⚖ " + N(d.tlTui) + " g/túi" : ""}${d.canLech ? ` · <b class="qa-lech" title="Lần cân trước ${N(d.canLech.tb)} g (${D(d.canLech.ngay)}) — ngưỡng ${N(d.canLech.ng)} %">⚠ cân lệch ${d.canLech.p > 0 ? "+" : ""}${N(d.canLech.p)} %</b>` : ""}${d.pnId ? ` · <span class="qa-pn" title="Phiếu nhập ${E(d.pnId)}${d.pnNguoi ? " · " + E(d.pnNguoi) : ""}">📥 nhập kho ${N(d.pnSl)} ${E(d.pnDv || "")}${d.tuPN ? " (phiếu của " + E(d.pnNguoi || "kho") + ")" : ""}</span>` : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
           : `<div class="empty"><b>Chưa có lô bao bì nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi bao bì về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>
         ${delBox(R.filter(x => x.xoa && SO[x.loai]).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap))), "data-id", x => `<b>${SO[x.loai].bm.slice(0, 5)}</b> · ${E(x.d.ten || "")} · về ${D(x.d.ngayNhap)}`)}`;
     } else if (view === "ngay") {
@@ -175,6 +175,14 @@
     if (n) toast(`Đã đính kèm ${n} ảnh vào lô bao bì`); return n;
   }
   async function save(o, msg) { const r = await api("webQASave", S.auth, o); if (msg !== false) toast(msg || "Đã lưu"); return r; }
+  /* BM.02 túi ép 3 biên — cân túi rỗng: so khối lượng TB 1 túi với lần cân trước của cùng mã bao bì (giống máy chủ: qaCanLech_) */
+  const canNg = () => (typeof S !== "undefined" && S.nguong && +S.nguong.canLech) || 5, ymdOk = v => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
+  const canLech = (d, id) => { const ma = String(d.ma || "").trim().toUpperCase(); if (d.loaiVT !== "Túi ép 3 biên" || !(+d.tlTui > 0) || !ma) return null;
+    const ng = ymdOk(d.ngayKT) ? d.ngayKT : ymdOk(d.ngayNhap) ? d.ngayNhap : ""; let p = null;
+    R.forEach(x => { if (x.loai !== "TUI" || x.xoa || x.id === id || !x.d || x.d.loaiVT !== "Túi ép 3 biên" || !(+x.d.tlTui > 0) || String(x.d.ma || "").trim().toUpperCase() !== ma) return;
+      const n = ymdOk(x.d.ngayKT) ? x.d.ngayKT : ymdOk(x.d.ngayNhap) ? x.d.ngayNhap : ""; if (ng && n && n > ng) return; if (ng && n === ng && id && x.id > id) return;
+      if (!p || n > p.ngay || (n === p.ngay && x.id > p.id)) p = { id: x.id, ngay: n, tb: +x.d.tlTui, ncc: x.d.ncc || "" }; });
+    if (!p) return null; const pct = Math.round((d.tlTui - p.tb) / p.tb * 10000) / 100; return { p: pct, tb: p.tb, ngay: p.ngay, ncc: p.ncc, ng: canNg(), vuot: Math.abs(pct) > canNg() }; };
   /* thanh nút chung của phiếu QA/QC (giống BM.06 / BM.08): Lưu = phiếu mới · Cập nhật = phiếu đã lưu · Xoá · Khôi phục (phiếu đã xoá) */
   const canRes = r => !!r && (TP() || r.nguoi === S.me.ten || !!(r.d && r.d.tuPN && QC())); /* phiếu kiểm tự tạo từ phiếu nhập kho: QC nào cũng xoá / khôi phục được */
   const acts = (r, canW, canDel) => r && r.xoa
@@ -270,6 +278,7 @@
           <p class="note" style="grid-column:1/-1;margin:0">Lỗi nặng: ${E(S0.nang)}. · Lỗi nhẹ: ${E(S0.nhe)}.</p>
           ${so === "TUI" ? `<div class="qa-can" id="qaCan" style="grid-column:1/-1"${d.loaiVT === "Túi ép 3 biên" ? "" : " hidden"}><div class="qa-can-h"><b>⚖ Cân túi rỗng</b><small>Túi ép 3 biên: cân vài túi rỗng, ghi tổng khối lượng. Số trung bình 1 túi được dùng sẵn làm <b>khối lượng bao bì</b> ở phiếu thông tin đóng gói (BM.05) của các mã hàng dùng túi này.</small></div>
             <div class="qa-can-g">${fld("Số túi cân", inp("canSo", d.canSo || "10", 'type="number" min="1" step="1" inputmode="numeric"'))}${fld("Tổng khối lượng cân (g)", inp("canKL", d.canKL, 'type="number" min="0" step="any" inputmode="decimal" placeholder="VD 123,5"'))}<div class="qa-can-tb"><span>TB 1 túi</span><b id="qaTlTui">—</b></div></div>
+            <small class="note qa-can-ss" id="qaCanSS"></small>
             <small class="note" id="qaCanQC"></small></div>` : ""}
           ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="5" placeholder="Mô tả lỗi: lỗi gì, ở đâu, bao nhiêu cái, mức độ… — ô tự giãn khi ghi dài">${E(d.ghiChu || "")}</textarea>`, true)}
           ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}" data-opt`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
@@ -331,6 +340,9 @@
     let dgAsk = 0;
     const canUp = () => { const c = bx.querySelector("#qaCan"); if (!c) return; const on = d.loaiVT === "Túi ép 3 biên"; c.hidden = !on; if (!on) return;
       const tb = bx.querySelector("#qaTlTui"); if (tb) tb.textContent = d.tlTui ? N(d.tlTui) + " g" : "—";
+      { const ss = bx.querySelector("#qaCanSS"), L = canLech(d, r && r.id); /* so với lần cân trước của cùng mã bao bì */
+        if (ss) { ss.classList.toggle("bad", !!(L && L.vuot)); ss.innerHTML = !d.tlTui ? "" : !L ? "Chưa có lần cân trước của mã này để so."
+          : `Lần cân trước: <b>${N(L.tb)} g</b> (${D(L.ngay)}${L.ncc ? " · " + E(L.ncc) : ""}) — ` + (L.vuot ? `<b>⚠ lệch ${L.p > 0 ? "+" : ""}${N(L.p)} %, quá ngưỡng ${N(L.ng)} %</b>. Kiểm lại số túi cân và tổng khối lượng; nếu cân đúng thì ghi lý do ở ô Ghi chú (đổi nhà cung cấp, đổi độ dày màng…).` : `lệch ${L.p > 0 ? "+" : ""}${N(L.p)} % (trong ngưỡng ${N(L.ng)} %).`); } }
       const n = bx.querySelector("#qaCanQC"); if (!n) return; const m = /^BB\.(?:GOI|TUI|BAO)\.(.+)$/i.exec(String(d.ma || "").trim());
       if (!m) { n.innerHTML = "Chọn <b>mã bao bì</b> dạng BB.GOI.&lt;mã nhãn&gt; (VD BB.GOI.DFZ-D6) để số cân gắn đúng mã hàng."; return; }
       if (!S.dg || !S.dg.qc) { n.textContent = "Đang tìm mã hàng dùng túi này…"; if (!dgAsk && typeof dgLoad === "function") { dgAsk = 1; dgLoad().then(() => { if (bx.isConnected) canUp(); }).catch(() => { n.textContent = ""; }); } return; }
@@ -382,6 +394,9 @@
           if (!it) { toast("Mã " + d.ma + " chưa có trong Danh mục vật tư — bấm “＋ Ghi mã mới” để tạo mã trước."); f(); return; } d.ma = it.ma; }
         if (!d.ten) { toast("Ghi " + SO[so].ten.toLowerCase() + "."); return; }
         if (!d.ketQua && so === "NHAN" && d.ketLuan) d.ketQua = kqTxt(d); if (d.loiNang !== "" || d.loiNhe !== "") d.soLoi = soLoi(d);
+        if (so === "TUI") { const L = canLech(d, r && r.id); /* cân túi rỗng lệch quá ngưỡng: hỏi lại trước khi lưu (không hỏi lại nếu số cân này đã lưu kèm cảnh báo) */
+          if (L && L.vuot && !(r && r.d && r.d.canLech && +r.d.tlTui === +d.tlTui) && typeof askConfirm === "function" && !await askConfirm([`Khối lượng trung bình 1 túi: ${N(d.tlTui)} g — lệch ${L.p > 0 ? "+" : ""}${N(L.p)} % so với lần cân trước (${N(L.tb)} g, ngày ${D(L.ngay)}${L.ncc ? ", " + L.ncc : ""}).`, `Ngưỡng cho phép: ${N(L.ng)} %. Số này sẽ thành khối lượng bao bì ở BM.05 của các mã hàng dùng túi này.`],
+            { t: "Cân túi rỗng lệch nhiều so với lần trước", n: "Kiểm lại <b>số túi cân</b> và <b>tổng khối lượng</b>. Nếu cân đúng (đổi nhà cung cấp, đổi độ dày màng…) thì ghi lý do ở ô Ghi chú rồi bấm <b>Vẫn lưu</b>.", no: "Quay lại sửa", ok: "Vẫn lưu" })) return; }
         btn.disabled = true; const moi = !r;
         const m0 = d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô bao bì";
         try { const o = await save({ id: r && r.id, loai: so, d }, false);
