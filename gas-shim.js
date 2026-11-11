@@ -188,7 +188,7 @@ function webThemAnhQA(a, id, fname, fid) {
   log_(me, 'Ảnh kiểm bao bì', (r.d.ma || r.d.ten || r.id) + ' · về ngày ' + (r.d.ngayNhap || ''), fname);
   return (anMap_()['QA:' + r.id] || []).length;
 }
-function webAnhQA(a, id) { auth_(a); return (anMap_()['QA:' + String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi })); }
+function webAnhQA(a, id) { auth_(a); return (anMap_()['QA:' + String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 function webKiemHoSo(a, ma, lo, loai, mime, size, so) {
   const me = auth_(a); hsSoChk_(loai, so); /* thiếu số phiếu thì dừng trước khi tải file */
   if (!me.qc) throw new Error('Tài khoản ' + me.ten + ' chưa có quyền QC.');

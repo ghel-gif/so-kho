@@ -436,7 +436,19 @@ function qpNhom_() { return (str_(settings_raw_('Nhóm duyệt QC theo phiếu n
 function qpTu_() { return str_(settings_raw_('Duyệt QC phiếu nhập từ ngày')) || '2026-10-19'; }
 const qpCan_ = (it, nh, m, tu) => !!it && !it.theoLo && nh.indexOf(it.nhom) >= 0 && m.loai === 'Nhập' && !m.lenh && !m.trangThai && m.ngay >= tu;
 function qpMap_() { const o = {}; if (!sheet_(QP_SH)) return o; rows_(QP_SH).forEach(r => { const id = str_(r[0]); if (id) o[id] = { tt: str_(r[2]), ngay: str_(r[3]), nguoi: str_(r[4]), ghiChu: str_(r[5]) }; }); return o; }
-function anMap_() { const o = {}; if (!sheet_(AN_SH)) return o; rows_(AN_SH).forEach(r => { const id = str_(r[0]); if (id) (o[id] = o[id] || []).push({ ma: str_(r[1]), lo: str_(r[2]), ten: str_(r[3]), fid: str_(r[5]), nguoi: str_(r[6]) }); }); return o; }
+function anMap_() { const o = {}; if (!sheet_(AN_SH)) return o; rows_(AN_SH).forEach(r => { const id = str_(r[0]); if (id) (o[id] = o[id] || []).push({ ma: str_(r[1]), lo: str_(r[2]), ten: str_(r[3]), fid: str_(r[5]), nguoi: str_(r[6]), xoay: anXoay_(r[8]) }); }); return o; }
+/* hướng xoay đã lưu của ảnh (cột 9 trang AnhNhap): 0 / 90 / 180 / 270 độ — ảnh gốc giữ nguyên, chỉ nhớ hướng để ai mở cũng thấy đúng chiều */
+const anXoay_ = v => { const g = ((Math.round(num_(v) / 90) * 90) % 360 + 360) % 360; return g || 0; };
+/** Lưu hướng xoay của 1 ảnh nhập kho / ảnh kiểm bao bì. Giữ nguyên file ảnh; hướng đi theo ảnh cả khi ảnh được dời sang Google Drive. */
+function webAnhXoay(a, fid, goc) {
+  auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  const sh = sheet_(AN_SH), R = sh ? rows_(AN_SH) : [], i = R.findIndex(r => str_(r[5]) === String(fid || ''));
+  if (!fid || i < 0) throw new Error('Không tìm thấy ảnh (có thể ảnh vừa được dời sang Drive) — đóng ảnh rồi mở lại.');
+  const g = anXoay_(goc);
+  if (!str_(sh.getRange(1, 9).getValue())) sh.getRange(1, 9).setValue('Xoay (độ)').setFontWeight('bold');
+  sh.getRange(i + 2, 9).setValue(g || '');
+  return g;
+}
 function qpCho_(items, moves) {
   const IM = {}, nh = qpNhom_(), tu = qpTu_(), Q = qpMap_(); items.forEach(i => IM[i.ma] = i);
   return moves.filter(m => qpCan_(IM[m.ma], nh, m, tu) && !(Q[m.id] && Q[m.id].tt && Q[m.id].tt !== 'Chờ duyệt')).length;
@@ -448,7 +460,7 @@ function getQCPhieu(a) {
   return { nhom: nh, tu: tu, list: moves_().filter(m => m.loai === 'Nhập' && !m.trangThai && !m.lenh && m.ngay >= lim && (qpCan_(IM[m.ma], nh, m, tu) || A[m.id]))
     .sort((x, y) => (y.ngay + y.id).localeCompare(x.ngay + x.id)).slice(0, 300)
     .map(m => ({ id: m.id, ngay: m.ngay, ma: m.ma, ten: (IM[m.ma] || {}).ten || '', nhom: (IM[m.ma] || {}).nhom || '', kg: m.kg, lo: m.lo, ncc: m.ncc, chungTu: m.chungTu, ghiChu: m.ghiChu, nguoiLap: m.nguoiLap,
-      can: qpCan_(IM[m.ma], nh, m, tu), qc: Q[m.id] || null, anh: (A[m.id] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi })) })) };
+      can: qpCan_(IM[m.ma], nh, m, tu), qc: Q[m.id] || null, anh: (A[m.id] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })) })) };
 }
 function setQCPhieu(a, id, tt, ghiChu) {
   const me = auth_(a);
@@ -493,7 +505,7 @@ function getAnh(a, fid) {
 function getAnhLo(a, ma, lo) {
   auth_(a);
   if (!sheet_(AN_SH)) return [];
-  return rows_(AN_SH).filter(r => str_(r[1]) === ma && str_(r[2]) === String(lo || '')).map(r => ({ fid: str_(r[5]), ten: str_(r[3]), nguoi: str_(r[6]) }));
+  return rows_(AN_SH).filter(r => str_(r[1]) === ma && str_(r[2]) === String(lo || '')).map(r => ({ fid: str_(r[5]), ten: str_(r[3]), nguoi: str_(r[6]), xoay: anXoay_(r[8]) }));
 }
 
 /* ===== CHUYỂN KHO: sang Kho hàng xử lý (mã "XL.<mã>": BTP quá hạn, tech dôi dư, hàng quá hạn, chưa đạt…) ·
@@ -745,7 +757,7 @@ function updateMove(a, id, d) {
     return true;
   } finally { lock.releaseLock(); }
 }
-function getAnhPhieu(a, id) { auth_(a); return (anMap_()[String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi })); }
+function getAnhPhieu(a, id) { auth_(a); return (anMap_()[String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 
 function saveItem(a, it, isNew) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]);

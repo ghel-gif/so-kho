@@ -297,14 +297,14 @@
     const w = dlg((isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm, draw(), true), bx = w.querySelector(".cfm-box");
     const anhPaint = () => {
       const L = bx.querySelector("#qaAnhL"), n = bx.querySelector("#qaAnhN"); if (!L) return; const A = anh || [];
-      L.innerHTML = A.map(x => `<a class="anh" data-fid="${E(x.fid)}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>`).join("")
+      L.innerHTML = A.map(x => `<a class="anh" data-fid="${E(x.fid)}" data-xoay="${+x.xoay || 0}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>`).join("")
         + pend.map((p, i) => `<span class="anh qa-pend" title="${E(p.f.name)} — chưa lưu"><img alt="" src="${p.url}"><button type="button" class="qa-px" data-px="${i}" aria-label="Bỏ ảnh này">✕</button></span>`).join("");
       L.hidden = !A.length && !pend.length;
       if (A.length && typeof anhLoad === "function") anhLoad(L);
       L.querySelectorAll("[data-px]").forEach(b => b.onclick = e => { e.stopPropagation(); const p = pend.splice(+b.dataset.px, 1)[0]; if (p) URL.revokeObjectURL(p.url); anhPaint(); });
       /* ảnh vừa chụp (chưa lưu) cũng bấm vào để xem lớn, phóng to, xoay */
       L.querySelectorAll(".qa-pend img").forEach(im => im.onclick = e => { e.stopPropagation(); if (typeof anhZoom === "function") anhZoom(im.src, [...L.querySelectorAll("img")].map(x => x.src)); });
-      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để xem lớn, phóng to, xoay. Ảnh lưu trên web 45 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
+      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để xem lớn, phóng to, xoay (xoay xong bấm Lưu hướng xoay để lần sau khỏi xoay lại). Ảnh lưu trên web 45 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
         : pend.length ? `<b>${pend.length} ảnh</b> sẽ tải lên khi bấm <b>Lưu</b> · bấm ảnh để xem lớn.` : "Chụp xong, ảnh tải lên khi bấm Lưu.";
     };
     const anhGet = async () => { if (!r || !r.id) return; try { anh = await api("webAnhQA", S.auth, r.id); } catch (e) { anh = anh || []; } if (bx.isConnected) anhPaint(); };
