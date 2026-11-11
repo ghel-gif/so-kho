@@ -787,11 +787,13 @@ function recipes_() {
   return r;
 }
 
+/* lệnh đã hoàn thành được Quản lý chấp nhận lệch định mức (VD lệnh dùng hết tồn nhũ): {l: lý do, n: người, t: lúc} */
+const lechOf_ = v => { const s = str_(v); if (!s) return null; try { const o = JSON.parse(s); return o && o.l ? o : null; } catch (e) { return { l: s, n: '', t: '' }; } };
 function orders_() {
   return rows_(SH.LX).filter(r => str_(r[0])).map(r => ({
     so: str_(r[0]), ngay: str_(r[1]), maSP: str_(r[2]), slDuKien: num_(r[3]), trangThai: str_(r[4]) || 'Đang SX',
     ngayHT: str_(r[5]), slThucTe: num_(r[6]), nguoiLap: str_(r[7]), nguoiHT: str_(r[8]), ghiChu: str_(r[9]),
-    khachHang: str_(r[10]), nguoiSX: str_(r[11]), qcSX: str_(r[12]), tyTrong: num_(r[13]), loGC: str_(r[14]), nsxGC: str_(r[15])
+    khachHang: str_(r[10]), nguoiSX: str_(r[11]), qcSX: str_(r[12]), tyTrong: num_(r[13]), loGC: str_(r[14]), nsxGC: str_(r[15]), lechOK: lechOf_(r[16])
   }));
 }
 /** Lệnh gia công (số lệnh bắt đầu bằng GC): BTP theo dõi bằng số lô + NSX do người nhập ghi (theo khách), không lấy số lệnh / ngày hoàn thành. */
@@ -802,7 +804,7 @@ function gcIn_(o) {
   return [lo, nsx];
 }
 /** Cột K–M trang LenhSX: khách hàng, người sản xuất, QC theo dõi SX (in lên thẻ nhận diện BTP). */
-function lxHead_() { const sh = sheet_(SH.LX); if (!str_(sh.getRange(1, 11).getValue())) sh.getRange(1, 11, 1, 3).setValues([['Khách hàng', 'Người sản xuất', 'QC theo dõi SX']]).setFontWeight('bold'); if (!str_(sh.getRange(1, 14).getValue())) sh.getRange(1, 14).setValue('Tỷ trọng (g/ml)').setFontWeight('bold'); if (!str_(sh.getRange(1, 15).getValue())) sh.getRange(1, 15, 1, 2).setValues([['Số lô (lệnh GC)', 'NSX (lệnh GC)']]).setFontWeight('bold'); }
+function lxHead_() { const sh = sheet_(SH.LX); if (!str_(sh.getRange(1, 11).getValue())) sh.getRange(1, 11, 1, 3).setValues([['Khách hàng', 'Người sản xuất', 'QC theo dõi SX']]).setFontWeight('bold'); if (!str_(sh.getRange(1, 14).getValue())) sh.getRange(1, 14).setValue('Tỷ trọng (g/ml)').setFontWeight('bold'); if (!str_(sh.getRange(1, 15).getValue())) sh.getRange(1, 15, 1, 2).setValues([['Số lô (lệnh GC)', 'NSX (lệnh GC)']]).setFontWeight('bold'); if (!str_(sh.getRange(1, 17).getValue())) sh.getRange(1, 17).setValue('Chấp nhận lệch định mức').setFontWeight('bold'); }
 /** BTP dạng lỏng (SC, EC, SL, OD, FS, EW, ME, SE, CS, DC): bắt buộc ghi tỷ trọng khi lập lệnh. */
 const isLiq_ = sp => !!sp && /\d\s*(SC|EC|SL|OD|FS|EW|ME|SE|CS|DC)\b/i.test(sp.ten || '');
 function ttIn_(v, sp, batBuoc) {
@@ -998,6 +1000,20 @@ function completeOrder(a, so, d) {
   } finally { lock.releaseLock(); }
 }
 
+/** Quản lý chấp nhận lệch định mức cho lệnh đã hoàn thành (ghi lý do). Lệnh được chấp nhận: hết cảnh báo lệch, không tính vào báo cáo hao hụt. Lý do trống = bỏ chấp nhận. */
+function setOrderLech(a, so, lyDo) {
+  const me = auth_(a, [ROLES.QL]); needCT_(me);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const row = orderRow_(so), od = orders_().find(x => x.so === so);
+    if (!od) throw new Error('Không tìm thấy lệnh ' + so + '.');
+    if (od.trangThai !== 'Hoàn thành') throw new Error('Chỉ chấp nhận lệch định mức cho lệnh đã hoàn thành.');
+    const l = String(lyDo || '').trim().slice(0, 300), v = l ? JSON.stringify({ l, n: me.ten, t: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm') }) : '';
+    lxHead_(); sheet_(SH.LX).getRange(row, 17).setValue(v);
+    log_(me, l ? 'Chấp nhận lệch định mức' : 'Bỏ chấp nhận lệch định mức', so, l);
+    return { so, lechOK: lechOf_(v) };
+  } finally { lock.releaseLock(); }
+}
 function reopenOrder(a, so) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
@@ -1011,6 +1027,7 @@ function reopenOrder(a, so) {
     }
     const lx = sheet_(SH.LX);
     lx.getRange(row, 5, 1, 3).setValues([['Đang SX', '', '']]);
+    if (str_(lx.getRange(row, 17).getValue())) lx.getRange(row, 17).setValue(''); /* mở lại lệnh: bỏ chấp nhận lệch cũ, hoàn thành lại thì xét lại */
     lx.getRange(row, 9).setValue('');
     log_(me, 'Mở lại lệnh SX', so, 'Huỷ các phiếu xuất/nhập của lệnh');
     return true;
@@ -1162,7 +1179,7 @@ function getVariance(a, tu, den) {
     const u = used[o.so] || {}, r = ct[o.maSP] || [], lines = [];
     r.forEach(l => { const it = find(l.ma); lines.push({ ma: l.ma, ten: it.ten || '', donVi: it.donVi || '', heSo: it.heSo || 1, dm: l.dm * o.slThucTe, tt: u[l.ma] || 0 }); });
     Object.keys(u).forEach(m => { if (!r.some(l => l.ma === m)) { const it = find(m); lines.push({ ma: m, ten: it.ten || '', donVi: it.donVi || '', heSo: it.heSo || 1, dm: 0, tt: u[m], ngoai: true }); } });
-    return { so: o.so, ngayHT: o.ngayHT, maSP: o.maSP, tenSP: find(o.maSP).ten || '', slDuKien: o.slDuKien, slThucTe: o.slThucTe, coCT: r.length > 0, lines };
+    return { so: o.so, ngayHT: o.ngayHT, maSP: o.maSP, tenSP: find(o.maSP).ten || '', slDuKien: o.slDuKien, slThucTe: o.slThucTe, coCT: r.length > 0, lines, lechOK: o.lechOK };
   }).sort((x, y) => y.ngayHT.localeCompare(x.ngayHT));
 }
 
