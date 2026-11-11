@@ -269,14 +269,41 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
       return linkHoSo(outJSON(res));
     }
   }
+  /* ---------- khoá tạm đăng nhập: sai mật khẩu 3 lần liên tiếp → khoá tài khoản 30 phút (sql/16_khoa_dang_nhap.sql) ----------
+     Máy chủ (Supabase) đếm theo tài khoản nên đổi máy / đổi trình duyệt vẫn bị khoá. Chưa chạy file SQL 16 thì các hàm dưới trả "không khoá" và đăng nhập như cũ. */
+  const KHOA_PHUT = 30, KHOA_LAN = 3;
+  const khoaXem = async ten => { try { const { data, error } = await sb.rpc("khoa_dang_nhap", { p_ten: ten }); return error ? 0 : (+data || 0); } catch (e) { return 0; } };
+  const saiGhi = async ten => { try { const { data, error } = await sb.rpc("dang_nhap_sai_ghi", { p_ten: ten }); return error ? null : data; } catch (e) { return null; } };
+  const dungGhi = async () => { try { await sb.rpc("dang_nhap_dung"); } catch (e) {} };
+  const khoaMsg = (ten, phut) => 'Tài khoản "' + ten + '" đang bị khoá tạm vì nhập sai mật khẩu ' + KHOA_LAN + ' lần. Thử lại sau ' + phut + ' phút, hoặc nhờ Quản lý mở khoá.';
+  const saiMsg = (ten, r, dau) => !r ? dau + "." : r.khoa ? (r.vua_khoa ? dau + " " + KHOA_LAN + ' lần. Tài khoản "' + ten + '" bị khoá tạm ' + (r.con_phut || KHOA_PHUT) + " phút." : khoaMsg(ten, r.con_phut || KHOA_PHUT)) : dau + ". Còn " + r.con_lan + " lần thử — sai tiếp sẽ bị khoá " + KHOA_PHUT + " phút.";
+  const loiMK = m => /should be different|same password|different from the old/i.test(m) ? "Mật khẩu mới phải khác mật khẩu đang dùng." : /at least|too short|weak|should contain|characters/i.test(m) ? "Mật khẩu mới chưa đạt yêu cầu của hệ thống (ít nhất 6 ký tự)." : /reauth|recent/i.test(m) ? "Hệ thống yêu cầu đăng nhập lại trước khi đổi mật khẩu. Đăng xuất, đăng nhập lại rồi đổi." : m;
+  /** Người đang đăng nhập tự đổi mật khẩu: phải nhập đúng mật khẩu hiện tại (nhập sai cũng tính vào 3 lần khoá). */
+  async function doiMatKhau(cu, moi) {
+    if (!ME) { try { await loadMe(); } catch (e) {} } if (!ME || !ME.email) throw new Error("Vui lòng đăng nhập.");
+    cu = String(cu || ""); moi = String(moi || "");
+    if (!cu) throw new Error("Nhập mật khẩu hiện tại.");
+    if (moi.length < 6) throw new Error("Mật khẩu mới ít nhất 6 ký tự.");
+    if (moi === cu) throw new Error("Mật khẩu mới phải khác mật khẩu đang dùng.");
+    const ten = ME.ten, lk = await khoaXem(ten); if (lk > 0) throw new Error(khoaMsg(ten, lk));
+    const { error } = await sb.auth.signInWithPassword({ email: ME.email, password: cu });
+    if (error) { if (/Invalid login/i.test(error.message)) { const r = await saiGhi(ten), e = new Error(saiMsg(ten, r, "Mật khẩu hiện tại không đúng")); e.khoa = !!(r && r.khoa); throw e; } throw new Error(error.message); }
+    const { error: e2 } = await sb.auth.updateUser({ password: moi });
+    if (e2) throw new Error(loiMK(e2.message || "Không đổi được mật khẩu."));
+    await dungGhi(); return true;
+  }
+  const dsKhoa = async () => { const { data, error } = await sb.rpc("ds_khoa_dang_nhap"); if (error) throw new Error(/function|schema cache|PGRST202|does not exist/i.test(error.message + " " + (error.code || "")) ? "CHUA_CAI" : error.message); return data || []; };
+  const moKhoa = async ten => { const { error } = await sb.rpc("mo_khoa_dang_nhap", { p_ten: ten }); if (error) throw new Error(error.message); return true; };
   async function login(a) {
     const { data: ds, error: e1 } = await sb.rpc("ds_dang_nhap"); if (e1) throw e1;
     const u = (ds || []).find(x => x.ten === a.ten); if (!u) throw new Error("Không có người dùng " + a.ten);
     const pw = String(a.pin || "");
     if (pw.length < 6) throw new Error("Mật khẩu ít nhất 6 ký tự." + (u.da_kich_hoat ? "" : " (Lần đầu dùng bản web: mật khẩu bạn nhập sẽ được đặt làm mật khẩu.)"));
     if (u.da_kich_hoat) {
+      const lk = await khoaXem(u.ten); if (lk > 0) throw new Error(khoaMsg(u.ten, lk));
       const { error } = await sb.auth.signInWithPassword({ email: u.email, password: pw });
-      if (error) throw new Error(/Invalid login/i.test(error.message) ? "Sai mật khẩu." : error.message);
+      if (error) throw new Error(/Invalid login/i.test(error.message) ? saiMsg(u.ten, await saiGhi(u.ten), "Sai mật khẩu") : error.message);
+      await dungGhi();
     } else {
       const { data, error } = await sb.auth.signUp({ email: u.email, password: pw });
       if (error) throw new Error(error.message);
@@ -440,5 +467,5 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     const r0 = await sb.from("sheet_ver").select("sheet,ver"); if (r0.error) throw r0.error;
     return vers(r0.data).some(v => !DB.sheets[v.sheet] || DB.sheets[v.sheet].ver !== +v.ver);
   }
-  window.SOKHO_WEB = { sync, peek, signOut: async () => { ME = null; DB.sheets = {}; DB.loaded = false; DB.ao = null; await sb.auth.signOut(); }, db: DB, khoThu: () => AO() };
+  window.SOKHO_WEB = { doiMatKhau, dsKhoa, moKhoa, sync, peek, signOut: async () => { ME = null; DB.sheets = {}; DB.loaded = false; DB.ao = null; await sb.auth.signOut(); }, db: DB, khoThu: () => AO() };
 })();

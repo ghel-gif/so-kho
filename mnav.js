@@ -62,12 +62,12 @@
     const ver = (document.querySelector(".hver") || {}).textContent || "";
     sheet.innerHTML = `<div class="mn-box"><div class="mn-hd"><div class="mn-me"><b>${E(u.ten || "")}</b><small>${E(u.vaiTro || "")}</small></div><button type="button" class="mn-x" aria-label="Đóng menu">✕</button></div>
       <div class="mn-grps"></div>
-      <div class="mn-ft"><button type="button" class="btn" data-act="theme"></button><button type="button" class="btn" data-act="out">Đăng xuất</button><small>Sổ Kho ${E(ver.trim())}</small></div></div>`;
+      <div class="mn-ft"><button type="button" class="btn" data-act="theme"></button>${typeof pwCan === "function" && pwCan() ? `<button type="button" class="btn" data-act="pw">🔑 Đổi mật khẩu${typeof S !== "undefined" && S.pwLk ? " · 🔒 " + S.pwLk : ""}</button>` : ""}<button type="button" class="btn" data-act="out">Đăng xuất</button><small>Sổ Kho ${E(ver.trim())}</small></div></div>`;
     document.getElementById("appView").appendChild(sheet); paintSheet(); document.documentElement.classList.add("mn-open");
     requestAnimationFrame(() => sheet && sheet.classList.add("in"));
     sheet.addEventListener("click", e => {
       if (e.target === sheet || e.target.closest(".mn-x")) { close(); return; }
-      const a = e.target.closest("[data-act]"); if (a) { if (a.dataset.act === "theme") { const b = document.getElementById("themeBtn"); if (b) b.click(); setTimeout(paintSheet, 60); } else { close(); const b = document.getElementById("logoutBtn"); if (b) b.click(); } return; }
+      const a = e.target.closest("[data-act]"); if (a) { if (a.dataset.act === "theme") { const b = document.getElementById("themeBtn"); if (b) b.click(); setTimeout(paintSheet, 60); } else if (a.dataset.act === "pw") { close(); if (typeof pwDlg === "function") pwDlg(); } else { close(); const b = document.getElementById("logoutBtn"); if (b) b.click(); } return; }
       const b = e.target.closest("[data-go]"); if (b) { const t = b.dataset.go; close(); if (typeof setTab === "function") setTab(t); } });
     sync(); const x = sheet.querySelector(".mn-x"); if (x) x.focus({ preventScroll: true });
   }
