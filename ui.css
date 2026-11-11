@@ -641,7 +641,7 @@ small{font-size:max(12.5px,.85em)}
   #tab-ton .tools #q{order:1;flex:1 1 60%!important;width:auto!important}
   #tab-ton .tools #reloadBtn{order:2;flex:0 0 auto}
   #tab-ton .tools select{order:3;flex:1 1 calc(50% - 4px)!important;width:auto!important}
-  #impBox,#tab-ton>p.note,#lsxListView>p.note,#mvHint,#xnForm>p.note,#qrBox>p.note,label>small.note,.dgnote{display:none!important}
+  #impBox,#tab-ton>p.note,#lsxListView>p.note,#lsxDs>p.note,#mvHint,#xnForm>p.note,#qrBox>p.note,label>small.note,.dgnote{display:none!important}
   .actions>.need-cnt small{max-width:150px}
 }
 /* kiểm tra vật tư: nút "Đạt hết" điền nhanh */
@@ -701,6 +701,13 @@ small{font-size:max(12.5px,.85em)}
 .dgbang thead tr:last-child th.fz{background:color-mix(in srgb,#1a5fb4 8%,var(--surface))}
 .dgbang td.hhp{color:#c62828;font-weight:700}
 .dgbang td.hhn{color:#1565c0;font-weight:700}
+/* Phối trộn — bảng theo dõi tháng: 3 cột dính Số lệnh · Mã BTP · Tên; cột chữ dài cho xuống dòng */
+.ptbang .fz1{width:150px;min-width:150px}.ptbang .fz2{left:150px;width:160px;min-width:160px}.ptbang .fz3{left:310px;width:230px;min-width:230px}
+.ptbang td:nth-child(7),.ptbang td:nth-child(19),.ptbang td:nth-child(20),.ptbang td:nth-child(24){white-space:normal;min-width:170px;max-width:300px}
+.ptbang td.hhp:nth-child(19){font-weight:600}
+/* điện thoại: chỉ giữ cột Số lệnh dính bên trái (3 cột dính rộng hơn cả màn hình) — cả bảng Đóng gói lẫn Phối trộn */
+@media (max-width:640px){.dgbang .fz2,.dgbang .fz3{position:static;box-shadow:none}.dgbang thead tr.grh th.fzg{position:static;box-shadow:none}
+  .dgbang .fz1{width:112px;min-width:112px;max-width:112px;white-space:normal;overflow-wrap:anywhere;box-shadow:3px 0 0 color-mix(in srgb,var(--ink) 22%,transparent)}}
 .dgbc{max-width:720px}
 .dgbc td:first-child{font-weight:600}
 /* lệnh trước ngày áp dụng biểu mẫu trên Sổ Kho (05/11/2026): "Chưa lập" màu xám, không nhấp nháy */

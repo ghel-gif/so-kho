@@ -1210,6 +1210,30 @@ function getTrace(a, ma, lo) {
 }
 
 /* ================= BÁO CÁO HAO HỤT ================= */
+/** PHỐI TRỘN — số liệu theo lệnh cho "Bảng theo dõi tháng" và "Báo cáo": nguyên liệu thực xuất (kg), sản phẩm nhập kho (kg, lô, NSX, HSD),
+ *  vật tư lệch định mức từ 2 % (lệnh đã hoàn thành). Chỉ lệnh phối trộn (sản phẩm không phải Thành phẩm), không tính lệnh đã huỷ. Cần quyền xem công thức.
+ *  Người không thấy Kho hàng xử lý: lệnh có dùng hàng kho đó → an = 1, không trả số nguyên liệu (thiếu phần bị ẩn thì số sẽ sai). */
+function getLsxStats(a) {
+  const me = auth_(a); needCT_(me);
+  const IM = {}; rows_(SH.VT).forEach(r => { if (str_(r[0])) IM[str_(r[0])] = { ten: str_(r[1]), nhom: str_(r[2]) }; });
+  const X = xlAn_() ? xlCodes_() : null, ct = recipes_(), O = {};
+  orders_().forEach(o => { const it = IM[o.maSP]; if (o.trangThai !== 'Đã huỷ' && !(it ? it.nhom === 'Thành phẩm' : /^TP\./.test(o.maSP || ''))) O[o.so] = o; });
+  const M = {};
+  rows_(SH.PH).forEach(r => { const so = str_(r[12]); if (!str_(r[0]) || str_(r[11]) || !so || !O[so]) return;
+    const x = M[so] || (M[so] = { nl: 0, sp: 0, lo: '', nsx: '', hsd: '', u: {}, an: 0 }), ma = str_(r[4]), loai = str_(r[3]);
+    if (loai === 'Xuất') { x.nl += num_(r[7]); if (X && X[ma]) x.an = 1; else x.u[ma] = (x.u[ma] || 0) + num_(r[5]); }
+    else if (loai === 'Nhập' && ma === O[so].maSP) { x.sp += num_(r[7]); if (str_(r[13])) x.lo = str_(r[13]); if (str_(r[14])) x.nsx = str_(r[14]); if (str_(r[15])) x.hsd = str_(r[15]); } });
+  const out = {}, r3 = v => Math.round(v * 1000) / 1000;
+  Object.keys(M).forEach(so => { const x = M[so], o = O[so], rc = ct[o.maSP] || [], L = [];
+    if (o.trangThai === 'Hoàn thành' && !x.an) {
+      rc.forEach(l => { if (X && X[l.ma]) return; const dm = l.dm * o.slThucTe, tt = x.u[l.ma] || 0; if (dm > 0 && Math.abs(tt - dm) / dm >= 0.02) L.push({ ma: l.ma, ten: (IM[l.ma] || {}).ten || '', p: Math.round((tt - dm) / dm * 1000) / 10 }); });
+      Object.keys(x.u).forEach(ma => { if (!rc.some(l => l.ma === ma)) L.push({ ma: ma, ten: (IM[ma] || {}).ten || '', ngoai: 1 }); });
+    }
+    out[so] = x.an ? { an: 1, sp: r3(x.sp), lo: x.lo, nsx: x.nsx, hsd: x.hsd, coCT: rc.length > 0, lech: [] }
+      : { nl: r3(x.nl), sp: r3(x.sp), lo: x.lo, nsx: x.nsx, hsd: x.hsd, coCT: rc.length > 0, lech: L };
+  });
+  return out;
+}
 function getVariance(a, tu, den) {
   needCT_(auth_(a, [ROLES.QL]));
   const items = items_(), ct = recipes_(), find = m => items.find(i => i.ma === m) || {};
