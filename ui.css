@@ -1193,3 +1193,5 @@ details.kkng .kkng-b{display:flex;flex-direction:column;gap:10px;margin-top:10px
 :root[data-theme=dark] .chip.gcl{background:#052e1f;color:#6ee7b7}
 @media (max-width:600px){.gcr{grid-template-columns:1fr 1fr}.gcr .btn{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){.gcq,.chip.gcl.miss{animation:none}}
+.gcinfo{padding:8px 10px;border-radius:8px;font-size:13.5px;background:#f0fdf4;color:#14532d;border:1px solid #86efac}.gcinfo.miss{background:#fff7ed;color:#9a3412;border:1.5px solid #f59e0b;font-weight:600}
+:root[data-theme=dark] .gcinfo{background:#0b2414;color:#bbf7d0;border-color:#166534}:root[data-theme=dark] .gcinfo.miss{background:#2a1a0a;color:#fed7aa;border-color:#b45309}
