@@ -295,7 +295,7 @@
       L.querySelectorAll("[data-px]").forEach(b => b.onclick = e => { e.stopPropagation(); const p = pend.splice(+b.dataset.px, 1)[0]; if (p) URL.revokeObjectURL(p.url); anhPaint(); });
       /* ảnh vừa chụp (chưa lưu) cũng bấm vào để xem lớn, phóng to, xoay */
       L.querySelectorAll(".qa-pend img").forEach(im => im.onclick = e => { e.stopPropagation(); if (typeof anhZoom === "function") anhZoom(im.src, [...L.querySelectorAll("img")].map(x => x.src)); });
-      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để xem lớn, phóng to, xoay. Ảnh lưu trên máy chủ 7 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
+      if (n) n.innerHTML = r && r.id ? (anh == null ? "Đang tải ảnh…" : A.length ? `${A.length} ảnh · bấm ảnh để xem lớn, phóng to, xoay. Ảnh lưu trên web 45 ngày rồi tự chuyển sang Google Drive, vẫn xem được ở đây.` : canEd ? "Chưa có ảnh." : "Không có ảnh.")
         : pend.length ? `<b>${pend.length} ảnh</b> sẽ tải lên khi bấm <b>Lưu</b> · bấm ảnh để xem lớn.` : "Chụp xong, ảnh tải lên khi bấm Lưu.";
     };
     const anhGet = async () => { if (!r || !r.id) return; try { anh = await api("webAnhQA", S.auth, r.id); } catch (e) { anh = anh || []; } if (bx.isConnected) anhPaint(); };
@@ -507,7 +507,7 @@
     if (tp) live(R).filter(x => x.loai === "KPH" && !x.d.dong).forEach(k => out.push({ id: k.id, c: "#c62828", t: `⚠ <b>${E(k.d.so)}</b> · ${E(k.d.suKPH)} — chưa xử lý xong (${D(k.d.ngay)})` }));
     return out;
   };
-  /* số nhấp nháy ở mục "Kiểm bao bì nhập kho" (menu trái): lô chờ kiểm (QC) + lô chờ TP. QA/QC xác nhận — gồm cả phiếu kiểm tự tạo khi kho lập phiếu nhập bao bì */
+  /* số nhấp nháy ở mục "IQC bao bì" (menu trái): lô chờ kiểm (QC) + lô chờ TP. QA/QC xác nhận — gồm cả phiếu kiểm tự tạo khi kho lập phiếu nhập bao bì */
   function qaBadgeSet() { const c = document.getElementById("navQaCnt"); if (!c) return; if (!S.me || !QC()) { c.hidden = true; return; }
     const A = vt(), cho = A.filter(r => ttOf(r) === "Chờ kiểm"), tre = cho.filter(r => hanT(r) < Date.now()), xn = TP() ? A.filter(r => ttOf(r) === "Chờ xác nhận") : [], n = cho.length + xn.length;
     const t = [cho.length ? cho.length + " lô bao bì chờ kiểm" + (tre.length ? " (" + tre.length + " quá hạn 48 giờ)" : "") : "", xn.length ? xn.length + " lô chờ TP. QA/QC xác nhận" : ""].filter(Boolean).join(" · ");

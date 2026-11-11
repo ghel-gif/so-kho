@@ -159,7 +159,7 @@
   }
   const userOpts = (v) => `<option value="">— chọn —</option>` + USERS.map(u => `<option ${u === v ? "selected" : ""}>${E(u)}</option>`).join("");
   async function save(o, msg) { const r = await api("webRDSave", S.auth, o); toast(msg || "Đã lưu"); return r; }
-  async function del(id) { if (!await askConfirm(["Xoá hồ sơ này? (khôi phục được trong Lịch sử phiếu / nhờ Quản lý)"])) return false; await api("webRDDel", S.auth, id, false); toast("Đã xoá"); return true; }
+  async function del(id) { if (!await askConfirm(["Xoá hồ sơ này? (khôi phục được trong Lịch sử / nhờ Quản lý)"])) return false; await api("webRDDel", S.auth, id, false); toast("Đã xoá"); return true; }
   const push = (title, body, to) => { try { window.SKPush && SKPush.send(title, body, to, "rd-" + title.slice(0, 20)); } catch (e) {} };
 
   /* ---------------- BM.02: công thức – phiếu kiểm tra pha chế ---------------- */

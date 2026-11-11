@@ -172,7 +172,7 @@ function webThemAnh(a, id, fname, fid) {
 }
 function webKiemAnh(a, fid) { auth_(a); return !!(sheet_(AN_SH) && rows_(AN_SH).some(r => str_(r[5]) === String(fid))); }
 /* --- ảnh kiểm bao bì nhập kho (sổ BM.01–04): chung kho ảnh với ảnh nhập kho, cột ID ghi "QA:<số hồ sơ>" ---
-   Ảnh nằm ở Supabase, sau 7 ngày được dời sang Google Drive cùng đợt dời ảnh hằng đêm (sql/14_anh_kiem_bao_bi.sql). */
+   Ảnh nằm ở Supabase, sau 45 ngày được dời sang Google Drive cùng đợt dời ảnh hằng đêm (sql/15_anh_giu_45_ngay.sql). */
 function qaAnhRec_(me, id) {
   const r = qaRows_().find(x => x.id === String(id));
   if (!r || QA_VT.indexOf(r.loai) < 0) throw new Error('Không tìm thấy lô bao bì (có thể đã bị xoá).');
@@ -226,7 +226,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     const names = [...code.matchAll(/^function\s+([A-Za-z0-9_$]+)\s*\(/gm)].map(m => m[1]);
     const lets = [...code.matchAll(/^let\s+([^;]+);/gm)].flatMap(m => m[1].split(",").map(s => s.split("=")[0].trim()));
     const src = code
-      .replace(/function auth_\(a, allowed\) \{/, "function auth_(a, allowed) { return __auth(a, allowed, ROLES);")
+      .replace(/function auth_\(a, allowed\) \{/, "function auth_(a, allowed) { return (ME_ = __auth(a, allowed, ROLES));")
       .replace(/globalThis\[fn\]/g, "__F[fn]")
       + "\n;const __F = {" + names.map(n => `${n}: ${n}`).join(",") + "};\nreturn Object.assign(__F, { __reset() { " + lets.map(n => `${n} = null;`).join(" ") + " } });";
     const keys = ["SpreadsheetApp", "Utilities", "LockService", "CacheService", "PropertiesService", "DriveApp", "MailApp", "ScriptApp", "Session", "HtmlService", "UrlFetchApp", "Logger"];

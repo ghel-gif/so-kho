@@ -16,7 +16,7 @@
     const rows = g.vao.map(x => `<tr><td>${E(x.nhom)}</td><td>${E(x.ma)}<br><small>${E(x.ten)}</small></td><td class="c">${E(x.lo || "—")}</td><td class="c">${D(x.nsx)}</td><td class="c">${D(x.hsd)}</td><td class="r">${x.kg ? N(x.kg) + " kg" : N(x.sl) + " " + E(x.dv || "")}</td><td class="c">${x.nhom === "Bán thành phẩm" || x.nhom === "Nguyên liệu" ? QCC(x.qc) : ""}</td></tr>`).join("");
     let sub = "";
     g.vao.forEach(x => (x.nguon || []).forEach(n => { sub += `<p ${pad} style="margin:8px 0 2px ${(lv + 1) * 6}mm"><b>↳ BTP ${E(x.ma)} lô ${E(x.lo)}</b> được sản xuất từ:</p>` + lenhBlock(n, lv + 1); }));
-    return `<div ${pad}><table><tr class="sec"><td colspan="7">${o.dg ? "Lệnh đóng gói" : "Lệnh SX BTP"} <b>${E(o.so)}</b> · ra lệnh ${D(o.ngay)}${o.ngayHT ? " · xong " + D(o.ngayHT) : ""} · ${E(o.tenSP || o.maSP)} · ${N(o.sl)} · ${E(o.trangThai)}</td></tr>
+    return `<div ${pad}><table><tr class="sec"><td colspan="7">${o.dg ? "Lệnh đóng gói" : "Lệnh SX"} <b>${E(o.so)}</b> · ra lệnh ${D(o.ngay)}${o.ngayHT ? " · xong " + D(o.ngayHT) : ""} · ${E(o.tenSP || o.maSP)} · ${N(o.sl)} · ${E(o.trangThai)}</td></tr>
       <tr><td colspan="7"><small>Người lập: ${E(o.nguoiLap)}${o.nguoiSX ? " · Người SX: " + E(o.nguoiSX) : ""}${o.qcSX ? " · QC theo dõi: " + E(o.qcSX) : ""}${o.khachHang ? " · Khách hàng: " + E(o.khachHang) : ""}${o.dg ? "<br>Biểu mẫu QC: " + formsTxt(o) : ""}</small></td></tr>
       <tr><th style="width:12%">Nhóm</th><th style="width:31%">Mã / tên</th><th style="width:15%">Số lô</th><th style="width:10%">NSX</th><th style="width:10%">HSD</th><th style="width:11%">Lượng xuất</th><th style="width:11%">QC</th></tr>
       ${rows || `<tr><td colspan="7" class="c">Chưa có phiếu xuất cho lệnh này</td></tr>`}</table></div>` + sub;

@@ -125,6 +125,7 @@ let SS_ = null, TZ_ = null, RC_ = null; // RC_: bộ nhớ đọc sheet, chỉ b
 const sheet_ = n => (SS_ || (SS_ = SpreadsheetApp.getActiveSpreadsheet())).getSheetByName(n);
 /* Bộ nhớ tạm trong 1 lần gọi: Cài đặt, Người dùng, Hồ sơ lô được đọc nhiều lần → chỉ đọc sheet 1 lần. Ghi vào các sheet này thì xoá bộ nhớ tạm. */
 let CD_C = null, ND_C = null, HS_C = null;
+let ME_ = null; // người đang gọi (auth_ ghi lại): Kho hàng xử lý chỉ XL_CHU_ thấy
 const cdRows_ = () => CD_C || (CD_C = sheet_(SH.CD) ? rows_(SH.CD) : []);
 const ndRows_ = () => ND_C || (ND_C = rows_(SH.ND));
 const hsRows_ = () => HS_C || (HS_C = sheet_(SH.HS) ? rows_(SH.HS) : []);
@@ -168,7 +169,7 @@ function auth_(a, allowed) {
   const role = str_(u[2]) || ROLES.XEM;
   if (allowed && allowed.indexOf(role) < 0) throw new Error('Tài khoản "' + role + '" không có quyền làm việc này.');
   const nhom = str_(u[3]).split(',').map(x => x.trim()).filter(String);
-  return { ten: a.ten, vaiTro: role, nhom, qc: role === ROLES.QL || str_(u[4]) === 'Có', ct: role === ROLES.QL || str_(u[5]) === 'Có' };
+  return (ME_ = { ten: a.ten, vaiTro: role, nhom, qc: role === ROLES.QL || str_(u[4]) === 'Có', ct: role === ROLES.QL || str_(u[5]) === 'Có' });
 }
 function needCT_(me) { if (!me.ct) throw new Error('Tài khoản ' + me.ten + ' không được xem công thức, định mức.'); }
 const seeItem_ = (me, it) => me.ct || !me.nhom.length || me.nhom.indexOf(it.nhom) >= 0;
@@ -217,22 +218,26 @@ function checkLotOut_(it, lo, L, ngay) {
   if (!x || dbOf_(it) === 'xl') return;
   const ten = it.ma + ' lô ' + (lo || '(chưa có lô)');
   if (x.qc && x.qc !== 'Đạt') throw new Error(ten + ' đang "' + x.qc + '" — QC chưa duyệt, không xuất được.');
-  if (x.hsd && x.hsd < ngay) throw new Error(ten + ' đã hết hạn (HSD ' + x.hsd.split('-').reverse().join('/') + '), không xuất được. Cần xử lý thì chuyển lô sang Kho hàng xử lý (Thẻ kho → Chuyển kho).');
+  if (x.hsd && x.hsd < ngay) throw new Error(ten + ' đã hết hạn (HSD ' + x.hsd.split('-').reverse().join('/') + '), không xuất được. ' + (xlAn_() ? 'Cần xử lý thì báo anh Ghel chuyển lô sang kho xử lý.' : 'Cần xử lý thì chuyển lô sang Kho hàng xử lý (Thẻ kho → Chuyển kho).'));
 }
 
 function items_() {
-  return rows_(SH.VT).filter(r => str_(r[0])).map(r => ({
+  const all = rows_(SH.VT).filter(r => str_(r[0])).map(r => ({
     ma: str_(r[0]), ten: str_(r[1]), nhom: str_(r[2]) || 'Khác', donVi: str_(r[3]) || 'kg',
     heSo: num_(r[4]) || 1, dauKy: num_(r[5]), toiThieu: num_(r[6]),
     theoLo: str_(r[7]) === 'Có', hanThang: num_(r[8]), chuHang: str_(r[9]), hamLuong: str_(r[10]), kho: str_(r[11])
   }));
+  return xlAn_() ? all.filter(i => dbOf_(i) !== 'xl') : all; /* Kho hàng xử lý: người khác không thấy mã, tồn, lô, phiếu */
 }
+/* mã đang ở Kho hàng xử lý (đọc thẳng danh mục, không lọc) */
+function xlCodes_() { const o = {}; rows_(SH.VT).forEach(r => { if (str_(r[0]) && dbOf_({ kho: str_(r[11]) }) === 'xl') o[str_(r[0])] = 1; }); return o; }
 
 function moves_() {
-  return rows_(SH.PH).filter(r => str_(r[0])).map(r => ({
+  const X = xlAn_() ? xlCodes_() : null;
+  return rows_(SH.PH).filter(r => str_(r[0]) && !(X && X[str_(r[4])])).map(r => ({
     id: str_(r[0]), lap: r[1] instanceof Date ? Utilities.formatDate(r[1], tz_(), 'dd/MM/yyyy HH:mm') : str_(r[1]),
     ngay: str_(r[2]), loai: str_(r[3]), ma: str_(r[4]), soLuong: num_(r[5]), donVi: str_(r[6]),
-    kg: num_(r[7]), chungTu: str_(r[8]), ghiChu: str_(r[9]), nguoiLap: str_(r[10]), trangThai: str_(r[11]), lenh: str_(r[12]),
+    kg: num_(r[7]), chungTu: str_(r[8]), ghiChu: X && /\(Kho (hàng|BTP) xử lý\)/.test(str_(r[9])) ? 'Chuyển kho nội bộ' : str_(r[9]), nguoiLap: str_(r[10]), trangThai: str_(r[11]), lenh: str_(r[12]),
     lo: str_(r[13]), nsx: str_(r[14]), hsd: str_(r[15]), ncc: str_(r[16])
   }));
 }
@@ -491,12 +496,16 @@ function getAnhLo(a, ma, lo) {
    Xuất mã đi + nhập mã nhận, giữ lô, NSX, HSD, QC, tỷ trọng, hồ sơ lô. Mã nhận chưa có thì tạo theo mã đi. ===== */
 const KHO_DB = { xl: { kho: 'Kho hàng xử lý', pre: 'XL' }, farm: { kho: 'Kho hàng bán Farm', pre: 'FARM' } };
 const dbOf_ = i => !i ? '' : (i.kho === KHO_DB.xl.kho || i.kho === 'Kho BTP xử lý') ? 'xl' : i.kho === KHO_DB.farm.kho ? 'farm' : '';
+/* Kho hàng xử lý chỉ một người thấy và chuyển hàng vào / ra (người khác: mã XL.… ẩn khỏi tồn kho, thẻ kho, lịch sử, báo cáo, bản tin) */
+const XL_CHU_ = 'Nguyễn Ô Ghel', xlAn_ = () => !!ME_ && ME_.ten !== XL_CHU_;
+function xlGuard_(it) { if (it && dbOf_(it) === 'xl' && xlAn_()) throw new Error('Kho hàng xử lý chỉ anh Ghel (' + XL_CHU_ + ') xem và thao tác.'); }
 function transferStock(a, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]);
   if (!isYmd_(d.ngay)) throw new Error('Ngày không hợp lệ.');
   const kg = Math.round(num_(d.kg) * 10000) / 10000;
   if (!(kg > 0)) throw new Error('Số kg chuyển phải lớn hơn 0.');
   const kieu = ['xl', 'farm', 've', 'cty'].indexOf(d.kieu) >= 0 ? d.kieu : 'cty', DB = KHO_DB[kieu], note = String(d.ghiChu || '').trim().slice(0, 120);
+  if (kieu === 'xl') xlGuard_({ kho: KHO_DB.xl.kho });
   if (kieu === 'xl' && !note) throw new Error('Ghi lý do đưa hàng vào Kho hàng xử lý.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -743,6 +752,7 @@ function saveItem(a, it, isNew) {
   try {
     const sh = sheet_(SH.VT), codes = rows_(SH.VT).map(r => str_(r[0]).toLowerCase());
     const idx = codes.indexOf(ma.toLowerCase());
+    if (dbOf_({ kho: String(it.kho || '').trim() }) === 'xl' || (idx >= 0 && dbOf_({ kho: str_(rows_(SH.VT)[idx][11]) }) === 'xl')) xlGuard_({ kho: KHO_DB.xl.kho }); /* mã ở Kho hàng xử lý: chỉ anh Ghel sửa */
     // hàng theo lô: không cho đặt / đổi tồn đầu kỳ (mã cũ đã có tồn đầu thì vẫn sửa được tên, kho…)
     const dkCu = idx >= 0 ? num_(sh.getRange(idx + 2, 6).getValue()) : 0;
     if (it.theoLo && num_(it.dauKy) && (isNew || num_(it.dauKy) !== dkCu)) throw new Error('Hàng theo dõi lô: để tồn đầu kỳ = 0 và nhập tồn đầu bằng phiếu Nhập theo từng lô.');
@@ -774,7 +784,7 @@ function deleteItem(a, ma) {
   try {
     const idx = rows_(SH.VT).findIndex(r => str_(r[0]) === ma);
     if (idx < 0) throw new Error('Không tìm thấy mã.');
-    const r = rows_(SH.VT)[idx];
+    const r = rows_(SH.VT)[idx]; xlGuard_({ kho: str_(r[11]) });
     sheet_(SH.VT).deleteRow(idx + 2);
     log_(me, 'Xoá vật tư', ma, str_(r[1]));
     return true;

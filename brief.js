@@ -94,7 +94,8 @@
     });
     const exp30 = A.exp.filter(x => x.con <= 30);
     const open = orders.filter(o => o.trangThai === "Đang SX" && recent(o)).sort(byDate).map(o => ({ so: o.so, ngay: o.ngay, nguoi: o.nguoiLap, sx: o.nguoiSX || "", qcSX: o.qcSX || "", dg: isTP(o), sp: (IM[o.maSP] || {}).ten || o.maSP, sl: o.slDuKien }));
-    return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP };
+    const xl = new Set(items.filter(i => i.kho === "Kho hàng xử lý" || i.kho === "Kho BTP xử lý").map(i => i.ma)); /* Kho hàng xử lý: chỉ anh Ghel thấy */
+    return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP, xl };
   }
 
   /* ---------- bản tin riêng từng người ---------- */
@@ -103,7 +104,7 @@
     formMiss: { t: "Lệnh đóng gói còn thiếu biểu mẫu QC", h: ["Lệnh", "Sản phẩm", "Trạng thái", "Còn thiếu"], row: x => [e(x.so), e(x.sp), x.xong ? "Đã xong" : "Đang đóng gói", "<b style='color:#c62828'>" + x.miss.join(", ") + "</b>"] },
     exp: { t: "Lô sắp hết hạn / quá hạn", h: ["Mã", "Tên", "Lô", "HSD", "Còn", "Tồn (kg)"], row: x => [e(x.ma), e(x.ten), e(x.lo || "—"), dmy(x.hsd), x.con < 0 ? "<b style='color:#c62828'>quá " + (-x.con) + " ngày</b>" : x.con + " ngày", f(x.ton)] },
     dgShort: { t: "Lệnh đóng gói thiếu tồn BTP", h: ["Lệnh", "BTP", "Lô đã chọn", "Cần (kg)", "Thiếu (kg)"], row: x => [e(x.so), e(x.ma), e(x.lots.join(", ")), f(x.need), "<b style='color:#c62828'>" + f(x.short) + "</b>"] },
-    lsxShort: { t: "Lệnh SX BTP thiếu nguyên liệu", h: ["Lệnh", "Thiếu"], row: x => [e(x.so), x.sh.map(s => e(s.ma) + " " + f(s.short) + " kg").join("; ")] },
+    lsxShort: { t: "Lệnh SX thiếu nguyên liệu", h: ["Lệnh", "Thiếu"], row: x => [e(x.so), x.sh.map(s => e(s.ma) + " " + f(s.short) + " kg").join("; ")] },
     low: { t: "Âm kho / dưới mức tối thiểu", h: ["Mã", "Tên", "Tồn (kg)", "Tối thiểu (kg)"], row: x => [e(x.ma), e(x.ten), x.am ? "<b style='color:#c62828'>" + f(x.ton) + "</b>" : f(x.ton), x.min ? f(x.min) : ""] },
     mine: { t: "Lệnh đang làm của tôi", h: ["Lệnh", "Loại", "Sản phẩm", "Ra lệnh"], row: x => [e(x.so), x.dg ? "Đóng gói" : "SX BTP", e(x.sp), dmy(x.ngay)] },
     treo: { t: "Lệnh SX chưa hoàn thành (treo lâu)", h: ["Lệnh", "Sản phẩm", "Ngày ra lệnh", "Đã treo"], row: x => [e(x.so), e(x.maSP), dmy(x.ngay), x.ngayTreo + " ngày"] }
@@ -120,6 +121,7 @@
       S.dgShort = X.dgShort.filter(mine); S.lsxShort = X.lsxShort.filter(mine);
       S.mine = X.open.filter(o => myOrd.has(o.so));
     }
+    if (u.ten !== "Nguyễn Ô Ghel" && X.xl && X.xl.size) ["cho", "low", "exp"].forEach(k => { if (S[k]) S[k] = S[k].filter(x => !X.xl.has(x.ma)); });
     Object.keys(S).forEach(k => { if (!S[k] || !S[k].length) delete S[k]; });
     const keys = ["formMiss", "cho", "dgShort", "lsxShort", "low", "exp", "treo", "mine"].filter(k => S[k]);
     const n = keys.filter(k => k !== "mine").reduce((s, k) => s + S[k].length, 0);

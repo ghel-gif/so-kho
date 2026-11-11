@@ -306,7 +306,7 @@
       <p style="margin:0 0 8px;font-size:15px">${st}</p>
       <div class="tools">${QC() ? `<button class="btn primary" type="button" id="kcNew">${kToday && !kToday.d.khongSX ? "Mở sổ hôm nay" : "+ Kiểm tra cân hôm nay"}</button>${vKC === "M1" && !kToday ? '<button class="btn" type="button" id="kcOff">Hôm nay không sản xuất</button>' : ""}` : ""}
         <input type="month" id="kcM" value="${E(fKCm)}" style="width:auto" title="Tháng (trống = tất cả)"><button class="btn" type="button" id="kcPr">🖨 In BM.02${fKCm ? " tháng " + fKCm.slice(5) + "/" + fKCm.slice(0, 4) : ""}</button></div>
-      <p class="note" style="margin:0 0 8px">${E(S0.luat)} Cân trong sổ: ${sc.length ? E(sc.map(t => t.d.ma || t.d.ten).join(", ")) : "<b>chưa có cân nào</b>"}${off.length ? " · không kiểm (không ở trạng thái Đang sử dụng): " + E(off.map(t => (t.d.ma || t.d.ten) + " – " + t.d.tinhTrang).join(", ")) : ""}. Đổi danh sách: Thiết bị nhà xưởng → mở thiết bị → Kiểm tra nội bộ.</p>
+      <p class="note" style="margin:0 0 8px">${E(S0.luat)} Cân trong sổ: ${sc.length ? E(sc.map(t => t.d.ma || t.d.ten).join(", ")) : "<b>chưa có cân nào</b>"}${off.length ? " · không kiểm (không ở trạng thái Đang sử dụng): " + E(off.map(t => (t.d.ma || t.d.ten) + " – " + t.d.tinhTrang).join(", ")) : ""}. Đổi danh sách: Thiết bị → mở thiết bị → Kiểm tra nội bộ.</p>
       <div class="list">${L.length ? L.map(kcRow).join("") : `<div class="empty"><b>Chưa có sổ kiểm tra cân${fKCm ? " trong tháng " + fKCm.slice(5) + "/" + fKCm.slice(0, 4) : ""}.</b></div>`}</div>`;
     b.querySelectorAll(".seg [data-v]").forEach(x => x.onclick = () => { vKC = x.dataset.v; renderKC(); });
     b.querySelectorAll("[data-kc]").forEach(x => x.onclick = () => { const k = rec(x.dataset.kc); if (k) kcDlg(k); });

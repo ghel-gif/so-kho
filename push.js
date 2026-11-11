@@ -48,7 +48,7 @@
   window.pushHook = function (fn, args, r) {
     try {
       const o = args[1] || {};
-      if (fn === "createOrder") send("Lệnh SX BTP mới: " + (o.so || ""), [o.maSP, o.slDuKien ? o.slDuKien + " kg" : "", "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: QL, ten: ["Phan Thị Cẩm Tiên"] }, "lsx-" + o.so);
+      if (fn === "createOrder") send("Lệnh SX mới: " + (o.so || ""), [o.maSP, o.slDuKien ? o.slDuKien + " kg" : "", "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: QL, ten: ["Phan Thị Cẩm Tiên"] }, "lsx-" + o.so);
       else if (fn === "savePack" && !o.hoanThanh && !((typeof S !== "undefined" && S.lenh) || []).some(x => x.so === o.so)) send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.dv ? o.dv + " gói/chai" : "", "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
       else if (fn === "savePack" && o.hoanThanh && String(o.ngay || "") >= "2026-11-05") setTimeout(async () => { try {
         const D = await api0("webDGFGet", S.auth, o.so), F = (D && D.forms) || [], miss = [];
@@ -57,7 +57,7 @@
       } catch (e) {} }, 1500);
       else if (fn === "createPackOrder") send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.sp, "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
       else if (fn === "setQC" && (args[3] === "Đạt" || args[3] === "Không đạt")) send((args[3] === "Đạt" ? "✅ QC Đạt: " : "⛔ QC Không đạt: ") + args[1], "Lô " + args[2] + (args[4] ? " · " + args[4] : "") + " · " + me(), { roles: KHO, ten: ["Phan Thị Cẩm Tiên"] }, "qc-" + args[1] + args[2]);
-      else if (fn === "saveMove" && o.loai === "Nhập" && r && r.qa) send("📦 Bao bì về — chờ QC kiểm: " + (o.ma || ""), [o.soLuong ? o.soLuong + " " + ((((typeof S !== "undefined" && S.items) || []).find(i => i.ma === o.ma) || {}).donVi || "") : "", o.ncc ? "NCC " + o.ncc : "", "nhập bởi " + me(), "mở Kiểm bao bì nhập kho"].filter(Boolean).join(" · "), { qc: true }, "bb-" + r.qa);
+      else if (fn === "saveMove" && o.loai === "Nhập" && r && r.qa) send("📦 Bao bì về — chờ QC kiểm: " + (o.ma || ""), [o.soLuong ? o.soLuong + " " + ((((typeof S !== "undefined" && S.items) || []).find(i => i.ma === o.ma) || {}).donVi || "") : "", o.ncc ? "NCC " + o.ncc : "", "nhập bởi " + me(), "mở IQC bao bì"].filter(Boolean).join(" · "), { qc: true }, "bb-" + r.qa);
       else if (fn === "saveMove" && o.loai === "Nhập") send("Nhập kho: " + (o.ma || ""), [o.lo ? "Lô " + o.lo : "", o.soLuong ? o.soLuong + " kg" : "", "nhập bởi " + me(), "kiểm QC nếu cần"].filter(Boolean).join(" · "), { qc: true }, "nhap-" + o.ma + o.lo);
     } catch (e) {}
   };
