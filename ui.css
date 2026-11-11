@@ -1179,3 +1179,17 @@ details.kkng .kkng-b{display:flex;flex-direction:column;gap:10px;margin-top:10px
 .chip.xl{background:#fff7ed;color:#9a3412;box-shadow:inset 0 0 0 1px #fdba74}
 :root[data-theme=dark] .chip.xl{background:#2a1a0a;color:#fdba74}
 @media (max-width:600px){.ckk button{flex:1 1 140px;padding:8px 10px;font-size:13.5px}.tkck .two{grid-template-columns:1fr!important}}
+
+/* ===== 4.6.4 · lệnh gia công: ô số lô / NSX theo khách ngay đầu lệnh; chip trên danh sách ===== */
+.gcq{border-width:2px;animation:gcPulse 1.6s ease-in-out infinite}
+.gcq.ok{animation:none;border-color:#86efac;background:#f0fdf4;color:#14532d}
+:root[data-theme=dark] .gcq.ok{background:#0b2414;color:#bbf7d0;border-color:#166534}
+@keyframes gcPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.0)}50%{box-shadow:0 0 0 5px rgba(245,158,11,.28)}}
+.gcr{display:grid;grid-template-columns:minmax(0,1fr) 170px auto;gap:8px;align-items:end}
+.gcr label{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.gqm{font-size:12.5px;font-weight:600}
+.chip.gcl{background:#ecfdf5;color:#065f46;box-shadow:inset 0 0 0 1px #6ee7b7}
+.chip.gcl.miss{background:#fff7ed;color:#b45309;box-shadow:inset 0 0 0 1.5px #f59e0b;animation:gcPulse 1.6s ease-in-out infinite}
+:root[data-theme=dark] .chip.gcl{background:#052e1f;color:#6ee7b7}
+@media (max-width:600px){.gcr{grid-template-columns:1fr 1fr}.gcr .btn{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.gcq,.chip.gcl.miss{animation:none}}
