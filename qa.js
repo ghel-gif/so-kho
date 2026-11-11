@@ -40,7 +40,7 @@
   const mauN = (so, sl) => { const m = /^(\d+)\s*mẫu/.exec(MAU[so] ? MAU[so](+sl || 0) : ""); return m ? +m[1] : 0; };
   const SO = {
     NHAN: { bm: "BM.01-QC-QT.02", ngan: "Nhãn", tieuDe: "SỔ KIỂM TRA NHÃN", hd: "QC-HD.04", nguong: 5, qc: "V (g/ml)", ten: "Tên nhãn", loaiTxt: "Loại nhãn",
-      loai: ["Nhãn dán hồ", "Nhãn decal", "Nhãn phụ", "Dán thùng / dán hộp", "Túi", "Túi cuộn", "Hộp"],
+      loai: ["Nhãn dán hồ", "Nhãn decal", "Nhãn phụ", "Dán thùng / dán hộp"], /* túi, túi cuộn → BM.02; hộp → BM.04 (phiếu cũ ghi loại khác vẫn giữ, sửa được) */
       ct: [["chinhTa", "Chính tả", ["Đúng", "Sai"]], ["kichThuoc", "Kích thước", DAT], ["dinhLuong", "Định lượng", DAT], ["ngoaiQuan", "Ngoại quan", ["Bình thường", "Không đạt"]]],
       nang: "Sai font, sai kích thước, sai nội dung, sai vị trí hình ảnh so với file thiết kế (decal: không đứt bế, giấy lót đứt rời; dán thùng/hộp: cắt phạm)", nhe: "Nhòe màu nhưng vẫn đọc được nội dung, nhãn bị cắt xéo chiều rộng" },
     TUI: { bm: "BM.02-QC-QT.02", ngan: "Túi / cuộn màng", tieuDe: "SỔ KIỂM TRA TÚI/CUỘN MÀNG", hd: "QC-HD.02", nguong: 5, qc: "Quy cách", ten: "Tên thương phẩm", loaiTxt: "Loại bao bì",
@@ -225,7 +225,7 @@
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}
           ${fld("Nhà cung cấp", inp("ncc", d.ncc, 'list="qaNcc"') + dl("qaNcc", A.map(x => x.d.ncc)))}
-          ${fld(S0.loaiTxt, so === "TUI" ? sel("loaiVT", d.loaiVT, S0.loai, "— chọn loại bao bì —") : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
+          ${fld(S0.loaiTxt, so === "TUI" || so === "NHAN" ? sel("loaiVT", d.loaiVT, S0.loai, so === "NHAN" ? "— chọn loại nhãn —" : "— chọn loại bao bì —") : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
           <div class="qa-ma" style="grid-column:1/-1"><label>Mã bao bì (Danh mục vật tư) *${inp("ma", d.ma, `list="qaMa" autocomplete="off" placeholder="Gõ hoặc chọn mã, VD ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}</label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<datalist id="qaMa">${bbCodes(so).map(i => `<option value="${E(i.ma)}">${E(i.ten)}</option>`).join("")}</datalist><small class="note qa-mah" id="qaMaH"></small></div>
           ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
           ${fld(S0.qc, inp("quyCach", d.quyCach))}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
