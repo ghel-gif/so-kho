@@ -56,7 +56,7 @@
       .forEach(([ma, l]) => R.push({ k: sc(l.lo), g: "Lô", t: `Lô ${E(l.lo)} · ${E(ma)}`, s: `${E(tenOf(ma))} · tồn ${N(l.ton)} kg${l.hsd ? " · HSD " + D(l.hsd) : ""}${l.qc ? " · QC " + E(l.qc) : ""}`, go: () => lotCard(ma, l.lo) }));
     /* lệnh */
     (S.lenh || []).filter(o => hit(fd([o.so, o.maSP, o.tenSP, tenOf(o.maSP), o.khachHang, o.nguoiSX].join(" ")))).sort((a, b) => (fd(b.so) === qq) - (fd(a.so) === qq) || String(b.ngay).localeCompare(String(a.ngay))).slice(0, 8)
-      .forEach(o => { const tp = typeof dgIsTP === "function" && dgIsTP(o); R.push({ k: sc(o.so), g: tp ? "Lệnh đóng gói" : "Lệnh SX", t: `${E(o.so)} · ${E(tenOf(o.maSP) || o.tenSP || o.maSP)}`, s: `${E(o.trangThai)} · ra lệnh ${D(o.ngay)}${o.khachHang ? " · " + E(o.khachHang) : ""}`,
+      .forEach(o => { const tp = typeof dgIsTP === "function" && dgIsTP(o); R.push({ k: sc(o.so), g: tp ? "Lệnh đóng gói" : "Lệnh phối trộn", t: `${E(o.so)} · ${E(tenOf(o.maSP) || o.tenSP || o.maSP)}`, s: `${E(o.trangThai)} · ra lệnh ${D(o.ngay)}${o.khachHang ? " · " + E(o.khachHang) : ""}`,
         go: () => { if (tp) { S.dgv = "detail"; S.dgSo = o.so; S.dgN = null; S.dgC = null; setTab("dgl"); } else { setTab("lsx"); openOrder(o.so); } } }); });
     L = order(R); paint();
     /* phiếu kiểm bao bì (tải khi cần) */

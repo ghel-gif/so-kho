@@ -4,7 +4,7 @@
 "use strict";
 (function () {
   const E = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-  const SHORT = { blv: "Việc", ton: "Tồn kho", tb: "Thiết bị", nhap: "Nhập", xnb: "Xuất", kk: "Kiểm kê", ls: "Lịch sử", rd: "Thử nghiệm", lsx: "Lệnh SX", qc: "QC lô", kc: "Cân", qa: "IQC", dgl: "Đóng gói", vt: "Danh mục", bc: "Báo cáo" };
+  const SHORT = { blv: "Việc", ton: "Tồn kho", tb: "Thiết bị", nhap: "Nhập", xnb: "Xuất", kk: "Kiểm kê", ls: "Lịch sử", rd: "Thử nghiệm", lsx: "Phối trộn", qc: "QC lô", kc: "Cân", qa: "IQC", dgl: "Đóng gói", vt: "Danh mục", bc: "Báo cáo" };
   const MENU_IC = "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z";
   const me = () => (typeof S !== "undefined" && S.me) || null;
   const side = () => document.querySelector("nav.side");

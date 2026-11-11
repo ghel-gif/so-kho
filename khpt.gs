@@ -563,6 +563,47 @@ function rdRows_() { return (sheet_(RD_SH) ? rows_(RD_SH) : []).filter(r => str_
 function webRDAll(a) { const me = auth_(a); needCT_(me); return rdRows_(); }
 /* Phòng R&D: chỉ TP. LAB/RD (Nguyễn Ô Ghel, vai trò Quản lý) lập / sửa công thức, yêu cầu, đánh giá */
 function rdEd_(me) { return me.vaiTro === ROLES.QL && me.ten === DL_EDITOR_; }
+/* ----- công thức thử: người thực hiện điều chỉnh phụ gia / dung môi theo thực tế; dòng hoạt chất (tech) do TP. LAB/RD ghi, giữ nguyên ----- */
+const RD_TECH_MOI_ = 'Thử nghiệm lô tech mới';
+const RD_SOLV_ = /(nước|water|dầu|\boil\b|\bMES\b|solvesso|\bS-?\s?(100|150|200)\b|xylen|toluen|\bNMP\b|pyrrolidon|\bDMSO\b|\bDMF\b|cyclohexanon|isophoron|methanol|ethanol|\bIPA\b|isopropanol|butanol|aceton|methyl oleat|metyl oleat|\bMSO\b|paraffin|dung môi|solvent)/i;
+/* loại dòng nguyên liệu — cùng cách đoán với màn hình (rd.js loaiOf) */
+function rdLoai_(r, IM) {
+  if (r.loai && ['tech', 'dm', 'pg', 'pb'].indexOf(r.loai) >= 0) return r.loai;
+  const t = String(r.ten || '').trim(); if (!t && !r.ma) return '';
+  const it = r.ma ? IM[r.ma] : null, nh = it ? it.nhom : '';
+  if (nh === 'Nguyên liệu') return 'tech'; if (nh === 'Phân bón') return 'pb'; if (r.bu || RD_SOLV_.test(t)) return 'dm'; if (nh) return 'pg';
+  return /\d{2,3}(?:[.,]\d+)?\s*%|\btech\b|\bTC\b|kỹ thuật/i.test(t) ? 'tech' : 'pg';
+}
+const rdNlKey_ = r => String(r.ma || '').trim().toUpperCase() || String(r.ten || '').trim().toLowerCase();
+/* chữ ký công thức để so sánh: mã, tên, %w/w, dòng bù (kemGc = kể cả ghi chú dòng) */
+function rdNlSig_(nl, kemGc) {
+  return JSON.stringify((Array.isArray(nl) ? nl : []).filter(r => r && (String(r.ten || '').trim() || String(r.ma || '').trim() || String(r.pct == null ? '' : r.pct).trim()))
+    .map(r => [String(r.ma || '').trim(), String(r.ten || '').trim(), r.pct === '' || r.pct == null ? '' : Math.round(num_(r.pct) * 1000) / 1000, r.bu ? 1 : 0].concat(kemGc ? [String(r.gc || '')] : [])));
+}
+/* dòng MỚI do người thực hiện thêm: chỉ coi là hoạt chất khi danh mục ghi nhóm "Nguyên liệu" hoặc tên ghi rõ tech / TC / kỹ thuật
+   (tên có "20%" chưa chắc là hoạt chất: NaOH 32%, Proxel 20%… → phụ gia) */
+function rdLoaiMoi_(r, IM) {
+  const t = String(r.ten || '').trim(), it = r.ma ? IM[r.ma] : null, nh = it ? it.nhom : '';
+  if (nh === 'Nguyên liệu') return 'tech'; if (nh === 'Phân bón') return 'pb'; if (r.bu || RD_SOLV_.test(t)) return 'dm';
+  return !nh && /\btech\b|\bTC\b|kỹ thuật/i.test(t) ? 'tech' : 'pg';
+}
+/* công thức do người thực hiện gửi lên: giữ đủ và đúng các dòng hoạt chất của công thức giao, không thêm hoạt chất; phụ gia / dung môi sửa tự do */
+function rdNlNV_(nl, goc, IM) {
+  const B = {}, BM = {}; (goc || []).forEach(r => { const k = rdNlKey_(r); if (k && !B[k]) B[k] = r; if (r.ma) BM[String(r.ma).trim().toUpperCase()] = 1; });
+  const out = (Array.isArray(nl) ? nl : []).filter(r => r && (String(r.ten || '').trim() || String(r.ma || '').trim())).slice(0, 60).map(r => {
+    const x = { ma: String(r.ma || '').trim().slice(0, 60), ten: String(r.ten || '').trim().slice(0, 150), pct: r.pct === '' || r.pct == null ? '' : Math.round(num_(r.pct) * 1000) / 1000 };
+    if (x.ma && !IM[x.ma] && !BM[x.ma.toUpperCase()]) x.ma = ''; if (r.bu) x.bu = true; if (r.gc) x.gc = String(r.gc).slice(0, 200);
+    const b = B[rdNlKey_(x)], k = b ? rdLoai_(b, IM) : rdLoaiMoi_(x, IM); /* dòng có trong công thức giao: theo loại ở công thức giao · dòng mới: không tin "loại" máy gửi lên */
+    if (k) x.loai = k; return x; });
+  if (!out.length) throw new Error('Công thức không còn dòng nào.');
+  const T0 = (goc || []).filter(r => rdLoai_(r, IM) === 'tech'), T1 = out.filter(r => r.loai === 'tech'), same = (x, t) => rdNlKey_(x) === rdNlKey_(t);
+  T0.forEach(t => { const ten = t.ten || t.ma, i = T1.findIndex(x => same(x, t) && Math.abs(num_(x.pct) - num_(t.pct)) < 1e-6);
+    if (i >= 0) { T1.splice(i, 1); return; }
+    if (T1.some(x => same(x, t))) throw new Error('Dòng hoạt chất "' + ten + '": giữ nguyên ' + num_(t.pct) + ' %. Người thực hiện chỉ điều chỉnh phụ gia, dung môi.');
+    throw new Error('Dòng hoạt chất "' + ten + '" do TP. LAB/RD ghi — không bỏ được. Người thực hiện chỉ điều chỉnh phụ gia, dung môi.'); });
+  if (T1.length) throw new Error('Không thêm hoạt chất "' + (T1[0].ten || T1[0].ma) + '" — hoạt chất do TP. LAB/RD ghi. Người thực hiện chỉ điều chỉnh phụ gia, dung môi.');
+  return out;
+}
 function webRDSave(a, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
   o = o || {}; const ql = rdEd_(me);
@@ -576,19 +617,47 @@ function webRDSave(a, o) {
     let d = o.d || {};
     if (o.loai === 'YC' && !ql) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập / sửa yêu cầu nghiên cứu.');
     if (o.loai === 'PT') {
-      if (!ql) { /* người được giao: chỉ ghi kết quả, ảnh, đề xuất, báo kết quả */
-        if (!cu) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập công thức thử nghiệm.');
-        if (cu.nguoiTH && cu.nguoiTH !== me.ten) throw new Error('Phiếu này giao cho ' + cu.nguoiTH + '.');
-        if (cu.tt === 'Đã duyệt') throw new Error('Phiếu đã được duyệt, không sửa kết quả được nữa.');
-        const keep = Object.assign({}, cu); ['kq', 'kqbd', 'deXuat', 'ngayBD', 'ngayKT', 'nvGhi', 'dat54', 'dat0', 'hong', 'meSL', 'meDV', 'danhGia', 'xuLy', 'ghiChu'].forEach(k => { if (k in d) keep[k] = d[k]; });
-        keep.tt = d.tt === 'Đã báo KQ' ? 'Đã báo KQ' : (cu.tt === 'Giao' ? 'Đang thử' : cu.tt);
-        if (keep.tt === 'Đã báo KQ') keep.baoLuc = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm');
-        d = keep;
+      const nowT = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm');
+      const soMoi = () => { const ym = Utilities.formatDate(new Date(), tz_(), 'yyMM'), n = R.filter(r => str_(r[1]) === 'PT' && (() => { try { return String(JSON.parse(str_(r[3]) || '{}').so || '').indexOf('PT-' + ym) === 0; } catch (e) { return false; } })()).length + 1; return 'PT-' + ym + '-' + ('0' + n).slice(-2); };
+      if (!ql) { /* người được giao: ghi kết quả, đề xuất, báo kết quả; ĐIỀU CHỈNH CÔNG THỨC theo thực tế pha chế (phụ gia, dung môi — không đổi hoạt chất); lập phiếu "thử tỷ lệ khác" */
+        const IM = {}; items_().forEach(it => { IM[it.ma] = it; });
+        const KQ_K = ['kq', 'kqbd', 'deXuat', 'ngayBD', 'ngayKT', 'nvGhi', 'dat54', 'dat0', 'hong', 'meSL', 'meDV', 'danhGia', 'xuLy', 'ghiChu'];
+        const lyCo = d.nlLy != null, ly = String(d.nlLy || '').trim().slice(0, 300); /* lý do điều chỉnh công thức (người thực hiện ghi) */
+        if (!cu) { /* phiếu thử tỷ lệ khác: chép từ phiếu đang được giao cho chính mình */
+          let src = null; if (d.tu) R.forEach(r => { if (src || str_(r[1]) !== 'PT' || str_(r[6]) === 'Đã xoá') return; try { const x = JSON.parse(str_(r[3]) || '{}'); if (x.so && x.so === d.tu) src = x; } catch (e) {} });
+          if (!src) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập công thức thử nghiệm.');
+          if (src.nguoiTH !== me.ten) throw new Error('Phiếu ' + src.so + ' giao cho ' + (src.nguoiTH || 'người khác') + ' — không lập phiếu thử tỷ lệ khác từ phiếu này được.');
+          if ((src.loaiTN || '') === RD_TECH_MOI_) throw new Error('Thử nghiệm lô tech mới: giữ nguyên công thức, không lập phiếu tỷ lệ khác.');
+          const goc = src.nlGoc || src.nl || [], nd = {};
+          ['sp', 'hl', 'loaiTN', 'yc', 'dang', 'tyTrong', 'quyTrinh', 't54', 't0', 'dvHL'].forEach(k => { if (src[k] !== undefined) nd[k] = src[k]; });
+          KQ_K.forEach(k => { if (k in d && k !== 'danhGia' && k !== 'xuLy') nd[k] = d[k]; });
+          if (!Array.isArray(nd.kq) || !nd.kq.length) nd.kq = (src.kq || []).map(r => ({ ct: r.ct, yc: r.yc, pp: r.pp, w: r.w, nb: r.nb }));
+          nd.nl = rdNlNV_(d.nl, goc, IM); nd.nlGoc = goc; nd.nlSua = { nguoi: me.ten, luc: nowT, ly: ly, tu: src.so };
+          nd.maCT = String(d.maCT || '').trim().slice(0, 40); nd.nguoiTH = me.ten; nd.ngayLap = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd');
+          nd.tu = src.so; nd.lan = (num_(src.lan) || 1) + 1; nd.tuNV = 1; nd.so = soMoi();
+          nd.tt = d.tt === 'Đã báo KQ' ? 'Đã báo KQ' : 'Đang thử'; if (nd.tt === 'Đã báo KQ') nd.baoLuc = nowT;
+          d = nd;
+        } else {
+          if (cu.nguoiTH && cu.nguoiTH !== me.ten) throw new Error('Phiếu này giao cho ' + cu.nguoiTH + '.');
+          if (cu.tt === 'Đã duyệt') throw new Error('Phiếu đã được duyệt, không sửa kết quả được nữa.');
+          const keep = Object.assign({}, cu); KQ_K.forEach(k => { if (k in d) keep[k] = d[k]; });
+          if (d.nlDoi && Array.isArray(d.nl) && cu.nguoiTH === me.ten && (cu.loaiTN || '') !== RD_TECH_MOI_ && rdNlSig_(d.nl, 1) !== rdNlSig_(cu.nl, 1)) { /* người thực hiện có sửa công thức (tỷ lệ, dòng, ghi chú dòng); lô tech mới: giữ nguyên công thức đã lưu */
+            const goc = cu.nlGoc || cu.nl || [];
+            keep.nl = rdNlNV_(d.nl, goc, IM);
+            if (rdNlSig_(keep.nl) !== rdNlSig_(goc)) { keep.nlGoc = goc; keep.nlSua = { nguoi: me.ten, luc: nowT, ly: lyCo ? ly : (cu.nlSua && cu.nlSua.ly) || '' }; if (cu.nlSua && cu.nlSua.tu) keep.nlSua.tu = cu.nlSua.tu; }
+            else if (!cu.tuNV) { delete keep.nlGoc; delete keep.nlSua; } /* trả về đúng công thức giao: bỏ dấu "đã điều chỉnh" */
+          } else if (cu.nlSua && lyCo && cu.nguoiTH === me.ten && ly !== (cu.nlSua.ly || '')) keep.nlSua = Object.assign({}, cu.nlSua, { ly: ly });
+          keep.tt = d.tt === 'Đã báo KQ' ? 'Đã báo KQ' : (cu.tt === 'Giao' ? 'Đang thử' : cu.tt);
+          if (keep.tt === 'Đã báo KQ') keep.baoLuc = nowT;
+          d = keep;
+        }
       } else {
         if (!String(d.sp || '').trim()) throw new Error('Ghi tên sản phẩm thử nghiệm.');
-        if (!d.so) { const ym = Utilities.formatDate(new Date(), tz_(), 'yyMM'), n = R.filter(r => str_(r[1]) === 'PT' && JSON.parse(str_(r[3]) || '{}').so && String(JSON.parse(str_(r[3]) || '{}').so).indexOf('PT-' + ym) === 0).length + 1; d.so = 'PT-' + ym + '-' + ('0' + n).slice(-2); }
+        if (!d.so) d.so = soMoi();
         if (!d.tt) d.tt = d.nguoiTH ? 'Giao' : 'Đang thử';
-        if (d.danhGia && ['Đạt', 'Không đạt'].indexOf(d.danhGia) >= 0) { d.tt = 'Đã duyệt'; d.duyetBoi = me.ten; d.duyetLuc = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm'); }
+        /* TP. LAB/RD sửa công thức → công thức mới là công thức giao: bỏ dấu "người thực hiện đã điều chỉnh" */
+        if (cu && (d.nlGoc || d.nlSua) && rdNlSig_(d.nl) !== rdNlSig_(cu.nl)) { delete d.nlGoc; delete d.nlSua; }
+        if (d.danhGia && ['Đạt', 'Không đạt'].indexOf(d.danhGia) >= 0) { d.tt = 'Đã duyệt'; d.duyetBoi = me.ten; d.duyetLuc = nowT; }
         else if (d.tt === 'Đã duyệt') { d.tt = d.baoLuc ? 'Đã báo KQ' : 'Đang thử'; d.duyetBoi = ''; d.duyetLuc = ''; } /* bỏ chọn kết luận = mở lại phiếu */
       }
     }

@@ -22,7 +22,7 @@
     low: { c: "#e5484d", i: "📉", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} — tồn <b style="color:${x.am ? "#c62828" : "inherit"}">${N(x.ton)} kg</b>${x.min ? " / tối thiểu " + N(x.min) : ""}`, go: () => bellTon("am") },
     exp: { c: "#d97706", i: "⏳", line: x => `<b>${E(x.ma)}</b> ${E(x.ten)} · lô ${E(x.lo || "—")} · HSD ${D(x.hsd)} — ${x.con < 0 ? `<b style="color:#c62828">quá hạn ${-x.con} ngày</b>` : "còn " + x.con + " ngày"} · ${N(x.ton)} kg`, go: x => window.lotCard ? lotCard(x.ma, x.lo) : bellTon("hsd") },
     treo: { c: "#5a4fcf", i: "🕒", line: x => `<b>${E(x.so)}</b> · ${E(x.maSP)} — ra lệnh ${D(x.ngay)}, treo ${x.ngayTreo} ngày`, go: x => openLSX(x.so) },
-    mine: { c: "#0f766e", i: "🛠", line: x => `<b>${E(x.so)}</b> · ${x.dg ? "Đóng gói" : "Lệnh SX"} · ${E(x.sp)} · ra lệnh ${D(x.ngay)}`, go: x => x.dg ? openDG(x.so) : openLSX(x.so) }
+    mine: { c: "#0f766e", i: "🛠", line: x => `<b>${E(x.so)}</b> · ${x.dg ? "Đóng gói" : "Phối trộn"} · ${E(x.sp)} · ra lệnh ${D(x.ngay)}`, go: x => x.dg ? openDG(x.so) : openLSX(x.so) }
   };
   function openDG(so) { S.dgv = "detail"; S.dgSo = so; S.dgN = null; S.dgC = null; setTab("dgl"); }
   function openLSX(so) { setTab("lsx"); setTimeout(() => { try { if (typeof openOrder === "function" && S.me && S.me.ct) openOrder(so); } catch (e) {} }, 80); }
