@@ -329,9 +329,10 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
   const mayP=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v)}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};const may=mayP(d.may||(kh&&kh.may));
   const nl=(()=>{const g={};D.nl.forEach(n=>{const k=n.ma+"|"+(n.lo||"");if(g[k])g[k].kg+=n.kg;else g[k]=Object.assign({},n)});const a=Object.values(g);return a.length?a:[null]})();if(!may.length)may.push(null);const me=(d.me||[]).filter(m=>m&&(m.ngay||m.nguoi||m.kg));if(!me.length)me.push(null);
   const tg=d.tg||{},te=bbTG(tg,bbKH(o,kh)),bd=te.bdN,ht=te.htN,KHN='<br><i style="font-size:10.5pt">(theo kế hoạch)</i>';
-  /* 12/11/2026 (theo anh Ghel): hao hụt (%) = (KL thu được − tổng KL cân thực tế các mẻ ở mục 4) / KL thu được × 100.
-     Chưa ghi số lượng mẻ ở mục 4 thì để trống. (Trước: so với KL kế hoạch → thu nhiều hơn kế hoạch ra số âm.) */
-  const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,meT=me.reduce((t,m)=>t+(m&&m.kg!==""&&m.kg!=null?+m.kg||0:0),0),hh=tu&&meT?(tu-meT)/tu*100:null,L=v=>tt&&v?kg(v/tt)+" L":"";
+  /* 12/11/2026 (theo anh Ghel): hao hụt (%) = (KL thu được − tổng KL nguyên liệu cân thực tế) / KL thu được × 100.
+     Tổng NL cân thực tế = tổng các phiếu xuất nguyên liệu của lệnh (tech + phụ gia + dung môi…), VD (1031 − 1021) × 100 / 1031.
+     Chưa có phiếu xuất NL thì để trống. (Trước: so với KL kế hoạch → thu nhiều hơn kế hoạch ra số âm.) */
+  const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,nlT=+D.nlTong||0,hh=tu&&nlT?(tu-nlT)/tu*100:null,L=v=>tt&&v?kg(v/tt)+" L":"";
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`,n=(i,a)=>a.length>1?" ("+(i+1)+")":"";
   const qc=o.qcSX||(kh&&kh.qc)||"",nv=o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", ");
   const KL=[["Đạt - Chuyển lưu kho BTP","Dán giấy trắng"],["Đạt - Chờ phối trộn","Dán giấy vàng"],["Phối lại","Dán giấy vàng"],["Chưa đạt - Chờ xử lý","Dán giấy đỏ"]];
@@ -347,7 +348,7 @@ function bbPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.
    ${sec('4. BÁN THÀNH PHẨM <i style="font-weight:400">(ghi nhận lại chi tiết nếu lệnh SX có nhiều mẻ)</i>')}
    ${me.map(m=>`<tr><td>Ngày SX: <b>${m&&m.ngay?dmy(m.ngay):""}</b>${m&&(m.tu||m.den)?`<br>${esc(m.tu||"")} – ${esc(m.den||"")}`:""}</td><td colspan="2">Thực hiện: ${m?esc(m.nguoi||""):""}</td><td>Số lượng: <b>${m&&m.kg!==""&&m.kg!=null?kg(m.kg)+" kg":""}</b></td></tr>`).join("")}
    ${sec("5. KẾT QUẢ")}
-   <tr><td>*Khối lượng theo KH:</td><td class="r"><b>${kg(khKg)}</b> kg</td><td>Thể tích: <b>${L(khKg)}</b></td><td rowspan="2" class="c">Hao hụt (%)<br><b style="font-size:14pt">${hh===null?"":nf.format(Math.round(hh*100)/100)+" %"}</b></td></tr>
+   <tr><td>*Khối lượng theo KH:</td><td class="r"><b>${kg(khKg)}</b> kg</td><td>Thể tích: <b>${L(khKg)}</b></td><td rowspan="2" class="c">Hao hụt (%)<br><b style="font-size:14pt">${hh===null?"":nf.format(Math.round(hh*100)/100||0)+" %"}</b></td></tr>
    <tr><td>*Khối lượng thu được:</td><td class="r"><b>${tu?kg(tu):""}</b> kg</td><td>Thể tích: <b>${L(tu)}</b></td></tr>
    <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
    <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl klb"><tr>${KL.slice(0,2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
