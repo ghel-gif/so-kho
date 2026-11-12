@@ -33,6 +33,7 @@ function vsMiss(id){const r=(K.data.kh||[]).find(x=>x.id===id);if(!r)return[];co
 /* danh sách Phối trộn: lệnh nào đã có biên bản vệ sinh BM.05 (theo dữ liệu kế hoạch; chưa tải thì tải rồi vẽ lại danh sách) */
 let vsT=0;window.vsHas=function(){if(!K.data){if(!vsT){vsT=1;load().then(()=>{if(window.renderLsx&&S.tab==="lsx")renderLsx()}).catch(()=>{}).finally(()=>{vsT=0})}return null}
   const o={};(K.data.vs||[]).forEach(v=>{if(v.lenh)o[v.lenh]=1});return o};
+window.vsLoad=()=>load().then(()=>window.vsHas());
 window.khReload=()=>{if(K.data)load(true).then(()=>{if(document.getElementById("khBox")&&!document.getElementById("tab-khpt").hidden)khRender()}).catch(()=>{})};
 
 /* ---------- khung chính ---------- */

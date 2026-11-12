@@ -79,6 +79,18 @@
     el.querySelectorAll("[data-qa]").forEach(b => b.onclick = () => qaOpen(T[+b.dataset.qa].id));
     bump(box, T.length);
   }
+  /* Phối trộn: lệnh đã hoàn thành (ra từ 05/11/2026) chưa lập Biên bản vệ sinh thiết bị khuấy trộn BM.05 */
+  async function vsCard(box) {
+    const el = box.querySelector("#blvVs"); if (!el || !window.vsLoad || !S.me || !(S.me.ct || S.me.qc)) return;
+    let V = null; try { V = window.vsHas() || await window.vsLoad(); } catch (e) {} if (!V) return;
+    const L = (S.lenh || []).filter(o => o.trangThai === "Hoàn thành" && String(o.ngay || "") >= "2026-11-05" && typeof itemBy === "function" && (itemBy(o.maSP) || {}).nhom === "Bán thành phẩm" && !V[o.so])
+      .sort((a, b) => String(b.ngayHT || b.ngay).localeCompare(String(a.ngayHT || a.ngay)));
+    if (!L.length) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div class="blv-card lv-bad" style="--c:#7c3aed"><div class="blv-h"><span class="blv-i">🧽</span><b>Phối trộn — chưa lập biên bản vệ sinh thiết bị (BM.05)</b><span class="blv-n">${L.length}</span></div><div class="blv-l">${L.slice(0, 12).map((o, i) => { const it = itemBy(o.maSP);
+      return `<button type="button" class="blv-r r-bad" data-vs="${i}"><span><b>${E(o.so)}</b> · ${E(it ? it.ten : o.maSP)} — xong ${D(o.ngayHT || o.ngay)}, <b style="color:#c62828">chưa lập BM.05</b></span></button>`; }).join("")}${L.length > 12 ? `<div class="note" style="padding:6px 10px">… và ${L.length - 12} lệnh khác — xem ở Phối trộn</div>` : ""}</div></div>`;
+    el.querySelectorAll("[data-vs]").forEach(b => b.onclick = () => { const o = L[+b.dataset.vs]; if (window.vsDlg) vsDlg(o.so); });
+    bump(box, L.length);
+  }
   async function tbCard(box) {
     const el = box.querySelector("#blvTb"); if (!el || !window.tbTasks) return;
     const T = await tbTasks(); if (!T.length) { el.innerHTML = ""; return; }
@@ -108,7 +120,7 @@
         <div class="blv-l">${L.map((x, i) => { const ln = M.line(x); return `<button type="button" class="blv-r${/#c62828/.test(ln) ? " r-bad" : ""}" data-k="${s.k}" data-i="${i}"><span>${ln}</span><span class="blv-go">Mở ›</span></button>`; }).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
     box.innerHTML = `<div class="blv-top"><div><h2 class="blv-hi">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)}${window.skyLine ? " · " + skyLine() : ""} — chỉ hiện việc thuộc phần của bạn.</p></div>
         <div class="blv-sum ${R.n ? "bad" : "ok"}" data-n="${R.n}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
-      <div class="blv-grid"><div id="blvDg"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
+      <div class="blv-grid"><div id="blvDg"></div><div id="blvVs"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
       ${mine && mine.rows.length ? card(mine) : ""}</div>
       <p class="note" style="margin-top:10px">Bàn làm việc tự cập nhật khi dữ liệu thay đổi. Bấm một dòng để mở đúng lệnh / lô.</p>`;
     navCnt(R.n);
@@ -117,5 +129,6 @@
     rdCard(box);
     qaCard(box);
     tbCard(box);
+    vsCard(box);
   };
 })();

@@ -514,7 +514,14 @@ function getAnhLo(a, ma, lo) {
 const KHO_DB = { xl: { kho: 'Kho hàng xử lý', pre: 'XL' }, farm: { kho: 'Kho hàng bán Farm', pre: 'FARM' } };
 const dbOf_ = i => !i ? '' : (i.kho === KHO_DB.xl.kho || i.kho === 'Kho BTP xử lý') ? 'xl' : i.kho === KHO_DB.farm.kho ? 'farm' : '';
 /* Kho hàng xử lý chỉ một người thấy và chuyển hàng vào / ra (người khác: mã XL.… ẩn khỏi tồn kho, thẻ kho, lịch sử, báo cáo, bản tin) */
-const XL_CHU_ = 'Nguyễn Ô Ghel', xlAn_ = () => !!ME_ && ME_.ten !== XL_CHU_;
+/* 12/11/2026: mở Kho hàng xử lý cho mọi người xem (trước chỉ anh Ghel) — chuyển kho vẫn theo quyền chuyển kho (Quản lý / Kế toán) */
+const XL_CHU_ = 'Nguyễn Ô Ghel', xlAn_ = () => false;
+/** BTP dùng cho lệnh đóng gói phải là hàng trong kho Asata: không lấy hàng kho công ty khác (ký gửi), Kho hàng xử lý, Kho hàng bán Farm */
+function btpDongGoi_(it) {
+  if (!it) return;
+  const d = dbOf_(it); if (d) throw new Error(it.ma + ' nằm ở ' + KHO_DB[d].kho + ' — không dùng đóng gói. Chọn BTP trong kho Asata.');
+  const c = String(it.chuHang || '').trim(); if (c && c !== 'Asata') throw new Error(it.ma + ' là hàng kho ' + c + ' (công ty khác) — không dùng đóng gói lệnh này. Chọn BTP trong kho Asata.');
+}
 function xlGuard_(it) { if (it && dbOf_(it) === 'xl' && xlAn_()) throw new Error('Kho hàng xử lý chỉ anh Ghel (' + XL_CHU_ + ') xem và thao tác.'); }
 function transferStock(a, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]);
@@ -1978,7 +1985,7 @@ const q = qcRows_().find(x => x.qc === o.qc);
     if (trung && trung.trangThai !== 'Đã huỷ') throw new Error('Số lệnh ' + so + ' đã tồn tại (' + trung.trangThai + ').');
     if (trung) { let ten = trung.so + ' (huỷ)', k = 2; while (all.some(x => x.so === ten)) ten = trung.so + ' (huỷ ' + k++ + ')'; sheet_(SH.LX).getRange(orderRow_(trung.so), 1).setValue(ten); }
     let items = items_(); const has = m => items.some(i => i.ma === m), vt = sheet_(SH.VT), moi = [];
-    btp.forEach(b => { if (!has(b.ma)) throw new Error('Không có mã BTP ' + b.ma + ' trong danh mục.'); });
+    btp.forEach(b => { if (!has(b.ma)) throw new Error('Không có mã BTP ' + b.ma + ' trong danh mục.'); btpDongGoi_(items.find(i => i.ma === b.ma)); });
     const tp = 'TP.' + dgCode_(q.qc), heSo = Math.round(num_(o.heSo) * 1e6) / 1e6 || 1;
     if (!has(tp)) {
       const loai = q.loai || 'chai';
@@ -2109,6 +2116,7 @@ function updatePack_(a, so, o) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const items = items_(), has = m => items.some(i => i.ma === m), vt = sheet_(SH.VT);
+    (o.btp || []).forEach(b => { if (b && b.ma) btpDongGoi_(items.find(i => i.ma === b.ma)); });
     (o.lines || []).forEach(l => { const ma = String(l.ma || '').trim(); if (!ma || has(ma) || !/^BB\./.test(ma)) return;
       vt.appendRow([ma, String(l.ten || ma).slice(0, 150), 'Bao bì', 'cái', 1, 0, 0, '', '', '', '', 'Kho bao bì']); items.push({ ma: ma }); });
     const row = orderRow_(so), lx = sheet_(SH.LX); lxHead_();
