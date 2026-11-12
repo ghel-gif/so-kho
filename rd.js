@@ -200,7 +200,7 @@
         return `<div class="row click${b.k === "doc" ? " r-bad" : b.k === "duyet" ? " r-wait" : ""}" data-id="${E(p.id)}"><div class="name"><span class="code">${E(d.so || "")}</span><span class="tn">${E(d.sp || "")}</span> ${chip(p)}${b.k === "xong" || b.k === "duyet" ? ` <button type="button" class="btn small" data-prbb="${E(p.id)}" title="In phiếu để ký">🖨 In</button>` : ""}</div><div class="kg">📦 ${E(bbBao(d))}<small>${bbN(d)} mẫu</small></div>
           ${next}<div class="meta">Lập ${D(d.ngayLap || p.ngay)} · ${d.tuSo ? "từ phiếu " + E(d.tuSo) : d.maSP ? "lô " + E(d.lo || "—") : ""}${d.bao && d.bao.ncc ? " · NCC " + E(d.bao.ncc) : ""} · ${d.ngayBD ? "bắt đầu " + D(d.ngayBD) : b.k === "giao" && b.cho >= 3 ? `<b style="color:#b45309">giao ${b.cho} ngày chưa bắt đầu</b>` : "chưa bắt đầu"} · thực hiện: <b>${E(d.nguoiTH || "—")}</b></div></div>`; };
       h += `<div class="tools">${QL() ? '<button class="btn primary" type="button" id="rdNewBB">+ Lập phiếu thử bao bì &amp; giao việc</button>' : ""}${L.length ? `<input id="rdBBq" type="search" placeholder="Tìm sản phẩm, bao bì, NCC…" value="${E(fBB)}" style="max-width:280px" data-opt>` : ""}</div>
-        <p class="note" style="margin:0 0 8px">Sản phẩm đóng vào bao bì thương mại, lưu 54±2 °C ${BB_NGAY} ngày: cân mẫu trước / sau (hao hụt), xem tình trạng bao bì, đo chỉ tiêu trước / sau lưu. Lập từ phiếu công thức hoặc từ lô trong kho.</p>
+        <p class="note" style="margin:0 0 8px">Sản phẩm đóng vào bao bì thương mại, lưu 54±2 °C ${BB_NGAY} ngày: xem tình trạng bao bì (móp, phồng, xì chảy), đo chỉ tiêu trước / sau lưu. Lập từ phiếu công thức hoặc từ lô trong kho.</p>
         ${L.length ? zone("lam", "🛠", "Đang làm", "cần người làm ngay", Zl.length, Zl.map(row).join(""), kw ? "Không có phiếu khớp." : "Không có phiếu nào đang cần làm.")
           + zone("theodoi", "⏳", "Đang lưu mẫu", "trong tủ 54 °C, chưa đến ngày đọc", Zt.length, Zt.map(row).join(""), "Không có mẫu nào đang lưu.")
           + zone("xong", "✅", "Đã xong", Zx.length ? `${dat} đạt · ${Zx.length - dat} không đạt` : "đã duyệt", Zx.length, Zx.map(row).join(""), "Chưa có phiếu nào được duyệt.")
@@ -573,30 +573,31 @@
       ["khac", "Hiện tượng khác", "nứt, đổi màu, nhãn bong, mực phai…", 1]]; };
   const bbKTv = (d, k) => { const v = ((d.kt || {})[k] || {}).v || ""; return v === "Có" ? "Nặng" : v; };
   const bbKTloi = d => bbKT(d).filter(([k]) => /Nhẹ|Nặng/.test(bbKTv(d, k)));
-  const BUOC_BB = [["giao", "Đóng mẫu", "chờ bắt đầu"], ["kq0", "Ghi ban đầu", "cân mẫu, chỉ tiêu"], ["luu", "Lưu mẫu", "54 °C · " + BB_NGAY + " ngày"], ["bao", "Báo kết quả", "tự đánh giá"], ["duyet", "Duyệt", "Quản lý đánh giá"], ["xong", "Đã xong", "in phiếu để ký"]];
+  const BUOC_BB = [["giao", "Đóng mẫu", "chờ bắt đầu"], ["kq0", "Ghi ban đầu", "chỉ tiêu trước lưu"], ["luu", "Lưu mẫu", "54 °C · " + BB_NGAY + " ngày"], ["bao", "Báo kết quả", "tự đánh giá"], ["duyet", "Duyệt", "Quản lý đánh giá"], ["xong", "Đã xong", "in phiếu để ký"]];
   const ngoai = r => /gửi ngoài/i.test((r && r.pp) || ""); /* chỉ tiêu gửi phòng thí nghiệm ngoài (hàm lượng): không chặn các bước, ghi khi có kết quả */
   const bbN = d => Math.max(1, Math.min(30, parseInt(d.n) || 3));
   const bbMau = d => { const n = bbN(d), M = Array.isArray(d.mau) ? d.mau.slice(0, n) : []; while (M.length < n) M.push({}); return M; };
   const bbBi = d => { const x = parseFloat(String(d.bi ?? "").replace(",", ".")); return x > 0 ? x : 0; };
   /* hao hụt khối lượng 1 mẫu: (KL trước − KL sau) / KL sản phẩm (cả bao bì trừ bì; chưa ghi bì thì chia cho KL cả bao bì) */
   const bbHH = (m, d) => { const a = parseFloat(String(m.m0 ?? "").replace(",", ".")), b = parseFloat(String(m.m14 ?? "").replace(",", ".")); if (!(a > 0) || !isFinite(b)) return null; const net = a - bbBi(d); return net > 0 ? (a - b) / net * 100 : null; };
-  const bbHHmax = d => { const L = bbMau(d).map(m => bbHH(m, d)).filter(x => x != null); return L.length ? Math.max(...L) : null; };
+  const BB_CAN = false; /* 12/11/2026: thử nghiệm bao bì không cân khối lượng — mẫu không còn ô cân (dữ liệu cũ, nếu có, vẫn giữ) */
+  const bbHHmax = d => { if (!BB_CAN) return null; const L = bbMau(d).map(m => bbHH(m, d)).filter(x => x != null); return L.length ? Math.max(...L) : null; };
   const bbBao = d => { const b = d.bao || {}; return [b.loai, b.vl, b.dt].filter(fil).join(" ") || "—"; };
   const inYcG = (yc, v) => { const x = parseFloat(String(v || "").replace(",", ".")); if (!isFinite(x) || !String(v).trim().match(/^[\d.,\s]+$/)) return null; const t = String(yc || "").replace(/,/g, ".");
     let m = /(-?\d+(?:\.\d+)?)\s*[-–÷~]\s*(-?\d+(?:\.\d+)?)/.exec(t); if (m) return x >= +m[1] && x <= +m[2];
     m = /(≥|>=|>|min)\s*(-?\d+(?:\.\d+)?)/i.exec(t); if (m) return m[1] === ">" ? x > +m[2] : x >= +m[2];
     m = /(≤|<=|<|max)\s*(-?\d+(?:\.\d+)?)/i.exec(t); if (m) return m[1] === "<" ? x < +m[2] : x <= +m[2]; return null; };
   function buocBB(d) {
-    const td = today(), th = d.nguoiTH || "", M = bbMau(d), K = (d.kq || []).filter(r => fil(r.ct) && !ngoai(r));
+    const td = today(), th = d.nguoiTH || "", M = BB_CAN ? bbMau(d) : [], K = (d.kq || []).filter(r => fil(r.ct) && !ngoai(r));
     const a = [M.filter(m => fil(m.m0)).length + K.filter(r => fil(r.a)).length, M.length + K.length];
     const kt = d.kt || {}, b = [M.filter(m => fil(m.m14)).length + K.filter(r => fil(r.b)).length + bbKT(d).filter(x => !x[3] && kt[x[0]] && kt[x[0]].v).length, M.length + K.length + bbKT(d).filter(x => !x[3]).length];
     const han = d.ngayBD ? add(d.ngayBD, BB_NGAY) : "", luu = d.ngayBD && b[0] < b[1] ? [{ k: "b", ten: "54 °C", tong: BB_NGAY, ngay: han, da: Math.max(0, Math.min(BB_NGAY, dDiff(td, d.ngayBD))) }] : [];
     const o = { P: { a, b }, luu, th }, set = x => Object.assign(o, x), who = th || "Quản lý", ql = th ? 0 : 1;
     if (d.tt === "Đã duyệt") return set({ z: "xong", k: "xong", i: 5 });
     if (d.tt === "Đã báo KQ") return set({ z: "lam", k: "duyet", i: 4, who: "Quản lý", ql: 1, viec: "xem kết quả, chọn Đạt / Không đạt rồi bấm Lưu để duyệt" });
-    if (!d.ngayBD) return set({ z: "lam", k: "giao", i: 0, who, ql, cho: dDiff(td, d.ngayLap || td), viec: th ? "đóng sản phẩm vào " + bbN(d) + " " + String((d.bao || {}).loai || "bao bì").toLowerCase() + ", cân từng mẫu, ghi Ngày bắt đầu" : "chọn người thực hiện để giao việc" });
-    if (a[0] < a[1]) return set({ z: "lam", k: "kq0", i: 1, who, ql, viec: "ghi khối lượng ban đầu và chỉ tiêu trước lưu (đã ghi " + a[0] + "/" + a[1] + ")" });
-    if (luu.length && han <= td) { const tre = dDiff(td, han); return set({ z: "lam", k: "doc", i: 2, who, ql, han, tre, viec: (tre > 0 ? "quá " + tre + " ngày" : "hôm nay đến ngày") + " lấy mẫu khỏi tủ 54 °C — cân lại, xem bao bì, ghi chỉ tiêu sau lưu" }); }
+    if (!d.ngayBD) return set({ z: "lam", k: "giao", i: 0, who, ql, cho: dDiff(td, d.ngayLap || td), viec: th ? "đóng sản phẩm vào " + bbN(d) + " " + String((d.bao || {}).loai || "bao bì").toLowerCase() + ", ghi Ngày bắt đầu" : "chọn người thực hiện để giao việc" });
+    if (a[0] < a[1]) return set({ z: "lam", k: "kq0", i: 1, who, ql, viec: "ghi chỉ tiêu trước lưu (đã ghi " + a[0] + "/" + a[1] + ")" });
+    if (luu.length && han <= td) { const tre = dDiff(td, han); return set({ z: "lam", k: "doc", i: 2, who, ql, han, tre, viec: (tre > 0 ? "quá " + tre + " ngày" : "hôm nay đến ngày") + " lấy mẫu khỏi tủ 54 °C — xem bao bì (móp, phồng, xì chảy), ghi chỉ tiêu sau lưu" }); }
     if (luu.length) return set({ z: "theodoi", k: "luu", i: 2, who, ql, han, con: dDiff(han, td) });
     return set({ z: "lam", k: "bao", i: 3, who, ql, viec: th ? "chọn kết luận Đạt / Không đạt, bấm Báo kết quả" : "chọn kết luận Đạt / Không đạt rồi bấm Lưu" });
   }
@@ -617,7 +618,7 @@
     const guide = () => { const ST = BUOC_BB.slice(0, 5).map(x => x[1]), st = i0 => `<ol class="rd-stepper">${ST.map((t, i) => `<li class="${i < i0 ? "done" : i === i0 ? "cur" : ""}"><i>${i < i0 ? "✓" : i + 1}</i><span>${t}</span></li>`).join("")}</ol>`;
       if (!p) return `<div class="rd-guide z-lam">${st(-1)}<p>👉 <b>Chuẩn bị — bạn (Quản lý):</b> chọn mẫu (từ phiếu công thức hoặc lô trong kho), ghi bao bì thử, số mẫu, chỉ tiêu theo dõi (mục 3.3), chọn <b>Người thực hiện</b> rồi bấm <b>Lưu &amp; giao việc</b>.</p></div>`;
       const b = buocBB(p.d), mine = cuaToi(b), td = today();
-      const CHO = { giao: `đóng sản phẩm vào ${bbN(p.d)} mẫu bao bì, đậy / hàn kín như hàng thật, <b>cân từng mẫu (cả bao bì)</b> ghi cột <b>Trước lưu</b>, ghi <b>Ngày bắt đầu</b> rồi cho vào tủ 54 °C.`, kq0: "ghi khối lượng ban đầu từng mẫu và các chỉ tiêu cột <b>Trước lưu</b> (đã ghi " + b.P.a[0] + "/" + b.P.a[1] + "), bấm Lưu kết quả.", doc: "đã đủ " + BB_NGAY + " ngày — lấy mẫu ra, để nguội về nhiệt độ phòng, <b>cân lại</b>, xem <b>tình trạng bao bì</b>, ghi chỉ tiêu cột <b>Sau lưu</b>, bấm Lưu kết quả.", bao: "đã đủ kết quả — chọn <b>Đạt / Không đạt</b> rồi bấm <b>📨 Báo kết quả</b>.", duyet: "xem kết quả, chọn <b>Đạt / Không đạt</b> rồi bấm <b>Lưu</b> để duyệt." };
+      const CHO = { giao: `đóng sản phẩm vào ${bbN(p.d)} mẫu bao bì, đậy / hàn kín như hàng thật, ghi các chỉ tiêu cột <b>Trước lưu</b>, ghi <b>Ngày bắt đầu</b> rồi cho vào tủ 54 °C.`, kq0: "ghi các chỉ tiêu cột <b>Trước lưu</b> (đã ghi " + b.P.a[0] + "/" + b.P.a[1] + "), bấm Lưu kết quả.", doc: "đã đủ " + BB_NGAY + " ngày — lấy mẫu ra, để nguội về nhiệt độ phòng, xem <b>tình trạng bao bì</b> (móp, phồng, xì chảy), ghi chỉ tiêu cột <b>Sau lưu</b>, bấm Lưu kết quả.", bao: "đã đủ kết quả — chọn <b>Đạt / Không đạt</b> rồi bấm <b>📨 Báo kết quả</b>.", duyet: "xem kết quả, chọn <b>Đạt / Không đạt</b> rồi bấm <b>Lưu</b> để duyệt." };
       const luu = b.luu.map(x => `Lưu mẫu ${E(luuTxt(x))} ${x.ngay > td ? "(còn " + dDiff(x.ngay, td) + " ngày)" : x.ngay === td ? "<b>(hôm nay)</b>" : `<b style="color:#c62828">(quá ${dDiff(td, x.ngay)} ngày)</b>`}`).join(" · ");
       const body = b.z === "xong" ? `<p>✅ <b>Đã xong</b> — kết luận <b>${E(p.d.danhGia || "")}</b>${p.d.duyetBoi ? " · duyệt: " + E(p.d.duyetBoi) + " " + E(p.d.duyetLuc || "") : ""}. In phiếu để ký.</p>`
         : b.z === "theodoi" ? `<p>⏳ <b>Đang lưu mẫu — chưa phải làm gì.</b> ${luu}. Đến ngày, máy nhắc <b>${E(b.who)}</b> lấy mẫu ra đọc.</p>`
@@ -649,18 +650,14 @@
       <div class="two"><label>Loại bao bì *<select id="bbLoai" ${ro}>${BB_LOAI.map(x => `<option ${x === d.bao.loai ? "selected" : ""}>${x}</option>`).join("")}</select></label><label>Vật liệu<input id="bbVl" list="bbVlDl" value="${E(d.bao.vl || "")}" ${ro} data-opt placeholder="VD HDPE, COEX, nhôm ghép"><datalist id="bbVlDl">${BB_VL.map(x => `<option value="${E(x)}"></option>`).join("")}</datalist></label></div>
       <div class="two"><label>Dung tích / quy cách<input id="bbDt" value="${E(d.bao.dt || "")}" ${ro} data-opt placeholder="VD 100 ml, 500 ml, 1 L, 20 g"></label><label>Mã bao bì trong kho<input id="bbBM" list="bbBbDl" value="${E(d.bao.ma ? lbI(itemBy(d.bao.ma) || { ma: d.bao.ma, ten: "" }) : "")}" ${ro} data-opt placeholder="Gõ mã / tên (nếu có)"><datalist id="bbBbDl">${BBs.map(i => `<option value="${E(lbI(i))}"></option>`).join("")}</datalist></label></div>
       <div class="two"><label>Nhà cung cấp bao bì<input id="bbNcc" value="${E(d.bao.ncc || "")}" ${ro} data-opt></label><label>Lô bao bì<input id="bbBLo" value="${E(d.bao.lo || "")}" ${ro} data-opt></label></div>
-      <div class="two"><label>Số mẫu đóng<input id="bbN" type="number" min="1" max="30" step="1" value="${bbN(d)}" ${ro}></label><label>Hao hụt khối lượng cho phép (%)<input id="bbHt" value="${E(d.ht || "")}" ${ro} data-opt placeholder="VD ≤ 1 — để trống nếu chưa đặt mức"></label></div>
-      <div class="two"><label>Ngày lập phiếu<input id="bbLap" type="date" value="${E(d.ngayLap || "")}" ${ro}></label><label>Người thực hiện<select id="bbNg" ${ro}>${userOpts(d.nguoiTH)}</select></label></div>
+      <div class="two"><label>Số mẫu đóng<input id="bbN" type="number" min="1" max="30" step="1" value="${bbN(d)}" ${ro}></label><span></span></div>
+      <div class="two"><label>Ngày lập phiếu<input id="bbLap" type="date" value="${E(d.ngayLap || "")}" ${ro}></label><label>Người thực hiện${p && ql ? ' <small class="note">(đổi người → bấm 💾 Lưu thay đổi, người mới được báo)</small>' : ""}<select id="bbNg" ${ro}>${userOpts(d.nguoiTH)}</select></label></div>
       ${ql ? `<label>Yêu cầu / ghi chú khi giao<input id="bbYc" value="${E(d.yc || "")}" data-opt placeholder="VD đóng như hàng bán, siết nắp bằng máy"></label>` : d.yc ? `<p class="note">Yêu cầu: ${E(d.yc)}</p>` : ""}
       ${p || ql ? `<div class="grp" id="bbS3">3. Kết quả ${toi && !ql ? '<small class="note" style="color:#2563eb">(phần của bạn)</small>' : ""}</div>
       ${p ? `<label style="max-width:300px">Ngày bắt đầu lưu mẫu 54 °C<input id="bbBD" type="date" value="${E(d.ngayBD || "")}" ${dis}${optK}></label>
-      <h4 class="bb-h">3.1 Khối lượng mẫu <small class="note">— cân cả bao bì, cùng một cân; sau lưu để nguội về nhiệt độ phòng rồi mới cân</small></h4>
-      <div class="two" style="max-width:600px"><label>KL bao bì rỗng (g)<input id="bbBi" type="number" step="any" inputmode="decimal" value="${E(d.bi ?? "")}" ${dis} data-opt placeholder="để tính % hao hụt theo KL sản phẩm"></label><span></span></div>
-      <div class="dgx rd-tb"><table class="bb-mt"><thead><tr><th style="width:44px">Mẫu</th><th>Trước lưu (g)</th><th>Sau ${BB_NGAY} ngày 54 °C (g)</th><th style="width:110px">Hao hụt</th><th>Ghi chú</th></tr></thead><tbody id="bbMau">${mauRows()}</tbody></table></div>
-      <p class="note" id="bbHHs"></p>
-      <h4 class="bb-h">3.2 Tình trạng bao bì sau lưu</h4>
+      <h4 class="bb-h">3.1 Tình trạng bao bì sau lưu</h4>
       <div class="dgx rd-tb"><table class="bb-kt"><thead><tr><th>Hiện tượng</th><th style="width:230px">Mức độ</th><th>Ghi chú</th></tr></thead><tbody id="bbKtB">${ktRows()}</tbody></table></div><p class="note" id="bbKtS"></p>` : '<p class="note">Khối lượng mẫu và tình trạng bao bì do người thực hiện ghi sau khi nhận việc. Chọn sẵn các chỉ tiêu theo dõi dưới đây.</p>'}
-      <h4 class="bb-h">3.3 Chỉ tiêu sản phẩm trong bao bì</h4>${ctDl}
+      <h4 class="bb-h">3.2 Chỉ tiêu sản phẩm trong bao bì</h4>${ctDl}
       ${ql ? `<div class="tools" style="margin:4px 0"><button type="button" class="btn small" id="bbQcvn">📋 Lấy chỉ tiêu theo QCVN 01-188 cho dạng <span class="bbDg2">${E(d.dang || "…")}</span></button></div>` : ""}
       <div class="dgx rd-tb"><table><thead><tr><th style="width:32%">Chỉ tiêu · phương pháp</th><th style="width:20%">Yêu cầu</th><th>Trước lưu</th><th>Sau ${BB_NGAY} ngày 54 °C</th>${ql ? '<th style="width:38px"></th>' : ""}</tr></thead><tbody id="bbKq">${kqRows()}</tbody></table></div>
       ${ql ? '<button type="button" class="btn small" id="bbAddKq" style="margin-top:6px">+ chỉ tiêu</button>' : ""}
@@ -673,7 +670,7 @@
         <div class="rd-dgr"><span class="rd-dgl">Ghi chú</span><textarea id="bbGc" rows="2" ${ghiKQ || (ql && p) ? "" : "disabled"} data-opt style="flex:1 1 300px;min-width:240px">${E(d.ghiChu || "")}</textarea></div>
       </div>` : ""}` : ""}
       <div class="actions" style="flex-wrap:wrap">
-        ${ql ? `<button class="btn primary" type="button" id="bbSave">${p ? "Lưu" : "Lưu & giao việc"}</button>` : ""}
+        ${ql ? `<button class="btn primary" type="button" id="bbSave">${p ? "💾 Lưu thay đổi" : "Lưu & giao việc"}</button>${p ? '<button class="btn" type="button" id="bbSua" title="Sửa sản phẩm, bao bì, số mẫu, chỉ tiêu, đổi người thực hiện">✎ Sửa phiếu / đổi người</button>' : ""}` : ""}
         ${!ql && toi && p && d.tt !== "Đã duyệt" ? (() => { const bao = buocBB(p.d).k === "bao"; return `<button class="btn${bao ? "" : " primary"}" type="button" id="bbDraft">Lưu kết quả</button><button class="btn${bao ? " primary" : ""}" type="button" id="bbBao">📨 Báo kết quả</button>`; })() : ""}
         ${p ? '<button class="btn" type="button" id="bbPr">🖨 In<span class="fnm"> phiếu</span></button>' : ""}
         ${p && ql ? '<button class="btn" type="button" id="bbLai">↻ Thử lại<span class="fnm"> (phiếu mới)</span></button><button class="btn danger" type="button" id="bbDel">Xoá</button>' : ""}
@@ -723,12 +720,12 @@
     if (q("#bbAddKq")) q("#bbAddKq").onclick = () => { d.kq.push({}); q("#bbKq").innerHTML = kqRows(); wire(); };
     const collect = () => {
       if (ql) { const bm = String(q("#bbBM").value || "").trim(), bu = bm.toUpperCase(), bi = BBs.find(i => lbI(i) === bm || i.ma.toUpperCase() === bu);
-        Object.assign(d, { nguon: ng, sp: q("#bbSp").value.trim(), dang: q("#bbDang").value, hl: q("#bbHl").value.trim(), ngayLap: q("#bbLap").value, nguoiTH: q("#bbNg").value, n: Math.max(1, Math.min(30, parseInt(q("#bbN").value) || 3)), ht: q("#bbHt").value.trim(), yc: q("#bbYc").value.trim(),
+        Object.assign(d, { nguon: ng, sp: q("#bbSp").value.trim(), dang: q("#bbDang").value, hl: q("#bbHl").value.trim(), ngayLap: q("#bbLap").value, nguoiTH: q("#bbNg").value, n: Math.max(1, Math.min(30, parseInt(q("#bbN").value) || 3)), ht: (q("#bbHt") || { value: d.ht || "" }).value.trim(), yc: q("#bbYc").value.trim(),
           bao: { loai: q("#bbLoai").value, vl: q("#bbVl").value.trim(), dt: q("#bbDt").value.trim(), ma: bi ? bi.ma : "", ncc: q("#bbNcc").value.trim(), lo: q("#bbBLo").value.trim() } });
         if (ng === "pt") { d.maSP = ""; d.lo = ""; d.nsx = ""; } else { d.tuPT = ""; d.tuSo = ""; d.maCT = ""; }
         d.mau = bbMau(d); if (!p && !d.kq.length) d.kq = kqTu(null, d.dang); }
       if (p && (ghiKQ || ql)) { const kt = {}; bbKT(d).forEach(([k]) => { const v = (w.querySelector(`[name="bbKt_${k}"]:checked`) || {}).value || "", g = (q(`[data-ktg="${k}"]`) || {}).value || ""; if (v || g.trim()) kt[k] = { v, gc: g.trim() }; });
-        Object.assign(d, { kt, bi: q("#bbBi").value.trim(), ngayBD: q("#bbBD").value, nhanXet: q("#bbNx").value.trim(), deXuat: q("#bbDx").value.trim(), ngayKT: q("#bbKT").value, danhGia: (w.querySelector("[name=bbDg]:checked") || {}).value || "", ghiChu: q("#bbGc").value.trim() });
+        Object.assign(d, { kt, bi: (q("#bbBi") || { value: d.bi || "" }).value.trim(), ngayBD: q("#bbBD").value, nhanXet: q("#bbNx").value.trim(), deXuat: q("#bbDx").value.trim(), ngayKT: q("#bbKT").value, danhGia: (w.querySelector("[name=bbDg]:checked") || {}).value || "", ghiChu: q("#bbGc").value.trim() });
         d.mau = d.mau.map(m => ({ m0: String(m.m0 ?? "").trim(), m14: String(m.m14 ?? "").trim(), gc: String(m.gc || "").trim() })); }
       d.kq = d.kq.filter(r => fil(r.ct) || r.a || r.b); };
     const go = async (extra, msg) => { collect(); Object.assign(d, extra || {});
@@ -744,6 +741,7 @@
       } catch (e) { toast(e.message); } };
     if (q("#bbSave")) q("#bbSave").onclick = () => go(null, p ? "Đã lưu phiếu" : "Đã lập phiếu" + (q("#bbNg").value ? " và giao cho " + q("#bbNg").value : ""));
     if (q("#bbDraft")) q("#bbDraft").onclick = () => go(null, "Đã lưu kết quả");
+    if (q("#bbSua")) q("#bbSua").onclick = () => { const el = q("#bbNg"); el.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => { el.focus(); el.style.boxShadow = "0 0 0 3px #2563eb66"; setTimeout(() => el.style.boxShadow = "", 2500); }, 350); toast("Sửa các ô ở mục 1, 2 (và chỉ tiêu mục 3.2) rồi bấm 💾 Lưu thay đổi"); };
     if (q("#bbBao")) q("#bbBao").onclick = () => go({ tt: "Đã báo KQ" }, "Đã báo kết quả cho TP. LAB/RD");
     if (q("#bbPr")) q("#bbPr").onclick = () => { collect(); prBB(d); };
     if (q("#bbPrTop")) q("#bbPrTop").onclick = () => { collect(); prBB(d); };
@@ -762,12 +760,9 @@
       <tr class="sec"><td colspan="4">2. BAO BÌ THỬ</td></tr>
       <tr><td>Loại · vật liệu</td><td>${E([b.loai, b.vl].filter(fil).join(" · "))}</td><td>Dung tích / quy cách</td><td>${E(b.dt || "")}</td></tr>
       <tr><td>Mã bao bì · NCC</td><td>${E([b.ma, b.ncc].filter(fil).join(" · "))}</td><td>Lô bao bì · số mẫu</td><td>${E(b.lo || "")}${b.lo ? " · " : ""}${bbN(d)} mẫu</td></tr></table>
-      <div class="gap"></div><table><tr class="sec"><td colspan="5">3.1 KHỐI LƯỢNG MẪU (cả bao bì)${bbBi(d) ? " · KL bao bì rỗng " + E(d.bi) + " g" : ""}${fil(d.ht) ? " · hao hụt cho phép " + E(d.ht) + " %" : ""}</td></tr><tr><th style="width:9%">Mẫu</th><th>Trước lưu (g)</th><th>Sau ${BB_NGAY} ngày 54 °C (g)</th><th>Hao hụt</th><th>Ghi chú</th></tr>
-      ${M.map((m, i) => `<tr><td class="c">${i + 1}</td><td class="c">${E(m.m0 || "")}</td><td class="c">${E(m.m14 || "")}</td><td class="c">${fP(bbHH(m, d))}</td><td>${E(m.gc || "")}</td></tr>`).join("")}
-      ${mx != null ? `<tr><td colspan="3" style="text-align:right"><b>Hao hụt lớn nhất</b></td><td class="c"><b>${fP(mx)}</b></td><td>${bbBi(d) ? "" : "<small>tính trên KL cả bao bì</small>"}</td></tr>` : ""}</table>
-      <div class="gap"></div><table><tr class="sec"><td colspan="3">3.2 TÌNH TRẠNG BAO BÌ SAU LƯU</td></tr><tr><th>Hiện tượng</th><th style="width:32%">Mức độ</th><th style="width:36%">Ghi chú</th></tr>
+      <div class="gap"></div><table><tr class="sec"><td colspan="3">3.1 TÌNH TRẠNG BAO BÌ SAU LƯU</td></tr><tr><th>Hiện tượng</th><th style="width:32%">Mức độ</th><th style="width:36%">Ghi chú</th></tr>
       ${bbKT(d).map(([k, t, mo]) => { const x = kt[k] || {}, v = bbKTv(d, k); return `<tr><td>${t} <small>(${mo})</small></td><td class="c">${BB_MUC.map(([m]) => cb(v === m) + " " + m).join(" &nbsp; ")}</td><td>${E(x.gc || "")}</td></tr>`; }).join("")}</table>
-      <div class="gap"></div><table><colgroup><col style="width:30%"><col style="width:22%"><col><col></colgroup><tr class="sec"><td colspan="4">3.3 CHỈ TIÊU SẢN PHẨM TRONG BAO BÌ</td></tr><tr><th>Chỉ tiêu <small>(phương pháp)</small></th><th>Yêu cầu</th><th>Trước lưu</th><th>Sau ${BB_NGAY} ngày 54 °C</th></tr>
+      <div class="gap"></div><table><colgroup><col style="width:30%"><col style="width:22%"><col><col></colgroup><tr class="sec"><td colspan="4">3.2 CHỈ TIÊU SẢN PHẨM TRONG BAO BÌ</td></tr><tr><th>Chỉ tiêu <small>(phương pháp)</small></th><th>Yêu cầu</th><th>Trước lưu</th><th>Sau ${BB_NGAY} ngày 54 °C</th></tr>
       ${(d.kq || []).filter(r => fil(r.ct)).map((r, i) => `<tr><td>${i + 1}. ${E(r.ct)}${r.pp ? `<br><small>${E(r.pp)}</small>` : ""}</td><td><small>${E(r.yc || "")}</small></td><td>${E(r.a || "")}</td><td>${E(r.b || "")}</td></tr>`).join("")}
       ${d.nhanXet || d.deXuat ? `<tr><td>Nhận xét · đề xuất</td><td colspan="3">${E(d.nhanXet || "")}${d.nhanXet && d.deXuat ? "<br>" : ""}${d.deXuat ? "<i>Đề xuất:</i> " + E(d.deXuat) : ""}</td></tr>` : ""}</table>
       <div class="gap"></div><table><tr class="sec"><td>4. ĐÁNH GIÁ</td></tr><tr><td>Bao bì: ${cb(d.danhGia === "Đạt")} Đạt &nbsp;&nbsp; ${cb(d.danhGia === "Không đạt")} Không đạt${d.ghiChu ? "<br>Ghi chú: " + E(d.ghiChu) : ""}</td></tr></table>
