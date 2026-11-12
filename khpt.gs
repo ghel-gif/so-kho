@@ -116,7 +116,8 @@ function webBBGet(a, so) {
   const r = (sheet_(BB_SH) ? rows_(BB_SH) : []).find(x => str_(x[0]) === so);
   let me = []; try { me = r ? JSON.parse(str_(r[1]) || '[]') : []; } catch (e) { me = []; }
   const q = qcMap_()[lotKey_(od.maSP, lo)] || null, tt = ttMap_()[lotKey_(od.maSP, lo)] || od.tyTrong || 0;
-  return { o: od, lo, nsx: nh ? nh.nsx : '', nl, kh: k, may: mayList_(), qc: q, tt,
+  const nlTong = Math.round(mv.filter(m => m.loai === 'Xuất').reduce((t, m) => t + (+m.kg || 0), 0) * 1000) / 1000; /* tổng mọi nguyên liệu xuất cho lệnh (tech + phụ gia + dung môi…) — gốc tính hao hụt, giống báo cáo Phối trộn */
+  return { o: od, lo, nsx: nh ? nh.nsx : '', nl, nlTong, kh: k, may: mayList_(), qc: q, tt,
     bb: r ? { me, ketLuan: str_(r[2]), ghiChu: str_(r[3]), nguoi: str_(r[4]), luc: khTs_(r[5]), may: str_(r[6]), tg: (() => { try { return JSON.parse(str_(r[7]) || 'null'); } catch (e) { return null; } })() } : null, ketLuan: BB_KL };
 }
 function webBBSave(a, so, d) {
