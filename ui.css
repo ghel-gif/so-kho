@@ -1403,3 +1403,10 @@ nav.side .navuser a.nupw{text-decoration:none}
 .chip.qc-tre{animation:skRing 1.8s ease-out infinite}
 #qcList .row.r-bad,#qcTk .row.r-bad{box-shadow:inset 4px 0 0 #e11d48}
 @media (prefers-reduced-motion:reduce){.chip.qc-tre{animation:none}}
+/* thử nghiệm tương thích bao bì */
+.bb-h{margin:12px 0 6px;font-size:14px}.bb-h small{font-weight:400}
+.bb-yn{display:flex;gap:6px}.bb-o{position:relative}.bb-o input{position:absolute;opacity:0;pointer-events:none}
+.bb-o span{display:inline-block;padding:5px 14px;border-radius:8px;border:2px solid var(--line,#cfd8dc);font-weight:700;cursor:pointer;min-width:58px;text-align:center}
+.bb-o input:disabled+span{cursor:default;opacity:.75}.bb-o.ok input:checked+span{background:#2e7d32;border-color:#2e7d32;color:#fff}.bb-o.bad input:checked+span{background:#c62828;border-color:#c62828;color:#fff}
+.bb-o input:focus-visible+span{outline:2px solid #2563eb;outline-offset:2px}
+.bb-mt input{width:100%;text-align:right}.bb-mt td:last-child input{text-align:left}

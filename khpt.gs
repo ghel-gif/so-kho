@@ -555,9 +555,9 @@ function webBieuDo(a, n) {
   return { M, nl, top: T, sl, qc };
 }
 
-/* ================= PHÒNG RD (RD-QT.01): BM.04 yêu cầu · BM.02 công thức – phiếu KT pha chế · BM.03 giao mẫu · BM.01 sổ (tổng hợp) =================
+/* ================= PHÒNG RD (RD-QT.01): BM.04 yêu cầu · BM.02 công thức – phiếu KT pha chế · BM.03 giao mẫu · BM.01 sổ (tổng hợp) · BB thử nghiệm tương thích bao bì =================
    Quản lý (TP. LAB/RD) lập yêu cầu, lập công thức thử và giao người thực hiện; người được giao ghi kết quả và báo kết quả; Quản lý kết luận. */
-const RD_SH = 'PhongRD', RD_HEAD = ['ID', 'Loại', 'Ngày', 'Dữ liệu (JSON)', 'Người lập', 'Lúc', 'Trạng thái', 'Người sửa cuối'], RD_LOAI = ['YC', 'PT', 'GM'];
+const RD_SH = 'PhongRD', RD_HEAD = ['ID', 'Loại', 'Ngày', 'Dữ liệu (JSON)', 'Người lập', 'Lúc', 'Trạng thái', 'Người sửa cuối'], RD_LOAI = ['YC', 'PT', 'GM', 'BB'];
 function rdRows_() { return (sheet_(RD_SH) ? rows_(RD_SH) : []).filter(r => str_(r[0])).map((r, i) => { let d = {}; try { d = JSON.parse(str_(r[3]) || '{}'); } catch (e) {}
   return { id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[2]), d, nguoi: str_(r[4]), luc: khTs_(r[5]), xoa: str_(r[6]) === 'Đã xoá' ? 1 : 0, sua: str_(r[7]) }; }); }
 function webRDAll(a) { const me = auth_(a); needCT_(me); return rdRows_(); }
@@ -661,6 +661,7 @@ function webRDSave(a, o) {
         else if (d.tt === 'Đã duyệt') { d.tt = d.baoLuc ? 'Đã báo KQ' : 'Đang thử'; d.duyetBoi = ''; d.duyetLuc = ''; } /* bỏ chọn kết luận = mở lại phiếu */
       }
     }
+    if (o.loai === 'BB') d = rdBB_(me, ql, d, cu, R);
     const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
     const ngay = isYmd_(o.ngay) ? o.ngay : Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd');
     if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
@@ -669,6 +670,33 @@ function webRDSave(a, o) {
     log_(me, 'Phòng RD ' + o.loai, id, (d.so || d.sp || d.noiDung || d.ten || '').toString().slice(0, 120) + (d.tt ? ' · ' + d.tt : ''));
     return { id, d };
   } finally { lock.releaseLock(); }
+}
+/* ----- THỬ NGHIỆM TƯƠNG THÍCH BAO BÌ (BB): sản phẩm đóng vào bao bì thương mại, lưu 54±2 °C 14 ngày; theo dõi khối lượng (hao hụt),
+   tình trạng bao bì, chỉ tiêu hoá lý trước / sau lưu. TP. LAB/RD lập & giao việc, người được giao ghi kết quả + báo kết quả, TP. LAB/RD duyệt. ----- */
+function rdBB_(me, ql, d, cu, R) {
+  const nowT = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HH:mm');
+  if (!ql) {
+    if (!cu) throw new Error('Chỉ TP. LAB/RD (Nguyễn Ô Ghel) lập phiếu thử nghiệm bao bì.');
+    if (cu.nguoiTH && cu.nguoiTH !== me.ten) throw new Error('Phiếu này giao cho ' + cu.nguoiTH + '.');
+    if (cu.tt === 'Đã duyệt') throw new Error('Phiếu đã được duyệt, không sửa kết quả được nữa.');
+    const keep = Object.assign({}, cu);
+    ['mau', 'kt', 'bi', 'ngayBD', 'ngayKT', 'nhanXet', 'deXuat', 'danhGia', 'ghiChu'].forEach(k => { if (k in d) keep[k] = d[k]; });
+    /* người thực hiện không đổi chỉ tiêu / mức yêu cầu do TP. LAB/RD ghi — chỉ ghi kết quả trước / sau lưu */
+    if (Array.isArray(d.kq) && Array.isArray(cu.kq)) keep.kq = cu.kq.map((r, i) => { const x = d.kq[i] || {}; return Object.assign({}, r, { a: String(x.a == null ? (r.a || '') : x.a).slice(0, 300), b: String(x.b == null ? (r.b || '') : x.b).slice(0, 300) }); });
+    if (Array.isArray(keep.mau)) keep.mau = keep.mau.slice(0, 30);
+    keep.tt = d.tt === 'Đã báo KQ' ? 'Đã báo KQ' : (cu.tt === 'Giao' ? 'Đang thử' : cu.tt);
+    if (keep.tt === 'Đã báo KQ') keep.baoLuc = nowT;
+    return keep;
+  }
+  if (!String(d.sp || '').trim()) throw new Error('Ghi tên sản phẩm thử nghiệm.');
+  if (!d.bao || !String(d.bao.loai || '').trim()) throw new Error('Ghi loại bao bì thử (chai, gói, túi…).');
+  if (!d.so) { const ym = Utilities.formatDate(new Date(), tz_(), 'yyMM');
+    const n = R.filter(r => str_(r[1]) === 'BB' && (() => { try { return String(JSON.parse(str_(r[3]) || '{}').so || '').indexOf('BB-' + ym) === 0; } catch (e) { return false; } })()).length + 1;
+    d.so = 'BB-' + ym + '-' + ('0' + n).slice(-2); }
+  if (!d.tt) d.tt = d.nguoiTH ? 'Giao' : 'Đang thử';
+  if (d.danhGia && ['Đạt', 'Không đạt'].indexOf(d.danhGia) >= 0) { if (!cu || cu.tt !== 'Đã duyệt' || cu.danhGia !== d.danhGia) { d.duyetBoi = me.ten; d.duyetLuc = nowT; } d.tt = 'Đã duyệt'; }
+  else if (d.tt === 'Đã duyệt') { d.tt = d.baoLuc ? 'Đã báo KQ' : 'Đang thử'; d.duyetBoi = ''; d.duyetLuc = ''; }
+  return d;
 }
 function webRDDel(a, id, khoiPhuc) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
