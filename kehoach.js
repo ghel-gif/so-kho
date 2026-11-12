@@ -1,6 +1,6 @@
 /* In sau khi vòng xoay "Đang lưu" đã tắt hẳn (tránh treo vòng xoay phía sau hộp thoại in) */
 window.khPrintNow=function(pg){let n=0;const go=()=>{const ov=document.getElementById("busyOv");if(ov&&ov.classList.contains("on")&&n++<40)return setTimeout(go,150);
-  try{window.print()}catch(e){toast("Không mở được hộp thoại in: "+e.message)}setTimeout(()=>{if(pg)pg.textContent=""},1500)};setTimeout(go,200)};
+  try{if(pg)pg.dataset.live="1";window.print()}catch(e){toast("Không mở được hộp thoại in: "+e.message)}};setTimeout(go,200)};
 /* Sổ Kho bản web — KẾ HOẠCH PHỐI TRỘN
  * Kế hoạch gắn với lệnh SX BTP: ngày phối trộn, máy, giờ, ưu tiên, người phối chế, QC.
  * Xem: Theo ngày · Hôm nay · Ngày mai · Kanban · Lịch · Giờ máy · Danh mục máy. Gửi kế hoạch → xưởng xem + copy dán Zalo + in. */
