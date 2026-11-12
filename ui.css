@@ -1414,3 +1414,12 @@ nav.side .navuser a.nupw{text-decoration:none}
 .bb-o span{min-width:52px;padding:5px 10px}
 @media (max-width:700px){.bb-kt thead{display:none}.bb-kt tr{display:grid;grid-template-columns:1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--line,#e2e8f0)}.bb-kt td{border:0!important;padding:0 8px!important}.bb-kt td input{width:100%}}
 .rd-segn{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:#dc2626;color:#fff;font-size:11.5px;font-weight:700;line-height:18px;text-align:center}
+/* Phối trộn · Biểu mẫu QC */
+.bm-row{display:grid;grid-template-columns:1fr auto;gap:6px 12px}.bm-row .bm-cs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bm-b{border:0;background:none;padding:0;cursor:pointer;font:inherit;color:inherit}
+.bm-c{display:inline-block;padding:5px 10px;border-radius:8px;border:1.5px solid var(--line,#cfd8dc);font-size:13px}
+.bm-c.bm-ok{border-color:#2e7d32;background:rgba(46,125,50,.08);color:#1b5e20}.bm-c.bm-gap{border-color:#d97706;background:rgba(217,119,6,.1);color:#92400e}.bm-c.bm-no{border-color:#c62828;background:rgba(198,40,40,.07);color:#b71c1c}.bm-c.bm-unk{opacity:.7}
+.bm-b:hover .bm-c,.bm-b:focus-visible .bm-c{box-shadow:0 0 0 2px #2563eb55}
+.bm-day{display:flex!important;flex-direction:row!important;gap:8px;align-items:center;margin:0}.bm-day input{height:auto!important;min-height:38px;width:auto;max-width:190px}
+.bm-tt{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700;background:#e2e8f0;color:#334155}.bm-tt.run{background:#dbeafe;color:#1d4ed8}
+.bm-old .bm-c.bm-no{border-color:var(--line,#cfd8dc);background:none;color:inherit;opacity:.8}
