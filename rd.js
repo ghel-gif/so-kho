@@ -192,8 +192,8 @@
       const Zt = L.filter(p => bq(p).z === "theodoi" && F(p)).sort((x, y) => String(bq(x).han).localeCompare(String(bq(y).han)));
       const Zx = L.filter(p => bq(p).z === "xong" && F(p)).sort((x, y) => String(y.d.duyetLuc || "").localeCompare(String(x.d.duyetLuc || "")));
       const dat = Zx.filter(p => p.d.danhGia === "Đạt").length;
-      const row = p => { const d = p.d, b = bq(p), mine = cuaToi(b), mx = bbHHmax(d), nCo = BB_KT.filter(([k]) => d.kt && d.kt[k] && d.kt[k].v === "Có").length;
-        const next = b.z === "xong" ? `<div class="rd-next done">✓ <b>Bao bì ${E(d.danhGia || "")}</b>${mx != null ? " · hao hụt tối đa " + (Math.round(mx * 100) / 100).toLocaleString("vi-VN") + " %" : ""}${nCo ? " · " + nCo + " hiện tượng ở bao bì" : ""}${d.duyetLuc ? " · duyệt " + D(d.duyetLuc) : ""}</div>`
+      const row = p => { const d = p.d, b = bq(p), mine = cuaToi(b), mx = bbHHmax(d), nCo = bbKTloi(d).length;
+        const next = b.z === "xong" ? `<div class="rd-next done">✓ <b>Bao bì ${E(d.danhGia || "")}</b>${mx != null ? " · hao hụt tối đa " + (Math.round(mx * 100) / 100).toLocaleString("vi-VN") + " %" : ""}${nCo ? " · " + bbKTloi(d).map(([k, t]) => t + " " + bbKTv(d, k).toLowerCase()).join(", ") : ""}${d.duyetLuc ? " · duyệt " + D(d.duyetLuc) : ""}</div>`
           : b.z === "theodoi" ? b.luu.map(x => `<div class="rd-next wait">⏳ Lưu mẫu ${E(luuTxt(x))} <b>(còn ${dDiff(x.ngay, td)} ngày)</b><span class="rd-bar"><i style="width:${Math.round(x.da / x.tong * 100)}%"></i></span></div>`).join("")
           : `<div class="rd-next${mine ? " my" : ""}${b.k === "doc" ? " bad" : ""}">👉 <b>${E(mine ? "Bạn" : b.who)}</b>: ${E(b.viec)}${mine ? ' <span class="rd-my">việc của bạn</span>' : ""}</div>`;
         return `<div class="row click${b.k === "doc" ? " r-bad" : b.k === "duyet" ? " r-wait" : ""}" data-id="${E(p.id)}"><div class="name"><span class="code">${E(d.so || "")}</span><span class="tn">${E(d.sp || "")}</span> ${chip(p)}${b.k === "xong" || b.k === "duyet" ? ` <button type="button" class="btn small" data-prbb="${E(p.id)}" title="In phiếu để ký">🖨 In</button>` : ""}</div><div class="kg">📦 ${E(bbBao(d))}<small>${bbN(d)} mẫu</small></div>
@@ -565,7 +565,13 @@
   const BB_LOAI = ["Chai", "Can", "Gói", "Túi", "Hũ", "Bao", "Thùng"];
   const BB_VL = ["HDPE", "COEX (HDPE/EVOH)", "PET", "PP", "LDPE", "Nhôm ghép (PET/AL/PE)", "Giấy ghép PE", "Thuỷ tinh"];
   /* tình trạng bao bì đọc sau lưu: ok = không có hiện tượng */
-  const BB_KT = [["phong", "Phồng, căng bao bì"], ["xep", "Xẹp, móp (hút chân không)"], ["bd", "Biến dạng, mềm, nứt thành bao bì"], ["ri", "Rò rỉ ở nắp / mép hàn"], ["mau", "Đổi màu, ăn mòn, trương nở bao bì"], ["nhan", "Nhãn bong, mực in nhoè / phai"]];
+  /* tình trạng bao bì đọc sau lưu: móp, phồng, xì chảy (bắt buộc) + hiện tượng khác (tuỳ chọn); mức Không / Nhẹ / Nặng. Chữ theo loại bao bì (chai, gói…) */
+  const BB_MUC = [["Không", "ok"], ["Nhẹ", "re"], ["Nặng", "bad"]];
+  const bbKT = d => { const l = String((d.bao || {}).loai || "Chai"), n = l.toLowerCase(), mem = /Gói|Túi|Bao/.test(l), vt = mem ? "ở mép hàn, thân " + n : "ở nắp, thân, đáy " + n;
+    return [["mop", "Móp " + n, mem ? "xẹp, dính sát vào sản phẩm" : "thân bị lõm vào (hút chân không)"], ["phong", "Phồng " + n, "căng, phình ra (sinh khí, giãn nở)"], ["xi", "Xì, chảy", "rỉ hoặc chảy sản phẩm " + vt],
+      ["khac", "Hiện tượng khác", "nứt, đổi màu, nhãn bong, mực phai…", 1]]; };
+  const bbKTv = (d, k) => { const v = ((d.kt || {})[k] || {}).v || ""; return v === "Có" ? "Nặng" : v; };
+  const bbKTloi = d => bbKT(d).filter(([k]) => /Nhẹ|Nặng/.test(bbKTv(d, k)));
   const BUOC_BB = [["giao", "Đóng mẫu", "chờ bắt đầu"], ["kq0", "Ghi ban đầu", "cân mẫu, chỉ tiêu"], ["luu", "Lưu mẫu", "54 °C · " + BB_NGAY + " ngày"], ["bao", "Báo kết quả", "tự đánh giá"], ["duyet", "Duyệt", "Quản lý đánh giá"], ["xong", "Đã xong", "in phiếu để ký"]];
   const ngoai = r => /gửi ngoài/i.test((r && r.pp) || ""); /* chỉ tiêu gửi phòng thí nghiệm ngoài (hàm lượng): không chặn các bước, ghi khi có kết quả */
   const bbN = d => Math.max(1, Math.min(30, parseInt(d.n) || 3));
@@ -582,7 +588,7 @@
   function buocBB(d) {
     const td = today(), th = d.nguoiTH || "", M = bbMau(d), K = (d.kq || []).filter(r => fil(r.ct) && !ngoai(r));
     const a = [M.filter(m => fil(m.m0)).length + K.filter(r => fil(r.a)).length, M.length + K.length];
-    const kt = d.kt || {}, b = [M.filter(m => fil(m.m14)).length + K.filter(r => fil(r.b)).length + BB_KT.filter(([k]) => kt[k] && kt[k].v).length, M.length + K.length + BB_KT.length];
+    const kt = d.kt || {}, b = [M.filter(m => fil(m.m14)).length + K.filter(r => fil(r.b)).length + bbKT(d).filter(x => !x[3] && kt[x[0]] && kt[x[0]].v).length, M.length + K.length + bbKT(d).filter(x => !x[3]).length];
     const han = d.ngayBD ? add(d.ngayBD, BB_NGAY) : "", luu = d.ngayBD && b[0] < b[1] ? [{ k: "b", ten: "54 °C", tong: BB_NGAY, ngay: han, da: Math.max(0, Math.min(BB_NGAY, dDiff(td, d.ngayBD))) }] : [];
     const o = { P: { a, b }, luu, th }, set = x => Object.assign(o, x), who = th || "Quản lý", ql = th ? 0 : 1;
     if (d.tt === "Đã duyệt") return set({ z: "xong", k: "xong", i: 5 });
@@ -625,8 +631,8 @@
         <td><textarea data-kq="${i}" data-k="a" rows="1" class="rd-ta rd-kqv" ${dis}${optK || o}>${E(r.a || "")}</textarea></td>
         <td><textarea data-kq="${i}" data-k="b" rows="1" class="rd-ta rd-kqv" ${dis}${optK || o || (chuaDen() ? " data-opt" : "")} placeholder="${ghiKQ && chuaDen() ? hanTxt() : ""}">${E(r.b || "")}</textarea></td>
         ${ql ? `<td><button type="button" class="btn small" data-rmkq="${i}">✕</button></td>` : ""}</tr>`; }).join("");
-    const ktRows = () => BB_KT.map(([k, t]) => { const v = (d.kt[k] || {}).v || "", g = (d.kt[k] || {}).gc || "";
-      return `<tr><td>${t}</td><td><div class="bb-yn">${[["Không", "ok"], ["Có", "bad"]].map(([x, c]) => `<label class="bb-o ${c}"><input type="radio" name="bbKt_${k}" value="${x}" ${v === x ? "checked" : ""} ${dis}${optK || (chuaDen() ? " data-opt" : "")}><span>${x}</span></label>`).join("")}</div></td><td><input data-ktg="${k}" value="${E(g)}" ${dis} data-opt placeholder="mô tả, số mẫu bị"></td></tr>`; }).join("");
+    const ktRows = () => bbKT(d).map(([k, t, mo, op]) => { const v = bbKTv(d, k), g = (d.kt[k] || {}).gc || "";
+      return `<tr><td><b>${t}</b><div class="note">${mo}</div></td><td><div class="bb-yn">${BB_MUC.map(([x, c]) => `<label class="bb-o ${c}"><input type="radio" name="bbKt_${k}" value="${x}" ${v === x ? "checked" : ""} ${dis}${optK || op || chuaDen() ? " data-opt" : ""}><span>${x}</span></label>`).join("")}</div></td><td><input data-ktg="${k}" value="${E(g)}" ${dis} data-opt placeholder="${k === "khac" ? "ghi rõ hiện tượng" : "mô tả, mẫu số mấy bị"}"></td></tr>`; }).join("");
     const w = dlg(p ? `Thử nghiệm bao bì ${E(d.so || "")}` : "Lập phiếu thử nghiệm tương thích bao bì", `
       ${guide()}
       ${p && (d.tt === "Đã duyệt" || d.tt === "Đã báo KQ") ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 8px;padding:9px 12px;border-radius:10px;background:rgba(46,125,50,.08);border:1.5px solid rgba(46,125,50,.4)"><b style="color:#2e7d32">${d.tt === "Đã duyệt" ? "✓ Phiếu đã hoàn thành — in ra để ký" : "Đã báo kết quả — có thể in ra trình ký"}</b><button class="btn primary small" type="button" id="bbPrTop">🖨 In phiếu</button></div>` : ""}
@@ -652,7 +658,7 @@
       <div class="dgx rd-tb"><table class="bb-mt"><thead><tr><th style="width:44px">Mẫu</th><th>Trước lưu (g)</th><th>Sau ${BB_NGAY} ngày 54 °C (g)</th><th style="width:110px">Hao hụt</th><th>Ghi chú</th></tr></thead><tbody id="bbMau">${mauRows()}</tbody></table></div>
       <p class="note" id="bbHHs"></p>
       <h4 class="bb-h">3.2 Tình trạng bao bì sau lưu</h4>
-      <div class="dgx rd-tb"><table><thead><tr><th>Hiện tượng</th><th style="width:170px">Có / Không</th><th>Ghi chú</th></tr></thead><tbody>${ktRows()}</tbody></table></div>` : '<p class="note">Khối lượng mẫu và tình trạng bao bì do người thực hiện ghi sau khi nhận việc. Chọn sẵn các chỉ tiêu theo dõi dưới đây.</p>'}
+      <div class="dgx rd-tb"><table class="bb-kt"><thead><tr><th>Hiện tượng</th><th style="width:230px">Mức độ</th><th>Ghi chú</th></tr></thead><tbody id="bbKtB">${ktRows()}</tbody></table></div><p class="note" id="bbKtS"></p>` : '<p class="note">Khối lượng mẫu và tình trạng bao bì do người thực hiện ghi sau khi nhận việc. Chọn sẵn các chỉ tiêu theo dõi dưới đây.</p>'}
       <h4 class="bb-h">3.3 Chỉ tiêu sản phẩm trong bao bì</h4>${ctDl}
       ${ql ? `<div class="tools" style="margin:4px 0"><button type="button" class="btn small" id="bbQcvn">📋 Lấy chỉ tiêu theo QCVN 01-188 cho dạng <span class="bbDg2">${E(d.dang || "…")}</span></button></div>` : ""}
       <div class="dgx rd-tb"><table><thead><tr><th style="width:32%">Chỉ tiêu · phương pháp</th><th style="width:20%">Yêu cầu</th><th>Trước lưu</th><th>Sau ${BB_NGAY} ngày 54 °C</th>${ql ? '<th style="width:38px"></th>' : ""}</tr></thead><tbody id="bbKq">${kqRows()}</tbody></table></div>
@@ -687,6 +693,13 @@
       kqMark(); };
     if (q("#bbKq")) { wire(); hhUp(); if (q("#bbBi")) q("#bbBi").oninput = () => { d.bi = q("#bbBi").value; hhUp(); }; }
     if (q("#bbHt")) q("#bbHt").oninput = () => { d.ht = q("#bbHt").value.trim(); hhUp(); };
+    /* tình trạng bao bì: đọc lại các nút đã chọn → tóm tắt; bấm lại nút đang chọn để bỏ chọn; đổi loại bao bì → đổi chữ (chai / gói…) */
+    const ktRead = () => { if (!q("#bbKtB")) return; bbKT(d).forEach(([k]) => { const v = (w.querySelector(`[name="bbKt_${k}"]:checked`) || {}).value || "", g = ((q(`[data-ktg="${k}"]`) || {}).value || "").trim(); if (v || g) d.kt[k] = { v, gc: g }; else delete d.kt[k]; }); };
+    const ktUp = () => { const s2 = q("#bbKtS"); if (!s2) return; ktRead(); const L = bbKTloi(d), nang = L.some(([k]) => bbKTv(d, k) === "Nặng" || k === "xi");
+      s2.innerHTML = L.length ? `${nang ? '<b style="color:#c62828">⚠' : '<b style="color:#b45309">'} ${L.map(([k, t]) => E(t) + " " + bbKTv(d, k).toLowerCase()).join(", ")}</b>${nang ? " — xì chảy hoặc hư hỏng nặng: thường đánh giá bao bì Không đạt." : ""}` : ""; };
+    const ktWire = () => w.querySelectorAll("#bbKtB input[type=radio]").forEach(r => { const mark = () => w.querySelectorAll(`input[name="${r.name}"]`).forEach(x => x.dataset.was = x.checked ? "1" : ""); mark(); r.addEventListener("click", () => { if (r.dataset.was === "1") r.checked = false; mark(); ktUp(); }); });
+    ktWire(); ktUp();
+    if (q("#bbLoai")) q("#bbLoai").addEventListener("change", () => { ktRead(); d.bao.loai = q("#bbLoai").value; const t = q("#bbKtB"); if (t) { t.innerHTML = ktRows(); ktWire(); ktUp(); } });
     if (q("#bbBD")) q("#bbBD").addEventListener("change", () => { d.ngayBD = q("#bbBD").value; });
     /* nút Đạt / Không đạt: bấm lần nữa để bỏ chọn */
     w.querySelectorAll(".rd-opt input[type=radio]").forEach(r => { const mark = () => w.querySelectorAll(`input[name="${r.name}"]`).forEach(x => x.dataset.was = x.checked ? "1" : ""); mark(); r.addEventListener("click", () => { if (r.dataset.was === "1") r.checked = false; mark(); }); });
@@ -713,7 +726,7 @@
           bao: { loai: q("#bbLoai").value, vl: q("#bbVl").value.trim(), dt: q("#bbDt").value.trim(), ma: bi ? bi.ma : "", ncc: q("#bbNcc").value.trim(), lo: q("#bbBLo").value.trim() } });
         if (ng === "pt") { d.maSP = ""; d.lo = ""; d.nsx = ""; } else { d.tuPT = ""; d.tuSo = ""; d.maCT = ""; }
         d.mau = bbMau(d); if (!p && !d.kq.length) d.kq = kqTu(null, d.dang); }
-      if (p && (ghiKQ || ql)) { const kt = {}; BB_KT.forEach(([k]) => { const v = (w.querySelector(`[name="bbKt_${k}"]:checked`) || {}).value || "", g = (q(`[data-ktg="${k}"]`) || {}).value || ""; if (v || g.trim()) kt[k] = { v, gc: g.trim() }; });
+      if (p && (ghiKQ || ql)) { const kt = {}; bbKT(d).forEach(([k]) => { const v = (w.querySelector(`[name="bbKt_${k}"]:checked`) || {}).value || "", g = (q(`[data-ktg="${k}"]`) || {}).value || ""; if (v || g.trim()) kt[k] = { v, gc: g.trim() }; });
         Object.assign(d, { kt, bi: q("#bbBi").value.trim(), ngayBD: q("#bbBD").value, nhanXet: q("#bbNx").value.trim(), deXuat: q("#bbDx").value.trim(), ngayKT: q("#bbKT").value, danhGia: (w.querySelector("[name=bbDg]:checked") || {}).value || "", ghiChu: q("#bbGc").value.trim() });
         d.mau = d.mau.map(m => ({ m0: String(m.m0 ?? "").trim(), m14: String(m.m14 ?? "").trim(), gc: String(m.gc || "").trim() })); }
       d.kq = d.kq.filter(r => fil(r.ct) || r.a || r.b); };
@@ -751,8 +764,8 @@
       <div class="gap"></div><table><tr class="sec"><td colspan="5">3.1 KHỐI LƯỢNG MẪU (cả bao bì)${bbBi(d) ? " · KL bao bì rỗng " + E(d.bi) + " g" : ""}${fil(d.ht) ? " · hao hụt cho phép " + E(d.ht) + " %" : ""}</td></tr><tr><th style="width:9%">Mẫu</th><th>Trước lưu (g)</th><th>Sau ${BB_NGAY} ngày 54 °C (g)</th><th>Hao hụt</th><th>Ghi chú</th></tr>
       ${M.map((m, i) => `<tr><td class="c">${i + 1}</td><td class="c">${E(m.m0 || "")}</td><td class="c">${E(m.m14 || "")}</td><td class="c">${fP(bbHH(m, d))}</td><td>${E(m.gc || "")}</td></tr>`).join("")}
       ${mx != null ? `<tr><td colspan="3" style="text-align:right"><b>Hao hụt lớn nhất</b></td><td class="c"><b>${fP(mx)}</b></td><td>${bbBi(d) ? "" : "<small>tính trên KL cả bao bì</small>"}</td></tr>` : ""}</table>
-      <div class="gap"></div><table><tr class="sec"><td colspan="3">3.2 TÌNH TRẠNG BAO BÌ SAU LƯU</td></tr><tr><th>Hiện tượng</th><th style="width:22%">Có / Không</th><th style="width:36%">Ghi chú</th></tr>
-      ${BB_KT.map(([k, t]) => { const x = kt[k] || {}; return `<tr><td>${t}</td><td class="c">${cb(x.v === "Có")} Có &nbsp; ${cb(x.v === "Không")} Không</td><td>${E(x.gc || "")}</td></tr>`; }).join("")}</table>
+      <div class="gap"></div><table><tr class="sec"><td colspan="3">3.2 TÌNH TRẠNG BAO BÌ SAU LƯU</td></tr><tr><th>Hiện tượng</th><th style="width:32%">Mức độ</th><th style="width:36%">Ghi chú</th></tr>
+      ${bbKT(d).map(([k, t, mo]) => { const x = kt[k] || {}, v = bbKTv(d, k); return `<tr><td>${t} <small>(${mo})</small></td><td class="c">${BB_MUC.map(([m]) => cb(v === m) + " " + m).join(" &nbsp; ")}</td><td>${E(x.gc || "")}</td></tr>`; }).join("")}</table>
       <div class="gap"></div><table><colgroup><col style="width:30%"><col style="width:22%"><col><col></colgroup><tr class="sec"><td colspan="4">3.3 CHỈ TIÊU SẢN PHẨM TRONG BAO BÌ</td></tr><tr><th>Chỉ tiêu <small>(phương pháp)</small></th><th>Yêu cầu</th><th>Trước lưu</th><th>Sau ${BB_NGAY} ngày 54 °C</th></tr>
       ${(d.kq || []).filter(r => fil(r.ct)).map((r, i) => `<tr><td>${i + 1}. ${E(r.ct)}${r.pp ? `<br><small>${E(r.pp)}</small>` : ""}</td><td><small>${E(r.yc || "")}</small></td><td>${E(r.a || "")}</td><td>${E(r.b || "")}</td></tr>`).join("")}
       ${d.nhanXet || d.deXuat ? `<tr><td>Nhận xét · đề xuất</td><td colspan="3">${E(d.nhanXet || "")}${d.nhanXet && d.deXuat ? "<br>" : ""}${d.deXuat ? "<i>Đề xuất:</i> " + E(d.deXuat) : ""}</td></tr>` : ""}</table>

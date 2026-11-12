@@ -1410,3 +1410,6 @@ nav.side .navuser a.nupw{text-decoration:none}
 .bb-o input:disabled+span{cursor:default;opacity:.75}.bb-o.ok input:checked+span{background:#2e7d32;border-color:#2e7d32;color:#fff}.bb-o.bad input:checked+span{background:#c62828;border-color:#c62828;color:#fff}
 .bb-o input:focus-visible+span{outline:2px solid #2563eb;outline-offset:2px}
 .bb-mt input{width:100%;text-align:right}.bb-mt td:last-child input{text-align:left}
+.bb-o.re input:checked+span{background:#d97706;border-color:#d97706;color:#fff}
+.bb-o span{min-width:52px;padding:5px 10px}
+@media (max-width:700px){.bb-kt thead{display:none}.bb-kt tr{display:grid;grid-template-columns:1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--line,#e2e8f0)}.bb-kt td{border:0!important;padding:0 8px!important}.bb-kt td input{width:100%}}
