@@ -1132,10 +1132,12 @@ function reopenOrder(a, so) {
 }
 
 function cancelOrder(a, so) {
-  const me = auth_(a, [ROLES.QL, ROLES.KT]);
+  const me = auth_(a); /* Quản lý, Kế toán huỷ mọi lệnh; người lập lệnh đóng gói huỷ được lệnh đóng gói do chính mình lập */
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const row = orderRow_(so), o = orders_().find(x => x.so === so);
+    if (!o) throw new Error('Không tìm thấy lệnh ' + so + '.');
+    if ([ROLES.QL, ROLES.KT].indexOf(me.vaiTro) < 0 && !(o.nguoiLap === me.ten && ldgMap_()[so])) throw new Error('Chỉ Quản lý, Kế toán hoặc người lập lệnh đóng gói này (' + (o.nguoiLap || '—') + ') được huỷ lệnh.');
     if (o.trangThai !== 'Đang SX') throw new Error('Chỉ huỷ được lệnh đang sản xuất.');
     sheet_(SH.LX).getRange(row, 5).setValue('Đã huỷ');
     log_(me, 'Huỷ lệnh SX', so, o.maSP + ' · dự kiến ' + o.slDuKien);
