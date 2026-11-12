@@ -1916,6 +1916,44 @@ function qcRows_() {
     nguon: str_(r[23]), ghiChu: str_(r[24]), gom: str_(r[25]), tl: num_(r[26]) || '', ds: num_(r[27]) || '', klBB: num_(r[28]) || ''
   }));
 }
+/** Đổi mã quy cách (mã QC) của 1 lệnh đóng gói ĐANG SX — chọn nhầm mã lúc lập lệnh. Đổi mã QC ở LenhDG và mã thành phẩm TP.<mã QC> ở LenhSX
+ *  (tự tạo mã thành phẩm nếu chưa có). Kế hoạch bao bì (lines) do máy khách tính lại theo quy cách mới rồi lưu bằng savePack. Chỉ Quản lý; có nhật ký. */
+function setPackQC(a, so, qcMoi) {
+  const me = auth_(a, [ROLES.QL]); needCT_(me);
+  so = String(so || '').trim(); qcMoi = String(qcMoi || '').trim();
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const o = orders_().find(x => x.so === so); if (!o) throw new Error('Không tìm thấy lệnh ' + so + '.');
+    if (o.trangThai !== 'Đang SX') throw new Error('Lệnh ' + so + ' không còn đang SX (' + o.trangThai + '): mở lại lệnh trước khi đổi quy cách.');
+    const q = qcRows_().find(x => x.qc.toUpperCase() === qcMoi.toUpperCase()); if (!q) throw new Error('Không có mã quy cách ' + qcMoi + ' trong danh mục.');
+    const sh = ldgSheet_(), v = sh.getRange(1, 1, sh.getLastRow(), 2).getValues(); let r = -1;
+    for (let i = v.length - 1; i >= 1; i--) if (str_(v[i][0]) === so) { r = i + 1; break; }
+    if (r < 0) throw new Error('Lệnh ' + so + ' không phải lệnh đóng gói.');
+    const cu = str_(v[r - 1][1]);
+    sh.getRange(r, 2).setValue(q.qc);
+    const tp = 'TP.' + dgCode_(q.qc), items = items_();
+    if (!items.some(i => i.ma === tp)) sheet_(SH.VT).appendRow([tp, (q.sp + ' · ' + q.nhan + ' · ' + (q.quyCach || q.loai || 'chai')).slice(0, 150), 'Thành phẩm', q.loai || 'chai', 1, 0, 0, 'Có', 24, '', '', 'Kho thành phẩm']);
+    sheet_(SH.LX).getRange(orderRow_(so), 3).setValue(tp);
+    log_(me, 'Đổi quy cách lệnh đóng gói', so, (cu || '—') + ' → ' + q.qc + ' · mã thành phẩm ' + o.maSP + ' → ' + tp);
+    return { so: so, cu: cu, qc: q.qc, tp: tp };
+  } finally { lock.releaseLock(); }
+}
+/** Xoá 1 mã quy cách khỏi danh mục QuyCachDG — chỉ khi không còn lệnh đóng gói nào (trừ lệnh đã huỷ) dùng mã đó. Quản lý / Kế toán; có nhật ký. */
+function webQCDel(a, qc) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
+  qc = String(qc || '').trim(); if (!qc) throw new Error('Thiếu mã quy cách.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const M = ldgMap_(), O = {}; orders_().forEach(o => { O[o.so] = o.trangThai; });
+    const dung = Object.keys(M).filter(so => String(M[so].qc).toUpperCase() === qc.toUpperCase() && O[so] && O[so] !== 'Đã huỷ');
+    if (dung.length) throw new Error('Mã ' + qc + ' đang dùng ở ' + dung.length + ' lệnh đóng gói (' + dung.slice(0, 5).join(', ') + ') — đổi quy cách các lệnh đó trước.');
+    const sh = sheet_(QCDG_SH), last = sh.getLastRow(), ids = last > 1 ? sh.getRange(2, 1, last - 1, 3).getValues() : [];
+    const i = ids.findIndex(r => str_(r[0]).toUpperCase() === qc.toUpperCase()); if (i < 0) throw new Error('Không có mã ' + qc + ' trong danh mục.');
+    sh.deleteRow(i + 2);
+    log_(me, 'Xoá quy cách đóng gói', qc, str_(ids[i][2]));
+    return qcRows_();
+  } finally { lock.releaseLock(); }
+}
 function ldgSheet_() { return shX_(LDG_SH, ['Số lệnh', 'Mã QC', 'Kế hoạch (JSON)', 'Người lập', 'Thời điểm']); }
 function ldgMap_() { const o = {}; if (!sheet_(LDG_SH)) return o; rows_(LDG_SH).forEach(r => { const so = str_(r[0]); if (!so) return; let p = {}; try { p = JSON.parse(str_(r[2]) || '{}'); } catch (e) {} o[so] = Object.assign({ qc: str_(r[1]) }, p); }); return o; }
 /** Danh mục quy cách + kế hoạch các lệnh đóng gói (cho tab Lệnh đóng gói TP). */
