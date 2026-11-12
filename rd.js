@@ -154,10 +154,11 @@
     const b = box(); if (!b) return;
     if (!S.me || !S.me.ct) { b.innerHTML = '<div class="empty">Tài khoản này không xem được hồ sơ RD (công thức).</div>'; return; }
     if (!b.dataset.ok) b.innerHTML = '<div class="empty"><span class="ldg">Đang tải hồ sơ RD…</span></div>';
-    try { await load(); } catch (e) { b.innerHTML = `<div class="empty">${E(e.message)}</div>`; return; }
-    b.dataset.ok = 1;
+    try { await load(); rdT = Date.now(); } catch (e) { b.innerHTML = `<div class="empty">${E(e.message)}</div>`; return; }
+    b.dataset.ok = 1; const TK = viecCan(tasksOf()); rdBadgeSet(TK);
+    const nSeg = l => { const n = TK.filter(x => rec(x.id) && rec(x.id).loai === l).length; return n ? ` <span class="rd-segn">${n}</span>` : ""; };
     const seg = [["pt", "Phiếu thử nghiệm (BM.02)"], ["bb", "Thử bao bì"], ["yc", "Yêu cầu (BM.04)"], ["so", "Sổ nghiên cứu (BM.01)"], ["gm", "Giao mẫu khảo nghiệm (BM.03)"]];
-    let h = `<div class="seg subseg" style="margin-bottom:10px">${seg.map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${t}</button>`).join("")}</div>`;
+    let h = `<div class="seg subseg" style="margin-bottom:10px">${seg.map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${t}${k === "pt" ? nSeg("PT") : k === "bb" ? nSeg("BB") : k === "yc" ? nSeg("YC") : ""}</button>`).join("")}</div>`;
     if (view === "pt") {
       const L = live(R).filter(x => x.loai === "PT").sort((a, b) => String(b.d.so || "").localeCompare(String(a.d.so || ""), "vi", { numeric: true }));
       const B = new Map(L.map(p => [p, buoc(p.d)])), bo = p => B.get(p), td = today();
@@ -848,9 +849,22 @@
     sheetPr("GM", "SỔ GIAO MẪU KHẢO NGHIỆM HIỆU LỰC", `<table><thead><tr><th style="width:4%">STT</th><th style="width:8%">Phòng bàn giao mẫu</th><th style="width:9%">Mã số biên bản giao mẫu</th><th style="width:8%">Mã số mẫu</th><th>Tên mẫu</th><th style="width:5%">ĐVT</th><th style="width:7%">TT/TL</th><th style="width:7%">Số lượng</th><th style="width:9%">Ngày gửi</th><th style="width:10%">Người nhận</th><th style="width:9%">Ngày trả kết quả</th><th style="width:9%">Ghi chú</th></tr></thead><tbody>${L.map((g, i) => `<tr><td class="c">${i + 1}</td><td>${E(g.d.phong)}</td><td>${E(g.d.bienBan)}</td><td>${E(g.d.maMau)}</td><td>${E(g.d.ten)}</td><td class="c">${E(g.d.dvt)}</td><td class="c">${E(g.d.ttl)}</td><td class="c">${E(g.d.sl)}</td><td class="c">${D(g.ngay)}</td><td>${E(g.d.nguoiNhan)}</td><td class="c">${D(g.d.ngayTra)}</td><td>${E(g.d.ghiChu)}</td></tr>`).join("")}</tbody></table>`); }
 
   /* ---------------- cho Bàn làm việc ---------------- */
+  /* huy hiệu đỏ ở mục "Thử nghiệm" (menu trái): số việc cần làm của người đang đăng nhập — bỏ qua mẫu đang lưu chưa đến ngày (màu xám) */
+  const viecCan = T => T.filter(x => x.c !== "#64748b");
+  function rdBadgeSet(T) { const c = document.getElementById("navRdCnt"); if (!c) return; if (!S.me || !S.me.ct) { c.hidden = true; return; }
+    const L = viecCan(T || tasksOf()), n = L.length, nb = L.filter(x => rec(x.id) && rec(x.id).loai === "BB").length, np = L.filter(x => rec(x.id) && rec(x.id).loai === "PT").length;
+    const t = n ? [np ? np + " phiếu thử nghiệm công thức" : "", nb ? nb + " phiếu thử bao bì" : "", n - np - nb ? (n - np - nb) + " yêu cầu / việc khác" : ""].filter(Boolean).join(" · ") + " cần làm" : "";
+    c.hidden = !n; c.textContent = n > 99 ? "99+" : n ? String(n) : ""; c.title = t; c.setAttribute("aria-label", t); }
+  let rdBusy = 0, rdT = 0;
+  window.rdBadge = async function (force) { if (!S.me || !S.me.ct) { rdBadgeSet([]); return; } if (rdBusy) return;
+    if (!force && rdT && Date.now() - rdT < 60e3) { rdBadgeSet(); return; }
+    rdBusy = 1; try { await load(); rdT = Date.now(); rdBadgeSet(); } catch (e) {} finally { rdBusy = 0; } };
   window.rdTasks = async function () {
     if (!S.me || !S.me.ct) return [];
-    try { await load(); } catch (e) { return []; }
+    try { await load(); rdT = Date.now(); } catch (e) { return []; }
+    const out = tasksOf(); rdBadgeSet(out); return out;
+  };
+  function tasksOf() {
     const me = S.me.ten, ql = QL(), t = today(), out = [];
     live(R).filter(x => x.loai === "PT").forEach(p => {
       const d = p.d, b = buoc(d), mine = cuaToi(b), hd = `<b>${E(d.so)}</b> · ${E(d.sp)}`;
@@ -869,6 +883,6 @@
     });
     live(R).filter(x => x.loai === "YC" && !x.d.ngayKT && (ql || x.d.nguoiTH === me)).forEach(y => { if (y.d.han && y.d.han <= add(t, 3)) out.push({ id: y.id, c: y.d.han < t ? "#c62828" : "#d97706", t: `📝 Yêu cầu: ${E((y.d.noiDung || "").slice(0, 80))} — cần kết quả <b>${D(y.d.han)}</b>${y.d.han < t ? " (quá hạn)" : ""}` }); });
     return out;
-  };
+  }
   window.rdOpen = function (id) { setTab("rd"); setTimeout(async () => { try { if (!R.length) await load(); const r = rec(id); if (r) (r.loai === "PT" ? ptDlg : r.loai === "BB" ? bbDlg : r.loai === "YC" ? ycDlg : gmDlg)(r); } catch (e) {} }, 300); };
 })();
