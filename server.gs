@@ -516,11 +516,9 @@ const dbOf_ = i => !i ? '' : (i.kho === KHO_DB.xl.kho || i.kho === 'Kho BTP xử
 /* Kho hàng xử lý chỉ một người thấy và chuyển hàng vào / ra (người khác: mã XL.… ẩn khỏi tồn kho, thẻ kho, lịch sử, báo cáo, bản tin) */
 /* 12/11/2026: mở Kho hàng xử lý cho mọi người xem (trước chỉ anh Ghel) — chuyển kho vẫn theo quyền chuyển kho (Quản lý / Kế toán) */
 const XL_CHU_ = 'Nguyễn Ô Ghel', xlAn_ = () => false;
-/** BTP dùng cho lệnh đóng gói phải là hàng trong kho Asata: không lấy hàng kho công ty khác (ký gửi), Kho hàng xử lý, Kho hàng bán Farm */
+/** BTP dùng cho lệnh đóng gói: được lấy cả hàng kho công ty khác; chỉ không lấy hàng Kho hàng xử lý (chờ xử lý, không dùng đóng gói) */
 function btpDongGoi_(it) {
-  if (!it) return;
-  const d = dbOf_(it); if (d) throw new Error(it.ma + ' nằm ở ' + KHO_DB[d].kho + ' — không dùng đóng gói. Chọn BTP trong kho Asata.');
-  const c = String(it.chuHang || '').trim(); if (c && c !== 'Asata') throw new Error(it.ma + ' là hàng kho ' + c + ' (công ty khác) — không dùng đóng gói lệnh này. Chọn BTP trong kho Asata.');
+  if (it && dbOf_(it) === 'xl') throw new Error(it.ma + ' nằm ở Kho hàng xử lý — không dùng đóng gói. Chuyển lô về kho trước nếu đã xử lý xong.');
 }
 function xlGuard_(it) { if (it && dbOf_(it) === 'xl' && xlAn_()) throw new Error('Kho hàng xử lý chỉ anh Ghel (' + XL_CHU_ + ') xem và thao tác.'); }
 function transferStock(a, d) {
