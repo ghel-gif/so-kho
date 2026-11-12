@@ -30,6 +30,9 @@ function vsMiss(id){const r=(K.data.kh||[]).find(x=>x.id===id);if(!r)return[];co
   kodes(r.may).forEach(code=>{const prev=(K.data.kh||[]).filter(p=>p.so!==r.so&&kodes(p.may).includes(code)&&kkey(p)<kkey(r)&&(S.lenh.find(x=>x.so===p.so)||{}).trangThai!=="Đã huỷ").sort((a,b)=>kkey(a)<kkey(b)?1:-1)[0];
     if(!prev)return;const op=S.lenh.find(x=>x.so===prev.so)||{};if(!op.maSP||op.maSP===oc.maSP)return;
     if(!(K.data.vs||[]).some(v=>v.lenh===prev.so&&v.kq==="Đạt"&&v.may.includes(code)))out.push({code,so:prev.so,maSP:op.maSP})});return out}
+/* danh sách Phối trộn: lệnh nào đã có biên bản vệ sinh BM.05 (theo dữ liệu kế hoạch; chưa tải thì tải rồi vẽ lại danh sách) */
+let vsT=0;window.vsHas=function(){if(!K.data){if(!vsT){vsT=1;load().then(()=>{if(window.renderLsx&&S.tab==="lsx")renderLsx()}).catch(()=>{}).finally(()=>{vsT=0})}return null}
+  const o={};(K.data.vs||[]).forEach(v=>{if(v.lenh)o[v.lenh]=1});return o};
 window.khReload=()=>{if(K.data)load(true).then(()=>{if(document.getElementById("khBox")&&!document.getElementById("tab-khpt").hidden)khRender()}).catch(()=>{})};
 
 /* ---------- khung chính ---------- */
@@ -148,7 +151,7 @@ function soGoiY(ngay){let mx=0;S.lenh.forEach(o=>{const m=/^AHK\.\d{4}\.(\d{3})$
 function khForm(r,ngay){if(!canKH()&&!r)return;const ro=!canKH()||(r&&(r.tt==="Hoàn thành"||r.tt==="Đã huỷ"));
   const used=new Set(rowsAll().filter(x=>!r||x.id!==r.id).map(x=>x.so));
   const cho=S.lenh.filter(o=>o.trangThai==="Đang SX"&&!used.has(o.so)&&(itemBy(o.maSP)||{}).nhom==="Bán thành phẩm");
-  const may=(K.data.may||[]).filter(m=>!m.ngung||(r&&String(r.may).split(",").map(x=>x.trim()).includes(m.ma)));
+  const may=withKhac((K.data.may||[]).filter(m=>!m.ngung||(r&&String(r.may).split(",").map(x=>x.trim()).includes(m.ma))));
   const curMay=r?String(r.may||"").split(",").map(x=>x.trim()).filter(String):[];
   const dl=(id,a)=>`<datalist id="${id}">${(a||[]).map(x=>`<option value="${esc(x)}"></option>`).join("")}</datalist>`;
   const d=r||{ngay:ngay||S.today,bd:"07:30",kt:"16:30",uuTien:"Bình thường",pc1:"",pc2:"",qc:"",ghiChu:"",may:""};
@@ -163,7 +166,7 @@ function khForm(r,ngay){if(!canKH()&&!r)return;const ro=!canKH()||(r&&(r.tt==="H
    <div class="two"><label>Ngày phối trộn<input id="khNgay" type="date" value="${esc(d.ngay)}"></label><label>Ưu tiên<select id="khUu">${UU.map(u=>`<option${u===d.uuTien?" selected":""}>${u}</option>`).join("")}</select></label></div>
    <div class="two"><label>Giờ bắt đầu<input id="khBd" type="time" value="${esc(d.bd)}"></label><label>Giờ kết thúc<input id="khKt" type="time" value="${esc(d.kt)}"></label></div>
    <div class="kh-mayl"><span class="lb">Máy${may.length?"":' <small class="note">(chưa có danh mục máy'+(S.me.vaiTro==="Quản lý"?' — vào mục "Danh mục máy" để khai báo':"")+')</small>'}</span>${may.length>6?'<input type="search" id="khMayQ" placeholder="🔍 Tìm nhanh máy theo mã hoặc tên…" autocomplete="off" style="margin:6px 0">':""}<div class="kh-mays">${may.map(m=>`<label class="kh-chk" data-s="${esc((m.ma+" "+m.ten).toLowerCase())}"><input type="checkbox" value="${esc(m.ma)}" ${curMay.includes(m.ma)?"checked":""}><span><b>${esc(m.ma)}</b> ${esc(m.ten)}${m.dang?` <small class="note">${esc(m.dang)}</small>`:""}</span></label>`).join("")}</div>
-     <input id="khMayX" placeholder="Máy khác (gõ tay, cách nhau dấu phẩy)" value="${esc(curMay.filter(x=>!may.some(m=>m.ma===x)).join(", "))}"></div>
+     <input id="khMayX" placeholder="Máy khác / ghi rõ thiết bị khác (gõ tay, cách nhau dấu phẩy)" value="${esc(curMay.filter(x=>!may.some(m=>m.ma===x)).join(", "))}"></div>
    <div class="two"><label>Phối chế 1<input id="khP1" list="khNdl" value="${esc(d.pc1)}"></label><label>Phối chế 2<input id="khP2" list="khNdl" value="${esc(d.pc2)}"></label></div>${dl("khNdl",K.data.nsx)}
    <label>QC theo dõi<input id="khQC" list="khQdl" value="${esc(d.qc)}"></label>${dl("khQdl",K.data.qc)}
    <label>Ghi chú<input id="khGC" value="${esc(d.ghiChu)}" placeholder="VD: Nghiền tráng vệ sinh máy"></label>
@@ -175,6 +178,7 @@ function khForm(r,ngay){if(!canKH()&&!r)return;const ro=!canKH()||(r&&(r.tt==="H
   w.querySelectorAll(".kh-seg2 button").forEach(b=>b.onclick=()=>{mode=b.dataset.m;w.querySelectorAll(".kh-seg2 button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("khCu").hidden=mode!=="cu";$("khMoi").hidden=mode!=="moi"});
   if($("khSoM")){$("khSoM").value=soGoiY(d.ngay);$("khSP").onchange=()=>{const sp=itemBy($("khSP").value);$("khTTw").firstChild.textContent="Tỷ trọng (g/ml)"+(isLiq(sp)?" *":"");if(sp&&!$("khTT").value){const t=lastTT(sp.ma);if(t)$("khTT").value=t}if(sp&&!$("khKH").value)$("khKH").value=khMacDinh(sp)}}
   const tm=()=>{const p=mins($("khBd").value,$("khKt").value);$("khTime").textContent=p?"Thời gian phối trộn: "+gio(p):""};$("khBd").oninput=$("khKt").oninput=tm;tm();
+  {const c=w.querySelector('.kh-mays input[value="'+TB_KHAC.ma+'"]');if(c)c.addEventListener("change",()=>{if(c.checked){$("khMayX").focus();toast("Ghi rõ thiết bị khác vào ô bên dưới (nếu cần)")}})}
   if($("khMayQ")){const fd=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").toLowerCase();$("khMayQ").oninput=()=>{const q=fd($("khMayQ").value).trim();w.querySelectorAll(".kh-mays .kh-chk").forEach(l=>{l.hidden=q&&!fd(l.dataset.s).includes(q)&&!l.querySelector("input").checked})}}
   w.onclick=e=>{if(e.target===w)close()};
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return close();
@@ -235,6 +239,9 @@ function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true}
     b.disabled=true;try{const ok=await save();if(ok!==false){st.saved=true;st.dirty=false;toast(x==="upd"?"Đã cập nhật":"Đã lưu")}}catch(e){handleErr(e)}btnState(w,st)})}
 /* ---------- nút trong chi tiết lệnh SX ---------- */
 /* 12/11/2026: mọi lệnh phối trộn (AHK, GC, TC…) đều có BM.06 biên bản SX và BM.05 vệ sinh thiết bị; BM.08 phiếu hoá lý chỉ cho lô AHK (lô GC., TC. chỉ cần QC duyệt) */
+/* mục "Thiết bị khác" luôn có trong danh sách máy (kế hoạch phối trộn, BM.06, BM.05) — dùng khi làm bằng thiết bị / dụng cụ ngoài danh mục */
+const TB_KHAC={ma:"TB-KHAC",ten:"Thiết bị khác",dang:""};
+const withKhac=L=>(L||[]).some(m=>m.ma===TB_KHAC.ma)?L:(L||[]).concat([TB_KHAC]);
 const isAHK=s=>/^AHK\./i.test(String(s||"").trim());
 /* tình trạng 3 biểu mẫu QC của 1 lệnh SX BTP: { bb: BM.06, hl: BM.08, vs: BM.05 } → { n: đã lập (0/1), gaps: [còn thiếu] } */
 async function bmStat(o){const emp=x=>x===undefined||x===null||String(x).trim()==="";
@@ -308,8 +315,8 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
   const bind=()=>{w.querySelectorAll("#bbMe input").forEach(x=>x.oninput=()=>{me[+x.dataset.i][x.dataset.f]=x.value});w.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{me.splice(+b.dataset.del,1);$("bbMe").innerHTML=rowsMe();bind()})};bind();
   const bindMay=()=>{w.querySelectorAll("#bbMayT input").forEach(x=>x.oninput=()=>{mayL[+x.dataset.j][x.dataset.g]=x.value});w.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{mayL.splice(+b.dataset.dm,1);if(!mayL.length)mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()})};bindMay();
   $("bbMayAdd").onclick=()=>{mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()};
-  const DM=(D.may&&D.may.length?D.may:MAY_TM).filter(m=>!m.ngung),fold=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").toLowerCase();
-  const pick=()=>{const q=fold($("bbMayQ").value).trim(),dg=dangOf(sp),L=DM.filter(m=>!mayL.some(x=>x.ma===m.ma)&&(!q?(!dg||String(m.dang||"").toUpperCase().includes(dg)):fold(m.ma+" "+m.ten).includes(q))).slice(0,14);
+  const DM=withKhac((D.may&&D.may.length?D.may:MAY_TM).filter(m=>!m.ngung)),fold=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").toLowerCase();
+  const pick=()=>{const q=fold($("bbMayQ").value).trim(),dg=dangOf(sp),L=DM.filter(m=>m.ma!==TB_KHAC.ma&&!mayL.some(x=>x.ma===m.ma)&&(!q?(!dg||String(m.dang||"").toUpperCase().includes(dg)):fold(m.ma+" "+m.ten).includes(q))).slice(0,14).concat(mayL.some(x=>x.ma===TB_KHAC.ma)?[]:[TB_KHAC]);
     $("bbMayL").innerHTML=L.map(m=>`<button type="button" class="kh-pk" data-ma="${esc(m.ma)}"><b>${esc(m.ma)}</b> ${esc(m.ten)}</button>`).join("")||'<span class="note">Không thấy máy phù hợp — gõ tay ở dòng trống.</span>';
     $("bbMayL").querySelectorAll("[data-ma]").forEach(b=>b.onclick=()=>{const m=DM.find(x=>x.ma===b.dataset.ma);const i=mayL.findIndex(x=>!x.ten&&!x.ma);const o={ten:m.ten,ma:m.ma};if(i>=0)mayL[i]=o;else mayL.push(o);$("bbMayT").innerHTML=rowsMay();bindMay();$("bbMayQ").value="";pick()})};
   $("bbMayQ").oninput=pick;pick();
@@ -455,7 +462,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
 
 /* ---------- BM.05-QC-QT.03 Biên bản vệ sinh thiết bị khuấy trộn ---------- */
 async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
-  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=(D.may&&D.may.length?D.may:MAY_TM);
+  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=withKhac(D.may&&D.may.length?D.may:MAY_TM);
   const tenOf=ma=>{const m=DM.find(x=>x.ma===ma);return m?m.ten:""};
   const now=new Date(),hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
   const tb=p?p.tb.map(t=>Object.assign({},t)):D.tb.map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:1,nuoc:1,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:1,nuoc:0,dm:0}]);
