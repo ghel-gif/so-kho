@@ -757,6 +757,38 @@ function updateMove(a, id, d) {
     return true;
   } finally { lock.releaseLock(); }
 }
+/** Sửa NGÀY SẢN XUẤT của 1 lô (ghi nhầm lúc nhập kho / lúc hoàn thành lệnh). Đổi NSX trên mọi phiếu nhập còn hiệu lực của lô
+ *  (phiếu tồn đầu, phiếu nhập vật tư, phiếu nhập sản phẩm của lệnh SX). HSD ghi kèm phiếu mà đúng bằng NSX cũ + hạn dùng thì tính lại theo NSX mới;
+ *  phiếu không ghi HSD thì phần mềm vẫn tự tính từ NSX. Lệnh gia công ghi lô / NSX ở lệnh: đổi theo.
+ *  Không đổi số lượng, không đổi ngày phiếu → không phụ thuộc khoá sổ. Chỉ Quản lý; có ghi nhật ký.
+ *  Trả về { n: số phiếu đã đổi, lenh: số lệnh gia công đổi theo, cu: [các NSX cũ], nsx } */
+function setLotNSX(a, ma, lo, nsx) {
+  const me = auth_(a, [ROLES.QL]);
+  ma = String(ma || '').trim(); lo = String(lo || '').trim(); nsx = String(nsx || '').trim();
+  if (!ma || !lo) throw new Error('Thiếu mã vật tư hoặc số lô.');
+  if (!isYmd_(nsx)) throw new Error('Ngày sản xuất không hợp lệ.');
+  if (nsx > Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd')) throw new Error('Ngày sản xuất không thể sau hôm nay.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const it = items_().find(x => x.ma === ma); if (!it) throw new Error('Không tìm thấy mã ' + ma + '.');
+    xlGuard_(it);
+    const sh = sheet_(SH.PH), last = sh.getLastRow(), han = hanOf_(it), cu = [];
+    const R = last > 1 ? sh.getRange(2, 1, last - 1, 16).getValues() : [];
+    let n = 0, co = 0;
+    R.forEach((r, i) => {
+      if (!str_(r[0]) || str_(r[3]) !== 'Nhập' || str_(r[11]) || str_(r[4]) !== ma || str_(r[13]) !== lo) return;
+      co++; const o = str_(r[14]), h = str_(r[15]); if (o === nsx) return;
+      sh.getRange(i + 2, 15).setValue(nsx);
+      if (h && o && h === addMonths_(o, han)) sh.getRange(i + 2, 16).setValue(addMonths_(nsx, han)); /* HSD tự tính theo NSX cũ → tính lại; HSD ghi tay khác thì giữ */
+      n++; if (cu.indexOf(o || '(chưa ghi)') < 0) cu.push(o || '(chưa ghi)');
+    });
+    if (!co) throw new Error('Không thấy phiếu nhập nào của ' + ma + ' lô ' + lo + '.');
+    let nL = 0; /* lệnh gia công: số lô / NSX ghi sẵn ở lệnh */
+    orders_().forEach(o => { if (o.maSP === ma && o.loGC === lo && o.nsxGC && o.nsxGC !== nsx && o.trangThai !== 'Đã huỷ') { lxHead_(); sheet_(SH.LX).getRange(orderRow_(o.so), 16).setValue(nsx); nL++; } });
+    if (n || nL) log_(me, 'Sửa NSX lô', ma + ' · ' + lo, 'NSX: ' + (cu.join(', ') || '—') + ' → ' + nsx + ' · ' + n + ' phiếu nhập' + (nL ? ' · ' + nL + ' lệnh gia công' : ''));
+    return { n: n, lenh: nL, cu: cu, nsx: nsx };
+  } finally { lock.releaseLock(); }
+}
 function getAnhPhieu(a, id) { auth_(a); return (anMap_()[String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 
 function saveItem(a, it, isNew) {
