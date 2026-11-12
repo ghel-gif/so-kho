@@ -792,6 +792,37 @@ function setLotNSX(a, ma, lo, nsx) {
     return { n: n, khac: nK, lenh: nL, cu: cu, nsx: nsx };
   } finally { lock.releaseLock(); }
 }
+/** Đổi SỐ LÔ của 1 lô (ghi tạm, ghi nhầm — VD lô "Nhập khẩu" ở tồn đầu → số lô thật), kèm sửa NSX nếu có.
+ *  Đổi số lô trên mọi phiếu còn hiệu lực của lô (nhập, xuất, kiểm kê), trạng thái QC lô, hồ sơ lô, tỷ trọng lô, lệnh gia công ghi lô ở lệnh.
+ *  Không đổi số lượng, không đổi ngày phiếu → không phụ thuộc khoá sổ. Lô mới đã có trên sổ thì không cho (tránh gộp nhầm 2 lô). Chỉ Quản lý; có ghi nhật ký.
+ *  Trả về { n: số phiếu đổi lô, qc, hs, tt, lenh, nsx: kết quả setLotNSX (nếu có) } */
+function setLotInfo(a, ma, lo, loMoi, nsx) {
+  const me = auth_(a, [ROLES.QL]);
+  ma = String(ma || '').trim(); lo = String(lo || '').trim(); loMoi = String(loMoi || '').trim().slice(0, 60); nsx = String(nsx || '').trim();
+  if (!ma || !loMoi) throw new Error('Thiếu mã vật tư hoặc số lô mới.');
+  if (nsx && !isYmd_(nsx)) throw new Error('Ngày sản xuất không hợp lệ.');
+  let out = { n: 0, qc: 0, hs: 0, tt: 0, lenh: 0 };
+  if (loMoi !== lo) {
+    const lock = LockService.getScriptLock(); lock.waitLock(20000);
+    try {
+      const it = items_().find(x => x.ma === ma); if (!it) throw new Error('Không tìm thấy mã ' + ma + '.');
+      if (!it.theoLo) throw new Error('Mã ' + ma + ' không theo dõi lô.');
+      xlGuard_(it);
+      const L = lots_(items_(), moves_());
+      if (!L[ma] || !L[ma][lo]) throw new Error('Không tìm thấy lô ' + (lo || '(chưa có lô)') + ' của ' + ma + '.');
+      if (L[ma][loMoi]) throw new Error('Lô ' + loMoi + ' đã có trên sổ của ' + ma + ' (tồn ' + L[ma][loMoi].ton + ' kg) — không đổi được, tránh gộp nhầm 2 lô.');
+      const sh = sheet_(SH.PH), last = sh.getLastRow(), R = last > 1 ? sh.getRange(2, 1, last - 1, 14).getValues() : [];
+      R.forEach((r, i) => { if (str_(r[0]) && !str_(r[11]) && str_(r[4]) === ma && str_(r[13]) === lo) { sh.getRange(i + 2, 14).setValue(loMoi); out.n++; } });
+      if (!out.n) throw new Error('Không thấy phiếu nào của ' + ma + ' lô ' + lo + '.');
+      [[SH.QC, 'qc'], [SH.HS, 'hs'], [SH.TT, 'tt']].forEach(([nm, k]) => { const s2 = sheet_(nm), l2 = s2.getLastRow(); if (l2 < 2) return;
+        s2.getRange(2, 1, l2 - 1, 2).getValues().forEach((r, i) => { if (str_(r[0]) === ma && str_(r[1]) === lo) { s2.getRange(i + 2, 2).setValue(loMoi); out[k]++; } }); });
+      orders_().forEach(o => { if (o.maSP === ma && o.loGC === lo && o.trangThai !== 'Đã huỷ') { lxHead_(); sheet_(SH.LX).getRange(orderRow_(o.so), 15).setValue(loMoi); out.lenh++; } });
+      log_(me, 'Đổi số lô', ma + ' · ' + lo + ' → ' + loMoi, out.n + ' phiếu' + (out.qc ? ' · QC lô' : '') + (out.hs ? ' · ' + out.hs + ' hồ sơ' : '') + (out.tt ? ' · tỷ trọng' : '') + (out.lenh ? ' · ' + out.lenh + ' lệnh gia công' : ''));
+    } finally { lock.releaseLock(); }
+  }
+  if (nsx) out.nsx = setLotNSX(a, ma, loMoi, nsx);
+  return out;
+}
 function getAnhPhieu(a, id) { auth_(a); return (anMap_()[String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 
 function saveItem(a, it, isNew) {
