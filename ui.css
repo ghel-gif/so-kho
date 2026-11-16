@@ -1423,3 +1423,7 @@ nav.side .navuser a.nupw{text-decoration:none}
 .bm-day{display:flex!important;flex-direction:row!important;gap:8px;align-items:center;margin:0}.bm-day input{height:auto!important;min-height:38px;width:auto;max-width:190px}
 .bm-tt{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;font-weight:700;background:#e2e8f0;color:#334155}.bm-tt.run{background:#dbeafe;color:#1d4ed8}
 .bm-old .bm-c.bm-no{border-color:var(--line,#cfd8dc);background:none;color:inherit;opacity:.8}
+/* 16/11/2026: ô chọn ẩn (Đạt / Không đạt…) phải nằm trong nút của nó — trước không có position:relative nên ô ẩn bị đặt lệch xuống dưới hộp thoại,
+   bấm Đạt → trình duyệt cuộn tới ô ẩn → cả hộp thoại trôi mất, trang tối mờ không bấm được */
+.rd-opt,.bb-o{position:relative}
+.rd-opt input,.bb-o input{left:0;top:0;width:1px;height:1px;margin:0}
