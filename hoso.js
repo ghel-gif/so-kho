@@ -13,7 +13,7 @@
   }
   function lenhBlock(g, lv) {
     const o = g.lenh, pad = lv ? `style="margin-left:${lv * 6}mm"` : "";
-    const rows = g.vao.map(x => `<tr><td>${E(x.nhom)}</td><td>${E(x.ma)}<br><small>${E(x.ten)}</small></td><td class="c">${E(x.lo || "—")}</td><td class="c">${D(x.nsx)}</td><td class="c">${D(x.hsd)}</td><td class="r">${x.kg ? N(x.kg) + " kg" : N(x.sl) + " " + E(x.dv || "")}</td><td class="c">${x.nhom === "Bán thành phẩm" || x.nhom === "Nguyên liệu" ? QCC(x.qc) : ""}</td></tr>`).join("");
+    const rows = g.vao.map(x => `<tr><td>${E((window.nhomTen || (v => v))(x.nhom))}</td><td>${E(x.ma)}<br><small>${E(x.ten)}</small></td><td class="c">${E(x.lo || "—")}</td><td class="c">${D(x.nsx)}</td><td class="c">${D(x.hsd)}</td><td class="r">${x.kg ? N(x.kg) + " kg" : N(x.sl) + " " + E(x.dv || "")}</td><td class="c">${x.nhom === "Bán thành phẩm" || x.nhom === "Nguyên liệu" ? QCC(x.qc) : ""}</td></tr>`).join("");
     let sub = "";
     g.vao.forEach(x => (x.nguon || []).forEach(n => { sub += `<p ${pad} style="margin:8px 0 2px ${(lv + 1) * 6}mm"><b>↳ BTP ${E(x.ma)} lô ${E(x.lo)}</b> được sản xuất từ:</p>` + lenhBlock(n, lv + 1); }));
     return `<div ${pad}><table><tr class="sec"><td colspan="7">${o.dg ? "Lệnh đóng gói" : "Lệnh SX"} <b>${E(o.so)}</b> · ra lệnh ${D(o.ngay)}${o.ngayHT ? " · xong " + D(o.ngayHT) : ""} · ${E(o.tenSP || o.maSP)} · ${N(o.sl)} · ${E(o.trangThai)}</td></tr>
@@ -29,7 +29,7 @@
     return `${K.PCSS}<style>.pq small{font-size:10pt}.pq h3{font-size:13pt;margin:12px 0 4px}</style><div class="pq">
       ${K.head("HỒ SƠ TRUY XUẤT LÔ", `Mã: <b>${E(l.ma)}</b><br>Số lô: <b>${E(l.lo || "—")}</b><br>In lúc: ${E(R.luc)}`)}
       <h3>1. Thông tin lô</h3><table>
-      <tr><td style="width:22%">Sản phẩm / vật tư</td><td colspan="3"><b>${E(l.ten)}</b> (${E(l.ma)}) · nhóm ${E(l.nhom)}</td></tr>
+      <tr><td style="width:22%">Sản phẩm / vật tư</td><td colspan="3"><b>${E(l.ten)}</b> (${E(l.ma)}) · nhóm ${E((window.nhomTen || (v => v))(l.nhom))}</td></tr>
       <tr><td>Số lô</td><td style="width:28%"><b>${E(l.lo || "—")}</b></td><td style="width:22%">Tồn hiện tại</td><td>${N(l.ton)} kg</td></tr>
       <tr><td>Ngày sản xuất</td><td>${D(l.nsx) || "—"}</td><td>Hạn sử dụng</td><td>${D(l.hsd) || "—"}</td></tr>
       <tr><td>Kết quả QC</td><td><b>${QCC(l.qc)}</b>${l.qcNgay ? " · " + D(l.qcNgay) : ""}${l.qcNguoi ? " · " + E(l.qcNguoi) : ""}</td><td>Hàm lượng / tỷ trọng</td><td>${E(l.hl || "—")}${l.tt ? " · " + E(l.tt) + " g/ml" : ""}</td></tr>

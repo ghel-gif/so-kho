@@ -49,7 +49,7 @@
     const tenOf = ma => (S.items.find(i => i.ma === ma) || {}).ten || "";
     /* vật tư */
     S.items.filter(i => hit(fd(i.ma + " " + i.ten + " " + (i.nhom || "") + " " + (i.chuHang || "")))).sort((a, b) => (fd(b.ma) === qq) - (fd(a.ma) === qq) || a.ma.localeCompare(b.ma)).slice(0, 6)
-      .forEach(i => { const t = S.bal && S.bal[i.ma] ? S.bal[i.ma].ton : 0; R.push({ k: sc(i.ma), g: "Vật tư · tồn kho", t: `${E(i.ma)} · ${E(i.ten)}`, s: `${E(i.nhom || "")} · tồn <b class="${t < -1e-6 ? "neg" : ""}">${N(t)} kg</b>`, go: () => { S.tkOpen = i.ma; const qi = $("q"); if (qi) qi.value = i.ma; setTab("ton"); } }); });
+      .forEach(i => { const t = S.bal && S.bal[i.ma] ? S.bal[i.ma].ton : 0; R.push({ k: sc(i.ma), g: "Vật tư · tồn kho", t: `${E(i.ma)} · ${E(i.ten)}`, s: `${E((window.nhomTen || (x => x))(i.nhom || ""))} · tồn <b class="${t < -1e-6 ? "neg" : ""}">${N(t)} kg</b>`, go: () => { S.tkOpen = i.ma; const qi = $("q"); if (qi) qi.value = i.ma; setTab("ton"); } }); });
     /* lô */
     const LO = []; Object.entries(S.lots || {}).forEach(([ma, ls]) => (ls || []).forEach(l => { if (hit(fd(ma + " " + l.lo + " " + tenOf(ma)))) LO.push([ma, l]); }));
     LO.sort((a, b) => (fd(b[1].lo) === qq) - (fd(a[1].lo) === qq) || (b[1].ton > 0) - (a[1].ton > 0) || String(b[1].nsx || "").localeCompare(String(a[1].nsx || ""))).slice(0, 6)
