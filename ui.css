@@ -1485,11 +1485,42 @@ nav.side .navuser a.nupw{text-decoration:none}
 /* Danh mục vật tư: ô tìm + tab phân loại */
 .vt-bar{display:flex;flex-direction:column;gap:10px}
 .vt-bar input[type=search]{width:100%;max-width:none}
-.vt-tabs{display:flex;flex-wrap:wrap;gap:6px}
-.vt-tabs button{border:1px solid var(--line);background:var(--surface);color:var(--text);font:600 13.5px var(--font);padding:7px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
-.vt-tabs button small{font-weight:600;color:var(--muted);margin-left:2px}
-.vt-tabs button[aria-pressed="true"]{background:var(--accent,#1f6fb8);border-color:var(--accent,#1f6fb8);color:#fff}
-.vt-tabs button[aria-pressed="true"] small{color:rgba(255,255,255,.85)}
-.vt-tabs.vt-sub{padding-top:8px;border-top:1px dashed var(--line)}
-.vt-tabs.vt-sub button{font-size:12.5px;padding:5px 10px}
-@media (max-width:640px){.vt-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}}
+.vt-tabs button small{font-weight:600;opacity:.75;margin-left:2px}
+.vt-tabs.vt-sub{padding-top:8px!important;border-top:1px dashed var(--line)!important}
+
+/* ===== 16/11/2026 — thống nhất giao diện =====
+   1. Một màu chủ đạo: mục đang chọn ở thanh trái, nút mở bảng dùng cùng xanh lá của nút chính (trước là xanh dương). */
+:root:not([data-theme=dark]){--side-act:#0f6f64}
+:root:not([data-theme=dark]) nav.side button[data-tab][aria-selected="true"]{box-shadow:0 2px 8px rgba(15,111,100,.3)!important}
+html body button.dl-open{background:#fff!important;color:#0f5c53!important;border:1.5px solid #0f6f64!important;box-shadow:0 2px 0 #0f6f64;font-weight:700;min-height:40px;padding:7px 14px}
+html body button.dl-open:hover{background:#e3f4f1!important}
+html body button.dl-open svg{stroke:#0f6f64}
+:root[data-theme=dark] button.dl-open{background:#16211f!important;color:#8fe0d3!important;border-color:#5fc4b4!important;box-shadow:0 2px 0 #5fc4b4}
+:root[data-theme=dark] button.dl-open svg{stroke:#8fe0d3}
+.qa-mas-i b{color:#0f5c53}
+:root[data-theme=dark] .qa-mas-i b{color:#8fe0d3}
+/* 2. Nút hành động chính của mỗi mục luôn ở góc trên phải (pgActSync đưa lên) — ẩn bản nằm lẫn trong thanh lọc */
+.tools>button.btn.primary.pg-moved{display:none!important}
+/* 3. Thanh trên cùng gọn hơn: bỏ nhãn WEB, nút đổi sáng / tối chỉ còn biểu tượng */
+.brand h1::after{display:none!important}
+#themeBtn{font-size:0!important;width:38px;padding:0!important;justify-content:center;gap:0!important}
+#themeBtn svg{width:18px;height:18px}
+/* 4. Ô bắt buộc chưa điền: chỉ viền + vạch vàng bên trái (nền trắng); riêng ô CẦN ĐIỀN TIẾP THEO mới tô vàng và nhấp nháy */
+html body input.need-in:not(.need-nx),html body select.need-in:not(.need-nx),html body textarea.need-in:not(.need-nx),
+#dglBox input.need-in:not(.need-nx):not([disabled]):not([type=checkbox]),#dglBox select.need-in:not(.need-nx):not([disabled]){background:var(--surface,#fff)!important;border-color:color-mix(in srgb,var(--need-line) 75%,var(--line))!important;box-shadow:inset 4px 0 0 var(--need-line)!important}
+label.need-lb:not(.need-nxl){color:inherit!important}
+/* 5. Biểu tượng nét vẽ thay emoji (icons.js) */
+.ei{display:inline-block;width:1.08em;height:1.08em;vertical-align:-.17em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ei.ok{stroke:var(--ok,#1e7a45)}.ei.bad{stroke:#c62828}.ei.warn{stroke:#c77700}
+.btn.primary .ei,.seg button[aria-pressed="true"] .ei{stroke:currentColor}
+/* 6. Điện thoại — Tồn kho hiện được nhiều mã hơn trên một màn hình: dòng gọn, bỏ dòng đầu kỳ / nhập / xuất (xem trong thẻ kho), chữ lô nhỏ hơn */
+@media (max-width:600px){
+  #stockList .row{padding:7px 12px!important;row-gap:2px}
+  #stockList .row .name{font-size:13.5px;line-height:1.25;gap:2px 6px}
+  #stockList .row .name .tn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #stockList .row .name .code{font-size:11.5px}
+  #stockList .row .kg{font-size:14.5px}
+  #stockList .row .stkn{display:none!important}
+  #stockList .row .lots{gap:3px 5px;margin-top:1px}
+  #stockList .lot{font-size:12px!important}
+}
