@@ -324,7 +324,7 @@ function webQCSave(a, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
   o = o || {}; const qc = String(o.qc || '').trim().slice(0, 60);
   if (!qc) throw new Error('Nhập mã quy cách (mã QC).');
-  if (!/^[A-Za-z0-9][A-Za-z0-9 ._·+\-()]*$/.test(qc)) throw new Error('Mã quy cách chỉ gồm chữ, số, dấu - . + ·');
+  if (!/^[\p{L}0-9][\p{L}0-9 ._·+\-()]*$/u.test(qc)) throw new Error('Mã quy cách chỉ gồm chữ, số, dấu - . + ·'); /* cho chữ có dấu: mã quét từ thư mục nhãn có dạng CCZ-KONA3-vàng */
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = shX_(QCDG_SH, QC_HEAD_), n = QC_HEAD_.length;
