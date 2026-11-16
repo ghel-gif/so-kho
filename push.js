@@ -52,7 +52,7 @@
       else if (fn === "savePack" && !o.hoanThanh && !((typeof S !== "undefined" && S.lenh) || []).some(x => x.so === o.so)) send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.dv ? o.dv + " gói/chai" : "", "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
       else if (fn === "savePack" && o.hoanThanh && String(o.ngay || "") >= "2026-11-05") setTimeout(async () => { try {
         const D = await api0("webDGFGet", S.auth, o.so), F = (D && D.forms) || [], miss = [];
-        if (!F.some(x => x.loai === "BM05")) miss.push("BM.05"); if (!F.some(x => /^BM0[46]$/.test(x.loai))) miss.push("BM.04/06"); if (!F.some(x => x.loai === "BM07")) miss.push("BM.07");
+        if (!F.some(x => x.loai === "BM05")) miss.push("BM.05"); if (!F.some(x => /^BM0[46]$/.test(x.loai))) miss.push("BM.04/06"); if (!F.some(x => x.loai === "BM07") && !(window.dgfTay && dgfTay(F))) miss.push("BM.07");
         if (miss.length) send("📋 Thiếu biểu mẫu QC: " + o.so, "Lệnh đã hoàn thành nhưng chưa lập " + miss.join(", ") + " · " + (o.qc || ""), { qc: true }, "bm-" + o.so);
       } catch (e) {} }, 1500);
       else if (fn === "createPackOrder") send("Lệnh đóng gói mới: " + (o.so || ""), [o.qc, o.sp, "lập bởi " + me()].filter(Boolean).join(" · "), { qc: true, roles: KHO }, "dg-" + o.so);
