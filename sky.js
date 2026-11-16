@@ -164,7 +164,8 @@
     K.fog = wx === "suongmu" ? [0, 1, 2].map(i => ({ x: rnd(0, W), y: H * (.3 + i * .24), w: W * rnd(.45, .8), v: rnd(5, 10) * (i % 2 ? 1 : -1) })) : [];
     K.bd = null; K.nextBird = K.t + rnd(2, 7); K.sh = null; K.nextShoot = K.t + rnd(3, 8); K.nextBolt = K.t + rnd(2, 5); K.fl = 0; K.boltT = 0;
   }
-  const SUNPOS = { binhminh: [.29, .9, "#ff9d4a"], sang: [.37, .34, "#ffd25a"], trua: [.44, .04, "#ffe27a"], chieu: [.51, .3, "#ffc04d"], hoanghon: [.57, .92, "#ff7a45"] };
+  /* 16/11/2026: mặt trời nằm trong khoảng trống giữa đầu trang (28%–54% bề ngang), không trùng logo bên trái hay nút "Tìm" bên phải */
+  const SUNPOS = { binhminh: [.31, .9, "#ff9d4a"], sang: [.36, .34, "#ffd25a"], trua: [.41, .06, "#ffe27a"], chieu: [.45, .3, "#ffc04d"], hoanghon: [.48, .92, "#ff7a45"] };
   function drawSun(g, ph, wx, t) {
     const p = SUNPOS[ph]; if (!p || !/^(quang|x|itmay|comay)$/.test(wx)) return;
     const W = K.w, H = K.h, x = W * p[0], y = H * p[1], R0 = Math.min(H * .34, 21), a = wx === "comay" ? .68 : 1;
@@ -211,7 +212,7 @@
     for (const f of K.fog) { f.x += f.v * dt; if (f.x > W + f.w) f.x = -f.w; if (f.x < -f.w) f.x = W + f.w; g.save(); g.translate(f.x, f.y); g.scale(f.w / 60, H * .22 / 60);
       const gr = g.createRadialGradient(0, 0, 0, 0, 0, 60); gr.addColorStop(0, dk ? "rgba(170,180,192,.22)" : "rgba(255,255,255,.6)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 60, 0, 6.283); g.fill(); g.restore(); }
     if (K.dr.length) { const wind = -.26; g.lineCap = "round"; g.lineWidth = 1; const col = dk ? "180,205,240" : "62,100,160";
-      for (const d of K.dr) { d.y += d.v * dt; d.x += d.v * wind * dt; if (d.y > H + 8) { d.y = rnd(-28, -4); d.x = rnd(-10, W + 50); } g.strokeStyle = `rgba(${col},${d.a})`; g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x - d.l * wind, d.y - d.l); g.stroke(); } }
+      for (const d of K.dr) { d.y += d.v * dt; d.x += d.v * wind * dt; if (d.y > H + 8) { d.y = rnd(-28, -4); d.x = rnd(-10, W + 50); } const zx = d.x / W, za = zx < .28 || zx > .56 ? .3 : 1; /* mưa mờ hẳn ở vùng có chữ */ g.strokeStyle = `rgba(${col},${d.a * za})`; g.beginPath(); g.moveTo(d.x, d.y); g.lineTo(d.x - d.l * wind, d.y - d.l); g.stroke(); } }
     if (wx === "giong") {
       if (K.t > K.nextBolt) { K.fl = 1; const P = [[rnd(W * .2, W * .75), -2]]; while (P[P.length - 1][1] < H) { const q = P[P.length - 1]; P.push([q[0] + rnd(-10, 10), q[1] + rnd(5, 11)]); } K.bolt = P; K.boltT = .24; K.nextBolt = K.t + rnd(5, 12); }
       if (K.boltT > 0) { K.boltT -= dt; g.save(); g.strokeStyle = "rgba(255,255,255,.95)"; g.lineWidth = 1.8; g.shadowColor = "rgba(190,210,255,.95)"; g.shadowBlur = 10; g.beginPath(); K.bolt.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke(); g.restore(); }

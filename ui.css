@@ -1427,3 +1427,42 @@ nav.side .navuser a.nupw{text-decoration:none}
    bấm Đạt → trình duyệt cuộn tới ô ẩn → cả hộp thoại trôi mất, trang tối mờ không bấm được */
 .rd-opt,.bb-o{position:relative}
 .rd-opt input,.bb-o input{left:0;top:0;width:1px;height:1px;margin:0}
+
+/* ===== 16/11/2026 · đầu trang: chữ luôn đọc được trên nền trời; thanh trái: chỉ đổi màu theo giờ, đứng yên ===== */
+/* lớp nền mờ sau logo / tên (trái) và cụm nút / tên người dùng (phải) — khoảng giữa để thấy trời */
+#skyFx::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;transition:background 1.2s ease;
+  background:linear-gradient(90deg,rgba(255,255,255,.66) 0,rgba(255,255,255,.42) 15%,rgba(255,255,255,0) 28%,rgba(255,255,255,0) 54%,rgba(255,255,255,.42) 70%,rgba(255,255,255,.66) 100%)}
+:root[data-theme=dark] #skyFx::after{background:linear-gradient(90deg,rgba(7,14,27,.72) 0,rgba(7,14,27,.46) 15%,rgba(7,14,27,0) 28%,rgba(7,14,27,0) 54%,rgba(7,14,27,.46) 70%,rgba(7,14,27,.72) 100%)}
+@media (max-width:700px){#skyFx::after{background:linear-gradient(90deg,rgba(255,255,255,.6) 0,rgba(255,255,255,.3) 45%,rgba(255,255,255,.6) 100%)}
+  :root[data-theme=dark] #skyFx::after{background:linear-gradient(90deg,rgba(7,14,27,.66) 0,rgba(7,14,27,.34) 45%,rgba(7,14,27,.66) 100%)}}
+/* giao diện tối: chữ đầu trang sáng hơn một bậc, có bóng nhẹ */
+:root[data-theme=dark] header .brand h1{color:#f8fafc;text-shadow:0 1px 3px rgba(0,0,0,.55)}
+:root[data-theme=dark] header .brand small{color:#d5dde8!important;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+:root[data-theme=dark] header #whoName{color:#dbe4ef;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+:root:not([data-theme=dark]) header .brand h1,:root:not([data-theme=dark]) header .brand small,:root:not([data-theme=dark]) header #whoName{text-shadow:0 1px 2px rgba(255,255,255,.85)}
+/* mặt trời (bản dự phòng khi không vẽ canvas) dời khỏi cụm nút bên phải */
+:root[data-sky=binhminh] #skyFx .sk-sun{left:31%}:root[data-sky=sang] #skyFx .sk-sun{left:35%}:root[data-sky=trua] #skyFx .sk-sun{left:40%}
+:root[data-sky=chieu] #skyFx .sk-sun{left:44%}:root[data-sky=hoanghon] #skyFx .sk-sun{left:47%}
+
+@media (min-width:901px){
+  /* thanh trái đứng yên: tắt quầng sáng trôi, hạt sáng / đom đóm, sao băng, vệt mưa */
+  #sideFx .sf-glow{animation:none!important}
+  #sideFx .sf-mote,#sideFx .sf-shoot,#sideFx .sf-rain{display:none!important}
+  :root[data-theme=dark] #sideFx .sf-st{animation:none!important;opacity:.35}
+  /* màu trời theo giờ, khớp tông đầu trang, chuyển chậm */
+  #sideFx .sf-tint{opacity:1;transition:background 2s ease}
+  :root:not([data-theme=dark])[data-sky=binhminh] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(255,214,186,.62),rgba(255,236,218,.22) 38%,rgba(255,255,255,0) 72%)}
+  :root:not([data-theme=dark])[data-sky=sang] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(214,236,255,.6),rgba(230,245,236,.22) 40%,rgba(255,255,255,0) 72%)}
+  :root:not([data-theme=dark])[data-sky=trua] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(204,230,255,.6),rgba(230,243,255,.22) 40%,rgba(255,255,255,0) 72%)}
+  :root:not([data-theme=dark])[data-sky=chieu] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(255,236,200,.62),rgba(248,244,228,.22) 40%,rgba(255,255,255,0) 72%)}
+  :root:not([data-theme=dark])[data-sky=hoanghon] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(255,200,176,.62),rgba(236,222,246,.26) 42%,rgba(255,255,255,0) 75%)}
+  :root:not([data-theme=dark])[data-sky=dem] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(184,200,232,.62),rgba(200,212,238,.24) 42%,rgba(255,255,255,0) 75%)}
+  :root[data-theme=dark][data-sky=binhminh] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(80,50,48,.55),rgba(40,40,58,.2) 42%,rgba(10,20,40,0) 75%)}
+  :root[data-theme=dark][data-sky=sang] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(24,56,86,.55),rgba(20,50,44,.2) 42%,rgba(10,20,40,0) 75%)}
+  :root[data-theme=dark][data-sky=trua] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(20,60,100,.55),rgba(20,55,90,.2) 42%,rgba(10,20,40,0) 75%)}
+  :root[data-theme=dark][data-sky=chieu] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(70,62,36,.5),rgba(34,48,60,.2) 42%,rgba(10,20,40,0) 75%)}
+  :root[data-theme=dark][data-sky=hoanghon] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(90,48,52,.55),rgba(56,38,72,.22) 42%,rgba(10,20,40,0) 75%)}
+  :root[data-theme=dark][data-sky=dem] #sideFx .sf-tint{background:linear-gradient(180deg,rgba(14,28,52,.6),rgba(14,28,52,.2) 42%,rgba(10,20,40,0) 75%)}
+}
+/* giao diện tối: logo Asata (chữ xanh đậm) đặt trên nền sáng bo góc cho rõ */
+:root[data-theme=dark] header .brand>img{background:rgba(255,255,255,.92);border-radius:8px;padding:2px 4px;box-sizing:content-box}
