@@ -42,7 +42,7 @@
       try { D = await api0("webDGFGet", S.auth, o.so); } catch (e) {}
       const F = (D && D.forms) || [], gap = f => (window.dgfGap && D ? dgfGap(D, f) : []);
       [["BM05", "BM.05", x => x.loai === "BM05"], ["KT", "BM.04/06", x => /^BM0[46]$/.test(x.loai)], ["BM07", "BM.07", x => x.loai === "BM07"]].forEach(([k, nm, fn]) => {
-        const Fs = F.filter(fn); if (!Fs.length) { miss.push({ t: nm + ": chưa lập", f: k, bad: 1 }); return; }
+        const Fs = F.filter(fn); if (!Fs.length) { if (k === "BM07" && window.dgfTay && dgfTay(F)) return; /* đóng tay: không cần BM.07 */ miss.push({ t: nm + ": chưa lập", f: k, bad: 1 }); return; }
         const G = [].concat(...Fs.map(gap)); if (G.length) miss.push({ t: nm + ": " + G.slice(0, 4).join(", ") + (G.length > 4 ? "…" : ""), f: k });
       });
       const P = ((S.dg && S.dg.lenh) || {})[o.so] || {}, X = P.x || {};
