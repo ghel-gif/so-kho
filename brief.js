@@ -90,7 +90,8 @@
       if (!F2.some(x => x.loai === "BM05")) miss.push("BM.05");
       if (!F2.some(x => /^BM0[46]$/.test(x.loai))) miss.push("BM.04/06");
       /* đóng tay / chiết tay (thiết bị chính ở BM.05, BM.04/06 là "Chiết tay / đóng tay") thì không cần BM.07 vệ sinh thiết bị */
-      const tay = (() => { const v = F2.filter(x => /^BM0[456]$/.test(x.loai)).map(x => String(x.may || "").split(";")[0].trim()).filter(Boolean); return v.length > 0 && v.every(m => /^Chiết tay \/ đóng tay/.test(m)); })();
+      const TAY = "Chiết tay / đóng tay (thủ công)", tayOf = f => { const d = f.d || { mayTen: f.may, maMay: f.maMay }, t = (d.tb || [])[0]; if (t && (t.ten || t.ma)) return t.ten === TAY ? 1 : 0; const m0 = String(d.mayTen || "").split(";")[0].trim(); if (m0) return m0 === TAY ? 1 : 0; return String(d.maMay || "").trim() ? 0 : null; };
+      const tv = F2.filter(x => /^BM0[456]$/.test(x.loai)).map(tayOf).filter(x => x != null), tay = tv.length > 0 && tv.every(x => x === 1);
       if (!F2.some(x => x.loai === "BM07") && !tay) miss.push("BM.07");
       if (miss.length) formMiss.push({ so: o.so, nguoi: o.nguoiLap, xong: o.trangThai === "Hoàn thành", miss, sp: (IM[o.maSP] || {}).ten || o.maSP });
     });
