@@ -316,9 +316,9 @@ function webDGFRestore(a, id) {
 
 /* ================= DANH MỤC QUY CÁCH ĐÓNG GÓI (QuyCachDG): thêm mã nhãn / mã quy cách mới, sửa thông số =================
  * Cột 1–26 như cũ; thêm 27 TL thuốc chuẩn (g) · 28 Dung sai (± g) · 29 KL bao bì (g) — theo phiếu thông tin đóng gói của R&D (BM.05-QC-QT.04). */
-const QC_HEAD_ = ['Mã QC', 'Mã nhãn', 'Sản phẩm', 'Mã BTP (mặc định)', 'Quy cách', 'Lượng / đơn vị', 'ĐVT lượng', 'Loại bao bì', 'Mã chai / can / xô', 'Mô tả chai', 'Mã hộp', 'Đơn vị / hộp', 'Mã thùng', 'Đơn vị / thùng', 'Nhãn phụ', 'Tem dán chai', 'Tem chống giả', 'Tem cảnh báo / thùng', 'Đai thùng', 'Băng keo', 'Phân phối', 'Ảnh nhãn (file ID)', 'Bảng thông tin (file ID)', 'Nguồn', 'Ghi chú / cần kiểm', 'Gồm mã nhãn (cặp đôi)', 'TL thuốc chuẩn (g)', 'Dung sai (± g)', 'KL bao bì (g)'];
-const QC_KEY_ = ['qc', 'nhan', 'sp', 'btp', 'quyCach', 'luong', 'dvl', 'loai', 'chai', 'moTaChai', 'hop', 'dvHop', 'thung', 'dvThung', 'nhanPhu', 'temChai', 'tcg', 'tcb', 'dai', 'bangKeo', 'pp', 'anh', 'bang', 'nguon', 'ghiChu', 'gom', 'tl', 'ds', 'klBB'];
-const QC_NUM_ = { luong: 1, dvHop: 1, dvThung: 1, tcb: 1, tl: 1, ds: 1, klBB: 1 };
+const QC_HEAD_ = ['Mã QC', 'Mã nhãn', 'Sản phẩm', 'Mã BTP (mặc định)', 'Quy cách', 'Lượng / đơn vị', 'ĐVT lượng', 'Loại bao bì', 'Mã chai / can / xô', 'Mô tả chai', 'Mã hộp', 'Đơn vị / hộp', 'Mã thùng', 'Đơn vị / thùng', 'Nhãn phụ', 'Tem dán chai', 'Tem chống giả', 'Tem cảnh báo / thùng', 'Đai thùng', 'Băng keo', 'Phân phối', 'Ảnh nhãn (file ID)', 'Bảng thông tin (file ID)', 'Nguồn', 'Ghi chú / cần kiểm', 'Gồm mã nhãn (cặp đôi)', 'TL thuốc chuẩn (g)', 'Dung sai (± g)', 'KL bao bì (g)', 'Thùng dài (mm)', 'Thùng rộng (mm)', 'Thùng cao (mm)', 'Thùng / pallet (đã chốt)', 'Thùng / lớp (đã chốt)'];
+const QC_KEY_ = ['qc', 'nhan', 'sp', 'btp', 'quyCach', 'luong', 'dvl', 'loai', 'chai', 'moTaChai', 'hop', 'dvHop', 'thung', 'dvThung', 'nhanPhu', 'temChai', 'tcg', 'tcb', 'dai', 'bangKeo', 'pp', 'anh', 'bang', 'nguon', 'ghiChu', 'gom', 'tl', 'ds', 'klBB', 'thD', 'thR', 'thC', 'palTp', 'palTl'];
+const QC_NUM_ = { luong: 1, dvHop: 1, dvThung: 1, tcb: 1, tl: 1, ds: 1, klBB: 1, thD: 1, thR: 1, thC: 1, palTp: 1, palTl: 1 };
 /** o: {qc, ...trường}; o.sua = true để ghi đè mã đã có (chỉ các trường gửi lên). Trả lại danh mục mới. */
 function webQCSave(a, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]); needCT_(me);
@@ -474,6 +474,23 @@ function webCanBBSave(a, o) {
     add.push([qc, k, v, CBB_LOAI_[k], ngay, me.ten, String(o.so || '').slice(0, 60), new Date(), k === 'klBB' ? String(o.bb || '').trim().slice(0, 80) : '']); });
   if (add.length) { const lock = LockService.getScriptLock(); lock.waitLock(20000); try { const sh = shX_(CBB_SH, CBB_HEAD_); add.forEach(r => sh.appendRow(r)); } finally { lock.releaseLock(); } }
   return cbbRows_().concat([]);
+}
+/** Chốt cách xếp pallet của 1 mã quy cách (từ BM.05: người lập điều chỉnh khác đề xuất) — lần sau BM.05 tự điền theo số đã chốt. */
+function webQCPallet(a, qc, tp, tl) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  qc = String(qc || '').trim(); tp = Math.round(num_(tp)); tl = Math.round(num_(tl));
+  if (!qc) throw new Error('Thiếu mã quy cách.');
+  if (!(tp > 0 && tp <= 1000 && tl > 0 && tl <= tp)) throw new Error('Số thùng / pallet, thùng / lớp không hợp lệ.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(QCDG_SH, QC_HEAD_), n = QC_HEAD_.length, h = sh.getRange(1, 1, 1, n).getValues()[0];
+    if (QC_HEAD_.some((t, i) => !str_(h[i]))) sh.getRange(1, 1, 1, n).setValues([QC_HEAD_.map((t, i) => str_(h[i]) || t)]);
+    const last = sh.getLastRow(), ids = last > 1 ? sh.getRange(2, 1, last - 1, 1).getValues().map(r => str_(r[0]).toUpperCase()) : [], i = ids.indexOf(qc.toUpperCase());
+    if (i < 0) throw new Error('Không tìm thấy mã quy cách ' + qc);
+    sh.getRange(i + 2, QC_KEY_.indexOf('palTp') + 1, 1, 2).setValues([[tp, tl]]);
+  } finally { lock.releaseLock(); }
+  log_(me, 'Chốt xếp pallet', qc, tp + ' thùng/pallet · ' + tl + ' thùng/lớp');
+  return qcRows_();
 }
 /** Xoá (mềm) / khôi phục 1 lần cân bao bì ghi sai — người cân hoặc Quản lý / Kế toán. */
 function webCanBBDel(a, id, khoiPhuc) {

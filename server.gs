@@ -188,12 +188,15 @@ function settings_() {
     nhomQC: o['Nhóm cần QC theo lô'] === undefined ? ['Nguyên liệu', 'Bán thành phẩm'] : list(o['Nhóm cần QC theo lô']),
     gio: o['Giờ gửi cảnh báo'] === undefined || o['Giờ gửi cảnh báo'] === '' ? 7 : Math.min(23, Math.max(0, Math.round(num_(o['Giờ gửi cảnh báo'])))),
     /* ngưỡng cảnh báo (Quản lý sửa ở Báo cáo → Cảnh báo): hao hụt BTP khi đóng gói, hạn QC duyệt lô, cân túi rỗng lệch */
-    hhLong: ngPct_(o[NG_K_.hhLong], 5), hhRan: ngPct_(o[NG_K_.hhRan], 3), qcHan: Math.max(1, Math.round(num_(o[NG_K_.qcHan])) || 3), canLech: ngPct_(o[NG_K_.canLech], 5)
+    hhLong: ngPct_(o[NG_K_.hhLong], 5), hhRan: ngPct_(o[NG_K_.hhRan], 3), qcHan: Math.max(1, Math.round(num_(o[NG_K_.qcHan])) || 3), canLech: ngPct_(o[NG_K_.canLech], 5),
+    /* pallet (đề xuất xếp pallet ở BM.05): kích thước pallet, chiều cao hàng tối đa (không kể pallet), khối lượng tối đa */
+    palD: ngMm_(o[NG_K_.palD], 1200), palR: ngMm_(o[NG_K_.palR], 1000), palCao: ngMm_(o[NG_K_.palCao], 1350), palKg: ngMm_(o[NG_K_.palKg], 1000)
   };
 }
-const NG_K_ = { hhLong: 'Ngưỡng hao hụt đóng gói dạng lỏng (%)', hhRan: 'Ngưỡng hao hụt đóng gói dạng rắn (%)', qcHan: 'Hạn QC duyệt lô (ngày)', canLech: 'Cân túi rỗng lệch quá (%)' };
+const NG_K_ = { hhLong: 'Ngưỡng hao hụt đóng gói dạng lỏng (%)', hhRan: 'Ngưỡng hao hụt đóng gói dạng rắn (%)', qcHan: 'Hạn QC duyệt lô (ngày)', canLech: 'Cân túi rỗng lệch quá (%)', palD: 'Pallet dài (mm)', palR: 'Pallet rộng (mm)', palCao: 'Chiều cao xếp hàng tối đa trên pallet (mm)', palKg: 'Khối lượng hàng tối đa / pallet (kg)' };
+function ngMm_(v, macDinh) { const n = num_(v); return n > 0 && n < 100000 ? Math.round(n) : macDinh; }
 function ngPct_(v, macDinh) { const n = num_(v); return n > 0 && n <= 100 ? Math.round(n * 100) / 100 : macDinh; }
-const nguong_ = cfg => ({ hhLong: cfg.hhLong, hhRan: cfg.hhRan, qcHan: cfg.qcHan, canLech: cfg.canLech });
+const nguong_ = cfg => ({ hhLong: cfg.hhLong, hhRan: cfg.hhRan, qcHan: cfg.qcHan, canLech: cfg.canLech, palD: cfg.palD, palR: cfg.palR, palCao: cfg.palCao, palKg: cfg.palKg });
 function log_(me, act, obj, detail) {
   try { sheet_(SH.NK).appendRow([new Date(), me.ten, act, String(obj || ''), String(detail || '').slice(0, 500)]); } catch (e) {}
 }
@@ -1348,7 +1351,7 @@ function getLog(a, thang) {
 function getAlertSettings(a) {
   auth_(a, [ROLES.QL]);
   const c = settings_(), on = ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'dailyAlert');
-  return { email: c.email, hetHan: c.hetHan, treo: c.treo, gio: c.gio, nhomQC: c.nhomQC.join(', '), bat: on, hhLong: c.hhLong, hhRan: c.hhRan, qcHan: c.qcHan, canLech: c.canLech };
+  return { email: c.email, hetHan: c.hetHan, treo: c.treo, gio: c.gio, nhomQC: c.nhomQC.join(', '), bat: on, hhLong: c.hhLong, hhRan: c.hhRan, qcHan: c.qcHan, canLech: c.canLech, palD: c.palD, palR: c.palR, palCao: c.palCao, palKg: c.palKg };
 }
 
 function saveAlertSettings(a, p) {
@@ -1367,6 +1370,7 @@ function saveAlertSettings(a, p) {
   /* ngưỡng: chỉ ghi khi máy gửi lên (bản cũ không gửi thì giữ nguyên) */
   ['hhLong', 'hhRan', 'canLech'].forEach(k => { if (p[k] !== undefined && p[k] !== '') { const v = num_(p[k]); if (!(v > 0 && v <= 100)) throw new Error('Ngưỡng % phải từ 0,1 đến 100.'); put(NG_K_[k], Math.round(v * 100) / 100); } });
   if (p.qcHan !== undefined && p.qcHan !== '') { const v = Math.round(num_(p.qcHan)); if (!(v >= 1 && v <= 60)) throw new Error('Hạn QC duyệt lô: từ 1 đến 60 ngày.'); put(NG_K_.qcHan, v); }
+  ['palD', 'palR', 'palCao', 'palKg'].forEach(k => { if (p[k] !== undefined && p[k] !== '') { const v = Math.round(num_(p[k])); if (!(v > 0 && v < 100000)) throw new Error('Thông số pallet không hợp lệ: ' + NG_K_[k]); put(NG_K_[k], v); } });
   installTrigger_(p.bat && emails.length > 0);
   log_(me, 'Sửa cài đặt cảnh báo', '', 'Email: ' + (emails.join(', ') || '(trống)') + ' · bật: ' + (p.bat ? 'có' : 'không'));
   return getAlertSettings(a);
@@ -1920,7 +1924,8 @@ function qcRows_() {
     quyCach: str_(r[4]), luong: num_(r[5]), dvl: str_(r[6]), loai: str_(r[7]), chai: str_(r[8]), moTaChai: str_(r[9]),
     hop: str_(r[10]), dvHop: num_(r[11]), thung: str_(r[12]), dvThung: num_(r[13]), nhanPhu: str_(r[14]), temChai: str_(r[15]),
     tcg: str_(r[16]), tcb: num_(r[17]), dai: str_(r[18]), bangKeo: str_(r[19]), pp: str_(r[20]), anh: str_(r[21]), bang: str_(r[22]),
-    nguon: str_(r[23]), ghiChu: str_(r[24]), gom: str_(r[25]), tl: num_(r[26]) || '', ds: num_(r[27]) || '', klBB: num_(r[28]) || ''
+    nguon: str_(r[23]), ghiChu: str_(r[24]), gom: str_(r[25]), tl: num_(r[26]) || '', ds: num_(r[27]) || '', klBB: num_(r[28]) || '',
+    thD: num_(r[29]) || '', thR: num_(r[30]) || '', thC: num_(r[31]) || '', palTp: num_(r[32]) || '', palTl: num_(r[33]) || '',   /* kích thước ngoài thùng carton (mm) — đề xuất xếp pallet ở BM.05 */
   }));
 }
 /** Đổi mã quy cách (mã QC) của 1 lệnh đóng gói ĐANG SX — chọn nhầm mã lúc lập lệnh. Đổi mã QC ở LenhDG và mã thành phẩm TP.<mã QC> ở LenhSX
