@@ -338,7 +338,7 @@ function webQCSave(a, o) {
       return v.slice(0, 300); };
     if (i < 0) {
       if (!str_(o.sp)) throw new Error('Nhập tên sản phẩm.');
-      if (!(num_(o.luong) > 0)) throw new Error('Nhập lượng / đơn vị (VD 18).');
+      if (!(num_(o.luong) > 0) && !str_(o.gom)) throw new Error('Nhập lượng / đơn vị (VD 18).'); /* mã cặp đôi (có "Gồm mã nhãn") không cần lượng: lấy theo từng mã thành phần */
       const row = QC_KEY_.map(k => k === 'qc' ? qc : (k === 'nhan' ? (val('nhan') || qc.split('·')[0]) : (val(k) === undefined ? '' : val(k))));
       if (!row[23]) row[23] = 'Nhập tay ' + Utilities.formatDate(new Date(), tz_(), 'dd/MM/yyyy') + ' · ' + me.ten;
       sh.getRange(last + 1, 1, 1, n).setValues([row]);
