@@ -1481,3 +1481,15 @@ nav.side .navuser a.nupw{text-decoration:none}
 :root[data-theme=dark] header .brand>img{background:rgba(255,255,255,.92);border-radius:8px;padding:2px 4px;box-sizing:content-box}
 
 .qa-ma .qa-mal>small.note{display:inline;margin:0}
+
+/* Danh mục vật tư: ô tìm + tab phân loại */
+.vt-bar{display:flex;flex-direction:column;gap:10px}
+.vt-bar input[type=search]{width:100%;max-width:none}
+.vt-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.vt-tabs button{border:1px solid var(--line);background:var(--surface);color:var(--text);font:600 13.5px var(--font);padding:7px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.vt-tabs button small{font-weight:600;color:var(--muted);margin-left:2px}
+.vt-tabs button[aria-pressed="true"]{background:var(--accent,#1f6fb8);border-color:var(--accent,#1f6fb8);color:#fff}
+.vt-tabs button[aria-pressed="true"] small{color:rgba(255,255,255,.85)}
+.vt-tabs.vt-sub{padding-top:8px;border-top:1px dashed var(--line)}
+.vt-tabs.vt-sub button{font-size:12.5px;padding:5px 10px}
+@media (max-width:640px){.vt-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}}
