@@ -268,7 +268,7 @@
           ${nkHtml()}
         </div></fieldset>
         <div class="qa-anh"><div class="qa-anh-h"><b>📷 Ảnh bao bì</b><small>không bắt buộc · chụp nhãn, số lô, thùng hàng, lỗi thấy được</small></div><div class="anhs" id="qaAnhL" hidden></div>
-          ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Chụp ảnh</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label></div>` : ""}<small class="note" id="qaAnhN"></small></div>
+          ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Chụp ảnh</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label><span class="qa-anh-tip">hoặc <b>kéo thả</b> ảnh vào đây · <b>Ctrl+V</b> để dán ảnh đã copy</span></div>` : ""}<small class="note" id="qaAnhN"></small></div>
         <fieldset class="qa-fs" ${ro}><legend>Kiểm tra (${S0.hd})</legend><div class="two qa-g">
           ${canEd ? `<div class="qa-quick" style="grid-column:1/-1"><button type="button" class="btn ok" data-a="all">✓ Đạt hết</button><span class="note">Bấm khi lô không có lỗi: điền tất cả tiêu chí đạt, 0 lỗi, cỡ mẫu theo ${S0.hd}, kết luận Đạt. Có lỗi thì sửa riêng ô đó.</span></div>` : ""}
           ${fld("Ngày kiểm tra", inp("ngayKT", d.ngayKT, 'type="date"'))}<div class="qa-pkw" style="grid-column:1/-1"><span class="qa-pkl">Người kiểm mẫu</span>${userSel("nguoiKT", d.nguoiKT)}</div>
@@ -353,12 +353,26 @@
     const hint = () => { const g = goiY(so, d), el = bx.querySelector("#qaGY"), S0 = SO[so]; if (el) el.innerHTML = g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý.";
       const m = bx.querySelector("#qaMauG"), t = MAU[so](+d.sl || 0); if (m) m.textContent = t ? "Theo " + S0.hd + ": " + t : (+d.sl ? "Cỡ lô " + N(d.sl) + ": ngoài bảng lấy mẫu của " + S0.hd : "");
       const k = bx.querySelector('[data-k="ketQua"]'); if (k) k.placeholder = kqTxt(d); };
+    /* thêm ảnh: chụp / chọn file, DÁN (Ctrl+V ảnh đã copy, ảnh chụp màn hình) hoặc KÉO THẢ ảnh vào phiếu */
+    const anhAdd = async fs => { fs = (fs || []).filter(f => f && /^image\//.test(f.type || "") || /\.(jpe?g|png|webp|heic|heif|gif|bmp)$/i.test((f && f.name) || "")); if (!fs.length) return 0;
+      if (r && r.id) { if (await upQA(r.id, fs)) { await anhGet(); renderQA(); } }
+      else { fs.forEach(f => pend.push({ f, url: URL.createObjectURL(f) })); anhPaint(); }
+      const z = bx.querySelector(".qa-anh"); if (z) z.scrollIntoView({ block: "nearest", behavior: "smooth" }); return fs.length; };
+    if (canEd) {
+      const named = (f, i) => { if (f.name && !/^image\.\w+$/i.test(f.name)) return f; const ext = ((f.type || "image/png").split("/")[1] || "png").replace("jpeg", "jpg"); try { return new File([f], "dan-" + new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "") + "-" + (i + 1) + "." + ext, { type: f.type || "image/png" }); } catch (e) { return f; } };
+      const onPaste = e => { if (!w.isConnected) { document.removeEventListener("paste", onPaste); return; } if ([...document.querySelectorAll(".cfm")].pop() !== w) return; /* có hộp thoại khác đang mở phía trên */
+        const cd = e.clipboardData; if (!cd) return; let fs = [...(cd.files || [])]; if (!fs.length) fs = [...(cd.items || [])].filter(it => it.kind === "file").map(it => it.getAsFile()).filter(Boolean);
+        fs = fs.filter(f => /^image\//.test(f.type || "")); if (!fs.length) return; e.preventDefault(); anhAdd(fs.map(named)).then(n => n && toast("Đã dán " + n + " ảnh")); };
+      document.addEventListener("paste", onPaste);
+      let dn = 0; const hasF = e => e.dataTransfer && [...(e.dataTransfer.types || [])].indexOf("Files") >= 0, zone = on => { const z = bx.querySelector(".qa-anh"); if (z) z.classList.toggle("drop", on); };
+      w.addEventListener("dragenter", e => { if (!hasF(e)) return; e.preventDefault(); dn++; zone(true); });
+      w.addEventListener("dragover", e => { if (!hasF(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+      w.addEventListener("dragleave", e => { if (!hasF(e)) return; dn = Math.max(0, dn - 1); if (!dn) zone(false); });
+      w.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); dn = 0; zone(false); const all = [...(e.dataTransfer.files || [])]; anhAdd(all).then(n => { if (n) toast("Đã thêm " + n + " ảnh"); else if (all.length) toast("File kéo vào không phải ảnh."); }); });
+    }
     function wire() {
       bx.querySelectorAll("[data-so]").forEach(x => x.onclick = () => { pull(); so = x.dataset.so; re(); });
-      bx.querySelectorAll("input[data-anh]").forEach(inp => inp.onchange = async () => {
-        const fs = [...(inp.files || [])]; inp.value = ""; if (!fs.length) return;
-        if (r && r.id) { if (await upQA(r.id, fs)) { await anhGet(); renderQA(); } }
-        else { fs.forEach(f => pend.push({ f, url: URL.createObjectURL(f) })); anhPaint(); } });
+      bx.querySelectorAll("input[data-anh]").forEach(inp => inp.onchange = () => { const fs = [...(inp.files || [])]; inp.value = ""; anhAdd(fs); });
       anhPaint();
       bx.querySelectorAll("[data-k]").forEach(el => el.addEventListener("change", () => { pull(); hint(); canUp(); nkUp(); }));
       canUp(); nkUp();
