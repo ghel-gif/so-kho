@@ -101,7 +101,7 @@
       <div class="meta">${E(n.d.noiDung || "")}${n.d.ketQua ? " · <b>" + E(n.d.ketQua) + "</b>" : ""}${n.d.nguoiTH ? " · " + E(n.d.nguoiTH) : ""}${n.d.quyetDinh ? " · " + E(n.d.quyetDinh) : ""}${isYmd(n.d.ngayTiep) ? " · tiếp theo " + D(n.d.ngayTiep) : ""}</div></div>`;
 
   /* ================= THIẾT BỊ NHÀ XƯỞNG ================= */
-  let vTB = "dm", q = "", fNhom = "", fTT = "", fHT = "", fNKm = "", fNKtb = "";
+  let vTB = "dm", q = "", fNhom = "", fTT = "", fHT = "", fNKm = "", fNKtb = ""; let edQ = false;
   window.renderTB = async function () {
     const b = document.getElementById("tbBox"); if (!b) return;
     if (!S.me) { b.innerHTML = '<div class="empty">Vui lòng đăng nhập.</div>'; return; }
@@ -122,16 +122,21 @@
       const nhoms = [...new Set(A.map(t => t.d.nhom || "-"))].sort((a, c) => a === "-" ? 1 : c === "-" ? -1 : a.localeCompare(c, "vi"));
       h += `<div class="tools">${ed ? '<button class="btn primary" type="button" id="tbNew">+ Thêm thiết bị</button>' : ""}
           <input type="text" id="tbQ" value="${E(q)}" placeholder="Tìm mã, tên, thông số…" style="width:auto;min-width:200px">
-          <select id="tbFN" style="width:auto"><option value="">Tất cả nhóm / khu vực</option>${nhoms.map(n => `<option value="${E(n)}"${n === fNhom ? " selected" : ""}>${E(n === "-" ? "(chưa ghi nhóm)" : n)}</option>`).join("")}</select>
+          
           <select id="tbFT" style="width:auto">${[["", "Tất cả tình trạng"], ["KHD", "Không hoạt động (tạm ngưng, chờ sửa, ngừng)"]].concat(TT.map(x => [x, x])).map(([v, t]) => `<option value="${E(v)}"${v === fTT ? " selected" : ""}>${E(t)}</option>`).join("")}</select>
-          <button class="btn" type="button" id="tbPrDM">🖨 In danh mục</button><button class="btn" type="button" id="tbPrKHD">🖨 Báo cáo thiết bị không hoạt động</button></div>
+          ${ed ? `<button class="btn" type="button" id="tbEdQ" aria-pressed="${edQ}">✏ ${edQ ? "Xong sửa nhanh" : "Sửa nhanh"}</button>` : ""}<button class="btn" type="button" id="tbPrDM">🖨 In danh mục</button><button class="btn" type="button" id="tbPrKHD">🖨 Báo cáo thiết bị không hoạt động</button></div>
         ${dup.length ? `<p class="note tb-warn">⚠ ${dup.length} mã thiết bị đang trùng: ${dup.map(([m, L]) => `<b>${E(m)}</b> (${E(L.map(t => t.d.ten).join(" / "))})`).join("; ")} — mở từng thiết bị để sửa lại mã cho đúng tem trên máy.</p>` : ""}
-        <p class="note" style="margin:0 0 8px">${L.length} / ${A.length} thiết bị.</p>
-        <div class="list">${L.length ? L.map(t => { const d = t.d, hh = hcTT(d);
-          return `<div class="row click" data-tb="${E(t.id)}"><div class="name">${d.ma ? `<b>${E(d.ma)}</b> · ` : ""}${E(d.ten)} ${chip(d.tinhTrang || "Chưa cập nhật", TTC[d.tinhTrang] || "#94a3b8")}${isDup(t) ? " " + chipO("Trùng mã", "#c62828") : ""}${hh ? " " + chipO(d.hcLoai + ": " + hh.t, hh.c) : ""}${d.kcSo ? " " + chipO(d.kcSo === "M1" ? "Kiểm cân hằng ngày" : "Kiểm cân hằng tuần", "#4d7c0f") : ""}</div>
-            <div class="kg">${E(d.namSD || "")}<small>${d.namSD ? "năm SD" : ""}</small></div>
-            <div class="meta">${[d.nhom, d.xuatXu, d.thongSo, d.boPhan ? "BP " + d.boPhan : "", d.ghiChu].filter(Boolean).map(E).join(" · ")}</div></div>`; }).join("")
-          : '<div class="empty"><b>Không có thiết bị nào khớp bộ lọc.</b></div>'}</div>`;
+        <div class="seg seg2 vt-tabs" id="tbNhomTabs" style="margin:0 0 8px">${[["", "Tất cả", A.length]].concat(nhoms.map(n => [n, n === "-" ? "(chưa ghi nhóm)" : n, A.filter(t => (t.d.nhom || "-") === n).length])).map(([v, t, n]) => `<button type="button" data-nh="${E(v)}" aria-pressed="${v === fNhom}">${E(t)} <small>${n}</small></button>`).join("")}</div>
+        <p class="note" style="margin:0 0 8px">${L.length} / ${A.length} thiết bị. ${ed ? (edQ ? "Đang <b>sửa nhanh</b>: gõ thẳng vào ô, rời ô là tự lưu — phiếu đóng gói, kế hoạch phối trộn lấy tên theo danh mục này." : "Bấm một dòng để mở hồ sơ đầy đủ, hoặc bật <b>Sửa nhanh</b> để chỉnh mã, tên, thông số ngay trên bảng.") : ""}</p>
+        ${L.length ? `<div class="dgx tb-tbl${edQ ? " tb-ed" : ""}"><table><thead><tr><th style="width:92px">Mã</th><th>Tên thiết bị</th><th style="width:96px">Xuất xứ</th><th>Thông số chính</th><th style="width:64px">Năm SD</th><th style="width:132px">Tình trạng</th>${edQ ? '<th style="width:54px"></th>' : ""}</tr></thead><tbody>${(() => {
+          const G = {}; L.slice().sort(byMa).forEach(t => { const n = t.d.nhom || "-"; (G[n] = G[n] || []).push(t); });
+          const cell = (t, k, at) => edQ ? `<input data-id="${E(t.id)}" data-f="${k}" value="${E(t.d[k] ?? "")}" ${at || ""}>` : E(t.d[k] || "");
+          return nhoms.filter(n => G[n]).map(n => `<tr class="tb-gh"><td colspan="${edQ ? 7 : 6}">${E(n === "-" ? "(chưa ghi nhóm)" : n)} <small>· ${G[n].length} thiết bị</small></td></tr>` + G[n].map(t => { const d = t.d, hh = hcTT(d);
+            return `<tr${edQ ? "" : ` class="click" data-tb="${E(t.id)}" style="cursor:pointer"`}><td>${edQ ? cell(t, "ma") : `<b>${E(d.ma || "—")}</b>`}${isDup(t) ? " " + chipO("Trùng mã", "#c62828") : ""}</td>
+              <td>${cell(t, "ten")}${!edQ && hh ? " " + chipO(d.hcLoai + ": " + hh.t, hh.c) : ""}${!edQ && d.kcSo ? " " + chipO(d.kcSo === "M1" ? "Kiểm cân hằng ngày" : "Kiểm cân hằng tuần", "#4d7c0f") : ""}${!edQ && d.ghiChu ? `<div class="note" style="margin:2px 0 0">${E(d.ghiChu)}</div>` : ""}</td>
+              <td>${cell(t, "xuatXu")}</td><td>${cell(t, "thongSo")}</td><td>${cell(t, "namSD", 'inputmode="numeric"')}</td>
+              <td>${edQ ? `<select data-id="${E(t.id)}" data-f="tinhTrang">${TT.concat(d.tinhTrang && !TT.includes(d.tinhTrang) ? [d.tinhTrang] : []).map(x => `<option${x === d.tinhTrang ? " selected" : ""}>${E(x)}</option>`).join("")}</select>` : chip(d.tinhTrang || "Chưa cập nhật", TTC[d.tinhTrang] || "#94a3b8")}</td>${edQ ? `<td><button class="btn small" type="button" data-tb="${E(t.id)}" title="Mở hồ sơ đầy đủ">Mở</button></td>` : ""}</tr>`; }).join("")).join(""); })()}</tbody></table></div>`
+          : '<div class="empty"><b>Không có thiết bị nào khớp bộ lọc.</b></div>'}`;
     } else if (vTB === "hc") {
       const L = HC.filter(t => !fHT || t.d.hcLoai === fHT).sort((a, c) => String(a.d.denHan || "9999").localeCompare(String(c.d.denHan || "9999")) || byMa(a, c));
       const sap = HC.filter(t => t.d.do && (() => { const x = hcTT(t.d); return x && x.n != null && x.n <= 60; })());
@@ -160,7 +165,12 @@
     const on = (id, ev, f) => { const el = document.getElementById(id); if (el) el[ev] = f; };
     on("tbNew", "onclick", () => tbDlg(null)); on("tbNkNew", "onclick", () => nkDlg(null, fNKtb ? { tb: fNKtb } : null));
     on("tbQ", "oninput", e => { q = e.target.value; clearTimeout(window.__tbQT); window.__tbQT = setTimeout(() => { renderTB().then(() => { const el = document.getElementById("tbQ"); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }); }, 250); });
-    on("tbFN", "onchange", e => { fNhom = e.target.value; renderTB(); }); on("tbFT", "onchange", e => { fTT = e.target.value; renderTB(); });
+    b.querySelectorAll("#tbNhomTabs [data-nh]").forEach(x => x.onclick = () => { fNhom = x.dataset.nh; renderTB(); });
+    on("tbEdQ", "onclick", () => { edQ = !edQ; renderTB(); });
+    b.querySelectorAll(".tb-ed [data-f]").forEach(x => x.onchange = async () => { const t = rec(x.dataset.id), k = x.dataset.f, v = x.value.trim(); if (!t || String(t.d[k] ?? "") === v) return;
+      if (k === "ten" && !v) { toast("Tên thiết bị không được để trống"); x.value = t.d.ten || ""; return; }
+      x.disabled = true; try { const d = Object.assign({}, t.d, { [k]: v }); await save({ id: t.id, loai: "TB", d }); t.d = d; x.classList.add("tb-saved"); setTimeout(() => x.classList.remove("tb-saved"), 1500); toast("Đã lưu " + (d.ma || d.ten)); }
+      catch (e) { toast(e.message); x.value = t.d[k] ?? ""; } finally { x.disabled = false; } }); on("tbFT", "onchange", e => { fTT = e.target.value; renderTB(); });
     on("tbFH", "onchange", e => { fHT = e.target.value; renderTB(); }); on("tbNkM", "onchange", e => { fNKm = e.target.value; renderTB(); }); on("tbNkTB", "onchange", e => { fNKtb = e.target.value; renderTB(); });
     on("tbPrDM", "onclick", () => { const qq = q.trim().toLowerCase(); prDanhMuc(A.filter(t => (!fNhom || (t.d.nhom || "-") === fNhom) && (!fTT || (fTT === "KHD" ? KHD.includes(t.d.tinhTrang) : t.d.tinhTrang === fTT)) && (!qq || [t.d.ma, t.d.ten, t.d.thongSo, t.d.ghiChu, t.d.nhom].join(" ").toLowerCase().includes(qq)))); });
     on("tbPrKHD", "onclick", () => prKHD(A.filter(t => KHD.includes(t.d.tinhTrang))));
@@ -475,9 +485,16 @@
   function kcBadgeSet(K) { const c = document.getElementById("navKcCnt"); if (!c) return; const n = K.length, t = K.map(x => x.s).join(" · "); c.hidden = !n; c.textContent = n ? String(n) : ""; c.title = n ? t.charAt(0).toUpperCase() + t.slice(1) : ""; c.setAttribute("aria-label", c.title); }
   /* huy hiệu nhấp nháy ở mục "Kiểm tra cân" trên menu trái — chỉ cho người kiểm được (QC / quản lý) */
   let kcBusy = 0;
+  /* DANH MỤC THIẾT BỊ là nguồn duy nhất về mã / tên máy: phiếu đóng gói, kế hoạch phối trộn lấy tên theo đây — sửa ở mục Thiết bị là các nơi khác đổi theo */
+  let dmBusy = 0;
+  window.tbDM = function () {
+    if (!R.length && !dmBusy && typeof S !== "undefined" && S.me) { dmBusy = 1; load().catch(() => {}).finally(() => { dmBusy = 0; }); }
+    return tbs().map(t => ({ ma: String(t.d.ma || "").trim(), ten: t.d.ten || "", nhom: t.d.nhom || "", tt: t.d.tinhTrang || "" })).filter(x => x.ma && x.ma.toUpperCase() !== "N/A");
+  };
   window.kcBadge = async function () {
     const c = document.getElementById("navKcCnt"); if (!c) return;
-    if (!S.me || !QC()) { c.hidden = true; return; }
+    if (!S.me) { c.hidden = true; return; }
+    if (!QC()) { c.hidden = true; window.tbDM(); return; }
     if (kcBusy) return; kcBusy = 1;
     try { await load(); kcBadgeSet(kcTodo(today())); } catch (e) {} finally { kcBusy = 0; }
   };

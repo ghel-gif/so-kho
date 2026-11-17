@@ -1524,3 +1524,13 @@ label.need-lb:not(.need-nxl){color:inherit!important}
   #stockList .row .lots{gap:3px 5px;margin-top:1px}
   #stockList .lot{font-size:12px!important}
 }
+
+/* Danh mục thiết bị: bảng gom theo nhóm + sửa nhanh ngay trên bảng */
+.tb-tbl table{width:100%;table-layout:fixed}.tb-tbl td{vertical-align:top;white-space:normal;overflow-wrap:anywhere}
+.tb-tbl tr.tb-gh td{background:rgba(15,111,100,.10);font-weight:700;position:sticky;top:0}
+.tb-tbl tr.tb-gh small{font-weight:400;opacity:.75}
+.tb-tbl tr.click:hover td{background:rgba(15,111,100,.05)}
+.tb-ed td{padding:3px 4px}.tb-ed input,.tb-ed select{width:100%;min-width:0;padding:5px 6px;font-size:13px;margin:0}
+.tb-ed input.tb-saved,.tb-ed select.tb-saved{outline:2px solid #2e7d32}
+#tbEdQ[aria-pressed="true"]{background:#0f6f64;color:#fff;border-color:#0f6f64}
+@media(max-width:700px){.tb-tbl{overflow-x:auto}.tb-tbl table{min-width:680px}}

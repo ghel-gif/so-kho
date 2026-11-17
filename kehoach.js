@@ -22,6 +22,9 @@ function full(k){const o=S.lenh.find(x=>x.so===k.so)||{},sp=itemBy(o.maSP)||{ma:
   const tt=o.trangThai==="Đã huỷ"?"Đã huỷ":o.trangThai==="Hoàn thành"?"Hoàn thành":k.ktTT?"Xong phối trộn":k.bdTT?"Đang SX":k.tt==="Sửa sau khi gửi"?"Sửa sau khi gửi":k.gui?"Đã gửi":"Tạo mới";
   return Object.assign({},k,{o,sp,tt,sl:o.trangThai==="Hoàn thành"?o.slThucTe:o.slDuKien,phut:mins(k.bd,k.kt),phutTT:minsTs(k.bdTT,k.ktTT)})}
 const canKH=()=>typeof can!=="undefined"&&can.phieu()&&S.me&&S.me.ct;
+/* máy phối trộn: tên theo Danh mục thiết bị; mã AHK không còn trong danh mục (đã bỏ / đổi mã) hoặc không thuộc nhóm Sản xuất thì ẩn */
+function mayDM(L){const M=window.tbDM?window.tbDM():[];if(!M.length)return L;const by={};M.forEach(m=>{by[m.ma.toUpperCase()]=m});
+  return L.map(x=>{const k=String(x.ma||"").toUpperCase(),m=by[k];if(m)return /^sản xuất/i.test(m.nhom)?Object.assign({},x,{ten:m.ten||x.ten}):null;return /^AHK-/.test(k)?null:x}).filter(Boolean)}
 async function load(force){if(K.data&&!force)return K.data;K.loading=K.loading||api("webKHGet",S.auth).then(d=>{if(!d.may||!d.may.length){d.may=MAY_TM.map(x=>Object.assign({},x));d.mayTM=1}K.data=d;return d}).finally(()=>K.loading=null);return K.loading}
 function rowsAll(){return (K.data.kh||[]).map(full)}
 /* máy của kế hoạch vừa chạy BTP khác mà chưa có biên bản vệ sinh BM.05 Đạt */
@@ -316,7 +319,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
   const bind=()=>{w.querySelectorAll("#bbMe input").forEach(x=>x.oninput=()=>{me[+x.dataset.i][x.dataset.f]=x.value});w.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{me.splice(+b.dataset.del,1);$("bbMe").innerHTML=rowsMe();bind()})};bind();
   const bindMay=()=>{w.querySelectorAll("#bbMayT input").forEach(x=>x.oninput=()=>{mayL[+x.dataset.j][x.dataset.g]=x.value});w.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{mayL.splice(+b.dataset.dm,1);if(!mayL.length)mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()})};bindMay();
   $("bbMayAdd").onclick=()=>{mayL.push({ten:"",ma:""});$("bbMayT").innerHTML=rowsMay();bindMay()};
-  const DM=withKhac((D.may&&D.may.length?D.may:MAY_TM).filter(m=>!m.ngung)),fold=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").toLowerCase();
+  const DM=withKhac(mayDM(D.may&&D.may.length?D.may:MAY_TM).filter(m=>!m.ngung)),fold=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").toLowerCase();
   const pick=()=>{const q=fold($("bbMayQ").value).trim(),dg=dangOf(sp),L=DM.filter(m=>m.ma!==TB_KHAC.ma&&!mayL.some(x=>x.ma===m.ma)&&(!q?(!dg||String(m.dang||"").toUpperCase().includes(dg)):fold(m.ma+" "+m.ten).includes(q))).slice(0,14).concat(mayL.some(x=>x.ma===TB_KHAC.ma)?[]:[TB_KHAC]);
     $("bbMayL").innerHTML=L.map(m=>`<button type="button" class="kh-pk" data-ma="${esc(m.ma)}"><b>${esc(m.ma)}</b> ${esc(m.ten)}</button>`).join("")||'<span class="note">Không thấy máy phù hợp — gõ tay ở dòng trống.</span>';
     $("bbMayL").querySelectorAll("[data-ma]").forEach(b=>b.onclick=()=>{const m=DM.find(x=>x.ma===b.dataset.ma);const i=mayL.findIndex(x=>!x.ten&&!x.ma);const o={ten:m.ten,ma:m.ma};if(i>=0)mayL[i]=o;else mayL.push(o);$("bbMayT").innerHTML=rowsMay();bindMay();$("bbMayQ").value="";pick()})};
@@ -466,7 +469,7 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
 
 /* ---------- BM.05-QC-QT.03 Biên bản vệ sinh thiết bị khuấy trộn ---------- */
 async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
-  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=withKhac(D.may&&D.may.length?D.may:MAY_TM);
+  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=withKhacmayDM(D.may&&D.may.length?D.may:MAY_TM);
   const tenOf=ma=>{const m=DM.find(x=>x.ma===ma);return m?m.ten:""};
   const now=new Date(),hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
   const tb=p?p.tb.map(t=>Object.assign({},t)):D.tb.map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:1,nuoc:1,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:1,nuoc:0,dm:0}]);

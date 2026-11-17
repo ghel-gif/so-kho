@@ -88,9 +88,14 @@ const TAY="Chiết tay / đóng tay (thủ công)";
 const tayOf=f=>{const d=f.d||{mayTen:f.may,maMay:f.maMay},t=(d.tb||[])[0];if(t&&(t.ten||t.ma))return t.ten===TAY?1:0;const m0=String(d.mayTen||"").split(";")[0].trim();if(m0)return m0===TAY?1:0;return String(d.maMay||"").trim()?0:null};
 window.dgfTay=F=>{const v=(F||[]).filter(f=>/^BM0[456]$/.test(f.loai)).map(tayOf).filter(x=>x!=null);return v.length>0&&v.every(x=>x===1)};
 const fold=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/gi,"d").toLowerCase();
+/* danh sách máy đóng gói đang dùng = TB_DG (vai trò của máy) + tên / mã lấy theo Danh mục thiết bị: máy đã bỏ khỏi danh mục thì ẩn, máy mới thuộc nhóm Đóng gói / Đo lường thì thêm */
+function dgL(){const M=window.tbDM?window.tbDM():[];if(!M.length)return TB_DG;const by={};M.forEach(m=>{by[m.ma.toUpperCase()]=m});
+  const base=TB_DG.filter(x=>by[x.ma.toUpperCase()]).map(x=>{const m=by[x.ma.toUpperCase()];return {ma:x.ma,ten:m.ten||x.ten,n:x.n,_k:x.ten+" "+m.ten}});
+  const ex=M.filter(m=>!TB_DG.some(x=>x.ma.toUpperCase()===m.ma.toUpperCase())&&/^(đóng gói|đo lường)/i.test(m.nhom)&&m.tt!=="Ngừng sử dụng").map(m=>({ma:m.ma,ten:m.ten,n:/rắn/i.test(m.nhom)?"R":/lỏng/i.test(m.nhom)?"L":"*",_k:m.ten}));
+  return base.concat(ex)}
 function mayPick(P,dis){return dis?"":`<div class="kh-bar" style="margin-top:4px"><input type="search" id="${P}Q" placeholder="🔍 Tìm thiết bị theo mã hoặc tên (VD: AHK-01, chiết rót, seal, cân)…" autocomplete="off"><button class="btn small" type="button" id="${P}Tay">Chiết tay / đóng tay</button><button class="btn small" type="button" id="${P}Clr">Xoá chọn</button></div><div class="kh-pick" id="${P}L"></div>`}
 function mayBind(P,D,idMa,idTen){const q=$(P+"Q");if(!q)return;const goi=isGoi(D.q),liq=liqOf(D.q),M=$(idMa),T=$(idTen);
-  const all=TB_DG.concat((D.may||[]).filter(m=>!TB_DG.some(x=>x.ma===m.ma)).map(m=>({ma:m.ma,ten:m.ten,n:"*"})));
+  const all=dgL().concat((D.may||[]).filter(m=>!dgL().some(x=>x.ma===m.ma)).map(m=>({ma:m.ma,ten:m.ten,n:"*"})));
   const fit=m=>m.n==="*"||(goi?/G|R/.test(m.n)&&!(liq&&m.n==="R"):/L/.test(m.n)&&m.n!=="G");
   const sp=v=>String(v||"").split(/\s*[,;]\s*/).filter(Boolean);
   const draw=()=>{const k=fold(q.value).trim(),have=sp(M.value),L=all.filter(m=>!have.includes(m.ma)&&(k?k.split(/\s+/).every(w=>fold(m.ma+" "+m.ten).includes(w)):fit(m))).slice(0,16);
@@ -199,16 +204,16 @@ function p05(I,d){const c=c05(d),K=B(),bx=v=>K.box(v),u=isGoi(I.q)?"GÓI":"CHAI"
 /* ---------- BM.04 / BM.06 Phiếu kiểm tra quá trình ---------- */
 /* Thiết bị theo từng dòng (BM.04 / BM.06): máy chính + máy phụ (in date, máy ép / seal, dán nhãn nếu có) */
 /* [khoá, vai trò, lọc máy, bắt buộc, nhãn lựa chọn thủ công] */
-const TBV={BM04:[["chinh","Thiết bị đóng gói chính",m=>m.n==="R"||m.n==="LG",1,TAY],["date","Máy in date",m=>/date/i.test(m.ten),1],["ep","Máy ép / hàn miệng túi (nếu có)",m=>/hàn miệng|ép|seal/i.test(m.ten)&&m.n!=="L"]],
-  BM06:[["chinh","Máy chiết rót chính",m=>/chiết/i.test(m.ten),1,TAY],["seal","Máy seal nắp",m=>/seal/i.test(m.ten),1],["date","Máy in date",m=>/date/i.test(m.ten),1],["nhan","Dán nhãn",m=>/dán nhãn/i.test(m.ten),1,"Dán thủ công"]]};
+const TBV={BM04:[["chinh","Thiết bị đóng gói chính",m=>m.n==="R"||m.n==="LG",1,TAY],["date","Máy in date",m=>/date/i.test(m._k||m.ten),1],["ep","Máy ép / hàn miệng túi (nếu có)",m=>/hàn miệng|ép|seal/i.test(m._k||m.ten)&&m.n!=="L"]],
+  BM06:[["chinh","Máy chiết rót chính",m=>/chiết/i.test(m._k||m.ten),1,TAY],["seal","Máy seal nắp",m=>/seal/i.test(m._k||m.ten),1],["date","Máy in date",m=>/date/i.test(m._k||m.ten),1],["nhan","Dán nhãn",m=>/dán nhãn/i.test(m._k||m.ten),1,"Dán thủ công"]]};
 const tbMiss=(loai,tb)=>(TBV[loai]||[]).map((r,i)=>r[3]&&!((tb||[])[i]||{}).ten?r[1]:"").filter(Boolean);
 TBV.BM05G=[TBV.BM04[0]];TBV.BM05C=[TBV.BM06[0]];
 function tbInit(loai,d){if(Array.isArray(d.tb)&&d.tb.length)return d.tb;const codes=String(d.maMay||"").split(/\s*[,;]\s*/).filter(Boolean);
-  return TBV[loai].map(([k,vai,f],i)=>{const m=TB_DG.find(x=>codes.includes(x.ma)&&f(x));if(m)return {k,vai,ma:m.ma,ten:m.ten};if(i===0&&d.mayTen===TAY)return {k,vai,ma:"",ten:TAY};return {k,vai,ma:"",ten:""}})}
-function tbHtml(loai,D,tb,dis){const ex=(D.may||[]).filter(m=>!TB_DG.some(x=>x.ma===m.ma));
-  return `<div class="dgx"><table><thead><tr><th style="width:38%">Thiết bị</th><th>Mã — tên thiết bị</th></tr></thead><tbody>${TBV[loai].map(([k,vai,f,req,man],i)=>{const t=tb[i]||{},L=TB_DG.filter(f).concat(ex),cur=man&&t.ten===man?"__tay":t.ma;
+  return TBV[loai].map(([k,vai,f],i)=>{const m=dgL().find(x=>codes.includes(x.ma)&&f(x));if(m)return {k,vai,ma:m.ma,ten:m.ten};if(i===0&&d.mayTen===TAY)return {k,vai,ma:"",ten:TAY};return {k,vai,ma:"",ten:""}})}
+function tbHtml(loai,D,tb,dis){const ex=(D.may||[]).filter(m=>!dgL().some(x=>x.ma===m.ma));
+  return `<div class="dgx"><table><thead><tr><th style="width:38%">Thiết bị</th><th>Mã — tên thiết bị</th></tr></thead><tbody>${TBV[loai].map(([k,vai,f,req,man],i)=>{const t=tb[i]||{},L=dgL().filter(f).concat(ex),cur=man&&t.ten===man?"__tay":t.ma;
     return `<tr><td>${esc(vai)}${req?' <b style="color:#c62828" title="Bắt buộc chọn">*</b>':""}</td><td><select data-tb="${i}" ${dis}${req?' data-req="1"':""}><option value="">${req?"— chọn (bắt buộc) —":"— không dùng —"}</option>${man?`<option value="__tay"${cur==="__tay"?" selected":""}>${esc(man)}</option>`:""}${L.map(m=>`<option value="${esc(m.ma)}"${m.ma===cur?" selected":""}>${esc(m.ma)} — ${esc(m.ten)}</option>`).join("")}${t.ma&&!L.some(m=>m.ma===t.ma)?`<option value="${esc(t.ma)}" selected>${esc(t.ma)} — ${esc(t.ten)}</option>`:""}</select></td></tr>`}).join("")}</tbody></table></div>`}
-function tbRead(loai,D,w,tb){w.querySelectorAll("[data-tb]").forEach(x=>{const i=+x.dataset.tb,[k,vai,,,man]=TBV[loai][i],v=x.value,m=TB_DG.concat(D.may||[]).find(y=>y.ma===v);tb[i]={k,vai,ma:v==="__tay"?"":v,ten:v==="__tay"?(man||TAY):m?m.ten:""}});return tb}
+function tbRead(loai,D,w,tb){w.querySelectorAll("[data-tb]").forEach(x=>{const i=+x.dataset.tb,[k,vai,,,man]=TBV[loai][i],v=x.value,m=dgL().concat(D.may||[]).find(y=>y.ma===v);tb[i]={k,vai,ma:v==="__tay"?"":v,ten:v==="__tay"?(man||TAY):m?m.ten:""}});return tb}
 
 const CR={BM04:[["Nhãn phụ, tem",[["np","Nhãn phụ: đúng chủng loại"],["tem","Tem: đúng chủng loại, đúng vị trí"]]],["Nhãn gói",[["ng","Đúng chủng loại"],["han","Đường hàn, cạnh biên, vết xé túi"],["vs","Vệ sinh bao bì"]]],["Mối ép nhiệt",[["ep","Nhiệt độ ép (°C)",1],["dinh","Mối ép dính đều"],["luc","Thử lực không bị bung, xì chảy"]]],["Thùng carton",[["nt","Nhãn dán thùng đúng loại"],["dut","Đủ gói/ thùng"],["duh","Đủ gói/ hộp"]]],["In phun",[["in1","NSX/SL: in đúng"],["in2","In rõ ràng, ngay ngắn trên gói"]]]],
   BM06:[["Nhãn phụ, tem",[["np","Nhãn phụ: đúng chủng loại"],["tem","Tem: đúng chủng loại, dán đúng vị trí"]]],["Nhãn chai",[["nc","Đúng chủng loại"],["phang","Nhãn phẳng, không nhăn, không dùn"],["vs","Vệ sinh bao bì"]]],["Seal",[["seal","Công suất seal (%)",1],["sd","Seal dính đều"]]],["Thùng carton",[["nt","Nhãn dán thùng đúng loại"],["dut","Đủ chai/ thùng"],["coc","Đủ cốc đong/ thùng"]]],["In phun",[["in1","NSX/SL: in đúng"],["in2","In rõ ràng, ngay ngắn trên nhãn"]]]]};
