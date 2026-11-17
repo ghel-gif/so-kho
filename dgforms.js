@@ -114,7 +114,9 @@ const palCfg=()=>{const n=(typeof S!=="undefined"&&S.nguong)||{};return {A:+n.pa
 function palLop(L,W,A,B){const f=(a,b,l,w)=>l>0&&w>0?Math.floor(a/l)*Math.floor(b/w):0;let best={n:0,t:""};const put=(n,t)=>{if(n>best.n)best={n,t}};
   put(f(A,B,L,W),`${Math.floor(A/L)} × ${Math.floor(B/W)}`);put(f(A,B,W,L),`${Math.floor(A/W)} × ${Math.floor(B/L)} (xoay)`);
   [[A,B],[B,A]].forEach(([a,b])=>[L,W].forEach(st=>{for(let x=st;x<a;x+=st){const n1=Math.max(f(x,b,L,W),f(x,b,W,L)),n2=Math.max(f(a-x,b,L,W),f(a-x,b,W,L));if(n1&&n2)put(n1+n2,`2 khối ${n1} + ${n2}`)}}));return best}
-function palGoiY(q,kgThung){const L=+q.thD,W=+q.thR,H=+q.thC;if(!(L>0&&W>0&&H>0))return null;const C=palCfg(),P=palLop(L,W,C.A,C.B);if(!P.n)return {err:`Thùng ${L}×${W} mm lớn hơn pallet ${C.A}×${C.B} mm`};
+/* kích thước thùng: mã quy cách chưa nhập thì lấy theo mã khác dùng CÙNG MÃ THÙNG (cùng thùng carton thì cùng kích thước) */
+function palKT(q){if(+q.thD>0&&+q.thR>0&&+q.thC>0)return q;const t=String(q.thung||"").trim().toUpperCase();if(!t)return q;const L=(typeof S!=="undefined"&&S.dg&&S.dg.qc)||[],x=L.find(y=>String(y.thung||"").trim().toUpperCase()===t&&+y.thD>0&&+y.thR>0&&+y.thC>0);return x?Object.assign({},q,{thD:x.thD,thR:x.thR,thC:x.thC,_ktTu:x.qc}):q}
+function palGoiY(q,kgThung){q=palKT(q);const L=+q.thD,W=+q.thR,H=+q.thC;if(!(L>0&&W>0&&H>0))return null;const C=palCfg(),P=palLop(L,W,C.A,C.B);if(!P.n)return {err:`Thùng ${L}×${W} mm lớn hơn pallet ${C.A}×${C.B} mm`};
   const byH=Math.floor(C.H/H),byK=kgThung>0?Math.floor(C.K/(P.n*kgThung)):99,lop=Math.max(0,Math.min(7,byH,byK));
   const vi=lop===byK&&byK<Math.min(7,byH)?`khối lượng ≤ ${C.K} kg`:lop===byH&&byH<7?`chiều cao ≤ ${C.H} mm`:"tối đa 7 lớp";
   return {tl:P.n,lop,tp:P.n*lop,mau:P.t,vi,L,W,H,C}}
@@ -152,7 +154,7 @@ function f05(D,p){const I=info(D),TK=isGoi(I.q)?"BM05G":"BM05C",SRC0=(p&&p.d&&p.
   /* đề xuất xếp pallet: đã chốt cho mã này (lần trước điều chỉnh) → dùng số đã chốt; chưa có → tính từ kích thước thùng */
   const palG=()=>{const c=c05(g0()),G=palGoiY(I.q,isFinite(c.thMax)?c.thMax:NaN),el=$("f5PalG"),ch=+I.q.palTp>0&&+I.q.palTl>0;if(!el)return G;
     const chot=ch?`Đã chốt cho mã <b>${esc(I.q.qc||"")}</b>: <b>${I.q.palTp}</b> thùng/pallet · <b>${I.q.palTl}</b> thùng/lớp. `:"";
-    const tinh=!G?`Chưa có kích thước thùng carton của mã <b>${esc(I.q.qc||"")}</b> — nhập dài × rộng × cao (mm) ở Danh mục quy cách để máy tự đề xuất.`:G.err?"⚠ "+esc(G.err):`Tính theo thùng ${G.L}×${G.W}×${G.H} mm, pallet ${G.C.A}×${G.C.B} mm: <b>${G.tl}</b> thùng/lớp (${esc(G.mau)}) × <b>${G.lop}</b> lớp (${G.vi}) = <b>${G.tp}</b> thùng/pallet.`;
+    const tinh=!G?`Chưa có kích thước thùng carton của mã <b>${esc(I.q.qc||"")}</b> — nhập dài × rộng × cao (mm) ở Danh mục quy cách để máy tự đề xuất.`:G.err?"⚠ "+esc(G.err):`Tính theo thùng ${I.q.thung?esc(I.q.thung)+" ":""}${G.L}×${G.W}×${G.H} mm, pallet ${G.C.A}×${G.C.B} mm: <b>${G.tl}</b> thùng/lớp (${esc(G.mau)}) × <b>${G.lop}</b> lớp (${G.vi}) = <b>${G.tp}</b> thùng/pallet.`;
     el.innerHTML=`💡 ${chot}${tinh}${canW?`${ch?` <button class="btn small" type="button" id="f5PalC">Dùng số đã chốt</button>`:""}${G&&!G.err&&G.tp?` <button class="btn small" type="button" id="f5PalT">Dùng số tính</button>`:""}`:""}`;
     const set=(tp,tl)=>{$("f5Tp").value=tp;$("f5Tl2").value=tl;$("f5Tp").dispatchEvent(new Event("input",{bubbles:true}))};
     if($("f5PalC"))$("f5PalC").onclick=()=>set(I.q.palTp,I.q.palTl);if($("f5PalT"))$("f5PalT").onclick=()=>set(G.tp,G.tl);return G};
