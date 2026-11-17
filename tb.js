@@ -101,7 +101,7 @@
       <div class="meta">${E(n.d.noiDung || "")}${n.d.ketQua ? " · <b>" + E(n.d.ketQua) + "</b>" : ""}${n.d.nguoiTH ? " · " + E(n.d.nguoiTH) : ""}${n.d.quyetDinh ? " · " + E(n.d.quyetDinh) : ""}${isYmd(n.d.ngayTiep) ? " · tiếp theo " + D(n.d.ngayTiep) : ""}</div></div>`;
 
   /* ================= THIẾT BỊ NHÀ XƯỞNG ================= */
-  let vTB = "dm", q = "", fNhom = "", fTT = "", fHT = "", fNKm = "", fNKtb = ""; let edQ = false;
+  let vTB = "dm", q = "", fNhom = "", fTT = "", fHT = "", fNKm = "", fNKtb = ""; let edId = "", gOpen = new Set();
   window.renderTB = async function () {
     const b = document.getElementById("tbBox"); if (!b) return;
     if (!S.me) { b.innerHTML = '<div class="empty">Vui lòng đăng nhập.</div>'; return; }
@@ -112,31 +112,34 @@
     const nQH = HC.filter(t => { const h = hcTT(t.d); return h && h.n != null && h.n < 0; }).length, n60 = HC.filter(t => { const h = hcTT(t.d); return h && h.n != null && h.n >= 0 && h.n <= 60; }).length;
     const nKHD = A.filter(t => KHD.includes(t.d.tinhTrang)).length;
     let h = `<div class="seg subseg" style="margin-bottom:10px">${[["dm", "Danh mục thiết bị"], ["hc", "Lịch kiểm định / hiệu chuẩn"], ["nk", "Nhật ký bảo trì"]].map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === vTB}">${t}</button>`).join("")}</div>
-      <div class="tb-sum"><div><b>${A.length}</b><small>thiết bị</small></div><div><b>${A.filter(t => t.d.tinhTrang === "Đang sử dụng").length}</b><small>đang sử dụng</small></div>
+      ${vTB === "dm" ? "" : `<div class="tb-sum"><div><b>${A.length}</b><small>thiết bị</small></div><div><b>${A.filter(t => t.d.tinhTrang === "Đang sử dụng").length}</b><small>đang sử dụng</small></div>
         <div class="${nKHD ? "warn" : ""}" data-go="khd" role="button" tabindex="0"><b>${nKHD}</b><small>không hoạt động</small></div><div><b>${HC.length}</b><small>dòng kiểm định / hiệu chuẩn</small></div>
-        <div class="${nQH ? "bad" : ""}" data-go="hc" role="button" tabindex="0"><b>${nQH}</b><small>quá hạn</small></div><div class="${n60 ? "warn" : ""}" data-go="hc" role="button" tabindex="0"><b>${n60}</b><small>đến hạn trong 60 ngày</small></div></div>`;
+        <div class="${nQH ? "bad" : ""}" data-go="hc" role="button" tabindex="0"><b>${nQH}</b><small>quá hạn</small></div><div class="${n60 ? "warn" : ""}" data-go="hc" role="button" tabindex="0"><b>${n60}</b><small>đến hạn trong 60 ngày</small></div></div>`}`;
     if (vTB === "dm") {
-      const qq = q.trim().toLowerCase();
-      const L = A.filter(t => (!fNhom || (t.d.nhom || "-") === fNhom) && (!fTT || (fTT === "KHD" ? KHD.includes(t.d.tinhTrang) : t.d.tinhTrang === fTT))
+      const qq = q.trim().toLowerCase(), loc = !!(qq || fTT);
+      const L = A.filter(t => (!fTT || (fTT === "KHD" ? KHD.includes(t.d.tinhTrang) : t.d.tinhTrang === fTT))
         && (!qq || [t.d.ma, t.d.ten, t.d.thongSo, t.d.ghiChu, t.d.nhom].join(" ").toLowerCase().includes(qq)));
       const nhoms = [...new Set(A.map(t => t.d.nhom || "-"))].sort((a, c) => a === "-" ? 1 : c === "-" ? -1 : a.localeCompare(c, "vi"));
-      h += `<div class="tools">${ed ? '<button class="btn primary" type="button" id="tbNew">+ Thêm thiết bị</button>' : ""}
-          <input type="text" id="tbQ" value="${E(q)}" placeholder="Tìm mã, tên, thông số…" style="width:auto;min-width:200px">
-          
+      const G = {}; L.slice().sort(byMa).forEach(t => { const n = t.d.nhom || "-"; (G[n] = G[n] || []).push(t); });
+      const fi = (t, k, lab, at, full) => `<label${full ? ' style="grid-column:1/-1"' : ""}>${lab}<input data-f="${k}" value="${E(t.d[k] ?? "")}" ${at || ""}></label>`;
+      const form = t => `<tr class="tb-form"><td colspan="4"><div class="two qa-g">
+          ${fi(t, "ma", "Mã thiết bị")}${fi(t, "namSD", "Năm sử dụng", 'inputmode="numeric"')}
+          ${fi(t, "ten", "Tên thiết bị", "", true)}
+          ${fi(t, "thongSo", "Thông số chính", "", true)}
+          ${fi(t, "xuatXu", "Xuất xứ")}<label>Tình trạng<select data-f="tinhTrang">${TT.concat(t.d.tinhTrang && !TT.includes(t.d.tinhTrang) ? [t.d.tinhTrang] : []).map(x => `<option${x === t.d.tinhTrang ? " selected" : ""}>${E(x)}</option>`).join("")}</select></label>
+          ${fi(t, "nhom", "Nhóm / khu vực", 'list="tbNhomL"')}${fi(t, "ghiChu", "Ghi chú / hiện trạng")}
+        </div><div class="tools" style="margin:8px 0 2px"><button class="btn primary noic" type="button" id="tbFSave">Lưu</button><button class="btn" type="button" id="tbFHuy">Huỷ</button><button class="btn" type="button" data-tb="${E(t.id)}">Hồ sơ đầy đủ (kiểm định, nhật ký, xoá)…</button></div></td></tr>`;
+      h += `<div class="tools tb-top"><input type="search" id="tbQ" value="${E(q)}" placeholder="Tìm thiết bị: gõ mã hoặc tên (VD: AHK-12, nghiền bi, cân)…" style="flex:1;min-width:220px">${ed ? '<button class="btn primary" type="button" id="tbNew">+ Thêm thiết bị</button>' : ""}</div>
+        ${dl("tbNhomL", A.map(x => x.d.nhom))}
+        <p class="note" style="margin:0 0 8px">${A.length} thiết bị · ${A.filter(t => t.d.tinhTrang === "Đang sử dụng").length} đang sử dụng · <a href="#" data-go="khd">${nKHD} không hoạt động</a>${fTT ? ` · đang lọc <b>${E(fTT === "KHD" ? "không hoạt động" : fTT)}</b> — <a href="#" id="tbFTx">bỏ lọc</a>` : ""}${loc ? ` · khớp ${L.length}` : ""}. ${ed ? "Bấm vào thiết bị để sửa." : ""}</p>
+        ${dup.length ? `<p class="note tb-warn">⚠ Mã đang trùng: ${dup.map(([m, L]) => `<b>${E(m)}</b> (${E(L.map(t => t.d.ten).join(" / "))})`).join("; ")}.</p>` : ""}
+        ${L.length ? `<div class="dgx tb-tbl"><table><thead><tr><th style="width:96px">Mã</th><th>Tên thiết bị</th><th>Thông số chính</th><th style="width:128px">Tình trạng</th></tr></thead><tbody>${nhoms.filter(n => G[n]).map(n => { const mo = loc || gOpen.has(n) || G[n].some(t => t.id === edId);
+          return `<tr class="tb-gh" data-g="${E(n)}" style="cursor:pointer"><td colspan="4">${mo ? "▾" : "▸"} ${E(n === "-" ? "(chưa ghi nhóm)" : n)} <small>· ${G[n].length} thiết bị</small></td></tr>` + (mo ? G[n].map(t => { const d = t.d;
+            return t.id === edId && ed ? form(t) : `<tr class="click" ${ed ? `data-row="${E(t.id)}"` : `data-tb="${E(t.id)}"`} style="cursor:pointer"><td><b>${E(d.ma || "—")}</b>${isDup(t) ? " " + chipO("Trùng mã", "#c62828") : ""}</td><td>${E(d.ten)}${d.ghiChu ? `<div class="note" style="margin:2px 0 0">${E(d.ghiChu)}</div>` : ""}</td><td>${E(d.thongSo || "")}</td><td>${d.tinhTrang === "Đang sử dụng" ? '<span class="note">Đang sử dụng</span>' : chip(d.tinhTrang || "Chưa cập nhật", TTC[d.tinhTrang] || "#94a3b8")}</td></tr>`; }).join("") : ""); }).join("")}</tbody></table></div>`
+          : '<div class="empty"><b>Không có thiết bị nào khớp.</b></div>'}
+        <details class="tb-more"><summary>In danh mục, lọc theo tình trạng…</summary><div class="tools" style="margin-top:8px">
           <select id="tbFT" style="width:auto">${[["", "Tất cả tình trạng"], ["KHD", "Không hoạt động (tạm ngưng, chờ sửa, ngừng)"]].concat(TT.map(x => [x, x])).map(([v, t]) => `<option value="${E(v)}"${v === fTT ? " selected" : ""}>${E(t)}</option>`).join("")}</select>
-          ${ed ? `<button class="btn" type="button" id="tbEdQ" aria-pressed="${edQ}">✏ ${edQ ? "Xong sửa nhanh" : "Sửa nhanh"}</button>` : ""}<button class="btn" type="button" id="tbPrDM">🖨 In danh mục</button><button class="btn" type="button" id="tbPrKHD">🖨 Báo cáo thiết bị không hoạt động</button></div>
-        ${dup.length ? `<p class="note tb-warn">⚠ ${dup.length} mã thiết bị đang trùng: ${dup.map(([m, L]) => `<b>${E(m)}</b> (${E(L.map(t => t.d.ten).join(" / "))})`).join("; ")} — mở từng thiết bị để sửa lại mã cho đúng tem trên máy.</p>` : ""}
-        <div class="seg seg2 vt-tabs" id="tbNhomTabs" style="margin:0 0 8px">${[["", "Tất cả", A.length]].concat(nhoms.map(n => [n, n === "-" ? "(chưa ghi nhóm)" : n, A.filter(t => (t.d.nhom || "-") === n).length])).map(([v, t, n]) => `<button type="button" data-nh="${E(v)}" aria-pressed="${v === fNhom}">${E(t)} <small>${n}</small></button>`).join("")}</div>
-        <p class="note" style="margin:0 0 8px">${L.length} / ${A.length} thiết bị. ${ed ? (edQ ? "Đang <b>sửa nhanh</b>: gõ thẳng vào ô, rời ô là tự lưu — phiếu đóng gói, kế hoạch phối trộn lấy tên theo danh mục này." : "Bấm một dòng để mở hồ sơ đầy đủ, hoặc bật <b>Sửa nhanh</b> để chỉnh mã, tên, thông số ngay trên bảng.") : ""}</p>
-        ${L.length ? `<div class="dgx tb-tbl${edQ ? " tb-ed" : ""}"><table><thead><tr><th style="width:92px">Mã</th><th>Tên thiết bị</th><th style="width:96px">Xuất xứ</th><th>Thông số chính</th><th style="width:64px">Năm SD</th><th style="width:132px">Tình trạng</th>${edQ ? '<th style="width:54px"></th>' : ""}</tr></thead><tbody>${(() => {
-          const G = {}; L.slice().sort(byMa).forEach(t => { const n = t.d.nhom || "-"; (G[n] = G[n] || []).push(t); });
-          const cell = (t, k, at) => edQ ? `<input data-id="${E(t.id)}" data-f="${k}" value="${E(t.d[k] ?? "")}" ${at || ""}>` : E(t.d[k] || "");
-          return nhoms.filter(n => G[n]).map(n => `<tr class="tb-gh"><td colspan="${edQ ? 7 : 6}">${E(n === "-" ? "(chưa ghi nhóm)" : n)} <small>· ${G[n].length} thiết bị</small></td></tr>` + G[n].map(t => { const d = t.d, hh = hcTT(d);
-            return `<tr${edQ ? "" : ` class="click" data-tb="${E(t.id)}" style="cursor:pointer"`}><td>${edQ ? cell(t, "ma") : `<b>${E(d.ma || "—")}</b>`}${isDup(t) ? " " + chipO("Trùng mã", "#c62828") : ""}</td>
-              <td>${cell(t, "ten")}${!edQ && hh ? " " + chipO(d.hcLoai + ": " + hh.t, hh.c) : ""}${!edQ && d.kcSo ? " " + chipO(d.kcSo === "M1" ? "Kiểm cân hằng ngày" : "Kiểm cân hằng tuần", "#4d7c0f") : ""}${!edQ && d.ghiChu ? `<div class="note" style="margin:2px 0 0">${E(d.ghiChu)}</div>` : ""}</td>
-              <td>${cell(t, "xuatXu")}</td><td>${cell(t, "thongSo")}</td><td>${cell(t, "namSD", 'inputmode="numeric"')}</td>
-              <td>${edQ ? `<select data-id="${E(t.id)}" data-f="tinhTrang">${TT.concat(d.tinhTrang && !TT.includes(d.tinhTrang) ? [d.tinhTrang] : []).map(x => `<option${x === d.tinhTrang ? " selected" : ""}>${E(x)}</option>`).join("")}</select>` : chip(d.tinhTrang || "Chưa cập nhật", TTC[d.tinhTrang] || "#94a3b8")}</td>${edQ ? `<td><button class="btn small" type="button" data-tb="${E(t.id)}" title="Mở hồ sơ đầy đủ">Mở</button></td>` : ""}</tr>`; }).join("")).join(""); })()}</tbody></table></div>`
-          : '<div class="empty"><b>Không có thiết bị nào khớp bộ lọc.</b></div>'}`;
+          <button class="btn" type="button" id="tbPrDM">🖨 In danh mục</button><button class="btn" type="button" id="tbPrKHD">🖨 Báo cáo thiết bị không hoạt động</button></div></details>`;
     } else if (vTB === "hc") {
       const L = HC.filter(t => !fHT || t.d.hcLoai === fHT).sort((a, c) => String(a.d.denHan || "9999").localeCompare(String(c.d.denHan || "9999")) || byMa(a, c));
       const sap = HC.filter(t => t.d.do && (() => { const x = hcTT(t.d); return x && x.n != null && x.n <= 60; })());
@@ -159,18 +162,20 @@
     }
     b.innerHTML = h;
     b.querySelectorAll(".seg [data-v]").forEach(x => x.onclick = () => { vTB = x.dataset.v; renderTB(); });
-    b.querySelectorAll("[data-go]").forEach(x => x.onclick = () => { if (x.dataset.go === "khd") { vTB = "dm"; fTT = "KHD"; } else vTB = "hc"; renderTB(); });
+    b.querySelectorAll("[data-go]").forEach(x => x.onclick = ev => { ev.preventDefault(); if (x.dataset.go === "khd") { vTB = "dm"; fTT = "KHD"; } else vTB = "hc"; renderTB(); });
     b.querySelectorAll("[data-tb]").forEach(x => x.onclick = ev => { ev.preventDefault(); const t = rec(x.dataset.tb); if (t) tbDlg(t); });
     b.querySelectorAll("[data-nk]").forEach(x => x.onclick = () => { const n = rec(x.dataset.nk); if (n) nkDlg(n); });
     const on = (id, ev, f) => { const el = document.getElementById(id); if (el) el[ev] = f; };
     on("tbNew", "onclick", () => tbDlg(null)); on("tbNkNew", "onclick", () => nkDlg(null, fNKtb ? { tb: fNKtb } : null));
     on("tbQ", "oninput", e => { q = e.target.value; clearTimeout(window.__tbQT); window.__tbQT = setTimeout(() => { renderTB().then(() => { const el = document.getElementById("tbQ"); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }); }, 250); });
-    b.querySelectorAll("#tbNhomTabs [data-nh]").forEach(x => x.onclick = () => { fNhom = x.dataset.nh; renderTB(); });
-    on("tbEdQ", "onclick", () => { edQ = !edQ; renderTB(); });
-    b.querySelectorAll(".tb-ed [data-f]").forEach(x => x.onchange = async () => { const t = rec(x.dataset.id), k = x.dataset.f, v = x.value.trim(); if (!t || String(t.d[k] ?? "") === v) return;
-      if (k === "ten" && !v) { toast("Tên thiết bị không được để trống"); x.value = t.d.ten || ""; return; }
-      x.disabled = true; try { const d = Object.assign({}, t.d, { [k]: v }); await save({ id: t.id, loai: "TB", d }); t.d = d; x.classList.add("tb-saved"); setTimeout(() => x.classList.remove("tb-saved"), 1500); toast("Đã lưu " + (d.ma || d.ten)); }
-      catch (e) { toast(e.message); x.value = t.d[k] ?? ""; } finally { x.disabled = false; } }); on("tbFT", "onchange", e => { fTT = e.target.value; renderTB(); });
+    b.querySelectorAll("tr.tb-gh[data-g]").forEach(x => x.onclick = () => { const n = x.dataset.g; gOpen.has(n) ? gOpen.delete(n) : gOpen.add(n); renderTB(); });
+    b.querySelectorAll("tr[data-row]").forEach(x => x.onclick = () => { edId = x.dataset.row; renderTB().then(() => { const el = b.querySelector('.tb-form [data-f="ten"]'); if (el) el.focus(); }); });
+    on("tbFHuy", "onclick", () => { edId = ""; renderTB(); });
+    on("tbFTx", "onclick", ev => { ev.preventDefault(); fTT = ""; renderTB(); });
+    on("tbFSave", "onclick", async () => { const t = rec(edId), f = b.querySelector(".tb-form"); if (!t || !f) return; const d = Object.assign({}, t.d); f.querySelectorAll("[data-f]").forEach(x => { d[x.dataset.f] = x.value.trim(); });
+      if (!d.ten) { toast("Tên thiết bị không được để trống"); return; }
+      try { await save({ id: t.id, loai: "TB", d }); t.d = d; if (d.nhom) gOpen.add(d.nhom); edId = ""; toast("Đã lưu " + (d.ma || d.ten)); renderTB(); } catch (e) { toast(e.message); } });
+    b.querySelectorAll(".tb-form input").forEach(x => x.onkeydown = ev => { if (ev.key === "Enter") { ev.preventDefault(); document.getElementById("tbFSave").click(); } else if (ev.key === "Escape") { edId = ""; renderTB(); } }); on("tbFT", "onchange", e => { fTT = e.target.value; renderTB(); });
     on("tbFH", "onchange", e => { fHT = e.target.value; renderTB(); }); on("tbNkM", "onchange", e => { fNKm = e.target.value; renderTB(); }); on("tbNkTB", "onchange", e => { fNKtb = e.target.value; renderTB(); });
     on("tbPrDM", "onclick", () => { const qq = q.trim().toLowerCase(); prDanhMuc(A.filter(t => (!fNhom || (t.d.nhom || "-") === fNhom) && (!fTT || (fTT === "KHD" ? KHD.includes(t.d.tinhTrang) : t.d.tinhTrang === fTT)) && (!qq || [t.d.ma, t.d.ten, t.d.thongSo, t.d.ghiChu, t.d.nhom].join(" ").toLowerCase().includes(qq)))); });
     on("tbPrKHD", "onclick", () => prKHD(A.filter(t => KHD.includes(t.d.tinhTrang))));
