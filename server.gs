@@ -345,10 +345,11 @@ function lotInfo_(it, loai, p, L, ngayMacDinh) {
   const lo = String(p.lo || '').trim();
   if (loai === 'Nhập') {
     if (!lo) throw new Error('Nhập số lô cho ' + it.ma + '.');
-    const nsx = isYmd_(p.nsx) ? p.nsx : ngayMacDinh;
+    /* Kho hàng xử lý (hàng hỏng, đỗ chai, cắt túi…): không rõ NSX thì để trống, không tự lấy ngày nhập làm NSX */
+    const nsx = isYmd_(p.nsx) ? p.nsx : (dbOf_(it) === 'xl' ? '' : ngayMacDinh);
     const cur = L[it.ma] && L[it.ma][lo];
     if (cur && cur.hsd) return [lo, cur.nsx || nsx, cur.hsd]; // lô đã có: giữ NSX, HSD cũ
-    return [lo, nsx, addMonths_(nsx, hanOf_(it))];
+    return [lo, nsx, nsx ? addMonths_(nsx, hanOf_(it)) : ''];
   }
   const x = L[it.ma] && L[it.ma][lo];
   if (!x) throw new Error('Chọn lô cho ' + it.ma + '.');
@@ -645,7 +646,7 @@ function saveMove(a, p) {
     sheet_(SH.PH).appendRow([id, new Date(), p.ngay, p.loai, it.ma, sl, donVi, kg,
       String(p.chungTu || '').slice(0, 100), String(p.ghiChu || '').slice(0, 200), me.ten, '', ''].concat(lot).concat([ncc]));
     let cho = false;
-    if (p.loai === 'Nhập' && needQC_(it, cfg) && !(L[it.ma] && L[it.ma][lot[0]])) {
+    if (p.loai === 'Nhập' && needQC_(it, cfg) && dbOf_(it) !== 'xl' && !(L[it.ma] && L[it.ma][lot[0]])) { /* hàng nhập thẳng vào Kho hàng xử lý: không tạo phiếu "Chờ kiểm" */
       sheet_(SH.QC).appendRow([it.ma, lot[0], 'Chờ kiểm', p.ngay, me.ten, 'Tự tạo khi nhập kho', '', new Date()]);
       cho = true;
     }
