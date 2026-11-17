@@ -117,8 +117,10 @@ function palLop(L,W,A,B){const f=(a,b,l,w)=>l>0&&w>0?Math.floor(a/l)*Math.floor(
 /* kích thước thùng: mã quy cách chưa nhập thì lấy theo mã khác dùng CÙNG MÃ THÙNG (cùng thùng carton thì cùng kích thước) */
 function palKT(q){if(+q.thD>0&&+q.thR>0&&+q.thC>0)return q;const t=String(q.thung||"").trim().toUpperCase();if(!t)return q;const L=(typeof S!=="undefined"&&S.dg&&S.dg.qc)||[],x=L.find(y=>String(y.thung||"").trim().toUpperCase()===t&&+y.thD>0&&+y.thR>0&&+y.thC>0);return x?Object.assign({},q,{thD:x.thD,thR:x.thR,thC:x.thC,_ktTu:x.qc}):q}
 function palGoiY(q,kgThung){q=palKT(q);const L=+q.thD,W=+q.thR,H=+q.thC;if(!(L>0&&W>0&&H>0))return null;const C=palCfg(),P=palLop(L,W,C.A,C.B);if(!P.n)return {err:`Thùng ${L}×${W} mm lớn hơn pallet ${C.A}×${C.B} mm`};
-  const byH=Math.floor(C.H/H),byK=kgThung>0?Math.floor(C.K/(P.n*kgThung)):99,lop=Math.max(0,Math.min(7,byH,byK));
-  const vi=lop===byK&&byK<Math.min(7,byH)?`khối lượng ≤ ${C.K} kg`:lop===byH&&byH<7?`chiều cao ≤ ${C.H} mm`:"tối đa 7 lớp";
+  /* ít kiểu xếp: trên 6 thùng/lớp thì lấy số chẵn (7→6, 11→10, 13→12), tối đa 6 lớp → đa số mã về 24 / 30 / 36 thùng/pallet */
+  if(P.n>6&&P.n%2){P.n-=1;P.t="lấy chẵn cho dễ xếp"}
+  const byH=Math.floor(C.H/H),byK=kgThung>0?Math.floor(C.K/(P.n*kgThung)):99,lop=Math.max(0,Math.min(6,byH,byK));
+  const vi=lop===byK&&byK<Math.min(6,byH)?`khối lượng ≤ ${C.K} kg`:lop===byH&&byH<6?`chiều cao ≤ ${C.H} mm`:"tối đa 6 lớp";
   return {tl:P.n,lop,tp:P.n*lop,mau:P.t,vi,L,W,H,C}}
 function f05(D,p){const I=info(D),TK=isGoi(I.q)?"BM05G":"BM05C",SRC0=(p&&p.d&&p.d.dlSrc)||"auto",QL=dlOf(I.q,SRC0),QG=dlG(QL,I.tt),d=Object.assign({ngay:today(),maMay:"",mayTen:"",nhietDo:"",tocDo:"",seal:"",nhietEp:"",tlThuoc:QG?QG.std:+I.q.tl>0?+I.q.tl:isFinite(I.thuoc)?Math.round(I.thuoc*10)/10:"",ds:QG?"":+I.q.ds>0?+I.q.ds:"",tMin:QG?QG.lo:+I.q.tl>0&&+I.q.ds>0?Math.round((I.q.tl-I.q.ds)*100)/100:"",tMax:QG?QG.hi:+I.q.tl>0&&+I.q.ds>0?Math.round((+I.q.tl+ +I.q.ds)*100)/100:"",loaiBB:isGoi(I.q)?"Gói thuốc":"Chai có nhãn, không nắp",klBB:cbbLast(I.q.qc,"klBB")?cbbLast(I.q.qc,"klBB").v:+I.q.klBB>0?+I.q.klBB:"",dvThung:I.q.dvThung||"",dvHop:+I.q.dvHop>0?+I.q.dvHop:"",klHop:cbbLast(I.q.qc,"klHop")?cbbLast(I.q.qc,"klHop").v:"",hopThung:+I.q.dvHop>0&&+I.q.dvThung>0?Math.round(I.q.dvThung/I.q.dvHop*100)/100:"",tyTrong:I.tt?I.tt:"",thungPallet:"",lop:"",thungLop:"",mangCo:"",klThung:cbbLast(I.q.qc,"klThung")?cbbLast(I.q.qc,"klThung").v:"",bangKeo:"",ghiChu:""},p?p.d:{}),canW=can.phieu(),dis=canW?"":"disabled";
   d.tb=tbInit(TK,d);
