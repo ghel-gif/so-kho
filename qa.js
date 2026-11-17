@@ -297,10 +297,12 @@
     const w = dlg((isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm, draw(), true), bx = w.querySelector(".cfm-box");
     const anhPaint = () => {
       const L = bx.querySelector("#qaAnhL"), n = bx.querySelector("#qaAnhN"); if (!L) return; const A = anh || [];
-      L.innerHTML = A.map(x => `<a class="anh" data-fid="${E(x.fid)}" data-xoay="${+x.xoay || 0}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>`).join("")
+      L.innerHTML = A.map(x => `<span class="qa-sv"><a class="anh" data-fid="${E(x.fid)}" data-xoay="${+x.xoay || 0}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>${canEd ? `<button type="button" class="qa-px" data-del="${E(x.fid)}" title="Xoá ảnh này" aria-label="Xoá ảnh này">✕</button>` : ""}</span>`).join("")
         + pend.map((p, i) => `<span class="anh qa-pend" title="${E(p.f.name)} — chưa lưu"><img alt="" src="${p.url}"><button type="button" class="qa-px" data-px="${i}" aria-label="Bỏ ảnh này">✕</button></span>`).join("");
       L.hidden = !A.length && !pend.length;
       if (A.length && typeof anhLoad === "function") anhLoad(L);
+      L.querySelectorAll("[data-del]").forEach(b => b.onclick = async e => { e.stopPropagation(); e.preventDefault(); if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Xoá?"; b.classList.add("sure"); setTimeout(() => { if (b.isConnected) { b.dataset.sure = ""; b.textContent = "✕"; b.classList.remove("sure"); } }, 3000); return; }
+        b.disabled = true; try { anh = await api("webXoaAnhQA", S.auth, r.id, b.dataset.del); anhPaint(); renderQA(); toast("Đã xoá ảnh"); } catch (err) { toast(err.message); b.disabled = false; } });
       L.querySelectorAll("[data-px]").forEach(b => b.onclick = e => { e.stopPropagation(); const p = pend.splice(+b.dataset.px, 1)[0]; if (p) URL.revokeObjectURL(p.url); anhPaint(); });
       /* ảnh vừa chụp (chưa lưu) cũng bấm vào để xem lớn, phóng to, xoay */
       L.querySelectorAll(".qa-pend img").forEach(im => im.onclick = e => { e.stopPropagation(); if (typeof anhZoom === "function") anhZoom(im.src, [...L.querySelectorAll("img")].map(x => x.src)); });

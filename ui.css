@@ -1539,3 +1539,5 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .tb-tbl tr.tb-form label{font-size:12.5px}.tb-tbl tr.tb-form input,.tb-tbl tr.tb-form select{width:100%}
 .tb-more{margin-top:12px}.tb-more summary{cursor:pointer;opacity:.8;font-size:13px}
 .tb-top input[type=search]{font-size:15px;padding:10px 12px}
+
+.qa-sv{position:relative;display:inline-flex}.qa-px.sure{width:auto;padding:0 8px;border-radius:12px;background:#c62828;font-weight:700}

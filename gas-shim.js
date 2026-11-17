@@ -188,6 +188,15 @@ function webThemAnhQA(a, id, fname, fid) {
   log_(me, 'Ảnh kiểm bao bì', (r.d.ma || r.d.ten || r.id) + ' · về ngày ' + (r.d.ngayNhap || ''), fname);
   return (anMap_()['QA:' + r.id] || []).length;
 }
+/* bỏ 1 ảnh khỏi lô bao bì (tải nhầm): gỡ ảnh khỏi sổ; quyền như thêm ảnh */
+function webXoaAnhQA(a, id, fid) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]), r = qaAnhRec_(me, id);
+  const sh = sheet_(AN_SH), R = sh ? rows_(AN_SH) : [], i = R.findIndex(x => str_(x[0]) === 'QA:' + r.id && str_(x[5]) === String(fid || ''));
+  if (!fid || i < 0) throw new Error('Không tìm thấy ảnh (có thể đã xoá).');
+  const ten = str_(R[i][3]); sh.deleteRow(i + 2);
+  log_(me, 'Xoá ảnh kiểm bao bì', (r.d.ma || r.d.ten || r.id) + ' · về ngày ' + (r.d.ngayNhap || ''), ten);
+  return (anMap_()['QA:' + r.id] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay }));
+}
 function webAnhQA(a, id) { auth_(a); return (anMap_()['QA:' + String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 function webKiemHoSo(a, ma, lo, loai, mime, size, so) {
   const me = auth_(a); hsSoChk_(loai, so); /* thiếu số phiếu thì dừng trước khi tải file */
