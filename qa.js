@@ -62,7 +62,7 @@
   const XN = ["Đạt", "Y/c: Điều chỉnh đợt sau", "Không đạt – trả NCC", "Không đạt – chấp nhận sử dụng (có email BLĐ)"];
   const TTQC = ["Bình thường", "Cách ly – chờ xử lý (nhãn vàng)", "Trả NCC (nhãn đỏ)"];
 
-  let R = [], USERS = [], view = "vt", fSo = "", fTT = "", fThang = "", ngay5 = "", thangK = "";
+  let R = [], USERS = [], view = "vt", fSo = "", fTT = "", fThang = "", ngay5 = "", thangK = ""; let qQ = "";
   const live = L => L.filter(x => !x.xoa);
   const rec = id => R.find(x => x.id === id);
   async function load() { R = await api0("webQAAll", S.auth); qaT = Date.now(); try { qaBadgeSet(); } catch (e) {} try { if (!USERS.length) USERS = await api0("getUserNames"); } catch (e) {} }
@@ -101,16 +101,21 @@
       let L = all.filter(r => (!fSo || r.loai === fSo) && (!fThang || String(r.d.ngayNhap).slice(0, 7) === fThang || ttOf(r) !== "Đã xác nhận"));
       if (fTT) L = L.filter(r => fTT === "Không đạt" ? r.d.ketLuan === "Không đạt" : ttOf(r) === fTT);
       L.sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap)) || String(c.luc).localeCompare(String(a.luc)));
-      h += `<div class="tools">${QC() ? '<button class="btn primary" type="button" id="qaNew">+ Ghi bao bì về</button>' : ""}
-        <select id="qaFSo" style="width:auto"><option value="">Tất cả sổ</option>${ORDER.map(k => `<option value="${k}"${k === fSo ? " selected" : ""}>${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</option>`).join("")}</select>
-        <select id="qaFTT" style="width:auto">${["", "Chờ kiểm", "Chờ xác nhận", "Đã xác nhận", "Không đạt"].map(t => `<option value="${t}"${t === fTT ? " selected" : ""}>${t || "Tất cả trạng thái"}</option>`).join("")}</select>
-        <input type="month" id="qaFM" value="${E(fThang)}" style="width:auto" title="Tháng nhập (trống = tất cả)">
-        <button class="btn" type="button" id="qaPr">🖨 In sổ ${fSo ? SO[fSo].bm.slice(0, 5) : "BM.01–04"}${fThang ? " tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</button></div>
-        <p class="note" style="margin:0 0 8px">${cho.length ? `<b style="color:#d97706">${cho.length} lô chờ kiểm</b> (hạn 48 giờ, hàng gấp 60 phút)` : "Không có lô chờ kiểm"} · ${cxn.length ? `<b style="color:#7c3aed">${cxn.length} lô chờ TP. QA/QC xác nhận</b>` : "không có lô chờ xác nhận"}. Lô chưa xác nhận luôn hiện, không theo tháng.</p>
-        <div class="list">${L.length ? L.map(r => { const d = r.d, t = ttOf(r);
-          return `<div class="row click" data-id="${E(r.id)}"><div class="name"><span class="st" style="background:#e0f2fe;color:#075985;border-color:#7dd3fc">${SO[r.loai].bm.slice(0, 5)}</span> ${E(d.ten)} ${chip(r)}${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh chụp khi nhận hàng">📷 ${r.anh}</span>` : ""}${d.gap && t === "Chờ kiểm" ? ' <span class="st" style="background:#c62828;color:#fff;border-color:#c62828">GẤP</span>' : ""}</div><div class="kg">${N(d.sl)}<small>${E(d.dvt || "")}</small></div>
-          <div class="meta">Về ${D(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""} · ${E(d.ncc || "—")}${d.npp ? " · NPP " + E(d.npp) : ""}${d.loaiVT ? " · " + E(d.loaiVT) : ""}${d.tlTui ? " · ⚖ " + N(d.tlTui) + " g/túi" : ""}${d.canLech ? ` · <b class="qa-lech" title="Lần cân trước ${N(d.canLech.tb)} g (${D(d.canLech.ngay)}) — ngưỡng ${N(d.canLech.ng)} %">⚠ cân lệch ${d.canLech.p > 0 ? "+" : ""}${N(d.canLech.p)} %</b>` : ""}${d.pnId ? ` · <span class="qa-pn" title="Phiếu nhập ${E(d.pnId)}${d.pnNguoi ? " · " + E(d.pnNguoi) : ""}">📥 nhập kho ${N(d.pnSl)} ${E(d.pnDv || "")}${d.tuPN ? " (phiếu của " + E(d.pnNguoi || "kho") + ")" : ""}</span>` : ""}${t === "Chờ kiểm" ? " · hạn kiểm " + hanTxt(r) : ` · kiểm ${D(d.ngayKT)} · ${E(d.nguoiKT || "")}${soLoi(d) !== "" ? " · " + soLoi(d) + " lỗi" : ""}`}${d.xnQL ? " · TP. QA/QC: <b>" + E(d.xnQL) + "</b>" : ""}${d.ycXuLy ? " · " + E(d.ycXuLy) : ""}</div></div>`; }).join("")
-          : `<div class="empty"><b>Chưa có lô bao bì nào${fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</b>${QC() ? "Bấm “Ghi bao bì về” khi nhà cung cấp giao hàng." : ""}</div>`}</div>
+      const fold = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase(), W = fold(qQ).split(/\s+/).filter(Boolean);
+      if (W.length) L = L.filter(r => { const t = fold([r.d.ten, r.d.ma, r.d.ncc, r.d.npp, r.d.loaiVT].join(" ")); return W.every(w => t.includes(w)); });
+      const GR = [["Chờ kiểm", "#d97706"], ["Chờ xác nhận", "#7c3aed"], ["Đã xác nhận", "#2e7d32"]], G = {}; L.forEach(r => { const t = ttOf(r); (G[t] = G[t] || []).push(r); }); Object.keys(G).forEach(t => { if (!GR.some(g => g[0] === t)) GR.push([t, "#64748b"]); });
+      const row = r => { const d = r.d, t = ttOf(r), sub = [d.gap && t === "Chờ kiểm" ? '<b style="color:#c62828">GẤP</b>' : "", t === "Chờ kiểm" ? "hạn kiểm " + hanTxt(r) : "",
+          d.canLech ? `<b class="qa-lech" title="Lần cân trước ${N(d.canLech.tb)} g (${D(d.canLech.ngay)}) — ngưỡng ${N(d.canLech.ng)} %">cân lệch ${d.canLech.p > 0 ? "+" : ""}${N(d.canLech.p)} %</b>` : "",
+          d.xnQL && d.ketLuan === "Không đạt" ? "TP. QA/QC: " + E(d.xnQL) : "", d.pnId ? "" : (t === "Đã xác nhận" && d.ketLuan !== "Không đạt" ? '<span style="color:#b45309">chưa nhập kho</span>' : "")].filter(Boolean).join(" · ");
+        return `<tr class="click" data-id="${E(r.id)}" style="cursor:pointer"><td>${D(d.ngayNhap)}</td><td><b>${E(d.ten)}</b>${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh">📷 ${r.anh}</span>` : ""}${sub ? `<div class="note" style="margin:2px 0 0">${sub}</div>` : ""}</td><td>${E(d.ncc || "—")}</td><td style="text-align:right;white-space:nowrap">${N(d.sl)} <small>${E(d.dvt || "")}</small></td><td>${chip(r)}</td></tr>`; };
+      h += `<div class="tools tb-top"><input type="search" id="qaQ" value="${E(qQ)}" placeholder="Tìm lô bao bì: tên, mã, nhà cung cấp…" style="flex:1;min-width:220px"><input type="month" id="qaFM" value="${E(fThang)}" style="width:auto" title="Tháng nhập (trống = tất cả)">${QC() ? '<button class="btn primary" type="button" id="qaNew">+ Ghi bao bì về</button>' : ""}</div>
+        <p class="note" style="margin:0 0 8px">${cho.length ? `<b style="color:#d97706">${cho.length} lô chờ kiểm</b>` : "Không có lô chờ kiểm"} · ${cxn.length ? `<b style="color:#7c3aed">${cxn.length} lô chờ xác nhận</b>` : "không có lô chờ xác nhận"}${fSo || fTT ? ` · đang lọc <b>${E([fSo ? SO[fSo].bm.slice(0, 5) : "", fTT].filter(Boolean).join(", "))}</b> — <a href="#" id="qaFx">bỏ lọc</a>` : ""}. Bấm vào lô để mở.</p>
+        ${L.length ? `<div class="dgx tb-tbl qa-tbl"><table><thead><tr><th style="width:92px">Ngày về</th><th>Bao bì</th><th style="width:24%">Nhà cung cấp</th><th style="width:120px;text-align:right">Số lượng</th><th style="width:176px">Kết quả</th></tr></thead><tbody>${GR.filter(([t]) => G[t]).map(([t, c]) => `<tr class="tb-gh"><td colspan="5"><span style="color:${c}">●</span> ${t} <small>· ${G[t].length} lô${t === "Đã xác nhận" && fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</small></td></tr>` + G[t].map(row).join("")).join("")}</tbody></table></div>`
+          : `<div class="empty"><b>${W.length || fSo || fTT ? "Không có lô nào khớp" : "Chưa có lô bao bì nào" + (fThang ? " trong tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : "")}</b>${QC() && !W.length ? "Bấm “Ghi bao bì về” khi nhà cung cấp giao hàng." : ""}</div>`}
+        <details class="tb-more"${fSo || fTT ? " open" : ""}><summary>In sổ, lọc theo sổ / trạng thái…</summary><div class="tools" style="margin-top:8px">
+          <select id="qaFSo" style="width:auto"><option value="">Tất cả sổ</option>${ORDER.map(k => `<option value="${k}"${k === fSo ? " selected" : ""}>${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</option>`).join("")}</select>
+          <select id="qaFTT" style="width:auto">${["", "Chờ kiểm", "Chờ xác nhận", "Đã xác nhận", "Không đạt"].map(t => `<option value="${t}"${t === fTT ? " selected" : ""}>${t || "Tất cả trạng thái"}</option>`).join("")}</select>
+          <button class="btn" type="button" id="qaPr">🖨 In sổ ${fSo ? SO[fSo].bm.slice(0, 5) : "BM.01–04"}${fThang ? " tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</button></div></details>
         ${delBox(R.filter(x => x.xoa && SO[x.loai]).sort((a, c) => String(c.d.ngayNhap).localeCompare(String(a.d.ngayNhap))), "data-id", x => `<b>${SO[x.loai].bm.slice(0, 5)}</b> · ${E(x.d.ten || "")} · về ${D(x.d.ngayNhap)}`)}`;
     } else if (view === "ngay") {
       const P = live(R).filter(x => x.loai === "KH" && x.d.duKien === ngay5), A = vt().filter(r => r.d.ngayNhap === ngay5).sort((a, c) => String(a.d.gioNhap || "").localeCompare(String(c.d.gioNhap || "")));
@@ -136,6 +141,8 @@
     b.querySelectorAll("[data-res]").forEach(x => x.onclick = async ev => { ev.stopPropagation(); x.disabled = true; try { await api("webQADel", S.auth, x.dataset.res, true); toast("Đã khôi phục phiếu"); renderQA(); } catch (e) { x.disabled = false; toast(e.message); } });
     const on = (id, ev, f) => { const el = document.getElementById(id); if (el) el[ev] = f; };
     on("qaNew", "onclick", () => vtDlg(null)); on("qaKH", "onclick", () => khDlg(null)); on("qaNewK", "onclick", () => kphDlg(null));
+    on("qaQ", "oninput", e => { qQ = e.target.value; clearTimeout(window.__qaQT); window.__qaQT = setTimeout(() => { renderQA().then(() => { const el = document.getElementById("qaQ"); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }); }, 250); });
+    on("qaFx", "onclick", ev => { ev.preventDefault(); fSo = ""; fTT = ""; renderQA(); });
     on("qaFSo", "onchange", e => { fSo = e.target.value; renderQA(); }); on("qaFTT", "onchange", e => { fTT = e.target.value; renderQA(); }); on("qaFM", "onchange", e => { fThang = e.target.value; renderQA(); });
     on("qaN5", "onchange", e => { ngay5 = e.target.value || today(); renderQA(); }); on("qaKM", "onchange", e => { thangK = e.target.value; renderQA(); });
     on("qaPr", "onclick", () => prSo(fSo, fThang)); on("qaPr5", "onclick", () => prNgay(ngay5)); on("qaPrK", "onclick", () => prKPH(thangK));
@@ -253,7 +260,7 @@
     const draw = () => {
       const S0 = SO[so], A = vt(), C = codesFor(so), ro = canEd ? "" : "disabled";
       const g = goiY(so, d);
-      return `${delNote(r)}${isNew ? `<div class="seg subseg" style="margin-bottom:8px">${ORDER.map(k => `<button type="button" data-so="${k}" aria-pressed="${k === so}">${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</button>`).join("")}</div>` : `<p class="note" style="margin:0 0 6px"><b>${S0.bm}</b> · ${S0.tieuDe.toLowerCase()} · ghi bởi ${E(r.nguoi)}${r.sua && r.sua !== r.nguoi ? " · sửa cuối " + E(r.sua) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</p>`}
+      return `${delNote(r)}${isNew ? `<div class="seg subseg" style="margin-bottom:8px">${ORDER.map(k => `<button type="button" data-so="${k}" aria-pressed="${k === so}">${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</button>`).join("")}</div><p class="note" style="margin:-2px 0 8px">Chọn <b>mã bao bì</b> bên dưới — sổ tự chuyển theo mã (nhãn, túi, chai, thùng), không cần đổi tab.</p>` : `<p class="note" style="margin:0 0 6px"><b>${S0.bm}</b> · ${S0.tieuDe.toLowerCase()} · ghi bởi ${E(r.nguoi)}${r.sua && r.sua !== r.nguoi ? " · sửa cuối " + E(r.sua) : ""}${d.nguon ? " · " + E(d.nguon) : ""}</p>`}
         ${locked ? `<p class="note" style="background:#e8f5e9;padding:6px 8px;border-radius:6px">✓ TP. QA/QC đã xác nhận (${E(d.xnQLNguoi || "")}${d.xnQLLuc ? " · " + E(d.xnQLLuc) : ""}) — chỉ xem.</p>` : ""}
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}
@@ -388,7 +395,7 @@
         const hide = () => { box.hidden = true; ma.setAttribute("aria-expanded", "false"); cur = -1; };
         const show = () => { const w = fo(ma.value).split(/\s+/).filter(Boolean), M = all.filter(x => w.every(t => x.k.includes(t))); R = M.slice(0, 40).map(x => x.i);
           if (!R.length) { box.innerHTML = `<div class="qa-mas-e">Không có mã nào khớp “${E(ma.value.trim())}” — kiểm tra lại từ khoá hoặc bấm <b>＋ Ghi mã mới</b>.</div>`; }
-          else box.innerHTML = R.map((i, n) => `<div class="qa-mas-i${n === cur ? " on" : ""}" role="option" data-n="${n}"><b>${E(i.ma)}</b><span>${E(i.ten)}</span>${P0.some(p => i.ma.toUpperCase().startsWith(p)) ? "" : '<i>sổ khác</i>'}</div>`).join("") + (M.length > R.length ? `<div class="qa-mas-e">… còn ${M.length - R.length} mã nữa — gõ thêm để lọc.</div>` : "");
+          else box.innerHTML = R.map((i, n) => `<div class="qa-mas-i${n === cur ? " on" : ""}" role="option" data-n="${n}"><b>${E(i.ma)}</b><span>${E(i.ten)}</span>${P0.some(p => i.ma.toUpperCase().startsWith(p)) ? "" : `<i>${(k => k ? SO[k].bm.slice(0, 5) + " · " + SO[k].ngan : "sổ khác")(ORDER.find(k => (BB_PRE[k] || []).some(p => i.ma.toUpperCase().startsWith(p))))}</i>`}</div>`).join("") + (M.length > R.length ? `<div class="qa-mas-e">… còn ${M.length - R.length} mã nữa — gõ thêm để lọc.</div>` : "");
           box.hidden = false; ma.setAttribute("aria-expanded", "true"); };
         const pick = n => { const it = R[n]; if (!it) return; ma.value = it.ma; hide(); ma.dispatchEvent(new Event("change", { bubbles: true })); };
         ma.addEventListener("input", () => { cur = -1; show(); }); ma.addEventListener("focus", () => { if (!bbBy(ma.value)) show(); }); ma.addEventListener("click", show);
@@ -397,8 +404,13 @@
           else if (e.key === "Enter") { if (R.length) { e.preventDefault(); pick(cur >= 0 ? cur : 0); } } else if (e.key === "Escape") { e.stopPropagation(); hide(); } });
         box.addEventListener("mousedown", e => { const o = e.target.closest("[data-n]"); e.preventDefault(); if (o) pick(+o.dataset.n); });
         ma.addEventListener("blur", () => setTimeout(hide, 150)); }
-      if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi; } pull(); maH(); qcSug(true); nkUp(); }); maH(); qcSug(false); }
-      const mn = bx.querySelector("#qaMaNew"); if (mn) mn.onclick = () => { pull(); bbNew(so, d.ma, d.ten, d.dvt, m => { d.ma = m; re(); toast("Đã ghi mã mới " + m + " vào Danh mục vật tư"); }, d.loaiVT); };
+      if (ma) { ma.addEventListener("input", maH); ma.addEventListener("change", () => { const it = bbBy(ma.value); if (it) { ma.value = it.ma; const t = bx.querySelector('[data-k="ten"]'), u = bx.querySelector('[data-k="dvt"]'); if (t && !t.value.trim()) t.value = it.ten; if (u && it.donVi && (!u.value.trim() || u.value.trim() === "cái")) u.value = it.donVi;
+          /* mã thuộc sổ khác (VD chọn mã chai khi đang ở sổ nhãn) → tự chuyển đúng sổ, khỏi phải nhớ đổi tab */
+          if (isNew) { const U = it.ma.toUpperCase(), k = ORDER.find(k => (BB_PRE[k] || []).some(p => U.startsWith(p))); if (k && k !== so) { pull(); so = k; re(); toast("Mã " + it.ma + " thuộc sổ " + SO[k].bm.slice(0, 5) + " · " + SO[k].ngan + " — đã tự chuyển sổ"); return; } } }
+        pull(); maH(); qcSug(true); nkUp(); }); maH(); qcSug(false); }
+      const mn = bx.querySelector("#qaMaNew"); if (mn) mn.onclick = () => { pull(); bbNew(so, d.ma, d.ten, d.dvt, m => { const it = bbBy(m), U = String(m).toUpperCase(), k = ORDER.find(k => (BB_PRE[k] || []).some(p => U.startsWith(p)));
+        d.ma = m; if (it) { d.ten = it.ten; if (it.donVi) d.dvt = it.donVi; } if (isNew && k) so = k; /* nạp ngay mã vừa ghi: tên, đơn vị, đúng sổ — không phải đóng mở lại */
+        re(); qcSug(true); nkUp(); toast("Đã ghi mã mới " + m + (k && isNew ? " · sổ " + SO[k].bm.slice(0, 5) : "")); }, d.loaiVT); };
       bx.querySelectorAll("[data-kl]").forEach(x => x.onclick = () => { pull(); d.ketLuan = d.ketLuan === x.dataset.kl ? "" : x.dataset.kl; re(); });
       const all = bx.querySelector('[data-a="all"]'); if (all) all.onclick = () => { pull(); const S0 = SO[so];
         S0.ct.forEach(([k, , o]) => { d[k] = o[0]; }); d.loiNang = "0"; d.loiNhe = "0";
