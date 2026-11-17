@@ -682,7 +682,7 @@ function webRDSave(a, o) {
     if (o.loai === 'BB') d = rdBB_(me, ql, d, cu, R);
     const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
     const ngay = isYmd_(o.ngay) ? o.ngay : Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd');
-    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    if (!id) do { id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10); } while (R.some(r => str_(r[0]) === id));
     if (i >= 0) sh.getRange(i + 2, 1, 1, RD_HEAD.length).setValues([[id, o.loai, ngay, js, str_(R[i][4]), R[i][5], '', me.ten]]);
     else sh.appendRow([id, o.loai, ngay, js, me.ten, new Date(), '', me.ten]);
     log_(me, 'Phòng RD ' + o.loai, id, (d.so || d.sp || d.noiDung || d.ten || '').toString().slice(0, 120) + (d.tt ? ' · ' + d.tt : ''));
@@ -787,7 +787,7 @@ function webQASave(a, o) {
       if (d.dong && !(cu && cu.dong)) { d.dongNguoi = me.ten; d.dongLuc = now; }
     }
     if (i >= 0 && str_(R[i][6]) === 'Đã xoá') throw new Error('Phiếu đã xoá — khôi phục trước rồi mới sửa.');
-    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    if (!id) do { id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10); } while (R.some(r => str_(r[0]) === id));
     /* QC nhập kho bao bì luôn khi ghi sổ kiểm: phiếu nhập đi kèm (máy chủ giữ mã phiếu, máy không tự ghi được) */
     if (o.loai === 'TUI') qaCanLech_(R, id, d); /* cân túi rỗng lệch quá ngưỡng so với lần cân trước cùng mã → ghi d.canLech */
     let pn = null;
@@ -973,7 +973,7 @@ function webTBSave(a, o) {
     if (i >= 0 && str_(R[i][1]) !== o.loai) throw new Error('Sai loại hồ sơ.');
     const d = Object.assign({}, o.d || {}); tbCheck_(o.loai, d, R, id);
     const js = JSON.stringify(d); if (js.length > 45000) throw new Error('Hồ sơ quá dài.');
-    if (!id) id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    if (!id) do { id = o.loai + '-' + Utilities.formatDate(new Date(), tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10); } while (R.some(r => str_(r[0]) === id));
     if (i >= 0) sh.getRange(i + 2, 1, 1, TB_HEAD.length).setValues([[id, o.loai, tbNgay_(o.loai, d), js, str_(R[i][4]), R[i][5], '', me.ten]]);
     else sh.appendRow([id, o.loai, tbNgay_(o.loai, d), js, me.ten, new Date(), '', me.ten]);
     log_(me, o.loai === 'KC' ? 'Kiểm tra cân ' + d.so : o.loai === 'NK' ? 'Nhật ký thiết bị' : 'Thiết bị', id, String(o.loai === 'KC' ? d.ngay + ' · ' + (d.khongSX ? 'không SX' : d.ketQua || '') : (d.ma ? d.ma + ' ' : '') + (d.ten || '') + (o.loai === 'NK' ? ' · ' + (d.loaiCV || '') : '')).slice(0, 150));
@@ -998,6 +998,19 @@ function webTBNhap(a, L) {
     sh.getRange(sh.getLastRow() + 1, 1, out.length, TB_HEAD.length).setValues(out);
     log_(me, 'Nhập danh sách thiết bị', String(out.length), out.length + ' hồ sơ');
     return tbRows_().length;
+  } finally { lock.releaseLock(); }
+}
+/* sửa hồ sơ bị trùng ID (2 hồ sơ lập cùng 1 giây): hồ sơ sau được cấp ID mới — chỉ TP. QA/QC */
+function webTBFixId(a) {
+  const me = auth_(a, [ROLES.QL]);
+  if (!qaTP_(me)) throw new Error('Chỉ TP. QA/QC (' + DL_EDITOR_ + ') sửa ID hồ sơ.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const R = sheet_(TB_SH) ? rows_(TB_SH) : [], seen = new Set(R.map(r => str_(r[0]))), got = new Set(), out = [];
+    R.forEach((r, i) => { const id = str_(r[0]); if (!id) return; if (!got.has(id)) { got.add(id); return; }
+      let k = 1, n; do { n = id + '-' + (++k); } while (seen.has(n)); seen.add(n); sheet_(TB_SH).getRange(i + 2, 1).setValue(n); out.push(id + ' → ' + n); });
+    if (out.length) log_(me, 'Sửa ID hồ sơ thiết bị trùng', out.join('; ').slice(0, 150), '');
+    return out;
   } finally { lock.releaseLock(); }
 }
 function webTBDel(a, id, khoiPhuc) {
