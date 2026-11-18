@@ -814,11 +814,22 @@ function setLotInfo(a, ma, lo, loMoi, nsx) {
   if (loMoi !== lo) {
     const lock = LockService.getScriptLock(); lock.waitLock(20000);
     try {
+      out = loDoi_(me, ma, lo, loMoi, false);
+    } finally { lock.releaseLock(); }
+  }
+  if (nsx) out.nsx = setLotNSX(a, ma, loMoi, nsx);
+  return out;
+}
+/* phần đổi số lô dùng chung (setLotInfo, đổi số lệnh đã hoàn thành). quiet = lô cũ không có trên sổ thì bỏ qua (trả null) thay vì báo lỗi. Gọi khi đã giữ khoá. */
+function loDoi_(me, ma, lo, loMoi, quiet) {
+  const out = { n: 0, qc: 0, hs: 0, tt: 0, lenh: 0 };
+  {
+    {
       const it = items_().find(x => x.ma === ma); if (!it) throw new Error('Không tìm thấy mã ' + ma + '.');
-      if (!it.theoLo) throw new Error('Mã ' + ma + ' không theo dõi lô.');
+      if (!it.theoLo) { if (quiet) return null; throw new Error('Mã ' + ma + ' không theo dõi lô.'); }
       xlGuard_(it);
       const L = lots_(items_(), moves_());
-      if (!L[ma] || !L[ma][lo]) throw new Error('Không tìm thấy lô ' + (lo || '(chưa có lô)') + ' của ' + ma + '.');
+      if (!L[ma] || !L[ma][lo]) { if (quiet) return null; throw new Error('Không tìm thấy lô ' + (lo || '(chưa có lô)') + ' của ' + ma + '.'); }
       if (L[ma][loMoi]) throw new Error('Lô ' + loMoi + ' đã có trên sổ của ' + ma + ' (tồn ' + L[ma][loMoi].ton + ' kg) — không đổi được, tránh gộp nhầm 2 lô.');
       const sh = sheet_(SH.PH), last = sh.getLastRow(), R = last > 1 ? sh.getRange(2, 1, last - 1, 14).getValues() : [];
       R.forEach((r, i) => { if (str_(r[0]) && !str_(r[11]) && str_(r[4]) === ma && str_(r[13]) === lo) { sh.getRange(i + 2, 14).setValue(loMoi); out.n++; } });
@@ -827,9 +838,8 @@ function setLotInfo(a, ma, lo, loMoi, nsx) {
         s2.getRange(2, 1, l2 - 1, 2).getValues().forEach((r, i) => { if (str_(r[0]) === ma && str_(r[1]) === lo) { s2.getRange(i + 2, 2).setValue(loMoi); out[k]++; } }); });
       orders_().forEach(o => { if (o.maSP === ma && o.loGC === lo && o.trangThai !== 'Đã huỷ') { lxHead_(); sheet_(SH.LX).getRange(orderRow_(o.so), 15).setValue(loMoi); out.lenh++; } });
       log_(me, 'Đổi số lô', ma + ' · ' + lo + ' → ' + loMoi, out.n + ' phiếu' + (out.qc ? ' · QC lô' : '') + (out.hs ? ' · ' + out.hs + ' hồ sơ' : '') + (out.tt ? ' · tỷ trọng' : '') + (out.lenh ? ' · ' + out.lenh + ' lệnh gia công' : ''));
-    } finally { lock.releaseLock(); }
+    }
   }
-  if (nsx) out.nsx = setLotNSX(a, ma, loMoi, nsx);
   return out;
 }
 function getAnhPhieu(a, id) { auth_(a); return (anMap_()[String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
@@ -940,15 +950,20 @@ function updateOrderInfo(a, so, o) {
     const row = orderRow_(so), od = orders_().find(x => x.so === so), items = items_(), lx = sheet_(SH.LX), doi = [];
     if (od.trangThai === 'Đã huỷ') throw new Error('Lệnh ' + so + ' đã huỷ.');
     let sp = items.find(i => i.ma === od.maSP);
-    if (od.trangThai === 'Đang SX') { // lệnh chưa hoàn thành: sửa được ngày, sản phẩm, khối lượng dự kiến
-      if (o.maSP !== undefined && o.maSP !== od.maSP) { const n = items.find(i => i.ma === o.maSP); if (!n) throw new Error('Chọn sản phẩm.'); needScope_(me, n); lx.getRange(row, 3).setValue(n.ma); doi.push('SP ' + od.maSP + ' → ' + n.ma); sp = n; }
+    { // đổi số lệnh (số lô): lệnh đang SX — ai lập phiếu cũng đổi được; lệnh đã hoàn thành — chỉ Quản lý
       const moi = String(o.soMoi || '').trim();
       if (moi && moi !== so) {
+        if (od.trangThai !== 'Đang SX' && me.vaiTro !== ROLES.QL) throw new Error('Lệnh đã hoàn thành: chỉ Quản lý đổi được số lệnh.');
+        /* lệnh đã hoàn thành, lô BTP nhập kho mang số lệnh cũ → đổi số lô theo (phiếu kho, QC lô, hồ sơ lô, tỷ trọng lô) */
+        if (od.trangThai !== 'Đang SX' && sp && sp.theoLo) { const r = loDoi_(me, od.maSP, so, moi, true); if (r) doi.push('Lô ' + so + ' → ' + moi + ' (' + r.n + ' phiếu)'); }
         const all = orders_(), trung = all.find(x => x.so.toLowerCase() === moi.toLowerCase() && x.so !== so);
         if (trung && trung.trangThai !== 'Đã huỷ') throw new Error('Số lệnh ' + moi + ' đã tồn tại.');
         if (trung) { let ten = trung.so + ' (huỷ)', k = 2; while (all.some(x => x.so === ten)) ten = trung.so + ' (huỷ ' + k++ + ')'; lx.getRange(orderRow_(trung.so), 1).setValue(ten); }
         lx.getRange(row, 1).setValue(moi); doi.push('Số lệnh ' + so + ' → ' + moi); const nr = renameRefs_(so, moi); if (nr) doi.push(nr + ' dòng biểu mẫu/kế hoạch đổi theo');
       }
+    }
+    if (od.trangThai === 'Đang SX') { // lệnh chưa hoàn thành: sửa được ngày, sản phẩm, khối lượng dự kiến
+      if (o.maSP !== undefined && o.maSP !== od.maSP) { const n = items.find(i => i.ma === o.maSP); if (!n) throw new Error('Chọn sản phẩm.'); needScope_(me, n); lx.getRange(row, 3).setValue(n.ma); doi.push('SP ' + od.maSP + ' → ' + n.ma); sp = n; }
       if (o.ngay !== undefined && o.ngay !== od.ngay) { if (!isYmd_(o.ngay)) throw new Error('Ngày ra lệnh không hợp lệ.'); lx.getRange(row, 2).setValue(o.ngay); doi.push('Ngày ' + od.ngay + ' → ' + o.ngay); }
       if (o.slDuKien !== undefined && num_(o.slDuKien) !== od.slDuKien) { const v = num_(o.slDuKien); if (!(v > 0)) throw new Error('Khối lượng dự kiến phải lớn hơn 0.'); lx.getRange(row, 4).setValue(v); doi.push('Dự kiến ' + od.slDuKien + ' → ' + v); }
     } else if (o.maSP !== undefined && o.maSP !== od.maSP || o.slDuKien !== undefined && num_(o.slDuKien) !== od.slDuKien) throw new Error('Lệnh đã hoàn thành: bấm "Mở lại lệnh để sửa" rồi mới đổi sản phẩm, khối lượng, vật tư.');
