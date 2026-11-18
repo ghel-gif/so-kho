@@ -754,7 +754,7 @@ function qaRows_() { return (sheet_(QA_SH) ? rows_(QA_SH) : []).filter(r => str_
   return { id: str_(r[0]), loai: str_(r[1]), ngay: str_(r[2]), d, nguoi: str_(r[4]), luc: khTs_(r[5]), xoa: str_(r[6]) === 'Đã xoá' ? 1 : 0, sua: str_(r[7]) }; }); }
 function webQAAll(a) { auth_(a); let A = {}; try { A = anMap_(); } catch (e) {} /* kèm số ảnh chụp khi ghi bao bì về */
   return qaRows_().map(r => { const L = A['QA:' + r.id] || [], n = L.length; if (n) { r.anh = n; if (L.some(x => /^MT-/i.test(x.ten))) r.mt = 1; if (L.some(x => /^MS-/i.test(x.ten))) r.ms = 1; } return r; }); }
-/* Ảnh 2 mặt bao bì (tên file bắt đầu MT- = mặt trước, MS- = mặt sau): bắt buộc với lô về từ ngày QA_ANH_TU_ — TP. QA/QC chỉ xác nhận được khi đủ cả hai */
+/* Ảnh 2 mặt bao bì (tên file bắt đầu MT- = mặt trước, MS- = mặt sau): bắt buộc với túi ép 3 biên (sổ BM.02) về từ ngày QA_ANH_TU_ — TP. QA/QC chỉ xác nhận được khi đủ cả hai */
 const QA_ANH_TU_ = '2026-11-18';
 function qaAnh2_(id) { let L = []; try { L = anMap_()['QA:' + id] || []; } catch (e) {} return L.some(x => /^MT-/i.test(x.ten)) && L.some(x => /^MS-/i.test(x.ten)); }
 function qaTP_(me) { return me.vaiTro === ROLES.QL && me.ten === DL_EDITOR_; } /* TP. QA/QC xác nhận */
@@ -796,7 +796,7 @@ function webQASave(a, o) {
       if (cu && cu.xnQL && !tp) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không sửa được nữa.');
       if (!tp) QA_XN_.forEach(k => { if (cu && k in cu) d[k] = cu[k]; else delete d[k]; }); /* QC không tự xác nhận */
       else if (String(d.xnQL || '') !== String((cu && cu.xnQL) || '')) { d.xnQLNguoi = d.xnQL ? me.ten : ''; d.xnQLLuc = d.xnQL ? now : '';
-        if (d.xnQL && cu && id && String(d.ngayNhap) >= QA_ANH_TU_ && !qaAnh2_(id)) throw new Error('Lô này chưa đủ ảnh 2 mặt bao bì (mặt trước + mặt sau) — yêu cầu QC chụp bổ sung rồi mới xác nhận.'); }
+        if (d.xnQL && cu && id && o.loai === 'TUI' && d.loaiVT === 'Túi ép 3 biên' && String(d.ngayNhap) >= QA_ANH_TU_ && !qaAnh2_(id)) throw new Error('Túi ép 3 biên: lô này chưa đủ ảnh 2 mặt (mặt trước + mặt sau) — yêu cầu QC chụp bổ sung rồi mới xác nhận.'); }
       if (d.ketLuan && ['Đạt', 'Không đạt'].indexOf(d.ketLuan) < 0) throw new Error('Kết luận chỉ Đạt / Không đạt.');
       if (d.ketLuan && !d.nguoiKT) d.nguoiKT = me.ten;
       if (d.ketLuan && !isYmd_(d.ngayKT)) d.ngayKT = now.slice(0, 10);
