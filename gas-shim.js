@@ -197,6 +197,15 @@ function webXoaAnhQA(a, id, fid) {
   log_(me, 'Xoá ảnh kiểm bao bì', (r.d.ma || r.d.ten || r.id) + ' · về ngày ' + (r.d.ngayNhap || ''), ten);
   return (anMap_()['QA:' + r.id] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay }));
 }
+/* gắn / đổi mặt (T = mặt trước, S = mặt sau, '' = ảnh thường) cho 1 ảnh đã có của lô bao bì: chỉ đổi tiền tố tên ảnh MT- / MS-, không tạo ảnh mới */
+function webMatAnhQA(a, id, fid, mat) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]), r = qaAnhRec_(me, id);
+  const sh = sheet_(AN_SH), R = sh ? rows_(AN_SH) : [], i = R.findIndex(x => str_(x[0]) === 'QA:' + r.id && str_(x[5]) === String(fid || ''));
+  if (!fid || i < 0) throw new Error('Không tìm thấy ảnh (có thể đã xoá).');
+  const ten = (mat === 'T' ? 'MT-' : mat === 'S' ? 'MS-' : '') + str_(R[i][3]).replace(/^M[TS]-/i, '');
+  sh.getRange(i + 2, 4).setValue(ten);
+  return (anMap_()['QA:' + r.id] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay }));
+}
 function webAnhQA(a, id) { auth_(a); return (anMap_()['QA:' + String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 function webKiemHoSo(a, ma, lo, loai, mime, size, so) {
   const me = auth_(a); hsSoChk_(loai, so); /* thiếu số phiếu thì dừng trước khi tải file */

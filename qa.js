@@ -306,7 +306,7 @@
       const L = bx.querySelector("#qaAnhL"), n = bx.querySelector("#qaAnhN"); if (!L) return; const A = anh || [];
       const cap = m => m ? `<i class="qa-matc">${MAT[m][1]}</i>` : "", co = m => A.filter(x => matOf(x.ten) === m).length + pend.filter(p => p.mat === m).length, M = bx.querySelector("#qaMat");
       { const can = anhCan(d, so), sm = bx.querySelector("#qaAnhS"); if (M) M.hidden = !can; if (sm) sm.innerHTML = can ? "túi ép 3 biên: <b>bắt buộc chụp 2 mặt</b> (trước + sau) trước khi ghi kết luận" : "không bắt buộc · chụp nhãn, số lô, thùng hàng, lỗi thấy được"; }
-      if (M) M.innerHTML = ["T", "S"].map(m => { const k = co(m); return `<div class="qa-mat-o${k ? " ok" : ""}" data-m="${m}"><b>${MAT[m][1]}</b><span>${k ? "✓ đã có " + k + " ảnh" : "chưa chụp"}</span>${canEd ? `<label class="btn small${k ? "" : " primary"}"><input type="file" accept="${ACC}" capture="environment" hidden data-mat="${m}">📷 ${k ? "Chụp thêm" : "Chụp"}</label><label class="btn small"><input type="file" accept="${ACC}" hidden data-mat="${m}">Chọn ảnh</label><small class="qa-mat-k">hoặc kéo thả ảnh ${MAT[m][1].toLowerCase()} vào ô này</small>` : ""}</div>`; }).join("");
+      if (M) M.innerHTML = ["T", "S"].map(m => { const k = co(m); return `<div class="qa-mat-o${k ? " ok" : ""}" data-m="${m}"><b>${MAT[m][1]}</b><span>${k ? "✓ đã có " + k + " ảnh" : "chưa chụp"}</span>${canEd ? `<label class="btn small${k ? "" : " primary"}"><input type="file" accept="${ACC}" capture="environment" hidden data-mat="${m}">📷 ${k ? "Chụp thêm" : "Chụp"}</label><label class="btn small"><input type="file" accept="${ACC}" hidden data-mat="${m}">Chọn ảnh</label><small class="qa-mat-k">hoặc kéo thả ảnh ${MAT[m][1].toLowerCase()} vào ô này (kéo ảnh đã có bên dưới lên cũng được)</small>` : ""}</div>`; }).join("");
       if (M) M.querySelectorAll("input[data-mat]").forEach(inp => inp.onchange = () => { const fs = [...(inp.files || [])]; inp.value = ""; anhAdd(fs, inp.dataset.mat); });
       L.innerHTML = A.map(x => `<span class="qa-sv"><a class="anh" data-fid="${E(x.fid)}" data-xoay="${+x.xoay || 0}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>${cap(matOf(x.ten))}${canEd ? `<button type="button" class="qa-px" data-del="${E(x.fid)}" title="Xoá ảnh này" aria-label="Xoá ảnh này">✕</button>` : ""}</span>`).join("")
         + pend.map((p, i) => `<span class="anh qa-pend" title="${E(p.f.name)} — chưa lưu"><img alt="" src="${p.url}">${cap(p.mat)}<button type="button" class="qa-px" data-px="${i}" aria-label="Bỏ ảnh này">✕</button></span>`).join("");
@@ -381,12 +381,20 @@
         const cd = e.clipboardData; if (!cd) return; let fs = [...(cd.files || [])]; if (!fs.length) fs = [...(cd.items || [])].filter(it => it.kind === "file").map(it => it.getAsFile()).filter(Boolean);
         fs = fs.filter(f => /^image\//.test(f.type || "")); if (!fs.length) return; e.preventDefault(); anhAdd(fs.map(named), "auto").then(n => n && toast("Đã dán " + n + " ảnh")); };
       document.addEventListener("paste", onPaste);
-      let dn = 0; const hasF = e => e.dataTransfer && [...(e.dataTransfer.types || [])].indexOf("Files") >= 0, zone = on => { const z = bx.querySelector(".qa-anh"); if (z) z.classList.toggle("drop", on); };
+      let dn = 0; const TY = e => (e.dataTransfer && [...(e.dataTransfer.types || [])]) || [], hasF = e => TY(e).some(t => t === "Files" || t === "text/x-qa-fid" || t === "text/x-qa-pend"), zone = on => { const z = bx.querySelector(".qa-anh"); if (z) z.classList.toggle("drop", on); };
       w.addEventListener("dragenter", e => { if (!hasF(e)) return; e.preventDefault(); dn++; zone(true); });
       const oMat = e => { const o = e.target && e.target.closest ? e.target.closest(".qa-mat-o[data-m]") : null; bx.querySelectorAll(".qa-mat-o.over").forEach(x => { if (x !== o) x.classList.remove("over"); }); if (o) o.classList.add("over"); return o; };
       w.addEventListener("dragover", e => { if (!hasF(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; oMat(e); });
       w.addEventListener("dragleave", e => { if (!hasF(e)) return; dn = Math.max(0, dn - 1); if (!dn) zone(false); });
+      /* kéo một ảnh ĐÃ CÓ trong lô (ảnh đã lưu hoặc ảnh chờ lưu) thả vào ô Mặt trước / Mặt sau = gắn mặt cho chính ảnh đó, không tạo bản sao */
+      w.addEventListener("dragstart", e => { const t = e.target && e.target.closest ? e.target : null; if (!t || !e.dataTransfer) return; const sv = t.closest(".qa-sv"), a = sv && sv.querySelector("a.anh[data-fid]"), pd = t.closest(".qa-pend");
+        if (a) e.dataTransfer.setData("text/x-qa-fid", a.dataset.fid); else if (pd) { const b = pd.querySelector("[data-px]"); if (b) e.dataTransfer.setData("text/x-qa-pend", b.dataset.px); } });
       w.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); dn = 0; zone(false); const o = oMat(e), m = o ? o.dataset.m : ""; bx.querySelectorAll(".qa-mat-o.over").forEach(x => x.classList.remove("over"));
+        const fid = e.dataTransfer.getData("text/x-qa-fid"), pi = e.dataTransfer.getData("text/x-qa-pend");
+        if (fid || pi !== "") { if (!m) return; /* thả ra ngoài 2 ô: không làm gì */
+          if (fid) { if (!r || !r.id) return; api("webMatAnhQA", S.auth, r.id, fid, m).then(L => { anh = L; anhPaint(); renderQA(); toast("Đã gắn ảnh là " + MAT[m][1].toLowerCase()); }).catch(err => toast(err.message)); }
+          else { const p = pend[+pi]; if (p) { p.mat = m; try { p.f = new File([p.f], MAT[m][0] + String(p.f.name || "anh.jpg").replace(/^M[TS]-/i, ""), { type: p.f.type || "image/jpeg" }); } catch (x) {} anhPaint(); toast("Đã gắn ảnh là " + MAT[m][1].toLowerCase()); } }
+          return; }
         const all = [...(e.dataTransfer.files || [])]; anhAdd(all, m || "auto").then(n => { if (n) toast("Đã thêm " + n + " ảnh" + (m ? " " + MAT[m][1].toLowerCase() : "")); else if (all.length) toast("File kéo vào không phải ảnh."); }); });
     }
     function wire() {
