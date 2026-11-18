@@ -1561,3 +1561,6 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .gm-lot-r{cursor:pointer;padding:2px 0}.gm-lot-r:hover{text-decoration:underline}.gm-lot .btn{align-self:flex-start;margin-top:4px}
 .gm-ck{grid-column:1/-1;display:flex!important;flex-direction:row!important;align-items:center;gap:8px;font-weight:400}.gm-ck input{width:auto!important;margin:0;flex:none}
 .gm-ten{border:1px solid rgba(15,111,100,.35);background:rgba(15,111,100,.06);border-radius:10px;padding:8px 10px}.gm-ten:empty{display:none}.gm-ten-t{display:flex;gap:8px;align-items:flex-start;margin-top:2px}.gm-ten-t b{flex:1;font-size:14.5px;user-select:all}
+.gm-bc{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:14px}.gm-bc th{text-align:left;font-weight:600;font-size:12.5px;color:#64748b;padding:3px 6px;border-bottom:1px solid #cbd5e1}.gm-bc td{padding:5px 6px;border-bottom:1px solid #e2e8f0;vertical-align:middle}
+.gm-giao{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px}.gm-giao label{flex:1;min-width:140px;margin:0}.gm-giao label:nth-child(2){flex:0 0 90px;min-width:90px}
+.gm-toi{border:1px solid #b45309;background:#fff7ed;border-radius:10px;padding:8px 12px;margin:0 0 8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}

@@ -193,18 +193,35 @@ function webGMDel(a, id) {
   sh.getRange(i + 2, 6).setValue('Đã xoá'); sh.getRange(i + 2, 7).setValue(me.ten);
   log_(me, 'Sổ gửi mẫu KTCL', id, 'Xoá'); return true;
 }
-/* bản cứng phiếu kết quả (đơn vị gửi sau bản scan): tài khoản đang đăng nhập xác nhận đã nhận, ghi số bản + ngày nhận; v = null -> huỷ xác nhận (người đã xác nhận hoặc Quản lý) */
+/* bản cứng phiếu kết quả (trung tâm gửi sau bản scan, tối đa 3 bản). v.act:
+   nhan {so, ngay}  — tài khoản đang đăng nhập xác nhận đã nhận từ trung tâm
+   giao {cho, so}   — người đang giữ (hoặc Quản lý) ghi giao cho tài khoản khác, chờ người đó xác nhận
+   xn {gid}         — CHỈ người được giao xác nhận đã nhận; đã xác nhận thì khoá
+   bo {gid}         — bỏ dòng giao: chưa xác nhận -> người giữ / Quản lý; đã xác nhận -> chỉ Quản lý và không phải chính người nhận
+   huy              — huỷ xác nhận nhận từ trung tâm, chỉ khi chưa giao cho ai */
 function webGMBanCung(a, id, v) {
-  const me = auth_(a), now = new Date();
+  const me = auth_(a), now = new Date(); v = v || { act: 'huy' }; const act = v.act || 'nhan', ql = me.vaiTro === ROLES.QL;
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = sheet_(GM_SH), R = sh ? rows_(GM_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id || '')); if (i < 0) throw new Error('Không tìm thấy dòng gửi mẫu.');
     let d = {}; try { d = JSON.parse(str_(R[i][2]) || '{}'); } catch (e) {}
-    if (v) { const so = Math.floor(Number(v.so)), ng = String(v.ngay || '').slice(0, 10); if (!(so >= 1 && so <= 99)) throw new Error('Ghi số bản cứng nhận được.'); if (!isYmd_(ng)) throw new Error('Ghi ngày nhận bản cứng.');
-      if (d.bc) throw new Error('Bản cứng đã được ' + d.bc.nguoi + ' xác nhận.'); d.bc = { so: so, ngay: ng, nguoi: me.ten, luc: khTs_(now) }; }
-    else { if (!d.bc) throw new Error('Chưa có xác nhận bản cứng.'); if (me.vaiTro !== ROLES.QL && d.bc.nguoi !== me.ten) throw new Error('Chỉ người đã xác nhận hoặc Quản lý huỷ được.'); delete d.bc; }
+    const b = d.bc, G = b ? (b.giao || []) : [], giu = b && (b.nguoi === me.ten || ql); let nk = '';
+    if (act === 'nhan') { const so = Math.floor(Number(v.so)), ng = String(v.ngay || '').slice(0, 10); if (!(so >= 1 && so <= 3)) throw new Error('Số bản cứng từ 1 đến 3.'); if (!isYmd_(ng)) throw new Error('Ghi ngày nhận bản cứng.');
+      if (b) throw new Error('Bản cứng đã được ' + b.nguoi + ' xác nhận.'); d.bc = { so: so, ngay: ng, nguoi: me.ten, luc: khTs_(now), giao: [] }; nk = 'Nhận bản cứng từ trung tâm: ' + so + ' bản ngày ' + ng; }
+    else if (!b) throw new Error('Chưa có xác nhận nhận bản cứng từ trung tâm.');
+    else if (act === 'giao') { if (!giu) throw new Error('Chỉ ' + b.nguoi + ' (người đang giữ bản cứng) hoặc Quản lý ghi giao được.');
+      const cho = String(v.cho || '').trim(), so = Math.floor(Number(v.so)), con = b.so - G.reduce((s, x) => s + (Number(x.so) || 0), 0);
+      if (!cho || cho.length > 60) throw new Error('Chọn người nhận là một tài khoản Sổ Kho.'); if (cho === b.nguoi) throw new Error(cho + ' đang giữ bản cứng rồi.');
+      if (!(so >= 1 && so <= con)) throw new Error('Chỉ còn ' + con + ' bản để giao.');
+      G.push({ id: 'g' + now.getTime().toString(36) + Math.floor(Math.random() * 90 + 10), cho: cho, so: so, ngay: Utilities.formatDate(now, tz_(), 'yyyy-MM-dd'), nguoiGiao: me.ten, luc: khTs_(now), nhan: '' }); b.giao = G; nk = 'Giao ' + so + ' bản cứng cho ' + cho; }
+    else if (act === 'xn' || act === 'bo') { const x = G.filter(y => y.id === String(v.gid || ''))[0]; if (!x) throw new Error('Không tìm thấy dòng giao bản cứng.');
+      if (act === 'xn') { if (x.cho !== me.ten) throw new Error('Chỉ ' + x.cho + ' tự xác nhận được.'); if (x.nhan) throw new Error('Đã xác nhận rồi.'); x.nhan = khTs_(now); nk = 'Xác nhận đã nhận ' + x.so + ' bản cứng từ ' + (x.nguoiGiao || b.nguoi); }
+      else { if (x.nhan) { if (!ql || x.cho === me.ten) throw new Error(x.cho + ' đã xác nhận nhận bản cứng — không bỏ được.'); } else if (!giu) throw new Error('Chỉ ' + b.nguoi + ' hoặc Quản lý bỏ được.');
+        b.giao = G.filter(y => y !== x); nk = 'Bỏ dòng giao ' + x.so + ' bản cứng cho ' + x.cho + (x.nhan ? ' (đã xác nhận ' + x.nhan + ')' : ''); } }
+    else if (act === 'huy') { if (G.length) throw new Error('Đã ghi giao bản cứng cho người khác — không huỷ được.'); if (!giu) throw new Error('Chỉ người đã xác nhận hoặc Quản lý huỷ được.'); delete d.bc; nk = 'Huỷ xác nhận bản cứng'; }
+    else throw new Error('Thao tác không hợp lệ.');
     sh.getRange(i + 2, 3).setValue(JSON.stringify(d)); sh.getRange(i + 2, 7).setValue(me.ten);
-    log_(me, 'Sổ gửi mẫu KTCL', str_(d.ten) + ' · ' + str_(d.dv), v ? 'Nhận bản cứng: ' + d.bc.so + ' bản ngày ' + d.bc.ngay : 'Huỷ xác nhận bản cứng');
+    log_(me, 'Sổ gửi mẫu KTCL', str_(d.ten) + ' · ' + str_(d.dv), nk);
     return { id: str_(R[i][0]), d: d, nguoi: str_(R[i][3]), luc: khTs_(R[i][4]), xoa: false, sua: me.ten };
   } finally { lock.releaseLock(); }
 }
