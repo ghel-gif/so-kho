@@ -384,7 +384,7 @@ function webPhieuNhap(a, id) { auth_(a); const m = moves_().find(x => x.id === S
     const q = await run("webQAKiemAnh", [a, id]); /* kiểm quyền + phiếu trước khi tải, khỏi để ảnh mồ côi */
     const ext = mime === "image/png" ? ".png" : mime === "image/webp" ? ".webp" : ".jpg";
     const stamp = fmt(new Date(), "yyyyMMdd-HHmmss");
-    const fname = ["KiemBB", q.ma || "chua-ma", q.ngay || "", stamp].filter(Boolean).join("_").replace(/[\\/:*?"<>|]/g, "-") + ext;
+    const fname = (/^M[TS]-/i.test(String(name || "")) ? String(name).slice(0, 3).toUpperCase() : "") /* MT- / MS-: ảnh mặt trước / mặt sau bao bì */ + ["KiemBB", q.ma || "chua-ma", q.ngay || "", stamp].filter(Boolean).join("_").replace(/[\\/:*?"<>|]/g, "-") + ext;
     const path = "QA_" + String(id).replace(/[^A-Za-z0-9._-]/g, "_") + "/" + stamp + "-" + Math.random().toString(36).slice(2, 7) + ext;
     const { error } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: mime, upsert: false });
     if (error) throw new Error("Không tải ảnh lên được: " + error.message + (/bucket|not found|policy|security/i.test(error.message) ? " (Quản lý cần chạy file 08_anh_nhap_kho.sql)" : ""));

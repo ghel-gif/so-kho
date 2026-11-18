@@ -74,6 +74,9 @@
   const hanT = r => new Date(baseT(r).getTime() + (r.d.gap ? 3600e3 : 48 * 3600e3));
   const hanTxt = r => { const ms = hanT(r) - Date.now(), h = Math.abs(ms) / 3600e3, t = h >= 1 ? Math.round(h) + " giờ" : Math.max(1, Math.round(h * 60)) + " phút";
     return ms < 0 ? `<b style="color:#c62828">quá hạn ${t}</b>` : `còn <b style="color:${h < 8 ? "#d97706" : "inherit"}">${t}</b>`; };
+  /* Ảnh 2 mặt bao bì: bắt buộc với lô về từ ANH_TU. Tên file ảnh mang tiền tố MT- (mặt trước) / MS- (mặt sau) để biết đã có mặt nào. */
+  const ANH_TU = "2026-11-18", MAT = { T: ["MT-", "Mặt trước"], S: ["MS-", "Mặt sau"] }, matOf = ten => /^MT-/i.test(ten || "") ? "T" : /^MS-/i.test(ten || "") ? "S" : "";
+  const anhCan = d => String((d && d.ngayNhap) || "") >= ANH_TU, thieuAnh = r => anhCan(r.d) && !!r.d.ketLuan && !(r.mt && r.ms);
   const ttOf = r => r.d.tt || (r.d.xnQL ? "Đã xác nhận" : r.d.ketLuan ? "Chờ xác nhận" : "Chờ kiểm");
   const chip = r => { const t = ttOf(r), kl = r.d.ketLuan, c = t === "Chờ kiểm" ? "#d97706" : t === "Chờ xác nhận" ? "#7c3aed" : kl === "Không đạt" ? "#c62828" : "#2e7d32";
     return `<span class="st" style="background:${c};color:#fff;border-color:${c}">${E(t === "Đã xác nhận" ? (kl || "Đã xác nhận") + " · đã xác nhận" : t === "Chờ xác nhận" ? (kl || "") + " · chờ xác nhận" : "Chờ kiểm")}</span>`; };
@@ -105,7 +108,7 @@
       if (W.length) L = L.filter(r => { const t = fold([r.d.ten, r.d.ma, r.d.ncc, r.d.npp, r.d.loaiVT].join(" ")); return W.every(w => t.includes(w)); });
       const GR = [["Chờ kiểm", "#d97706"], ["Chờ xác nhận", "#7c3aed"], ["Đã xác nhận", "#2e7d32"]], G = {}; L.forEach(r => { const t = ttOf(r); (G[t] = G[t] || []).push(r); }); Object.keys(G).forEach(t => { if (!GR.some(g => g[0] === t)) GR.push([t, "#64748b"]); });
       const row = r => { const d = r.d, t = ttOf(r), sub = [d.gap && t === "Chờ kiểm" ? '<b style="color:#c62828">GẤP</b>' : "", t === "Chờ kiểm" ? "hạn kiểm " + hanTxt(r) : "",
-          d.canLech ? `<b class="qa-lech" title="Lần cân trước ${N(d.canLech.tb)} g (${D(d.canLech.ngay)}) — ngưỡng ${N(d.canLech.ng)} %">cân lệch ${d.canLech.p > 0 ? "+" : ""}${N(d.canLech.p)} %</b>` : "",
+          thieuAnh(r) ? '<b style="color:#c62828">Thiếu ảnh 2 mặt</b>' : "", d.canLech ? `<b class="qa-lech" title="Lần cân trước ${N(d.canLech.tb)} g (${D(d.canLech.ngay)}) — ngưỡng ${N(d.canLech.ng)} %">cân lệch ${d.canLech.p > 0 ? "+" : ""}${N(d.canLech.p)} %</b>` : "",
           d.xnQL && d.ketLuan === "Không đạt" ? "TP. QA/QC: " + E(d.xnQL) : "", d.pnId ? "" : (t === "Đã xác nhận" && d.ketLuan !== "Không đạt" ? '<span style="color:#b45309">chưa nhập kho</span>' : "")].filter(Boolean).join(" · ");
         return `<tr class="click" data-id="${E(r.id)}" style="cursor:pointer"><td>${D(d.ngayNhap)}</td><td><b>${E(d.ten)}</b>${r.anh ? ` <span class="qa-anhc" title="${r.anh} ảnh">📷 ${r.anh}</span>` : ""}${sub ? `<div class="note" style="margin:2px 0 0">${sub}</div>` : ""}</td><td>${E(d.ncc || "—")}</td><td style="text-align:right;white-space:nowrap">${N(d.sl)} <small>${E(d.dvt || "")}</small></td><td>${chip(r)}</td></tr>`; };
       h += `<div class="tools tb-top"><input type="search" id="qaQ" value="${E(qQ)}" placeholder="Tìm lô bao bì: tên, mã, nhà cung cấp…" style="flex:1;min-width:220px"><input type="month" id="qaFM" value="${E(fThang)}" style="width:auto" title="Tháng nhập (trống = tất cả)"><select id="qaFSo" style="width:auto"><option value="">Tất cả sổ</option>${ORDER.map(k => `<option value="${k}"${k === fSo ? " selected" : ""}>${SO[k].bm.slice(0, 5)} · ${SO[k].ngan}</option>`).join("")}</select><select id="qaFTT" style="width:auto">${["", "Chờ kiểm", "Chờ xác nhận", "Đã xác nhận", "Không đạt"].map(t => `<option value="${t}"${t === fTT ? " selected" : ""}>${t || "Tất cả trạng thái"}</option>`).join("")}</select><button class="btn" type="button" id="qaPr">🖨 In sổ ${fSo ? SO[fSo].bm.slice(0, 5) : "BM.01–04"}${fThang ? " tháng " + fThang.slice(5) + "/" + fThang.slice(0, 4) : ""}</button>${QC() ? '<button class="btn primary" type="button" id="qaNew">+ Ghi bao bì về</button>' : ""}</div>
@@ -270,8 +273,9 @@
           <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
           ${nkHtml()}
         </div></fieldset>
-        <div class="qa-anh"><div class="qa-anh-h"><b>📷 Ảnh bao bì</b><small>không bắt buộc · chụp nhãn, số lô, thùng hàng, lỗi thấy được</small></div><div class="anhs" id="qaAnhL" hidden></div>
-          ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Chụp ảnh</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label><span class="qa-anh-tip">hoặc <b>kéo thả</b> ảnh vào đây · <b>Ctrl+V</b> để dán ảnh đã copy</span></div>` : ""}<small class="note" id="qaAnhN"></small></div>
+        <div class="qa-anh"><div class="qa-anh-h"><b>📷 Ảnh bao bì</b><small>${anhCan(d) ? "<b>bắt buộc chụp 2 mặt</b> (trước + sau) trước khi ghi kết luận" : "chụp nhãn, số lô, thùng hàng, lỗi thấy được"}</small></div>
+          <div class="qa-mat" id="qaMat"></div><div class="anhs" id="qaAnhL" hidden></div>
+          ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Ảnh khác (lỗi, số lô, thùng…)</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label><span class="qa-anh-tip"><b>kéo thả</b> hoặc <b>Ctrl+V</b>: ảnh vào mặt còn thiếu trước</span></div>` : ""}<small class="note" id="qaAnhN"></small></div>
         <fieldset class="qa-fs" ${ro}><legend>Kiểm tra (${S0.hd})</legend><div class="two qa-g">
           ${canEd ? `<div class="qa-quick" style="grid-column:1/-1"><button type="button" class="btn ok" data-a="all">✓ Đạt hết</button><span class="note">Bấm khi lô không có lỗi: điền tất cả tiêu chí đạt, 0 lỗi, cỡ mẫu theo ${S0.hd}, kết luận Đạt. Có lỗi thì sửa riêng ô đó.</span></div>` : ""}
           ${fld("Ngày kiểm tra", inp("ngayKT", d.ngayKT, 'type="date"'))}<div class="qa-pkw" style="grid-column:1/-1"><span class="qa-pkl">Người kiểm mẫu</span>${userSel("nguoiKT", d.nguoiKT)}</div>
@@ -300,8 +304,11 @@
     const w = dlg((isNew ? "Ghi bao bì về" : "Lô bao bì") + " — " + SO[so].bm, draw(), true), bx = w.querySelector(".cfm-box");
     const anhPaint = () => {
       const L = bx.querySelector("#qaAnhL"), n = bx.querySelector("#qaAnhN"); if (!L) return; const A = anh || [];
-      L.innerHTML = A.map(x => `<span class="qa-sv"><a class="anh" data-fid="${E(x.fid)}" data-xoay="${+x.xoay || 0}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>${canEd ? `<button type="button" class="qa-px" data-del="${E(x.fid)}" title="Xoá ảnh này" aria-label="Xoá ảnh này">✕</button>` : ""}</span>`).join("")
-        + pend.map((p, i) => `<span class="anh qa-pend" title="${E(p.f.name)} — chưa lưu"><img alt="" src="${p.url}"><button type="button" class="qa-px" data-px="${i}" aria-label="Bỏ ảnh này">✕</button></span>`).join("");
+      const cap = m => m ? `<i class="qa-matc">${MAT[m][1]}</i>` : "", co = m => A.filter(x => matOf(x.ten) === m).length + pend.filter(p => p.mat === m).length, M = bx.querySelector("#qaMat");
+      if (M) M.innerHTML = ["T", "S"].map(m => { const k = co(m); return `<div class="qa-mat-o${k ? " ok" : ""}"><b>${MAT[m][1]}</b><span>${k ? "✓ đã có " + k + " ảnh" : "chưa chụp"}</span>${canEd ? `<label class="btn small${k ? "" : " primary"}"><input type="file" accept="${ACC}" capture="environment" hidden data-mat="${m}">📷 ${k ? "Chụp thêm" : "Chụp"}</label><label class="btn small"><input type="file" accept="${ACC}" hidden data-mat="${m}">Chọn ảnh</label>` : ""}</div>`; }).join("");
+      if (M) M.querySelectorAll("input[data-mat]").forEach(inp => inp.onchange = () => { const fs = [...(inp.files || [])]; inp.value = ""; anhAdd(fs, inp.dataset.mat); });
+      L.innerHTML = A.map(x => `<span class="qa-sv"><a class="anh" data-fid="${E(x.fid)}" data-xoay="${+x.xoay || 0}" title="${E(x.ten)}${x.nguoi ? " · " + E(x.nguoi) : ""}"><span><span class="ldg">Đang tải</span></span></a>${cap(matOf(x.ten))}${canEd ? `<button type="button" class="qa-px" data-del="${E(x.fid)}" title="Xoá ảnh này" aria-label="Xoá ảnh này">✕</button>` : ""}</span>`).join("")
+        + pend.map((p, i) => `<span class="anh qa-pend" title="${E(p.f.name)} — chưa lưu"><img alt="" src="${p.url}">${cap(p.mat)}<button type="button" class="qa-px" data-px="${i}" aria-label="Bỏ ảnh này">✕</button></span>`).join("");
       L.hidden = !A.length && !pend.length;
       if (A.length && typeof anhLoad === "function") anhLoad(L);
       L.querySelectorAll("[data-del]").forEach(b => b.onclick = async e => { e.stopPropagation(); e.preventDefault(); if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Xoá?"; b.classList.add("sure"); setTimeout(() => { if (b.isConnected) { b.dataset.sure = ""; b.textContent = "✕"; b.classList.remove("sure"); } }, 3000); return; }
@@ -359,21 +366,25 @@
       const m = bx.querySelector("#qaMauG"), t = MAU[so](+d.sl || 0); if (m) m.textContent = t ? "Theo " + S0.hd + ": " + t : (+d.sl ? "Cỡ lô " + N(d.sl) + ": ngoài bảng lấy mẫu của " + S0.hd : "");
       const k = bx.querySelector('[data-k="ketQua"]'); if (k) k.placeholder = kqTxt(d); };
     /* thêm ảnh: chụp / chọn file, DÁN (Ctrl+V ảnh đã copy, ảnh chụp màn hình) hoặc KÉO THẢ ảnh vào phiếu */
-    const anhAdd = async fs => { fs = (fs || []).filter(f => f && /^image\//.test(f.type || "") || /\.(jpe?g|png|webp|heic|heif|gif|bmp)$/i.test((f && f.name) || "")); if (!fs.length) return 0;
-      if (r && r.id) { if (await upQA(r.id, fs)) { await anhGet(); renderQA(); } }
-      else { fs.forEach(f => pend.push({ f, url: URL.createObjectURL(f) })); anhPaint(); }
+    /* mat = "T" / "S": ảnh của mặt trước / mặt sau (đổi tên file thêm MT- / MS-). mat = "auto" (dán, kéo thả): lần lượt vào mặt còn thiếu, dư thì là ảnh khác */
+    const anhAdd = async (fs, mat) => { fs = (fs || []).filter(f => f && /^image\//.test(f.type || "") || /\.(jpe?g|png|webp|heic|heif|gif|bmp)$/i.test((f && f.name) || "")); if (!fs.length) return 0;
+      const co = m => (anh || []).filter(x => matOf(x.ten) === m).length + pend.filter(p => p.mat === m).length, thieu = ["T", "S"].filter(m => !co(m));
+      const G = fs.map(f => { const m = mat === "T" || mat === "S" ? mat : mat === "auto" && anhCan(d) ? (thieu.shift() || "") : ""; if (!m) return { f, mat: "" };
+        let g = f; try { g = new File([f], MAT[m][0] + String(f.name || "anh.jpg").replace(/^M[TS]-/i, ""), { type: f.type || "image/jpeg" }); } catch (e) {} return { f: g, mat: m }; });
+      if (r && r.id) { if (await upQA(r.id, G.map(x => x.f))) { await anhGet(); renderQA(); } }
+      else { G.forEach(x => pend.push({ f: x.f, mat: x.mat, url: URL.createObjectURL(x.f) })); anhPaint(); }
       const z = bx.querySelector(".qa-anh"); if (z) z.scrollIntoView({ block: "nearest", behavior: "smooth" }); return fs.length; };
     if (canEd) {
       const named = (f, i) => { if (f.name && !/^image\.\w+$/i.test(f.name)) return f; const ext = ((f.type || "image/png").split("/")[1] || "png").replace("jpeg", "jpg"); try { return new File([f], "dan-" + new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "") + "-" + (i + 1) + "." + ext, { type: f.type || "image/png" }); } catch (e) { return f; } };
       const onPaste = e => { if (!w.isConnected) { document.removeEventListener("paste", onPaste); return; } if ([...document.querySelectorAll(".cfm")].pop() !== w) return; /* có hộp thoại khác đang mở phía trên */
         const cd = e.clipboardData; if (!cd) return; let fs = [...(cd.files || [])]; if (!fs.length) fs = [...(cd.items || [])].filter(it => it.kind === "file").map(it => it.getAsFile()).filter(Boolean);
-        fs = fs.filter(f => /^image\//.test(f.type || "")); if (!fs.length) return; e.preventDefault(); anhAdd(fs.map(named)).then(n => n && toast("Đã dán " + n + " ảnh")); };
+        fs = fs.filter(f => /^image\//.test(f.type || "")); if (!fs.length) return; e.preventDefault(); anhAdd(fs.map(named), "auto").then(n => n && toast("Đã dán " + n + " ảnh")); };
       document.addEventListener("paste", onPaste);
       let dn = 0; const hasF = e => e.dataTransfer && [...(e.dataTransfer.types || [])].indexOf("Files") >= 0, zone = on => { const z = bx.querySelector(".qa-anh"); if (z) z.classList.toggle("drop", on); };
       w.addEventListener("dragenter", e => { if (!hasF(e)) return; e.preventDefault(); dn++; zone(true); });
       w.addEventListener("dragover", e => { if (!hasF(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
       w.addEventListener("dragleave", e => { if (!hasF(e)) return; dn = Math.max(0, dn - 1); if (!dn) zone(false); });
-      w.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); dn = 0; zone(false); const all = [...(e.dataTransfer.files || [])]; anhAdd(all).then(n => { if (n) toast("Đã thêm " + n + " ảnh"); else if (all.length) toast("File kéo vào không phải ảnh."); }); });
+      w.addEventListener("drop", e => { if (!hasF(e)) return; e.preventDefault(); dn = 0; zone(false); const all = [...(e.dataTransfer.files || [])]; anhAdd(all, "auto").then(n => { if (n) toast("Đã thêm " + n + " ảnh"); else if (all.length) toast("File kéo vào không phải ảnh."); }); });
     }
     function wire() {
       bx.querySelectorAll("[data-so]").forEach(x => x.onclick = () => { pull(); so = x.dataset.so; re(); });
@@ -432,6 +443,10 @@
           if (!d.ma) { toast("Ghi mã bao bì (theo Danh mục vật tư). Chưa có mã thì bấm “＋ Ghi mã mới”."); f(); return; }
           if (!it) { toast("Mã " + d.ma + " chưa có trong Danh mục vật tư — bấm “＋ Ghi mã mới” để tạo mã trước."); f(); return; } d.ma = it.ma; }
         if (!d.ten) { toast("Ghi " + SO[so].ten.toLowerCase() + "."); return; }
+        /* bắt buộc đủ ảnh 2 mặt: khi QC ghi kết luận lần đầu, và khi TP. QA/QC xác nhận (lô về từ ngày áp dụng) */
+        if (anhCan(d)) { const co = m => (anh || []).filter(x => matOf(x.ten) === m).length + pend.filter(p => p.mat === m).length, th = ["T", "S"].filter(m => !co(m)).map(m => MAT[m][1].toLowerCase());
+          const klMoi = d.ketLuan && !(r && r.d && r.d.ketLuan), xnMoi = d.xnQL && !(r && r.d && r.d.xnQL);
+          if (th.length && (klMoi || xnMoi)) { toast((xnMoi && !klMoi ? "Chưa xác nhận được: lô còn thiếu ảnh " : "Chụp đủ 2 mặt bao bì rồi mới lưu kết luận — còn thiếu ảnh ") + th.join(" và ") + "."); const e = bx.querySelector(".qa-anh"); if (e) { e.scrollIntoView({ block: "center" }); e.classList.add("drop"); setTimeout(() => e.classList.remove("drop"), 1800); } return; } }
         if (!d.ketQua && so === "NHAN" && d.ketLuan) d.ketQua = kqTxt(d); if (d.loiNang !== "" || d.loiNhe !== "") d.soLoi = soLoi(d);
         if (so === "TUI") { const L = canLech(d, r && r.id); /* cân túi rỗng lệch quá ngưỡng: hỏi lại trước khi lưu (không hỏi lại nếu số cân này đã lưu kèm cảnh báo) */
           if (L && L.vuot && !(r && r.d && r.d.canLech && +r.d.tlTui === +d.tlTui) && typeof askConfirm === "function" && !await askConfirm([`Khối lượng trung bình 1 túi: ${N(d.tlTui)} g — lệch ${L.p > 0 ? "+" : ""}${N(L.p)} % so với lần cân trước (${N(L.tb)} g, ngày ${D(L.ngay)}${L.ncc ? ", " + L.ncc : ""}).`, `Ngưỡng cho phép: ${N(L.ng)} %. Số này sẽ thành khối lượng bao bì ở BM.05 của các mã hàng dùng túi này.`],

@@ -1543,3 +1543,12 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .qa-sv{position:relative;display:inline-flex}.qa-px.sure{width:auto;padding:0 8px;border-radius:12px;background:#c62828;font-weight:700}
 
 .lsx-td{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}.lsx-td .seg{margin:0}.lsx-td #lsxTdLy{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.lsx-td #lsxTdLy[hidden]{display:none}
+
+/* IQC bao bì: 2 ô ảnh bắt buộc (mặt trước / mặt sau) */
+.qa-mat{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+.qa-mat-o{border:2px dashed #c62828;border-radius:10px;padding:8px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:rgba(198,40,40,.05)}
+.qa-mat-o b{flex-basis:100%}.qa-mat-o span{flex:1;min-width:90px;font-size:13px;color:#c62828;font-weight:600}
+.qa-mat-o.ok{border:1.5px solid #2e7d32;background:rgba(46,125,50,.06)}.qa-mat-o.ok span{color:#2e7d32}
+.qa-matc{position:absolute;left:3px;bottom:3px;background:rgba(15,111,100,.92);color:#fff;font-style:normal;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:8px;pointer-events:none}
+.qa-pend{position:relative}
+@media(max-width:560px){.qa-mat{grid-template-columns:1fr}}
