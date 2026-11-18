@@ -176,7 +176,7 @@ function webGMSave(a, o) {
   try {
     const sh = shX_(GM_SH, GM_HEAD), R = rows_(GM_SH); let id = String(o.id || ''), i = id ? R.findIndex(r => str_(r[0]) === id) : -1;
     if (id && i < 0) throw new Error('Không tìm thấy dòng gửi mẫu (có thể đã bị xoá).');
-    if (i >= 0) { let cu = {}; try { cu = JSON.parse(str_(R[i][2]) || '{}'); } catch (e) {} d.nguoiLap = cu.nguoiLap || d.nguoiLap;
+    if (i >= 0) { let cu = {}; try { cu = JSON.parse(str_(R[i][2]) || '{}'); } catch (e) {} d.nguoiLap = cu.nguoiLap || d.nguoiLap; if (cu.bc) d.bc = cu.bc;
       sh.getRange(i + 2, 2, 1, 2).setValues([[d.ngay, JSON.stringify(d)]]); sh.getRange(i + 2, 7).setValue(me.ten);
       log_(me, 'Sổ gửi mẫu KTCL', d.ten + ' · ' + d.dv, 'Sửa' + (d.ketQua && d.ketQua !== cu.ketQua ? ' · kết quả ' + d.ketQua : '') + (d.huy && !cu.huy ? ' · huỷ' : ''));
       return { id, d, nguoi: str_(R[i][3]), luc: khTs_(R[i][4]), xoa: false, sua: me.ten }; }
@@ -192,6 +192,21 @@ function webGMDel(a, id) {
   if (me.vaiTro !== ROLES.QL && str_(R[i][3]) !== me.ten) throw new Error('Chỉ người lập hoặc Quản lý xoá được dòng này.');
   sh.getRange(i + 2, 6).setValue('Đã xoá'); sh.getRange(i + 2, 7).setValue(me.ten);
   log_(me, 'Sổ gửi mẫu KTCL', id, 'Xoá'); return true;
+}
+/* bản cứng phiếu kết quả (đơn vị gửi sau bản scan): tài khoản đang đăng nhập xác nhận đã nhận, ghi số bản + ngày nhận; v = null -> huỷ xác nhận (người đã xác nhận hoặc Quản lý) */
+function webGMBanCung(a, id, v) {
+  const me = auth_(a), now = new Date();
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_(GM_SH), R = sh ? rows_(GM_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id || '')); if (i < 0) throw new Error('Không tìm thấy dòng gửi mẫu.');
+    let d = {}; try { d = JSON.parse(str_(R[i][2]) || '{}'); } catch (e) {}
+    if (v) { const so = Math.floor(Number(v.so)), ng = String(v.ngay || '').slice(0, 10); if (!(so >= 1 && so <= 99)) throw new Error('Ghi số bản cứng nhận được.'); if (!isYmd_(ng)) throw new Error('Ghi ngày nhận bản cứng.');
+      if (d.bc) throw new Error('Bản cứng đã được ' + d.bc.nguoi + ' xác nhận.'); d.bc = { so: so, ngay: ng, nguoi: me.ten, luc: khTs_(now) }; }
+    else { if (!d.bc) throw new Error('Chưa có xác nhận bản cứng.'); if (me.vaiTro !== ROLES.QL && d.bc.nguoi !== me.ten) throw new Error('Chỉ người đã xác nhận hoặc Quản lý huỷ được.'); delete d.bc; }
+    sh.getRange(i + 2, 3).setValue(JSON.stringify(d)); sh.getRange(i + 2, 7).setValue(me.ten);
+    log_(me, 'Sổ gửi mẫu KTCL', str_(d.ten) + ' · ' + str_(d.dv), v ? 'Nhận bản cứng: ' + d.bc.so + ' bản ngày ' + d.bc.ngay : 'Huỷ xác nhận bản cứng');
+    return { id: str_(R[i][0]), d: d, nguoi: str_(R[i][3]), luc: khTs_(R[i][4]), xoa: false, sua: me.ten };
+  } finally { lock.releaseLock(); }
 }
 /* nhập sổ Excel cũ (1 lần): bỏ qua dòng đã có (trùng ngày + tên + nguồn gốc + đơn vị + mục đích + mã hồ sơ) — chỉ Quản lý */
 function webGMNhap(a, L) {
