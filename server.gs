@@ -985,7 +985,7 @@ function updateOrderInfo(a, so, o) {
 
 /* Đổi số lệnh: kéo theo kế hoạch đóng gói, biểu mẫu QC, cân bao bì, biên bản SX, vệ sinh TB, thẻ nhận diện, phiếu kho (chứng từ) */
 function renameRefs_(so, moi) {
-  const T = [['LenhDG', [1]], ['BieuMauDG', [3]], ['CanBaoBi', [7]], ['BienBanSX', [1]], ['VeSinhTB', [2, 4]], ['TheNhanDien', [1]]];
+  const T = [['LenhDG', [1]], ['BieuMauDG', [3]], ['CanBaoBi', [7]], ['BienBanSX', [1]], ['VeSinhTB', [2, 4]], ['TheNhanDien', [1]], ['DinhMucPL', [1]]];
   let n = 0;
   T.forEach(([name, cols]) => { const sh = sheet_(name); if (!sh || sh.getLastRow() < 2) return;
     cols.forEach(c => { const rg = sh.getRange(2, c, sh.getLastRow() - 1, 1), v = rg.getValues(); let ch = false;

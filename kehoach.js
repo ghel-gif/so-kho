@@ -483,19 +483,27 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
   const tong=L.reduce((a,x)=>a+(+x.lt||0),0),lit=liq?tong/(+o.tyTrong):0;
   const lotTxt=x=>{if(!x.lo)return"";const l=(S.lots[x.ma]||[]).find(y=>y.lo===x.lo);return `<br><small>Số lô: ${esc(x.lo)}${l&&l.nsx?" · NSX: "+dmy(l.nsx):""}</small>`};
   const K="bm02:"+o.maSP;let mem={};try{mem=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
+  /* phần đã lưu của lệnh này (khách hàng, hàm lượng, số lô, NSX, KL ĐK, các bước) */
+  let sv=null;try{sv=await api("webPLGet",S.auth,o.so)}catch(e){}const SD=(sv&&sv.d)||null,dkK=x=>x.ma+"|"+(x.lo||"");
+  if(SD){if(SD.b1)mem.b1=SD.b1;if(SD.buoc!==undefined&&SD.buoc!=="")mem.buoc=SD.buoc;L.forEach(x=>{const v=(SD.dk||{})[dkK(x)];if(v!==undefined)x.dk=v===""?null:+v})}
   const w=document.createElement("div");w.className="cfm";
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>In định mức phối liệu — BM.02-QC-QT.03</h2>
    <p class="note">Lệnh <b>${esc(o.so)}</b> · ${esc(sp.ten)} · ${f2(tong)} kg${liq?" ≈ "+f1(lit)+" lít":""}. Nguyên liệu và khối lượng lấy từ ${mv.length?"phiếu xuất của lệnh":"công thức × khối lượng dự kiến"}; phần dưới đây ghi thêm cho bản in.</p>
-   <div class="two"><label>Khách hàng<input data-opt id="plKH" value="${esc(o.khachHang||"Công ty CP BVTV Asata Hoa Kỳ")}"></label><label>Hàm lượng đăng ký<input data-opt id="plHL" value="${esc(sp.hamLuong||(typeof hlGoiY==="function"?hlGoiY(sp):"")||"")}"></label></div>
-   <div class="two"><label>Số lô SX in trên phiếu<input data-opt id="plLo" value="${esc((typeof gcLo==="function"&&gcLo(o))||o.so)}"></label><label>NSX<input type="date" data-opt id="plNsx" value="${esc((typeof gcNsx==="function"&&gcNsx(o))||o.ngay||"")}"></label></div>
+   <div class="two"><label>Khách hàng<input data-opt id="plKH" value="${esc((SD&&SD.kh)||o.khachHang||"Công ty CP BVTV Asata Hoa Kỳ")}"></label><label>Hàm lượng đăng ký<input data-opt id="plHL" value="${esc((SD&&SD.hl)||sp.hamLuong||(typeof hlGoiY==="function"?hlGoiY(sp):"")||"")}"></label></div>
+   <div class="two"><label>Số lô SX in trên phiếu<input data-opt id="plLo" value="${esc((SD&&SD.lo)||(typeof gcLo==="function"&&gcLo(o))||o.so)}"></label><label>NSX<input type="date" data-opt id="plNsx" value="${esc((SD&&SD.nsx)||(typeof gcNsx==="function"&&gcNsx(o))||o.ngay||"")}"></label></div>
    <div class="dgx" style="margin:8px 0"><table><thead><tr><th>Nguyên liệu</th><th style="width:110px;text-align:right">KL SX (kg)</th><th style="width:150px">KL ĐK — PM (kg)</th></tr></thead><tbody>${L.map((x,i)=>`<tr><td><b>${esc(x.ma)}</b> · ${esc(x.it.ten)}${x.lo?` <small>· lô ${esc(x.lo)}</small>`:""}</td><td style="text-align:right">${f2(x.lt)}</td><td><input data-dk="${i}" inputmode="decimal" value="${x.dk===null?"":f2(x.dk)}" style="width:100%;min-width:120px;box-sizing:border-box;text-align:right" placeholder="ghi tay" data-opt></td></tr>`).join("")}</tbody></table></div>
-   <p class="note" style="margin:-2px 0 8px">Cột <b>KL ĐK — PM</b> lấy sẵn tồn theo phần mềm, sửa được; số nhập ở đây chỉ dùng cho bản in, không đổi tồn kho. Nhập số không tách hàng nghìn, dấu phẩy cho số lẻ (VD 4481,08).</p>
+   <p class="note" style="margin:-2px 0 8px">Cột <b>KL ĐK — PM</b> lấy sẵn tồn theo phần mềm, sửa được; số nhập ở đây chỉ dùng cho bản in (bấm Lưu để giữ lại cho lần mở sau), không đổi tồn kho. Nhập số không tách hàng nghìn, dấu phẩy cho số lẻ (VD 4481,08).</p>
    <label>Bước 1 — chuẩn bị<input data-opt id="plB1" value="${esc(mem.b1||"Kiểm tra thiết bị trước khi phối liệu")}" placeholder="VD: Kiểm tra thiết bị: ống sục khí, chuẩn bị tank IBC"></label>
    <label>Thao tác sau khi nạp liệu <small class="note">— mỗi dòng một bước, in sau danh sách nguyên liệu</small><textarea data-opt id="plBuoc" rows="3" placeholder="VD: Sục khí trong 5 – 10 phút, kiểm tra mẫu tan hoàn toàn">${esc(mem.buoc||"")}</textarea></label>
-   <p class="note" style="margin:4px 0 0">Hai ô bước thao tác được nhớ cho sản phẩm này trên máy đang dùng.</p>
-   <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button><button class="btn primary" type="button" data-x="in">In</button></div></div>`;
+   <p class="note" style="margin:4px 0 0">Bấm <b>Lưu</b> để giữ toàn bộ phần ghi ở đây theo lệnh này; lệnh mới của cùng sản phẩm tự lấy lại hai ô bước thao tác lần trước (trên máy đang dùng).</p>
+   <div class="actions"><span class="note" id="plSv" style="flex:1;margin:0">${sv?"Đã lưu "+esc(sv.nguoi||"")+(sv.luc?" · "+esc(String(sv.luc)):""):"Chưa lưu"}</span><button class="btn" type="button" data-x="close">Đóng</button>${can.phieu()?'<button class="btn" type="button" data-x="save">Lưu</button>':""}<button class="btn primary" type="button" data-x="in">${can.phieu()?"Lưu và in":"In"}</button></div></div>`;
   document.body.appendChild(w);w.querySelector('[data-x="close"]').onclick=()=>w.remove();
-  w.querySelector('[data-x="in"]').onclick=()=>{w.querySelectorAll("[data-dk]").forEach(x=>{const v=x.value.trim().replace(/\s/g,""),n=v===""?null:+(/,/.test(v)?v.replace(/\./g,"").replace(",","."):v);L[+x.dataset.dk].dk=n===null||!isFinite(n)?null:n});
+  const rdDK=()=>w.querySelectorAll("[data-dk]").forEach(x=>{const v=x.value.trim().replace(/\s/g,""),n=v===""?null:+(/,/.test(v)?v.replace(/\./g,"").replace(",","."):v);L[+x.dataset.dk].dk=n===null||!isFinite(n)?null:n});
+  const luu=async()=>{rdDK();const g=id=>w.querySelector("#"+id).value.trim(),dk={};L.forEach(x=>{dk[dkK(x)]=x.dk===null?"":x.dk});
+    const r=await api("webPLSave",S.auth,o.so,{kh:g("plKH"),hl:g("plHL"),lo:g("plLo"),nsx:g("plNsx"),b1:g("plB1"),buoc:g("plBuoc"),dk});w.querySelector("#plSv").textContent="Đã lưu "+(r.nguoi||"")+" · vừa xong";return r};
+  if(w.querySelector('[data-x="save"]'))w.querySelector('[data-x="save"]').onclick=async e=>{e.target.disabled=true;try{await luu();toast("Đã lưu")}catch(err){handleErr(err)}finally{e.target.disabled=false}};
+  w.querySelector('[data-x="in"]').onclick=async()=>{if(can.phieu()){try{await luu()}catch(err){return handleErr(err)}}
+    w.querySelectorAll("[data-dk]").forEach(x=>{const v=x.value.trim().replace(/\s/g,""),n=v===""?null:+(/,/.test(v)?v.replace(/\./g,"").replace(",","."):v);L[+x.dataset.dk].dk=n===null||!isFinite(n)?null:n});
     const g=id=>w.querySelector("#"+id).value.trim(),b1=g("plB1"),buoc=g("plBuoc").split(/\n+/).map(x=>x.trim()).filter(Boolean);
     try{localStorage.setItem(K,JSON.stringify({b1,buoc:buoc.join("\n")}))}catch(e){}
     const HD=head("ĐỊNH MỨC PHỐI LIỆU<br>PHIẾU HƯỚNG DẪN PHỐI LIỆU","Mã số: BM.02-QC-QT.03<br>Phiên bản: 02<br>Ngày hiệu lực: 02/01/2026");

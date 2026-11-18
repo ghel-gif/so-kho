@@ -156,6 +156,27 @@ function webTNDSave(a, so, d) {
   return { d: o, nguoi: me.ten, luc: new Date() };
 }
 
+/* ================= ĐỊNH MỨC PHỐI LIỆU (BM.02-QC-QT.03): lưu phần ghi thêm cho bản in theo lệnh ================= */
+const DMPL_SH = 'DinhMucPL', DMPL_HEAD = ['Số lệnh', 'Dữ liệu (JSON)', 'Người lưu', 'Thời điểm'];
+function webPLGet(a, so) {
+  auth_(a); if (!sheet_(DMPL_SH)) return null;
+  const r = rows_(DMPL_SH).find(x => str_(x[0]) === String(so || '')); if (!r) return null;
+  let d = null; try { d = JSON.parse(str_(r[1]) || 'null'); } catch (e) { d = null; }
+  return d ? { d, nguoi: str_(r[2]), luc: khTs_(r[3]) } : null;
+}
+function webPLSave(a, so, d) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  so = String(so || '').trim(); if (!orders_().some(x => x.so === so)) throw new Error('Không tìm thấy lệnh ' + so);
+  d = d || {}; const t = (v, n) => String(v == null ? '' : v).trim().slice(0, n || 200), dk = {};
+  Object.keys(d.dk || {}).slice(0, 80).forEach(k => { const v = d.dk[k]; dk[t(k, 120)] = (v === '' || v == null || !isFinite(+v)) ? '' : +v; });
+  const o = { kh: t(d.kh), hl: t(d.hl, 300), lo: t(d.lo, 60), nsx: isYmd_(d.nsx) ? d.nsx : '', b1: t(d.b1, 300), buoc: t(d.buoc, 2000), dk };
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try { const sh = shX_(DMPL_SH, DMPL_HEAD), R = rows_(DMPL_SH), i = R.findIndex(x => str_(x[0]) === so), row = [so, JSON.stringify(o), me.ten, new Date()];
+    if (i >= 0) sh.getRange(i + 2, 1, 1, 4).setValues([row]); else sh.appendRow(row); } finally { lock.releaseLock(); }
+  log_(me, 'Định mức phối liệu BM.02', so, 'Lưu phần ghi cho bản in');
+  return { d: o, nguoi: me.ten, luc: new Date() };
+}
+
 /* ================= PHIẾU KIỂM NGHIỆM HOÁ LÝ BTP (BM.08-QC-QT.03) =================
  * Trang PhieuHoaLy: Số phiếu | Mã BTP | Số lô | Ngày kiểm | Dạng | Kết quả (JSON) | Kết luận | Nhận xét | Người thực hiện | Lúc | Trạng thái
  * Phiếu Đạt tự ghi vào hồ sơ lô (loại "Phiếu kiểm hoá lý", link #hl:<số phiếu>) → lô hiện ĐÃ CÓ và QC duyệt Đạt được. */
