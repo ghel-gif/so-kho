@@ -547,8 +547,8 @@
   function prSo(so, thang) {
     const ks = so ? [so] : ORDER, yr = (thang || today()).slice(0, 4);
     const parts = ks.map(k => { const L = vt().filter(r => r.loai === k && (thang ? String(r.d.ngayNhap).slice(0, 7) === thang : String(r.d.ngayNhap).slice(0, 4) === yr)).sort((a, c) => String(a.d.ngayNhap).localeCompare(String(c.d.ngayNhap)) || String(a.luc).localeCompare(String(c.luc)));
-      if (!L.length && !so) return ""; return [k, L]; }).filter(Boolean);
-    if (!parts.length) { toast("Chưa có lô bao bì nào trong " + (thang ? "tháng " + thang.slice(5) + "/" + yr : "năm " + yr) + "."); return; }
+      return [k, L]; }); /* in chung "Tất cả sổ": luôn đủ 4 sổ BM.01–04, sổ nào tháng đó chưa có lô thì in bảng trống */
+    if (!parts.some(p => p[1].length)) { toast("Chưa có lô bao bì nào trong " + (thang ? "tháng " + thang.slice(5) + "/" + yr : "năm " + yr) + "."); return; }
     const K = window.BMK, html = parts.map(([k, L], i) => `<div class="pq qap"${i ? ' style="break-before:page"' : ""}>${K.head(SO[k].tieuDe + (thang ? " THÁNG " + thang.slice(5) : "") + " NĂM " + yr, META(SO[k].bm))}<div class="gap"></div>${tblOf(COLS[k], L, 12)}</div>`).join("");
     K.pr(`${K.PCSS}${PRCSS}${html}`, true);
   }
