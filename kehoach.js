@@ -512,7 +512,7 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
      <table style="margin-top:-1px"><colgroup><col style="width:22%"><col style="width:28%"><col style="width:22%"><col></colgroup>
       <tr class="sec"><td colspan="4">II. Phần dành cho Bộ phận Kế toán kho: (Xuất vật tư, nguyên liệu)</td></tr>
       <tr><td>Số lô SX</td><td><b>${esc(o.so)}</b></td><td>Ngày ra lệnh</td><td><b>${dmy(o.ngay)}</b></td></tr>
-      <tr><td>${liq?"Số lượng (lít)":"Số lượng (kg)"}</td><td><b>${liq?f1(lit):f2(tong)}</b></td><td>Tỷ trọng</td><td><b>${liq?String(o.tyTrong).replace(".",","):"—"}</b></td></tr></table>
+      <tr><td>${liq?"Số lượng (lít)":"Số lượng (kg)"}</td><td><b>${liq?f1(lit):f2(tong)}</b></td><td>Tỷ trọng</td><td><b>${liq?(+o.tyTrong).toFixed(3).replace(".",","):"—"}</b></td></tr></table>
      <table class="nlt" style="margin-top:-1px"><colgroup><col style="width:4.5%"><col style="width:13%"><col><col style="width:10%"><col style="width:9.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:7%"><col style="width:8.5%"></colgroup>
       <tr><th rowspan="2" colspan="3">Nguyên liệu</th><th colspan="2">KL SX (kg)</th><th colspan="2">KL ĐK (kg)</th><th rowspan="2">KL CK<br>(kg)</th><th rowspan="2">%w/w</th><th rowspan="2">Hàm lượng<br>(g/l)</th></tr>
       <tr><th>LT</th><th>TT</th><th>PM</th><th>TT</th></tr>${nl}
