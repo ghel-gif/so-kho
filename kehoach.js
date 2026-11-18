@@ -506,17 +506,17 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
     w.querySelectorAll("[data-dk]").forEach(x=>{const v=x.value.trim().replace(/\s/g,""),n=v===""?null:+(/,/.test(v)?v.replace(/\./g,"").replace(",","."):v);L[+x.dataset.dk].dk=n===null||!isFinite(n)?null:n});
     const g=id=>w.querySelector("#"+id).value.trim(),b1=g("plB1"),buoc=g("plBuoc").split(/\n+/).map(x=>x.trim()).filter(Boolean);
     try{localStorage.setItem(K,JSON.stringify({b1,buoc:buoc.join("\n")}))}catch(e){}
-    const HD=`<table class="h2"><tr><td class="lg" rowspan="3"><img src="${LOGO()}"></td><td class="tt" rowspan="3">ĐỊNH MỨC PHỐI LIỆU - PHIẾU HƯỚNG DẪN PHỐI LIỆU</td><td class="mt">Mã số: BM.02-QC-QT.03</td></tr><tr><td class="mt">Phiên bản: 02</td></tr><tr><td class="mt">Ngày hiệu lực: 02/01/2026</td></tr></table>`;
+    const HD=`<table class="h2"><tr><td class="lg"><img src="${LOGO()}"></td><td class="tt">ĐỊNH MỨC PHỐI LIỆU<br>PHIẾU HƯỚNG DẪN PHỐI LIỆU</td><td class="mt">Mã số: BM.02-QC-QT.03<br>Phiên bản: 02<br>Ngày hiệu lực: 02/01/2026</td></tr></table>`;
     const COL='<colgroup><col style="width:5%"><col style="width:12.3%"><col style="width:18.4%"><col style="width:8.9%"><col style="width:8.5%"><col style="width:9.7%"><col style="width:8.9%"><col style="width:8.4%"><col style="width:11.1%"><col style="width:8.8%"></colgroup>';
     const pct=p=>p>0&&p<0.01?p.toFixed(3).replace(".",","):p2(p),chinh=Math.max.apply(null,L.map(x=>+x.lt||0));
     const nl=L.map((x,i)=>{const B="";return `<tr${B}><td class="c">${i+1}</td><td class="ma">${esc(x.ma)}</td><td class="ten"><span class="tn">${esc(x.it.ten)}</span>${lotTxt(x)}</td><td class="r">${f2(x.lt)}</td><td class="r">${f2(x.tt)}</td><td class="r">${x.dk===null?"":f2(x.dk)}</td><td></td><td></td><td class="r">${tong?pct(x.lt/tong*100):""}</td><td></td></tr>`}).join("");
     const sx=L.map((x,i)=>`<tr><td class="c">2.${i+1}</td><td colspan="4" class="ten"><b>${esc(x.it.ten)}${lotTxt(x)}</b></td><td colspan="2" class="r"><b>${f2(x.lt)}</b></td><td colspan="2"></td><td></td></tr>`).join("")+buoc.map((t,i)=>`<tr><td class="c">2.${L.length+i+1}</td><td colspan="8"><i>${esc(t)}</i></td><td></td></tr>`).join("");
     const html=`<style>
 .p2{font:13pt/1.25 "Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.p2 table{width:calc(100% - 2px);border-collapse:collapse;table-layout:fixed}.p2 td,.p2 th{border:1px solid #000;padding:3px 3px;vertical-align:middle;color:#000;overflow-wrap:break-word}
-.p2 .h2 td{padding:1px 3px}.p2 .h2 .lg{width:16.3%;text-align:center}.p2 .h2 .lg img{height:15mm;max-width:95%;object-fit:contain}
-.p2 .h2 .tt{text-align:center;font-size:14pt;font-weight:700}.p2 .h2 .mt{width:23%;font-size:10.5pt;white-space:nowrap;border-top:0;border-bottom:0;height:6mm}
-.p2 .h2 tr:first-child .mt{border-top:1px solid #000}.p2 .h2 tr:last-child .mt{border-bottom:1px solid #000}
+/* lề trên 1,8 cm: trang in đã có lề 10 mm → thêm 8 mm ở đầu mỗi trang */
+.p2{padding-top:8mm;box-sizing:border-box}.p2 table{width:calc(100% - 2px);border-collapse:collapse;table-layout:fixed}.p2 td,.p2 th{border:1px solid #000;padding:3px 3px;vertical-align:middle;color:#000;overflow-wrap:break-word}
+.p2 .h2{margin-bottom:2mm}.p2 .h2 td{padding:2mm 3mm}.p2 .h2 .lg{width:17%;text-align:center;padding:1.5mm}.p2 .h2 .lg img{height:19mm;max-width:100%;object-fit:contain;display:block;margin:0 auto}
+.p2 .h2 .tt{text-align:center;font-size:15pt;font-weight:700;line-height:1.4;white-space:nowrap}.p2 .h2 .mt{width:25%;font-size:11.5pt;line-height:1.6;white-space:nowrap}
 .p2 .st{margin:0;padding:1px 2px;font-size:13pt}.p2 .g{background:#f2f2f2}.p2 .c{text-align:center}.p2 .r{text-align:right;white-space:nowrap}.p2 th{background:#fff;text-align:center;font-weight:700}
 .p2 .i1 td{text-align:center}.p2 .i1 .lb{font-weight:700}.p2 .i1 .kh{font-size:14pt;font-weight:700}.p2 .i1 .sp{font-size:19pt;font-weight:700;padding:4px 3px}.p2 .i1 .hl{font-style:italic}
 .p2 .i2 td{text-align:center;font-weight:700}
