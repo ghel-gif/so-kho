@@ -164,7 +164,8 @@ function webGMAll(a) { auth_(a); return gmRows_(); }
 function gmClean_(d, me) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).trim().slice(0, n || 200), ymd = v => isYmd_(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : '';
   const o = { ngay: ymd(d.ngay), ten: t(d.ten, 200), ma: t(d.ma, 80), lo: t(d.lo, 60), nsx: ymd(d.nsx), nguon: t(d.nguon, 120), sl: t(d.sl, 40), dv: t(d.dv, 80), mucDich: t(d.mucDich, 200), soHS: t(d.soHS, 120),
-    ketQua: ['Đạt', 'Không đạt'].indexOf(t(d.ketQua)) >= 0 ? t(d.ketQua) : '', ngayNhan: ymd(d.ngayNhan), ghiChu: t(d.ghiChu, 300), huy: !!d.huy, xong: !!d.xong, nguoiLap: t(d.nguoiLap, 60) || (me ? me.ten : '') };
+    ketQua: ['Đạt', 'Không đạt'].indexOf(t(d.ketQua)) >= 0 ? t(d.ketQua) : '', ngayNhan: ymd(d.ngayNhan), ghiChu: t(d.ghiChu, 300), huy: !!d.huy, xong: !!d.xong, nguoiLap: t(d.nguoiLap, 60) || (me ? me.ten : ''),
+    /* theo QC-HD.49 */ loaiMau: t(d.loaiMau) === 'Phân bón' ? 'Phân bón' : 'Thuốc BVTV', dang: ['Rắn', 'Lỏng'].indexOf(t(d.dang)) >= 0 ? t(d.dang) : '', phamVi: t(d.phamVi) === 'Nhiều chỉ tiêu' ? 'Nhiều chỉ tiêu' : 'Chỉ hàm lượng', chiTieu: t(d.chiTieu, 200), maPB: t(d.maPB, 40), slLo: t(d.slLo, 40), vanDon: t(d.vanDon, 80), mauLuu: !!d.mauLuu };
   if (!o.ngay) throw new Error('Ghi ngày gửi mẫu.'); if (!o.ten) throw new Error('Ghi tên mẫu.'); if (!o.dv) throw new Error('Ghi đơn vị KTCL.');
   return o;
 }

@@ -13,6 +13,21 @@
   const key = s => String(s || "").replace(/\s+/g, "").toUpperCase();
   const t0 = s => Date.parse(s + "T00:00:00+07:00"), cho = r => Math.max(0, Math.round((t0(today()) - t0(r.d.ngay)) / 864e5));
   const HAN = 15; /* số ngày chờ kết quả coi là trễ */
+  /* QC-HD.49 (lần ban hành 02, 28/09/2026) mục 5.2: đơn vị thử nghiệm và lượng mẫu gửi. bv = thuốc BVTV [chỉ kiểm hàm lượng, kiểm nhiều chỉ tiêu] (g hoặc mL); pb = phân bón (g hoặc mL); null = hướng dẫn chưa có thông tin */
+  const LAB = {
+    "VinaCert": { ten: "Công ty Cổ phần Chứng nhận và Giám định Vinacert", dc: "F8-62 đường số 6, Khu dân cư 586, Phường Hưng Phú, TP. Cần Thơ", dt: "0934 488 845 (Lan Anh) · 0939 836 631 (Chị Lam)", bv: [200, 300], pb: 1000 },
+    "Phía Nam": { ten: "Trung tâm Kiểm định và Khảo nghiệm thuốc BVTV phía Nam", dc: "28 Mạc Đỉnh Chi, Phường Sài Gòn, TP.HCM", dt: "02838 231 805", bv: [100, 200], pb: null },
+    "Phía Bắc": { ten: "Trung tâm Kiểm định và Khảo nghiệm thuốc BVTV phía Bắc", dc: "7A Phố Lê Văn Hiến, Phường Đông Ngạc, TP. Hà Nội", dt: "0916 993 992 (Anh Nghĩa)", bv: [100, 200], pb: null },
+    "SaigonCert": { ten: "Công ty Cổ phần Chứng nhận và Giám định SaigonCert", dc: "69 đường Làng Tăng Phú, Phường Tăng Nhơn Phú, TP. HCM", dt: "0981 977 731 (Kiều Tiên)", bv: null, pb: 500 },
+    "Quatest 3": { ten: "Trung tâm Kỹ thuật tiêu chuẩn đo lường chất lượng 3 (QUATEST3)", dc: "1196 đường Ba Tháng Hai, Phường Bình Thới, TP. HCM", dt: "02838 294 274 · 02838 293 012", bv: null, pb: 1000 },
+    "IQC": { ten: "Công ty Cổ phần Chứng nhận và Giám định IQC", dc: "Ô 6 BT 4 Khu đô thị mới Cầu Bươu, Phường Thanh Trì, TP. Hà Nội", dt: "0913 837 110", bv: null, pb: 500 } };
+  const MUC = ["cập nhật date mới", "kiểm soát lô", "kiểm tra hàm lượng", "hợp quy", "hợp quy 54°C", "hợp quy 0°C", "độ bền bảo quản 54°C", "nghiên cứu", "điều tra bất thường"];
+  const lCua = d => { const L = LAB[d.dv]; if (!L) return null; const n = d.loaiMau === "Phân bón" ? L.pb : (L.bv ? L.bv[d.phamVi === "Nhiều chỉ tiêu" ? 1 : 0] : null); if (!n) return ""; const long_ = d.dang === "Lỏng";
+    return n >= 1000 ? (n / 1000) + (long_ ? " L" : " kg") : n + (long_ ? " mL" : " g"); };
+  /* tên mẫu ghi trên nhãn / phiếu yêu cầu theo QC-HD.49 mục 5.3 */
+  const tenHD = d => { const t = String(d.ten || "").trim(); if (!t) return ""; const p = [d.nsx ? "NSX: " + D(d.nsx) : "", d.lo ? "Số lô SX: " + d.lo : "", d.slLo ? "Số lượng: " + d.slLo : ""].filter(Boolean).join(" – ");
+    return t + (d.loaiMau === "Phân bón" && d.maPB ? ", Mã số phân bón: " + d.maPB : "") + (p ? " (" + p + ")" : ""); };
+  const longOf = ten => /(^|\s|\d)(SL|EC|SC|OD|FS|ME|EW|SE|DC|CS|ULV|AL)\b/i.test(String(ten || "").trim().split(/\s+/).slice(-1)[0] || "") ? "Lỏng" : "Rắn";
   const ttOf = r => r.d.huy ? "Huỷ" : (r.d.ketQua || r.d.xong) ? "Đã có kết quả" : "Chờ kết quả";
   let R = [], loaded = false, q = "", fNam = "", fDV = "", fTT = "";
   const live = () => R.filter(x => !x.xoa);
@@ -55,26 +70,46 @@
   const lots = () => { const out = []; try { (S.items || []).forEach(it => { if (!it.theoLo || !/Bán thành phẩm|Thành phẩm|Nguyên liệu|Phân bón/.test(it.nhom || "")) return; (S.lots[it.ma] || []).forEach(l => l.lo && out.push({ ma: it.ma, ten: it.ten, lo: l.lo, nsx: String(l.nsx || "").slice(0, 10), nhom: it.nhom })); }); } catch (e) {} return out.sort((a, c) => (a.nhom === "Bán thành phẩm" ? 0 : 1) - (c.nhom === "Bán thành phẩm" ? 0 : 1) || String(c.lo).localeCompare(String(a.lo))); };
 
   function gmDlg(r, pre) {
-    const moi = !r, ed = QC(), d = Object.assign({ ngay: today(), ten: "", ma: "", lo: "", nsx: "", nguon: "", sl: "", dv: "", mucDich: "", soHS: "", ketQua: "", ngayNhan: "", ghiChu: "", huy: false, xong: false, nguoiLap: (S.me && S.me.ten) || "" }, r ? r.d : (pre || {})), dis = ed ? "" : "disabled";
+    const moi = !r, ed = QC(), d0 = r ? r.d : (pre || {}), d = Object.assign({ ngay: today(), ten: "", ma: "", lo: "", nsx: "", nguon: "", sl: "", dv: "", mucDich: "", loaiMau: "Thuốc BVTV", dang: "", phamVi: "Chỉ hàm lượng", chiTieu: "", maPB: "", slLo: "", vanDon: "", mauLuu: false, soHS: "", ketQua: "", ngayNhan: "", ghiChu: "", huy: false, xong: false, nguoiLap: (S.me && S.me.ten) || "" }, d0), dis = ed ? "" : "disabled";
+    if (!d.dang) d.dang = longOf(d.ten); if (!d0.loaiMau && /phân bón|fertili|asata combi|chelate|hữu cơ/i.test(d.ten)) d.loaiMau = "Phân bón";
+    const sel = (k, lb, L) => `<label>${lb}<select data-k="${k}" data-opt ${dis}>${L.map(x => `<option${x === d[k] ? " selected" : ""}>${x}</option>`).join("")}</select></label>`;
     const w = document.createElement("div"); w.className = "cfm";
     const f = (k, lb, at, full) => `<label${full ? ' style="grid-column:1/-1"' : ""}>${lb}<input data-k="${k}" value="${E(d[k] ?? "")}" ${at || ""} ${dis}></label>`;
-    w.innerHTML = `<div class="cfm-box kh-dlg"><h2>${moi ? "Ghi gửi mẫu kiểm tra chất lượng" : "Mẫu gửi KTCL · " + E(d.ten)}</h2>${moi ? '<p class="note">Khi có kết quả, bấm vào dòng mẫu trong sổ để ghi mã số hồ sơ và kết quả.</p>' : ""}
+    w.innerHTML = `<div class="cfm-box kh-dlg"><h2>${moi ? "Ghi gửi mẫu kiểm tra chất lượng" : "Mẫu gửi KTCL · " + E(d.ten)}</h2>${moi ? '<p class="note">Theo QC-HD.49. Khi có kết quả, bấm vào dòng mẫu trong sổ để ghi mã số hồ sơ và kết quả.</p>' : ""}
       ${moi && ed ? `<label>Chọn lô trên sổ kho <small class="note">— gõ tên, mã hoặc số lô; mẫu không thuộc lô nào (mẫu PTN, mẫu mua…) thì bỏ qua</small><input id="gmLot" list="gmLotL" placeholder="VD: 2607.089, us-sinate…" data-opt autocomplete="off"></label>${dl("gmLotL", lots().map(x => x.lo + " · " + x.ten + " · " + x.ma))}` : ""}
-      <div class="two qa-g">${f("ngay", "Ngày gửi mẫu", 'type="date"')}${f("sl", "Số lượng mẫu", 'list="gmSlL" placeholder="100ml / 100gr"')}
-        ${f("ten", "Tên mẫu", "", true)}
+      <div class="two qa-g">${f("ngay", "Ngày gửi mẫu", 'type="date"')}${sel("loaiMau", "Loại mẫu", ["Thuốc BVTV", "Phân bón"])}
+        ${f("ten", "Tên sản phẩm <small class=\"note\">— đúng tên trên TCCS / hồ sơ đăng ký, không viết tắt</small>", "", true)}
         ${f("lo", "Số lô SX", 'data-opt')}${f("nsx", "NSX", 'type="date" data-opt')}
+        <label data-pb>Mã số phân bón<input data-k="maPB" value="${E(d.maPB)}" data-opt ${dis}></label>${f("slLo", "Số lượng cả lô <small class=\"note\">(hàng gia công, nếu bên đặt yêu cầu)</small>", 'placeholder="VD: 14.220 Lít" data-opt')}
         ${f("nguon", "Nguồn gốc", 'list="gmNgL" placeholder="số lô, Mẫu PTN, Mẫu mua, BTP nhập khẩu…" data-opt')}${f("dv", "Đơn vị KTCL", 'list="gmDvL" placeholder="VinaCert, Quatest 3, Phía Nam…"')}
-        ${f("mucDich", "Mục đích KTCL", 'list="gmMdL" placeholder="cập nhật date mới, hợp quy 54°C…" data-opt', true)}</div>
+        <p class="note" id="gmDvI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
+        ${f("mucDich", "Mục đích KTCL", 'list="gmMdL" placeholder="cập nhật date mới, hợp quy 54°C…" data-opt')}${f("chiTieu", "Chỉ tiêu yêu cầu", 'placeholder="VD: hàm lượng Glufosinate ammonium" data-opt')}
+        ${sel("phamVi", "Phạm vi kiểm", ["Chỉ hàm lượng", "Nhiều chỉ tiêu"])}${sel("dang", "Dạng mẫu", ["Rắn", "Lỏng"])}
+        ${f("sl", "Lượng mẫu gửi", 'list="gmSlL" placeholder="theo QC-HD.49"')}${f("vanDon", "Số vận đơn / biên nhận", 'data-opt')}
+        <p class="note" id="gmSlI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
+        <label class="gm-ck"><input type="checkbox" data-c="mauLuu" ${d.mauLuu ? "checked" : ""} ${dis}><span>Đã chia và niêm phong mẫu lưu đối chứng của cùng lần lấy mẫu</span></label>
+        <div class="gm-ten" id="gmTen" style="grid-column:1/-1"></div></div>
       <fieldset class="qa-fs" ${dis}${moi ? " hidden" : ""}><legend>Kết quả</legend><div class="two qa-g">${f("soHS", "Mã số hồ sơ / số phiếu kết quả", 'data-opt')}${f("ngayNhan", "Ngày nhận kết quả", 'type="date" data-opt')}
         <label>Kết quả<select data-k="ketQua" data-opt>${["", "Đạt", "Không đạt"].map(x => `<option value="${x}"${x === (d.ketQua || "") ? " selected" : ""}>${x || "— chưa có —"}</option>`).join("")}</select></label>${f("ghiChu", "Ghi chú", 'data-opt')}
         <label class="gm-ck"><input type="checkbox" data-c="xong" ${d.xong ? "checked" : ""}><span>Đã xong, không cần theo dõi nữa (không ghi kết quả)</span></label>
         <label class="gm-ck"><input type="checkbox" data-c="huy" ${d.huy ? "checked" : ""}><span>Huỷ mẫu này</span></label></div></fieldset>
-      ${dl("gmSlL", ["100ml", "100gr", "500ml", "500gr"])}${dl("gmDvL", uniq("dv"))}${dl("gmMdL", uniq("mucDich"))}${dl("gmNgL", ["Mẫu PTN", "Mẫu mua", "BTP nhập khẩu", "Mẫu nhập khẩu"])}
+      ${dl("gmSlL", ["100 g", "100 mL", "200 g", "200 mL", "300 g", "300 mL", "500 g", "500 mL", "1 kg", "1 L"])}${dl("gmDvL", [...new Set(Object.keys(LAB).concat(uniq("dv")))])}${dl("gmMdL", [...new Set(MUC.concat(uniq("mucDich")))])}${dl("gmNgL", ["Mẫu PTN", "Mẫu mua", "BTP nhập khẩu", "Mẫu nhập khẩu"])}
       ${r ? `<p class="note">Người lập: ${E(d.nguoiLap || r.nguoi || "")}${r.sua ? " · sửa cuối: " + E(r.sua) : ""}</p>` : ""}
       <div class="actions">${!moi && ed ? '<button class="btn danger" type="button" data-x="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${ed ? '<button class="btn primary noic" type="button" data-x="save">Lưu</button>' : ""}</div></div>`;
     document.body.appendChild(w);
     const g = k => w.querySelector(`[data-k="${k}"]`), set = (k, v) => { const el = g(k); if (el && v != null) el.value = v; };
-    const lot = w.querySelector("#gmLot"); if (lot) lot.onchange = () => { const v = lot.value, x = lots().find(y => y.lo + " · " + y.ten + " · " + y.ma === v); if (!x) return; set("ten", x.ten); set("lo", x.lo); set("nsx", x.nsx); set("nguon", x.lo); d.ma = x.ma; if (!g("sl").value) set("sl", /SL|EC|SC|OD|FS|ME|EW|SE/i.test(x.ten.split(" ").pop()) ? "100ml" : "100gr"); };
+    /* theo QC-HD.49: hiện địa chỉ đơn vị, gợi ý lượng mẫu gửi (tự điền khi ô còn trống hoặc đang là số gợi ý cũ), dựng dòng "Tên mẫu" ghi trên nhãn và phiếu yêu cầu */
+    let slGY = "";
+    const cur = () => { const o = {}; w.querySelectorAll("[data-k]").forEach(x => { o[x.dataset.k] = x.value.trim(); }); return o; };
+    const up = () => { const o = cur(), L = LAB[o.dv], gy = lCua(o), pb = o.loaiMau === "Phân bón"; w.querySelectorAll("[data-pb]").forEach(x => { x.style.display = pb ? "" : "none"; });
+      const di = w.querySelector("#gmDvI"); di.hidden = !L; if (L) di.innerHTML = `<b>${E(L.ten)}</b> · ${E(L.dc)} · ĐT: ${E(L.dt)}`;
+      const si = w.querySelector("#gmSlI"); si.hidden = !L; if (L) si.innerHTML = gy ? `QC-HD.49: gửi ${E(o.dv)} ${pb ? "phân bón" : "thuốc BVTV, " + o.phamVi.toLowerCase()} — <b>${gy}</b>; mẫu lưu đối chứng chuẩn bị riêng.` : `QC-HD.49 chưa có lượng mẫu ${pb ? "phân bón" : "thuốc BVTV"} cho ${E(o.dv)} — xác nhận với đơn vị nhận trước khi lấy mẫu.`;
+      const sl = g("sl"); if (ed && L && gy != null && (!sl.value.trim() || sl.value.trim() === slGY)) { sl.value = gy; slGY = gy; }
+      const t = tenHD(o), tb = w.querySelector("#gmTen"); tb.innerHTML = t ? `<small class="note">Tên mẫu ghi trên nhãn và phiếu yêu cầu (QC-HD.49 mục 5.3):</small><div class="gm-ten-t"><b>${E(t)}</b><button type="button" class="btn small" id="gmCopy">Chép</button></div>` : "";
+      const cb = w.querySelector("#gmCopy"); if (cb) cb.onclick = async () => { try { await navigator.clipboard.writeText(t); toast("Đã chép tên mẫu"); } catch (e) { toast("Không chép được — bôi đen rồi Ctrl+C"); } }; };
+    w.querySelectorAll("[data-k]").forEach(x => { x.addEventListener("input", up); x.addEventListener("change", up); });
+    const lot = w.querySelector("#gmLot"); if (lot) lot.onchange = () => { const v = lot.value, x = lots().find(y => y.lo + " · " + y.ten + " · " + y.ma === v); if (!x) return; set("ten", String(x.ten).replace(/^BTP\s+/i, "")); set("lo", x.lo); set("nsx", x.nsx); set("nguon", x.lo); d.ma = x.ma; set("dang", longOf(x.ten)); if (/Phân bón/i.test(x.nhom || "")) set("loaiMau", "Phân bón"); up(); };
+    if (!moi && d.sl) slGY = "\u0000"; up();
     w.querySelector('[data-x="close"]').onclick = () => w.remove();
     const sv = w.querySelector('[data-x="save"]'); if (sv) sv.onclick = async () => { const o = Object.assign({}, d); w.querySelectorAll("[data-k]").forEach(x => { o[x.dataset.k] = x.value.trim(); }); w.querySelectorAll("[data-c]").forEach(x => { o[x.dataset.c] = x.checked; });
       if (!/^\d{4}-\d{2}-\d{2}$/.test(o.ngay)) { toast("Ghi ngày gửi mẫu."); g("ngay").focus(); return; } if (!o.ten) { toast("Ghi tên mẫu."); g("ten").focus(); return; } if (!o.dv) { toast("Ghi đơn vị KTCL."); g("dv").focus(); return; }

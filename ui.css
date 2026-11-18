@@ -1560,3 +1560,4 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .gm-lot{border:1px dashed rgba(15,111,100,.45);border-radius:10px;padding:8px 10px;margin:8px 0;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
 .gm-lot-r{cursor:pointer;padding:2px 0}.gm-lot-r:hover{text-decoration:underline}.gm-lot .btn{align-self:flex-start;margin-top:4px}
 .gm-ck{grid-column:1/-1;display:flex!important;flex-direction:row!important;align-items:center;gap:8px;font-weight:400}.gm-ck input{width:auto!important;margin:0;flex:none}
+.gm-ten{border:1px solid rgba(15,111,100,.35);background:rgba(15,111,100,.06);border-radius:10px;padding:8px 10px}.gm-ten:empty{display:none}.gm-ten-t{display:flex;gap:8px;align-items:flex-start;margin-top:2px}.gm-ten-t b{flex:1;font-size:14.5px;user-select:all}
