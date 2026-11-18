@@ -76,7 +76,7 @@
     return ms < 0 ? `<b style="color:#c62828">quá hạn ${t}</b>` : `còn <b style="color:${h < 8 ? "#d97706" : "inherit"}">${t}</b>`; };
   /* Ảnh 2 mặt bao bì: bắt buộc với TÚI ÉP 3 BIÊN (sổ BM.02) về từ ANH_TU; bao bì khác không bắt buộc. Tên file ảnh mang tiền tố MT- (mặt trước) / MS- (mặt sau) để biết đã có mặt nào. */
   const ANH_TU = "2026-11-18", MAT = { T: ["MT-", "Mặt trước"], S: ["MS-", "Mặt sau"] }, matOf = ten => /^MT-/i.test(ten || "") ? "T" : /^MS-/i.test(ten || "") ? "S" : "";
-  const anhCan = (d, lo) => lo === "TUI" && !!d && d.loaiVT === "Túi ép 3 biên" && String(d.ngayNhap || "") >= ANH_TU /* chỉ túi ép 3 biên (in 2 mặt) mới bắt buộc ảnh 2 mặt */, thieuAnh = r => anhCan(r.d, r.loai) && !!r.d.ketLuan && !(r.mt && r.ms);
+  const anhCan = (d, lo) => lo === "TUI" && !!d && d.loaiVT === "Túi ép 3 biên" /* chỉ túi ép 3 biên (in 2 mặt) mới bắt buộc ảnh 2 mặt; lô đã được TP xác nhận từ trước thì không đòi lại */, thieuAnh = r => anhCan(r.d, r.loai) && !!r.d.ketLuan && !r.d.xnQL && !(r.mt && r.ms);
   const ttOf = r => r.d.tt || (r.d.xnQL ? "Đã xác nhận" : r.d.ketLuan ? "Chờ xác nhận" : "Chờ kiểm");
   const chip = r => { const t = ttOf(r), kl = r.d.ketLuan, c = t === "Chờ kiểm" ? "#d97706" : t === "Chờ xác nhận" ? "#7c3aed" : kl === "Không đạt" ? "#c62828" : "#2e7d32";
     return `<span class="st" style="background:${c};color:#fff;border-color:${c}">${E(t === "Đã xác nhận" ? (kl || "Đã xác nhận") + " · đã xác nhận" : t === "Chờ xác nhận" ? (kl || "") + " · chờ xác nhận" : "Chờ kiểm")}</span>`; };

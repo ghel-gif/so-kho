@@ -796,7 +796,7 @@ function webQASave(a, o) {
       if (cu && cu.xnQL && !tp) throw new Error('Phiếu đã được TP. QA/QC xác nhận, không sửa được nữa.');
       if (!tp) QA_XN_.forEach(k => { if (cu && k in cu) d[k] = cu[k]; else delete d[k]; }); /* QC không tự xác nhận */
       else if (String(d.xnQL || '') !== String((cu && cu.xnQL) || '')) { d.xnQLNguoi = d.xnQL ? me.ten : ''; d.xnQLLuc = d.xnQL ? now : '';
-        if (d.xnQL && cu && id && o.loai === 'TUI' && d.loaiVT === 'Túi ép 3 biên' && String(d.ngayNhap) >= QA_ANH_TU_ && !qaAnh2_(id)) throw new Error('Túi ép 3 biên: lô này chưa đủ ảnh 2 mặt (mặt trước + mặt sau) — yêu cầu QC chụp bổ sung rồi mới xác nhận.'); }
+        if (d.xnQL && cu && id && o.loai === 'TUI' && d.loaiVT === 'Túi ép 3 biên' && !qaAnh2_(id)) throw new Error('Túi ép 3 biên: lô này chưa đủ ảnh 2 mặt (mặt trước + mặt sau) — yêu cầu QC chụp bổ sung rồi mới xác nhận.'); }
       if (d.ketLuan && ['Đạt', 'Không đạt'].indexOf(d.ketLuan) < 0) throw new Error('Kết luận chỉ Đạt / Không đạt.');
       if (d.ketLuan && !d.nguoiKT) d.nguoiKT = me.ten;
       if (d.ketLuan && !isYmd_(d.ngayKT)) d.ngayKT = now.slice(0, 10);
