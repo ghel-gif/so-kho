@@ -156,6 +156,55 @@ function webTNDSave(a, so, d) {
   return { d: o, nguoi: me.ten, luc: new Date() };
 }
 
+/* ================= SỔ THEO DÕI GỬI MẪU KTCL (mẫu gửi đơn vị kiểm nghiệm bên ngoài) ================= */
+const GM_SH = 'GuiMau', GM_HEAD = ['ID', 'Ngày gửi', 'Dữ liệu (JSON)', 'Người lập', 'Lúc', 'Trạng thái', 'Người sửa cuối'];
+function gmRows_() { return (sheet_(GM_SH) ? rows_(GM_SH) : []).filter(r => str_(r[0])).map(r => { let d = {}; try { d = JSON.parse(str_(r[2]) || '{}'); } catch (e) {}
+  return { id: str_(r[0]), d, nguoi: str_(r[3]), luc: khTs_(r[4]), xoa: str_(r[5]) === 'Đã xoá', sua: str_(r[6]) }; }); }
+function webGMAll(a) { auth_(a); return gmRows_(); }
+function gmClean_(d, me) {
+  d = d || {}; const t = (v, n) => String(v == null ? '' : v).trim().slice(0, n || 200), ymd = v => isYmd_(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : '';
+  const o = { ngay: ymd(d.ngay), ten: t(d.ten, 200), ma: t(d.ma, 80), lo: t(d.lo, 60), nsx: ymd(d.nsx), nguon: t(d.nguon, 120), sl: t(d.sl, 40), dv: t(d.dv, 80), mucDich: t(d.mucDich, 200), soHS: t(d.soHS, 120),
+    ketQua: ['Đạt', 'Không đạt'].indexOf(t(d.ketQua)) >= 0 ? t(d.ketQua) : '', ngayNhan: ymd(d.ngayNhan), ghiChu: t(d.ghiChu, 300), huy: !!d.huy, xong: !!d.xong, nguoiLap: t(d.nguoiLap, 60) || (me ? me.ten : '') };
+  if (!o.ngay) throw new Error('Ghi ngày gửi mẫu.'); if (!o.ten) throw new Error('Ghi tên mẫu.'); if (!o.dv) throw new Error('Ghi đơn vị KTCL.');
+  return o;
+}
+function webGMSave(a, o) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); o = o || {};
+  const d = gmClean_(o.d, me), now = new Date();
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = shX_(GM_SH, GM_HEAD), R = rows_(GM_SH); let id = String(o.id || ''), i = id ? R.findIndex(r => str_(r[0]) === id) : -1;
+    if (id && i < 0) throw new Error('Không tìm thấy dòng gửi mẫu (có thể đã bị xoá).');
+    if (i >= 0) { let cu = {}; try { cu = JSON.parse(str_(R[i][2]) || '{}'); } catch (e) {} d.nguoiLap = cu.nguoiLap || d.nguoiLap;
+      sh.getRange(i + 2, 2, 1, 2).setValues([[d.ngay, JSON.stringify(d)]]); sh.getRange(i + 2, 7).setValue(me.ten);
+      log_(me, 'Sổ gửi mẫu KTCL', d.ten + ' · ' + d.dv, 'Sửa' + (d.ketQua && d.ketQua !== cu.ketQua ? ' · kết quả ' + d.ketQua : '') + (d.huy && !cu.huy ? ' · huỷ' : ''));
+      return { id, d, nguoi: str_(R[i][3]), luc: khTs_(R[i][4]), xoa: false, sua: me.ten }; }
+    do { id = 'GM-' + Utilities.formatDate(now, tz_(), 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10); } while (R.some(r => str_(r[0]) === id));
+    sh.appendRow([id, d.ngay, JSON.stringify(d), me.ten, now, '', '']);
+    log_(me, 'Sổ gửi mẫu KTCL', d.ten + ' · ' + d.dv, 'Gửi mẫu ngày ' + d.ngay + (d.lo ? ' · lô ' + d.lo : ''));
+    return { id, d, nguoi: me.ten, luc: khTs_(now), xoa: false, sua: '' };
+  } finally { lock.releaseLock(); }
+}
+function webGMDel(a, id) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  const sh = sheet_(GM_SH), R = sh ? rows_(GM_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id || '')); if (i < 0) throw new Error('Không tìm thấy dòng gửi mẫu.');
+  if (me.vaiTro !== ROLES.QL && str_(R[i][3]) !== me.ten) throw new Error('Chỉ người lập hoặc Quản lý xoá được dòng này.');
+  sh.getRange(i + 2, 6).setValue('Đã xoá'); sh.getRange(i + 2, 7).setValue(me.ten);
+  log_(me, 'Sổ gửi mẫu KTCL', id, 'Xoá'); return true;
+}
+/* nhập sổ Excel cũ (1 lần): bỏ qua dòng đã có (trùng ngày + tên + nguồn gốc + đơn vị + mục đích + mã hồ sơ) — chỉ Quản lý */
+function webGMNhap(a, L) {
+  const me = auth_(a, [ROLES.QL]); L = L || []; const now = new Date();
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const sh = shX_(GM_SH, GM_HEAD), K = d => [d.ngay, d.ten, d.lo, d.nguon, d.dv, d.mucDich, d.soHS].join('|').toLowerCase(), have = new Set(gmRows_().filter(r => !r.xoa).map(r => K(r.d)));
+    let n = 0, bo = 0; const st = Utilities.formatDate(now, tz_(), 'yyMMddHHmmss');
+    L.forEach((x, i) => { const d = gmClean_(x, null); if (have.has(K(d))) { bo++; return; } have.add(K(d)); sh.appendRow(['GM-' + st + '-' + (i + 1), d.ngay, JSON.stringify(d), d.nguoiLap || me.ten, now, '', '']); n++; });
+    log_(me, 'Sổ gửi mẫu KTCL', 'Nhập sổ cũ', n + ' dòng' + (bo ? ' · bỏ ' + bo + ' dòng trùng' : ''));
+    return { n, bo };
+  } finally { lock.releaseLock(); }
+}
+
 /* ================= ĐỊNH MỨC PHỐI LIỆU (BM.02-QC-QT.03): lưu phần ghi thêm cho bản in theo lệnh ================= */
 const DMPL_SH = 'DinhMucPL', DMPL_HEAD = ['Số lệnh', 'Dữ liệu (JSON)', 'Người lưu', 'Thời điểm'];
 function webPLGet(a, so) {
