@@ -473,15 +473,15 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
 window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},liq=!!(+o.tyTrong>0)&&!(typeof isRan==="function"&&isRan(sp));
   if(o.trangThai==="Hoàn thành"&&!S.odMoves){try{S.odMoves=await api("getOrderMoves",S.auth,o.so)}catch(e){return handleErr(e)}}
   const mv=(S.odMoves||[]).filter(m=>m.loai==="Xuất"),ct=(S.congThuc[o.maSP]||[]).filter(l=>itemBy(l.ma));
-  /* số trên phiếu cho xưởng: KHÔNG tách hàng nghìn (1001,56 — tránh đọc nhầm dấu chấm thành dấu thập phân), dấu phẩy thập phân, kg luôn 2 số lẻ, lít 1 số lẻ */
-  const f2=n=>n===""||n===null||n===undefined||!isFinite(+n)?"":(Math.round(+n*100)/100).toFixed(2).replace(".",","),f1=n=>(Math.round(+n*10)/10).toFixed(1).replace(".",",");
+  /* số trên phiếu cho xưởng (theo mẫu Excel BM.02): KHÔNG tách hàng nghìn (1001,56), dấu phẩy thập phân; kg 1 số lẻ (1100,0 — số lẻ hơn thì 2: 0,05); %w/w 2 số lẻ; lít 1 số lẻ; tỷ trọng 3 số lẻ */
+  const f2=n=>{if(n===""||n===null||n===undefined||!isFinite(+n))return"";const v=Math.round(+n*100)/100;return (Math.round(v*10)===v*10||Math.abs(Math.round(v*10)-v*10)<1e-9?v.toFixed(1):v.toFixed(2)).replace(".",",")},p2=n=>(Math.round(+n*100)/100).toFixed(2).replace(".",","),f1=n=>(Math.round(+n*10)/10).toFixed(1).replace(".",",");
   /* dòng nguyên liệu: lệnh đã hoàn thành → theo phiếu xuất thật (gộp theo mã + lô); đang SX → theo công thức × khối lượng dự kiến */
   let L;if(mv.length){const G={};mv.forEach(m=>{const k=m.ma+"|"+(m.lo||"");(G[k]=G[k]||{ma:m.ma,lo:m.lo||"",tt:0,dk:null});G[k].tt+=+m.kg||0;if(m.tonSau!==null&&m.tonSau!==undefined)G[k].dk=(+m.tonSau)+(+m.kg||0)});
       L=Object.values(G).map(x=>{const c=ct.find(l=>l.ma===x.ma),it=itemBy(x.ma)||{ten:x.ma,heSo:1};return Object.assign(x,{it,lt:c?c.dm*(+o.slDuKien||0)*(it.heSo||1):x.tt})})}
   else L=ct.map(l=>{const it=itemBy(l.ma),od=(S.odLines||[]).find(x=>x.ma===l.ma);return {ma:l.ma,it,lo:it.theoLo?(od&&od.lo)||"":"",lt:l.dm*(+o.slDuKien||0)*(it.heSo||1),tt:"",dk:S.bal[l.ma]?S.bal[l.ma].ton:null}});
   if(!L.length){toast("Sản phẩm chưa có công thức phối trộn — khai công thức rồi in lệnh.");return}
   const tong=L.reduce((a,x)=>a+(+x.lt||0),0),lit=liq?tong/(+o.tyTrong):0;
-  const lotTxt=x=>{if(!x.lo)return"";const l=(S.lots[x.ma]||[]).find(y=>y.lo===x.lo);return `<br><small>Số lô: ${esc(x.lo)}${l&&l.nsx?" · NSX: "+dmy(l.nsx):""}</small>`};
+  const lotTxt=x=>{if(!x.lo)return"";const l=(S.lots[x.ma]||[]).find(y=>y.lo===x.lo);return `${l&&l.nsx?"<br>NSX: "+dmy(l.nsx):""}<br>SL: ${esc(x.lo)}${l&&+l.tyTrong>0?"<br>(Tỷ trọng: "+(+l.tyTrong).toFixed(3).replace(".",",")+")":""}`};
   const K="bm02:"+o.maSP;let mem={};try{mem=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
   /* phần đã lưu của lệnh này (khách hàng, hàm lượng, số lô, NSX, KL ĐK, các bước) */
   let sv=null;try{sv=await api("webPLGet",S.auth,o.so)}catch(e){}const SD=(sv&&sv.d)||null,dkK=x=>x.ma+"|"+(x.lo||"");
@@ -506,43 +506,63 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
     w.querySelectorAll("[data-dk]").forEach(x=>{const v=x.value.trim().replace(/\s/g,""),n=v===""?null:+(/,/.test(v)?v.replace(/\./g,"").replace(",","."):v);L[+x.dataset.dk].dk=n===null||!isFinite(n)?null:n});
     const g=id=>w.querySelector("#"+id).value.trim(),b1=g("plB1"),buoc=g("plBuoc").split(/\n+/).map(x=>x.trim()).filter(Boolean);
     try{localStorage.setItem(K,JSON.stringify({b1,buoc:buoc.join("\n")}))}catch(e){}
-    const HD=head("ĐỊNH MỨC PHỐI LIỆU<br>PHIẾU HƯỚNG DẪN PHỐI LIỆU","Mã số: BM.02-QC-QT.03<br>Phiên bản: 02<br>Ngày hiệu lực: 02/01/2026");
-    const nl=L.map((x,i)=>`<tr><td class="c">${i+1}</td><td style="font-size:9.5pt">${esc(x.ma)}</td><td>${esc(x.it.ten)}${lotTxt(x)}</td><td class="r">${f2(x.lt)}</td><td class="r">${f2(x.tt)}</td><td class="r">${x.dk===null?"":f2(x.dk)}</td><td></td><td></td><td class="r">${tong?(p=>p>0&&p<0.01?p.toFixed(3).replace(".",","):f2(p))(x.lt/tong*100):""}</td><td></td></tr>`).join("");
-    const sx=L.map((x,i)=>`<tr><td class="c">2.${i+1}</td><td>${esc(x.it.ten)}${lotTxt(x)}</td><td class="r">${f2(x.lt)}</td><td></td><td></td></tr>`).join("")+buoc.map((t,i)=>`<tr><td class="c">2.${L.length+i+1}</td><td colspan="4">${esc(t)}</td></tr>`).join("");
-    const html=`${PCSS}<style>.pq.pl td,.pq.pl th{padding:5px 6px}.pq.pl .tk td{height:9mm}.pq.pl small{font-size:10.5pt}.pq.pl .nb td{border:0;padding:2px 4px}.pq.pl .pb{break-before:page;page-break-before:always}.pq.pl .kq td{height:9mm}.pq.pl .r{white-space:nowrap}.pq.pl .nlt td,.pq.pl .nlt th{font-size:11pt;padding:4px 4px}.pq.pl .hd .tt{font-size:15pt}</style>
-    <div class="pq pl">${HD}
-     <table style="margin-top:-1px"><colgroup><col style="width:6%"><col style="width:28%"><col></colgroup>
-      <tr class="sec"><td colspan="3">I. Thông tin chung</td></tr>
-      <tr><td class="c">1</td><td>Khách hàng</td><td><b>${esc(g("plKH"))}</b></td></tr>
-      <tr><td class="c">2</td><td>Tên sản phẩm</td><td><b>${esc(sp.ten)}</b></td></tr>
-      <tr><td class="c">3</td><td>Hàm lượng đăng ký</td><td>${esc(g("plHL"))}</td></tr>
-      <tr><td class="c">4</td><td>Yêu cầu SX</td><td><b>${liq?f1(lit)+" lít":f2(tong)+" kg"}</b></td></tr></table>
-     <table style="margin-top:-1px"><colgroup><col style="width:22%"><col style="width:28%"><col style="width:22%"><col></colgroup>
-      <tr class="sec"><td colspan="4">II. Phần dành cho Bộ phận Kế toán kho: (Xuất vật tư, nguyên liệu)</td></tr>
-      <tr><td>Số lô SX</td><td><b>${esc(o.so)}</b></td><td>Ngày ra lệnh</td><td><b>${dmy(o.ngay)}</b></td></tr>
-      <tr><td>${liq?"Số lượng (lít)":"Số lượng (kg)"}</td><td><b>${liq?f1(lit):f2(tong)}</b></td><td>Tỷ trọng</td><td><b>${liq?(+o.tyTrong).toFixed(3).replace(".",","):"—"}</b></td></tr></table>
-     <table class="nlt" style="margin-top:-1px"><colgroup><col style="width:4.5%"><col style="width:13%"><col><col style="width:10%"><col style="width:9.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:7%"><col style="width:8.5%"></colgroup>
-      <tr><th rowspan="2" colspan="3">Nguyên liệu</th><th colspan="2">KL SX (kg)</th><th colspan="2">KL ĐK (kg)</th><th rowspan="2">KL CK<br>(kg)</th><th rowspan="2">%w/w</th><th rowspan="2">Hàm lượng<br>(g/l)</th></tr>
+    const HD=`<table class="h2"><tr><td class="lg" rowspan="3"><img src="${LOGO()}"></td><td class="tt" rowspan="3">ĐỊNH MỨC PHỐI LIỆU - PHIẾU HƯỚNG DẪN PHỐI LIỆU</td><td class="mt">Mã số: BM.02-QC-QT.03</td></tr><tr><td class="mt">Phiên bản: 02</td></tr><tr><td class="mt">Ngày hiệu lực: 02/01/2026</td></tr></table>`;
+    const COL='<colgroup><col style="width:5%"><col style="width:12.3%"><col style="width:18.4%"><col style="width:8.9%"><col style="width:8.5%"><col style="width:9.7%"><col style="width:8.9%"><col style="width:8.4%"><col style="width:11.1%"><col style="width:8.8%"></colgroup>';
+    const pct=p=>p>0&&p<0.01?p.toFixed(3).replace(".",","):p2(p),chinh=Math.max.apply(null,L.map(x=>+x.lt||0));
+    const nl=L.map((x,i)=>{const B="";return `<tr${B}><td class="c">${i+1}</td><td class="ma">${esc(x.ma)}</td><td class="ten"><span class="tn">${esc(x.it.ten)}</span>${lotTxt(x)}</td><td class="r">${f2(x.lt)}</td><td class="r">${f2(x.tt)}</td><td class="r">${x.dk===null?"":f2(x.dk)}</td><td></td><td></td><td class="r">${tong?pct(x.lt/tong*100):""}</td><td></td></tr>`}).join("");
+    const sx=L.map((x,i)=>`<tr><td class="c">2.${i+1}</td><td colspan="4" class="ten"><b>${esc(x.it.ten)}${lotTxt(x)}</b></td><td colspan="2" class="r"><b>${f2(x.lt)}</b></td><td colspan="2"></td><td></td></tr>`).join("")+buoc.map((t,i)=>`<tr><td class="c">2.${L.length+i+1}</td><td colspan="8"><i>${esc(t)}</i></td><td></td></tr>`).join("");
+    const html=`<style>
+.p2{font:13pt/1.25 "Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.p2 table{width:calc(100% - 2px);border-collapse:collapse;table-layout:fixed}.p2 td,.p2 th{border:1px solid #000;padding:3px 3px;vertical-align:middle;color:#000;word-wrap:break-word;overflow-wrap:anywhere}
+.p2 .h2 td{padding:1px 3px}.p2 .h2 .lg{width:33%;text-align:center}.p2 .h2 .lg img{height:15mm;max-width:95%;object-fit:contain}.p2.pb .h2 .lg{width:16.3%}
+.p2 .h2 .tt{text-align:center;font-size:14pt;font-weight:700;background:#f2f2f2}.p2 .h2 .mt{width:23%;font-size:10.5pt;white-space:nowrap;border-top:0;border-bottom:0;height:6mm}
+.p2 .h2 tr:first-child .mt{border-top:1px solid #000}.p2 .h2 tr:last-child .mt{border-bottom:1px solid #000}
+.p2 .st{margin:0;padding:1px 2px;font-size:13pt}.p2 .g{background:#f2f2f2}.p2 .c{text-align:center}.p2 .r{text-align:right;white-space:nowrap}.p2 th{background:#fff;text-align:center;font-weight:700}
+.p2 .i1 td{text-align:center}.p2 .i1 .lb{font-weight:700}.p2 .i1 .kh{font-size:14pt;font-weight:700}.p2 .i1 .sp{font-size:19pt;font-weight:700;padding:4px 3px}.p2 .i1 .hl{font-style:italic}
+.p2 .i2 td{text-align:center;font-weight:700}
+.p2 .nlt{margin-top:5mm}.p2 .nlt th{height:8.5mm}.p2 .nlt td{height:13mm}.p2 .nlt .ma{font-size:10pt;padding:3px 1px}.p2 .nlt .ten{text-align:left}.p2 .nlt tr.bb td{font-weight:700}.p2 .nlt tr.bb .ten{font-weight:400}.p2 .nlt tr.bb .tn{font-weight:700}
+.p2 .nlt .tg td{height:12mm;font-weight:700}.p2 .nlt .tl td{height:12mm;font-weight:700}.p2 .nlt .nb{border:0}
+.p2 .sxt th{height:11mm}.p2 .sxt td{height:8.2mm}.p2 .sxt .ten{text-align:left}
+.p2 .kq2{margin-top:4mm;display:flex;justify-content:space-between;align-items:flex-start}.p2 .kq2 td,.p2 .kq2 th{height:8.2mm}
+.p2 .sg2{margin-top:1mm}.p2 .sg2 td{border:0;text-align:center;height:8mm;white-space:nowrap}.p2 .sg2 .dl td{height:13mm;vertical-align:bottom;text-align:left}
+.p2.pb{break-before:page;page-break-before:always}
+</style>
+    <div class="p2">${HD}
+     <p class="st"><b>I.Thông tin chung</b></p>
+     <table class="i1">${COL}
+      <tr><td>1</td><td colspan="2" class="lb g">Khách hàng</td><td colspan="7" class="kh g">${esc(g("plKH"))}</td></tr>
+      <tr><td>2</td><td colspan="2" class="lb g">Tên sản phẩm</td><td colspan="7" class="sp g">${esc(sp.ten)}</td></tr>
+      <tr><td>3</td><td colspan="2">Hàm lượng đăng ký</td><td colspan="7" class="hl">${esc(g("plHL"))}</td></tr>
+      <tr><td>4</td><td colspan="2">Yêu cầu SX</td><td colspan="2" style="border-right:0">${liq?f1(lit):f2(tong)}</td><td colspan="5" style="border-left:0;text-align:left">${liq?"lít":"kg"}</td></tr></table>
+     <p class="st"><b>II. Phần dành cho Bộ phận Kế toán kho:</b> (Xuất vật tư, nguyên liệu)</p>
+     <table class="i2">${COL}
+      <tr><td colspan="3" class="g">Số lô SX</td><td colspan="3">${esc(o.so)}</td><td colspan="2" class="g">Ngày ra lệnh</td><td colspan="2">${dmy(o.ngay)}</td></tr>
+      <tr><td colspan="3" class="g">${liq?"Số lượng (lít)":"Số lượng (kg)"}</td><td colspan="3">${liq?f1(lit):f2(tong)}</td><td colspan="2" class="g">Tỷ trọng</td><td colspan="2">${liq?(+o.tyTrong).toFixed(3).replace(".",","):"—"}</td></tr></table>
+     <table class="nlt">${COL}
+      <tr><th rowspan="2">Stt</th><th rowspan="2">Mã NVL/SL</th><th rowspan="2">Tên nguyên liệu</th><th colspan="2">KL SX (kg)</th><th colspan="2">KL ĐK (kg)</th><th rowspan="2">KL CK<br>(kg)</th><th rowspan="2">%w/w</th><th rowspan="2">Hàm lượng<br>(g/l)</th></tr>
       <tr><th>LT</th><th>TT</th><th>PM</th><th>TT</th></tr>${nl}
-      <tr><td colspan="3"><b>TỔNG CỘNG (KG)</b></td><td class="r"><b>${f2(tong)}</b></td><td></td><td></td><td></td><td></td><td class="r"><b>100</b></td><td></td></tr>
-      ${liq?`<tr><td colspan="3"><b>TỔNG CỘNG (L)</b></td><td class="r"><b>${f1(lit)}</b></td><td colspan="6"></td></tr>`:""}</table>
-     <div class="pb">${HD}
-     <table style="margin-top:-1px"><colgroup><col style="width:8%"><col><col style="width:15%"><col style="width:15%"><col style="width:18%"></colgroup>
-      <tr class="sec"><td colspan="5">III. Phần dành cho Bộ phận Sản xuất: (Thực hiện phối trộn theo quy trình)</td></tr>
-      <tr><th>STT</th><th>Diễn giải thực hiện</th><th>Khối lượng<br>(kg)</th><th>Khối lượng<br>thực tế (kg)</th><th>Ghi chú</th></tr>
-      <tr><td class="c"><b>1</b></td><td colspan="4"><b>${esc(b1||"Kiểm tra thiết bị trước khi phối liệu")}</b></td></tr>
-      <tr><td class="c"><b>2</b></td><td colspan="4"><b>Tên nguyên liệu</b></td></tr>${sx}
-      <tr><td class="c"><b>3</b></td><td colspan="4"><b>Kiểm tra bán thành phẩm, vệ sinh thiết bị</b></td></tr>
-      <tr><td class="c">3.1</td><td colspan="4">Lấy mẫu mang lên phòng LAB kiểm tra trước khi xả liệu</td></tr>
-      <tr><td class="c">3.2</td><td colspan="4">Cân tịnh lại sản phẩm và dán “Phiếu thu hồi BTP”</td></tr>
-      <tr><td colspan="2"><b>Tổng cộng</b></td><td class="r"><b>${f2(tong)}</b></td><td></td><td></td></tr></table>
-     <table class="kq" style="margin-top:10px"><colgroup><col style="width:24%"><col style="width:30%"><col style="width:20%"><col></colgroup>
-      <tr><th colspan="2">KẾT QUẢ</th><th colspan="2">Thông tin date</th></tr>
-      <tr><td>Ngày hoàn thành</td><td>${o.ngayHT?dmy(o.ngayHT):""}</td><td>NSX:</td><td><b>${dmy(g("plNsx"))}</b></td></tr>
-      <tr><td>Ngoại quan</td><td></td><td>Số lô SX:</td><td><b>${esc(g("plLo"))}</b></td></tr>
-      <tr><td>KL thu được (kg)</td><td>${+o.slThucTe>0?f2(o.slThucTe):""}</td><td colspan="2" rowspan="${liq?3:1}"></td></tr>
-      ${liq?`<tr><td>Tỷ trọng thực tế</td><td></td></tr><tr><td>Thể tích thực (L)</td><td></td></tr>`:""}</table>
-     ${sign([["Tổ phối liệu"],["Giám sát phối liệu"],["Thủ kho"],["Phòng R&amp;D"]])}</div></div>`;
+      <tr class="tg"><td colspan="3" class="g">TỔNG CỘNG (KG)</td><td class="r g">${f2(tong)}</td><td class="g"></td><td class="g"></td><td class="g"></td><td class="g"></td><td class="r g">100,0</td><td class="g"></td></tr>
+      ${liq?`<tr class="tl"><td colspan="3">TỔNG CỘNG (L)</td><td class="r">${f1(lit)}</td><td colspan="6" class="nb"></td></tr>`:""}</table></div>
+    <div class="p2 pb">${HD}
+     <p class="st"><b>III. Phần dành cho Bộ phận Sản xuất:</b> (Thực hiện phối trộn theo quy trình dưới đây)</p>
+     <table class="sxt">${COL}
+      <tr><th style="padding:0;font-size:12pt">STT</th><th colspan="4">Diễn giải thực hiện</th><th colspan="2">Khối lượng<br>(kg)</th><th colspan="2">Khối lượng<br>thực tế (kg)</th><th>Ghi chú</th></tr>
+      <tr><td>1</td><td colspan="8">${esc(b1||"Kiểm tra thiết bị trước khi phối liệu")}</td><td></td></tr>
+      <tr><td>2</td><td colspan="8">Tên nguyên liệu</td><td></td></tr>${sx}
+      <tr><td>3</td><td colspan="8">Kiểm tra bán thành phẩm, vệ sinh thiết bị</td><td></td></tr>
+      <tr><td class="c">3.1</td><td colspan="8">Lấy <b>mẫu mang lên phòng LAB kiểm tra</b> trước khi xả liệu</td><td></td></tr>
+      <tr><td class="c">3.2</td><td colspan="8">Cân tịnh lại sản phẩm và dán <b>"Phiếu nhận dạng BTP"</b></td><td></td></tr>
+      <tr><td colspan="5" class="c"><b>Tổng cộng</b></td><td colspan="2" class="r"><b>${f2(tong)}</b></td><td colspan="2"></td><td></td></tr></table>
+     <div class="kq2"><table style="width:53%"><colgroup><col style="width:67%"><col></colgroup>
+       <tr><th colspan="2" class="g">KẾT QUẢ</th></tr>
+       <tr><td>Ngày hoàn thành</td><td>${o.ngayHT?dmy(o.ngayHT):""}</td></tr><tr><td>Ngoại quan</td><td></td></tr>
+       <tr><td>KL thu được (kg)</td><td>${+o.slThucTe>0?f2(o.slThucTe):""}</td></tr>${liq?"<tr><td>Tỷ trọng thực tế</td><td></td></tr><tr><td>Thể tích thực (L)</td><td></td></tr>":""}</table>
+      <table style="width:31%"><colgroup><col style="width:38%"><col></colgroup>
+       <tr><th colspan="2" class="g">Thông tin date</th></tr><tr><td>NSX:</td><td>${dmy(g("plNsx"))}</td></tr><tr><td>Số lô SX:</td><td>${esc(g("plLo"))}</td></tr></table></div>
+     <table class="sg2"><colgroup><col style="width:16.3%"><col style="width:36.8%"><col style="width:27%"><col></colgroup>
+      <tr><td>Tổ phối liệu</td><td>Giám sát phối liệu</td><td>Thủ kho</td><td>Phòng R&amp;D</td></tr>
+      <tr class="dl"><td>1/&nbsp;&nbsp;………………</td><td></td><td></td><td></td></tr>
+      <tr class="dl"><td>2/&nbsp;&nbsp;………………</td><td style="text-align:center">…………………….</td><td style="text-align:center">……………………..</td><td style="text-align:center">………………………</td></tr></table></div>`;
     w.remove();pr(html)}};
 /* ---------- BM.05-QC-QT.03 Biên bản vệ sinh thiết bị khuấy trộn ---------- */
 async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
