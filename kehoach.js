@@ -481,7 +481,7 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
   else L=ct.map(l=>{const it=itemBy(l.ma),od=(S.odLines||[]).find(x=>x.ma===l.ma);return {ma:l.ma,it,lo:it.theoLo?(od&&od.lo)||"":"",lt:l.dm*(+o.slDuKien||0)*(it.heSo||1),tt:"",dk:S.bal[l.ma]?S.bal[l.ma].ton:null}});
   if(!L.length){toast("Sản phẩm chưa có công thức phối trộn — khai công thức rồi in lệnh.");return}
   const tong=L.reduce((a,x)=>a+(+x.lt||0),0),lit=liq?tong/(+o.tyTrong):0;
-  const lotTxt=x=>{if(!x.lo)return"";const l=(S.lots[x.ma]||[]).find(y=>y.lo===x.lo);return `${l&&l.nsx?"<br>NSX: "+dmy(l.nsx):""}<br>SL: ${esc(x.lo)}${l&&+l.tyTrong>0?"<br>(Tỷ trọng: "+(+l.tyTrong).toFixed(3).replace(".",",")+")":""}`};
+  const lotTxt=x=>{if(!x.lo)return"";const l=(S.lots[x.ma]||[]).find(y=>y.lo===x.lo);return `${l&&l.nsx?"<br>NSX: "+dmy(l.nsx):""}<br>SL: ${esc(x.lo)}`};
   const K="bm02:"+o.maSP;let mem={};try{mem=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
   /* phần đã lưu của lệnh này (khách hàng, hàm lượng, số lô, NSX, KL ĐK, các bước) */
   let sv=null;try{sv=await api("webPLGet",S.auth,o.so)}catch(e){}const SD=(sv&&sv.d)||null,dkK=x=>x.ma+"|"+(x.lo||"");
@@ -514,13 +514,13 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
     const html=`<style>
 .p2{font:13pt/1.25 "Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .p2 table{width:calc(100% - 2px);border-collapse:collapse;table-layout:fixed}.p2 td,.p2 th{border:1px solid #000;padding:3px 3px;vertical-align:middle;color:#000;word-wrap:break-word;overflow-wrap:anywhere}
-.p2 .h2 td{padding:1px 3px}.p2 .h2 .lg{width:33%;text-align:center}.p2 .h2 .lg img{height:15mm;max-width:95%;object-fit:contain}.p2.pb .h2 .lg{width:16.3%}
+.p2 .h2 td{padding:1px 3px}.p2 .h2 .lg{width:16.3%;text-align:center}.p2 .h2 .lg img{height:15mm;max-width:95%;object-fit:contain}
 .p2 .h2 .tt{text-align:center;font-size:14pt;font-weight:700;background:#f2f2f2}.p2 .h2 .mt{width:23%;font-size:10.5pt;white-space:nowrap;border-top:0;border-bottom:0;height:6mm}
 .p2 .h2 tr:first-child .mt{border-top:1px solid #000}.p2 .h2 tr:last-child .mt{border-bottom:1px solid #000}
 .p2 .st{margin:0;padding:1px 2px;font-size:13pt}.p2 .g{background:#f2f2f2}.p2 .c{text-align:center}.p2 .r{text-align:right;white-space:nowrap}.p2 th{background:#fff;text-align:center;font-weight:700}
 .p2 .i1 td{text-align:center}.p2 .i1 .lb{font-weight:700}.p2 .i1 .kh{font-size:14pt;font-weight:700}.p2 .i1 .sp{font-size:19pt;font-weight:700;padding:4px 3px}.p2 .i1 .hl{font-style:italic}
 .p2 .i2 td{text-align:center;font-weight:700}
-.p2 .nlt{margin-top:5mm}.p2 .nlt th{height:8.5mm}.p2 .nlt td{height:13mm}.p2 .nlt .ma{font-size:10pt;padding:3px 1px}.p2 .nlt .ten{text-align:left}.p2 .nlt tr.bb td{font-weight:700}.p2 .nlt tr.bb .ten{font-weight:400}.p2 .nlt tr.bb .tn{font-weight:700}
+.p2 .nlt{margin-top:5mm}.p2 .nlt th{height:8.5mm}.p2 .nlt td{height:13mm}.p2 .nlt .ma{font-size:10pt;padding:3px 1px;text-align:center}.p2 .nlt .ten{text-align:left}.p2 .nlt tr.bb td{font-weight:700}.p2 .nlt tr.bb .ten{font-weight:400}.p2 .nlt tr.bb .tn{font-weight:700}
 .p2 .nlt .tg td{height:12mm;font-weight:700}.p2 .nlt .tl td{height:12mm;font-weight:700}.p2 .nlt .nb{border:0}
 .p2 .sxt th{height:11mm}.p2 .sxt td{height:8.2mm}.p2 .sxt .ten{text-align:left}
 .p2 .kq2{margin-top:4mm;display:flex;justify-content:space-between;align-items:flex-start}.p2 .kq2 td,.p2 .kq2 th{height:8.2mm}
