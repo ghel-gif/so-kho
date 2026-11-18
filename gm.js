@@ -45,7 +45,7 @@
   let USERS = [];
   const badge = () => { const b = document.getElementById("tabGmBtn"); if (!b) return; let c = b.querySelector(".cnt"); const n = live().filter(choToi).length; if (!c) { c = document.createElement("span"); c.className = "cnt"; b.appendChild(c); } c.hidden = !n; c.textContent = n; };
   const ttOf = r => r.d.huy ? "Huỷ" : (r.d.ketQua || r.d.xong) ? "Đã có kết quả" : "Chờ kết quả";
-  let R = [], loaded = false, q = "", fNam = "", fDV = "", fTT = "";
+  let R = [], loaded = false, q = "", fNam = "", fThang = "", fDV = "", fTT = "";
   const live = () => R.filter(x => !x.xoa);
   async function load() { R = await api("webGMAll", S.auth); loaded = true; try { badge(); } catch (e) {} try { if (!USERS.length) USERS = await api("getUserNames"); } catch (e) {} }
   const uniq = k => [...new Set(live().map(r => String(r.d[k] || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
@@ -62,24 +62,25 @@
     const W = fold(q).split(/\s+/).filter(Boolean);
     const Y = A.filter(r => String(r.d.ngay).slice(0, 4) === fNam).sort((a, c) => String(a.d.ngay).localeCompare(String(c.d.ngay)) || String(a.luc || "").localeCompare(String(c.luc || "")) || String(a.id).localeCompare(String(c.id)));
     Y.forEach((r, i) => { r._stt = i + 1; });
-    const L = Y.filter(r => (!fDV || dvFull(r.d.dv) === fDV) && (!fTT || (fTT === "Chờ bản cứng" ? choBC(r) : fTT === "Chờ tôi xác nhận bản cứng" ? choToi(r) : ttOf(r) === fTT)) && (!W.length || (t => W.every(w => t.includes(w)))(fold([r.d.ten, r.d.lo, r.d.nguon, r.d.dv, r.d.mucDich, r.d.soHS, r.d.ghiChu, r.d.ma].join(" ")))));
+    const L = Y.filter(r => (!fThang || String(r.d.ngay).slice(5, 7) === fThang) && (!fDV || dvFull(r.d.dv) === fDV) && (!fTT || (fTT === "Chờ bản cứng" ? choBC(r) : fTT === "Chờ tôi xác nhận bản cứng" ? choToi(r) : ttOf(r) === fTT)) && (!W.length || (t => W.every(w => t.includes(w)))(fold([r.d.ten, r.d.lo, r.d.nguon, r.d.dv, r.d.mucDich, r.d.soHS, r.d.ghiChu, r.d.ma].join(" ")))));
     const ch = A.filter(r => ttOf(r) === "Chờ kết quả"), tre = ch.filter(r => cho(r) > HAN);
     const G = { "Chờ kết quả": [], "Đã có kết quả": [], "Huỷ": [] }; L.forEach(r => G[ttOf(r)].push(r)); G["Chờ kết quả"].reverse(); G["Đã có kết quả"].reverse(); /* mới gửi lên đầu */
     const row = r => { const d = r.d; return `<tr class="click" data-id="${E(r.id)}" style="cursor:pointer"><td style="text-align:center">${r._stt}</td><td>${D(d.ngay)}</td><td><b>${E(d.ten)}</b>${d.lo || d.nsx ? `<div class="note" style="margin:2px 0 0">${[d.lo ? "Lô " + E(d.lo) : "", d.nsx ? "NSX " + D(d.nsx) : ""].filter(Boolean).join(" · ")}</div>` : ""}</td><td>${E(d.nguon || "")}</td><td>${E(dvFull(d.dv))}</td><td>${E(d.mucDich || "")}</td><td>${E(d.soHS || "")}${d.ngayNhan ? `<div class="note" style="margin:2px 0 0">${d.ngayNhan >= BC_TU ? "bản scan" : "nhận"} ${D(d.ngayNhan)}</div>` : ""}</td><td>${kqChip(r)}${d.bc ? `<div class="note" style="margin:2px 0 0">Bản cứng: ${E(bcTxt(d.bc))}</div>` : choBC(r) ? '<div style="margin:3px 0 0"><span class="st" style="background:#b45309;color:#fff;border-color:transparent">chờ bản cứng</span></div>' : ""}${d.ghiChu ? `<div class="note" style="margin:2px 0 0">${E(d.ghiChu)}</div>` : ""}</td></tr>`; };
     b.innerHTML = `<div class="tools tb-top"><input type="search" id="gmQ" value="${E(q)}" placeholder="Tìm mẫu: tên, số lô, đơn vị, mã số hồ sơ…" style="flex:1;min-width:220px">
         <select id="gmNam" style="width:auto">${nams.map(n => `<option${n === fNam ? " selected" : ""}>${n}</option>`).join("")}</select>
+        <select id="gmThang" style="width:auto"><option value="">Cả năm</option>${Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map(m => `<option value="${m}"${m === fThang ? " selected" : ""}>Tháng ${+m}${(n => n ? " (" + n + ")" : "")(Y.filter(r => String(r.d.ngay).slice(5, 7) === m).length)}</option>`).join("")}</select>
         <select id="gmDV" style="width:auto"><option value="">Tất cả đơn vị</option>${[...new Set(uniq("dv").map(dvFull))].sort((a, c) => a.localeCompare(c, "vi")).map(x => `<option${x === fDV ? " selected" : ""}>${E(x)}</option>`).join("")}</select>
         <select id="gmTT" style="width:auto">${["", "Chờ kết quả", "Chờ bản cứng", "Chờ tôi xác nhận bản cứng", "Đã có kết quả", "Huỷ"].map(t => `<option value="${t}"${t === fTT ? " selected" : ""}>${t || "Tất cả trạng thái"}</option>`).join("")}</select>
-        <button class="btn" type="button" id="gmPr">🖨 In sổ năm ${fNam}</button>${QC() ? '<button class="btn primary" type="button" id="gmNew">+ Ghi gửi mẫu</button>' : ""}</div>
+        <button class="btn" type="button" id="gmPr">🖨 In sổ ${fThang ? "tháng " + +fThang + "/" : "năm "}${fNam}</button>${QC() ? '<button class="btn primary" type="button" id="gmNew">+ Ghi gửi mẫu</button>' : ""}</div>
       ${A.some(choToi) ? `<div class="gm-toi"><b>Có ${A.filter(choToi).length} phiếu kết quả bản cứng giao cho bạn, chờ bạn xác nhận đã nhận.</b> <button type="button" class="btn small" id="gmToi">Xem</button></div>` : ""}
       <p class="note" style="margin:0 0 8px">${ch.length ? `<b style="color:#b45309">${ch.length} mẫu chờ kết quả</b>${tre.length ? ` · <b style="color:#c62828">${tre.length} mẫu quá ${HAN} ngày</b>` : ""}` : "Không có mẫu chờ kết quả"}${A.filter(choBC).length ? ` · <b style="color:#b45309">${A.filter(choBC).length} mẫu chờ bản cứng</b>` : ""} · năm ${fNam}: ${Y.length} mẫu${L.length !== Y.length ? ` · khớp ${L.length}` : ""}. Bấm vào mẫu để ghi mã số hồ sơ, kết quả.</p>
       ${L.length ? `<div class="dgx tb-tbl"><table><thead><tr><th style="width:44px">STT</th><th style="width:104px">Ngày gửi</th><th>Tên mẫu</th><th style="width:13%">Nguồn gốc</th><th style="width:11%">Đơn vị KTCL</th><th style="width:14%">Mục đích</th><th style="width:15%">Mã số hồ sơ</th><th style="width:138px">Kết quả</th></tr></thead><tbody>${Object.keys(G).filter(t => G[t].length).map(t => `<tr class="tb-gh"><td colspan="8">${t} <small>· ${G[t].length} mẫu</small></td></tr>` + G[t].map(row).join("")).join("")}</tbody></table></div>`
-        : `<div class="empty"><b>${W.length || fDV || fTT ? "Không có mẫu nào khớp" : "Chưa có mẫu gửi nào trong năm " + fNam}</b></div>`}`;
+        : `<div class="empty"><b>${W.length || fDV || fTT || fThang ? "Không có mẫu nào khớp" : "Chưa có mẫu gửi nào trong năm " + fNam}</b></div>`}`;
     const on = (id, ev, f) => { const el = document.getElementById(id); if (el) el[ev] = f; };
     on("gmQ", "oninput", e => { q = e.target.value; clearTimeout(window.__gmQT); window.__gmQT = setTimeout(() => window.renderGM().then(() => { const el = document.getElementById("gmQ"); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }), 250); });
-    on("gmNam", "onchange", e => { fNam = e.target.value; window.renderGM(); }); on("gmDV", "onchange", e => { fDV = e.target.value; window.renderGM(); }); on("gmTT", "onchange", e => { fTT = e.target.value; window.renderGM(); });
-    on("gmToi", "onclick", () => { fTT = "Chờ tôi xác nhận bản cứng"; const A2 = live().filter(choToi); if (A2.length) fNam = String(A2[0].d.ngay).slice(0, 4); window.renderGM(); }); try { badge(); } catch (e) {}
-    on("gmNew", "onclick", () => gmDlg(null)); on("gmPr", "onclick", () => prGM(fNam));
+    on("gmNam", "onchange", e => { fNam = e.target.value; window.renderGM(); }); on("gmThang", "onchange", e => { fThang = e.target.value; window.renderGM(); }); on("gmDV", "onchange", e => { fDV = e.target.value; window.renderGM(); }); on("gmTT", "onchange", e => { fTT = e.target.value; window.renderGM(); });
+    on("gmToi", "onclick", () => { fTT = "Chờ tôi xác nhận bản cứng"; const A2 = live().filter(choToi); if (A2.length) fNam = String(A2[0].d.ngay).slice(0, 4); fThang = ""; window.renderGM(); }); try { badge(); } catch (e) {}
+    on("gmNew", "onclick", () => gmDlg(null)); on("gmPr", "onclick", () => prGM(fNam, fThang));
     b.querySelectorAll("tr[data-id]").forEach(x => x.onclick = () => gmDlg(live().find(r => r.id === x.dataset.id)));
     if (window.pgActSync) window.pgActSync();
   };
@@ -160,13 +161,13 @@
     if (moi && ed) setTimeout(() => (lot || g("ten")).focus(), 50);
   }
 
-  function prGM(nam) {
-    const K = window.BMK, L = live().filter(r => String(r.d.ngay).slice(0, 4) === nam).sort((a, c) => String(a.d.ngay).localeCompare(String(c.d.ngay)) || String(a.luc || "").localeCompare(String(c.luc || "")) || String(a.id).localeCompare(String(c.id)));
-    if (!L.length) { toast("Năm " + nam + " chưa có mẫu gửi nào."); return; }
+  function prGM(nam, th) {
+    const K = window.BMK, L = live().filter(r => String(r.d.ngay).slice(0, 4) === nam && (!th || String(r.d.ngay).slice(5, 7) === th)).sort((a, c) => String(a.d.ngay).localeCompare(String(c.d.ngay)) || String(a.luc || "").localeCompare(String(c.luc || "")) || String(a.id).localeCompare(String(c.id)));
+    if (!L.length) { toast((th ? "Tháng " + +th + "/" : "Năm ") + nam + " chưa có mẫu gửi nào."); return; }
     const W = [4, 8, 20, 11, 6, 8, 7, 13, 6, 8, 7, 12, 12], H = ["STT", "Ngày gởi mẫu", "Tên mẫu", "Nguồn gốc", "Số lượng", "Đơn vị KTCL", "Trạng thái", "Mã số hồ sơ", "Kết quả", "Ngày nhận", "Người lập", "Mục đích KTCL", "Ghi chú"], tw = W.reduce((a, c) => a + c, 0);
     const body = L.map((r, i) => { const d = r.d, t = ttOf(r); return `<tr><td class="c">${i + 1}</td><td class="c nw">${D(d.ngay)}</td><td>${E(d.ten)}${d.nsx ? "<br>NSX: " + D(d.nsx) : ""}${d.lo ? "<br>Số lô SX: " + E(d.lo) : ""}</td><td>${E(d.nguon || "")}</td><td class="c">${E(d.sl || "")}</td><td>${E(dvFull(d.dv))}</td><td class="c">${t === "Huỷ" ? "Huỷ" : "Đã gởi"}</td><td>${E(d.soHS || "")}</td><td class="c">${E(d.ketQua || "")}</td><td class="c nw">${D(d.ngayNhan)}</td><td>${E(d.nguoiLap || r.nguoi || "")}</td><td>${E(d.mucDich || "")}</td><td>${E([d.ghiChu || (t === "Đã có kết quả" ? "Hoàn thành" : ""), d.bc ? "Bản cứng: " + bcTxt(d.bc) : ""].filter(Boolean).join(". "))}</td></tr>`; }).join("");
     K.pr(`${K.PCSS}<style>.pq.gmp table{table-layout:fixed;width:100%}.pq.gmp td,.pq.gmp th{font-size:9pt;padding:2px 3px;line-height:1.25;overflow-wrap:break-word}.pq.gmp td{vertical-align:top}.pq.gmp .c{text-align:center}.pq.gmp .nw{white-space:nowrap}.pq.gmp th{background:#e5e7eb}.pq.gmp h1{font-size:15pt;text-align:center;margin:0 0 6px}.pq.gmp thead{display:table-header-group}</style>
-      <div class="pq gmp"><h1>SỔ THEO DÕI GỬI MẪU KIỂM TRA CHẤT LƯỢNG — NĂM ${E(nam)}</h1><table><colgroup>${W.map(x => `<col style="width:${(x / tw * 100).toFixed(2)}%">`).join("")}</colgroup><thead><tr>${H.map(t => `<th>${t}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`, true);
+      <div class="pq gmp"><h1>SỔ THEO DÕI GỬI MẪU KIỂM TRA CHẤT LƯỢNG — ${th ? "THÁNG " + +th + "/" : "NĂM "}${E(nam)}</h1><table><colgroup>${W.map(x => `<col style="width:${(x / tw * 100).toFixed(2)}%">`).join("")}</colgroup><thead><tr>${H.map(t => `<th>${t}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>`, true);
   }
 
   /* ---- cho khung QC lô: các lần gửi mẫu của 1 lô + nút gửi mẫu điền sẵn ---- */
