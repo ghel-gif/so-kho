@@ -22,9 +22,6 @@ function full(k){const o=S.lenh.find(x=>x.so===k.so)||{},sp=itemBy(o.maSP)||{ma:
   const tt=o.trangThai==="Đã huỷ"?"Đã huỷ":o.trangThai==="Hoàn thành"?"Hoàn thành":k.ktTT?"Xong phối trộn":k.bdTT?"Đang SX":k.tt==="Sửa sau khi gửi"?"Sửa sau khi gửi":k.gui?"Đã gửi":"Tạo mới";
   return Object.assign({},k,{o,sp,tt,sl:o.trangThai==="Hoàn thành"?o.slThucTe:o.slDuKien,phut:mins(k.bd,k.kt),phutTT:minsTs(k.bdTT,k.ktTT)})}
 const canKH=()=>typeof can!=="undefined"&&can.phieu()&&S.me&&S.me.ct;
-/* máy phối trộn: tên theo Danh mục thiết bị; mã AHK không còn trong danh mục (đã bỏ / đổi mã) hoặc không thuộc nhóm Sản xuất thì ẩn */
-function mayDM(L){const M=window.tbDM?window.tbDM():[];if(!M.length)return L;const by={};M.forEach(m=>{by[m.ma.toUpperCase()]=m});
-  return L.map(x=>{const k=String(x.ma||"").toUpperCase(),m=by[k];if(m)return /^sản xuất/i.test(m.nhom)?Object.assign({},x,{ten:m.ten||x.ten}):null;return /^AHK-/.test(k)?null:x}).filter(Boolean)}
 async function load(force){if(K.data&&!force)return K.data;K.loading=K.loading||api("webKHGet",S.auth).then(d=>{if(!d.may||!d.may.length){d.may=MAY_TM.map(x=>Object.assign({},x));d.mayTM=1}K.data=d;return d}).finally(()=>K.loading=null);return K.loading}
 function rowsAll(){return (K.data.kh||[]).map(full)}
 /* máy của kế hoạch vừa chạy BTP khác mà chưa có biên bản vệ sinh BM.05 Đạt */
@@ -244,6 +241,9 @@ function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true}
 /* ---------- nút trong chi tiết lệnh SX ---------- */
 /* 12/11/2026: mọi lệnh phối trộn (AHK, GC, TC…) đều có BM.06 biên bản SX và BM.05 vệ sinh thiết bị; BM.08 phiếu hoá lý chỉ cho lô AHK (lô GC., TC. chỉ cần QC duyệt) */
 /* mục "Thiết bị khác" luôn có trong danh sách máy (kế hoạch phối trộn, BM.06, BM.05) — dùng khi làm bằng thiết bị / dụng cụ ngoài danh mục */
+/* máy phối trộn: tên theo Danh mục thiết bị; mã AHK không còn trong danh mục (đã bỏ / đổi mã) hoặc không thuộc nhóm Sản xuất thì ẩn */
+function mayDM(L){const M=window.tbDM?window.tbDM():[];if(!M.length)return L;const by={};M.forEach(m=>{by[m.ma.toUpperCase()]=m});
+  return L.map(x=>{const k=String(x.ma||"").toUpperCase(),m=by[k];if(m)return /^sản xuất/i.test(m.nhom)?Object.assign({},x,{ten:m.ten||x.ten}):null;return /^AHK-/.test(k)?null:x}).filter(Boolean)}
 const TB_KHAC={ma:"TB-KHAC",ten:"Thiết bị khác",dang:""};
 const withKhac=L=>(L||[]).some(m=>m.ma===TB_KHAC.ma)?L:(L||[]).concat([TB_KHAC]);
 const isAHK=s=>/^AHK\./i.test(String(s||"").trim());
@@ -467,9 +467,74 @@ function hlPrint(it,D,d){const dg=d.dang,kq=d.kq||{},v=k=>String(kq[k]||"").trim
    <div>- Phiếu kiểm soát chất lượng nội bộ theo ISO 9001:2015, làm căn cứ cho phép chuyển công đoạn. Phòng thử nghiệm của công ty chưa được công nhận ISO/IEC 17025; phiếu không thay thế kết quả của tổ chức thử nghiệm được chỉ định / công nhận.</div>
    <div>- Phương pháp thử theo các hướng dẫn nội bộ QC-HD hiện hành; thiết bị đo được kiểm tra, hiệu chuẩn theo kế hoạch của công ty.</div></div>`)}
 
+/* ---------- BM.02-QC-QT.03 Định mức phối liệu – Phiếu hướng dẫn phối liệu (in từ lệnh phối trộn) ----------
+   Trang 1: thông tin chung + phần Kế toán kho (định mức, tồn, %w/w). Trang 2: phần Sản xuất (trình tự nạp liệu, kết quả, chữ ký).
+   Số liệu lấy từ lệnh và công thức; các bước thao tác do người lập ghi (nhớ theo từng sản phẩm trên máy này). */
+window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},liq=!!(+o.tyTrong>0)&&!(typeof isRan==="function"&&isRan(sp));
+  if(o.trangThai==="Hoàn thành"&&!S.odMoves){try{S.odMoves=await api("getOrderMoves",S.auth,o.so)}catch(e){return handleErr(e)}}
+  const mv=(S.odMoves||[]).filter(m=>m.loai==="Xuất"),ct=(S.congThuc[o.maSP]||[]).filter(l=>itemBy(l.ma));
+  const f2=n=>n===""||n===null||n===undefined||!isFinite(+n)?"":(Math.round(+n*100)/100).toLocaleString("vi-VN",{maximumFractionDigits:2}),f1=n=>(Math.round(+n*10)/10).toLocaleString("vi-VN",{maximumFractionDigits:1});
+  /* dòng nguyên liệu: lệnh đã hoàn thành → theo phiếu xuất thật (gộp theo mã + lô); đang SX → theo công thức × khối lượng dự kiến */
+  let L;if(mv.length){const G={};mv.forEach(m=>{const k=m.ma+"|"+(m.lo||"");(G[k]=G[k]||{ma:m.ma,lo:m.lo||"",tt:0,dk:null});G[k].tt+=+m.kg||0;if(m.tonSau!==null&&m.tonSau!==undefined)G[k].dk=(+m.tonSau)+(+m.kg||0)});
+      L=Object.values(G).map(x=>{const c=ct.find(l=>l.ma===x.ma),it=itemBy(x.ma)||{ten:x.ma,heSo:1};return Object.assign(x,{it,lt:c?c.dm*(+o.slDuKien||0)*(it.heSo||1):x.tt})})}
+  else L=ct.map(l=>{const it=itemBy(l.ma),od=(S.odLines||[]).find(x=>x.ma===l.ma);return {ma:l.ma,it,lo:it.theoLo?(od&&od.lo)||"":"",lt:l.dm*(+o.slDuKien||0)*(it.heSo||1),tt:"",dk:S.bal[l.ma]?S.bal[l.ma].ton:null}});
+  if(!L.length){toast("Sản phẩm chưa có công thức phối trộn — khai công thức rồi in lệnh.");return}
+  const tong=L.reduce((a,x)=>a+(+x.lt||0),0),lit=liq?tong/(+o.tyTrong):0;
+  const lotTxt=x=>{if(!x.lo)return"";const l=(S.lots[x.ma]||[]).find(y=>y.lo===x.lo);return `<br><small>Số lô: ${esc(x.lo)}${l&&l.nsx?" · NSX: "+dmy(l.nsx):""}</small>`};
+  const K="bm02:"+o.maSP;let mem={};try{mem=JSON.parse(localStorage.getItem(K)||"{}")}catch(e){}
+  const w=document.createElement("div");w.className="cfm";
+  w.innerHTML=`<div class="cfm-box kh-dlg"><h2>In định mức phối liệu — BM.02-QC-QT.03</h2>
+   <p class="note">Lệnh <b>${esc(o.so)}</b> · ${esc(sp.ten)} · ${f2(tong)} kg${liq?" ≈ "+f1(lit)+" lít":""}. Nguyên liệu và khối lượng lấy từ ${mv.length?"phiếu xuất của lệnh":"công thức × khối lượng dự kiến"}; phần dưới đây ghi thêm cho bản in.</p>
+   <div class="two"><label>Khách hàng<input id="plKH" value="${esc(o.khachHang||"Công ty CP BVTV Asata Hoa Kỳ")}"></label><label>Hàm lượng đăng ký<input id="plHL" value="${esc(sp.hamLuong||(typeof hlGoiY==="function"?hlGoiY(sp):"")||"")}"></label></div>
+   <div class="two"><label>Số lô SX in trên phiếu<input id="plLo" value="${esc((typeof gcLo==="function"&&gcLo(o))||o.so)}"></label><label>NSX<input type="date" id="plNsx" value="${esc((typeof gcNsx==="function"&&gcNsx(o))||o.ngay||"")}"></label></div>
+   <label>Bước 1 — chuẩn bị<input id="plB1" value="${esc(mem.b1||"Kiểm tra thiết bị trước khi phối liệu")}" placeholder="VD: Kiểm tra thiết bị: ống sục khí, chuẩn bị tank IBC"></label>
+   <label>Thao tác sau khi nạp liệu <small class="note">— mỗi dòng một bước, in sau danh sách nguyên liệu</small><textarea id="plBuoc" rows="3" placeholder="VD: Sục khí trong 5 – 10 phút, kiểm tra mẫu tan hoàn toàn">${esc(mem.buoc||"")}</textarea></label>
+   <p class="note" style="margin:4px 0 0">Hai ô bước thao tác được nhớ cho sản phẩm này trên máy đang dùng.</p>
+   <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button><button class="btn primary" type="button" data-x="in">In</button></div></div>`;
+  document.body.appendChild(w);w.querySelector('[data-x="close"]').onclick=()=>w.remove();
+  w.querySelector('[data-x="in"]').onclick=()=>{const g=id=>w.querySelector("#"+id).value.trim(),b1=g("plB1"),buoc=g("plBuoc").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+    try{localStorage.setItem(K,JSON.stringify({b1,buoc:buoc.join("\n")}))}catch(e){}
+    const HD=head("ĐỊNH MỨC PHỐI LIỆU<br>PHIẾU HƯỚNG DẪN PHỐI LIỆU","Mã số: BM.02-QC-QT.03<br>Phiên bản: 02<br>Ngày hiệu lực: 02/01/2026");
+    const nl=L.map((x,i)=>`<tr><td class="c">${i+1}</td><td style="font-size:9.5pt">${esc(x.ma)}</td><td>${esc(x.it.ten)}${lotTxt(x)}</td><td class="r">${f2(x.lt)}</td><td class="r">${f2(x.tt)}</td><td class="r">${x.dk===null?"":f2(x.dk)}</td><td></td><td></td><td class="r">${tong?f2(x.lt/tong*100):""}</td><td></td></tr>`).join("");
+    const sx=L.map((x,i)=>`<tr><td class="c">2.${i+1}</td><td>${esc(x.it.ten)}${lotTxt(x)}</td><td class="r">${f2(x.lt)}</td><td></td><td></td></tr>`).join("")+buoc.map((t,i)=>`<tr><td class="c">2.${L.length+i+1}</td><td colspan="4">${esc(t)}</td></tr>`).join("");
+    const html=`${PCSS}<style>.pq.pl td,.pq.pl th{padding:5px 6px}.pq.pl .tk td{height:9mm}.pq.pl small{font-size:10.5pt}.pq.pl .nb td{border:0;padding:2px 4px}.pq.pl .pb{break-before:page;page-break-before:always}.pq.pl .kq td{height:9mm}.pq.pl .r{white-space:nowrap}.pq.pl .nlt td,.pq.pl .nlt th{font-size:11pt;padding:4px 4px}.pq.pl .hd .tt{font-size:15pt}</style>
+    <div class="pq pl">${HD}
+     <table style="margin-top:-1px"><colgroup><col style="width:6%"><col style="width:28%"><col></colgroup>
+      <tr class="sec"><td colspan="3">I. Thông tin chung</td></tr>
+      <tr><td class="c">1</td><td>Khách hàng</td><td><b>${esc(g("plKH"))}</b></td></tr>
+      <tr><td class="c">2</td><td>Tên sản phẩm</td><td><b>${esc(sp.ten)}</b></td></tr>
+      <tr><td class="c">3</td><td>Hàm lượng đăng ký</td><td>${esc(g("plHL"))}</td></tr>
+      <tr><td class="c">4</td><td>Yêu cầu SX</td><td><b>${liq?f1(lit)+" lít":f2(tong)+" kg"}</b></td></tr></table>
+     <table style="margin-top:-1px"><colgroup><col style="width:22%"><col style="width:28%"><col style="width:22%"><col></colgroup>
+      <tr class="sec"><td colspan="4">II. Phần dành cho Bộ phận Kế toán kho: (Xuất vật tư, nguyên liệu)</td></tr>
+      <tr><td>Số lô SX</td><td><b>${esc(o.so)}</b></td><td>Ngày ra lệnh</td><td><b>${dmy(o.ngay)}</b></td></tr>
+      <tr><td>${liq?"Số lượng (lít)":"Số lượng (kg)"}</td><td><b>${liq?f1(lit):f2(tong)}</b></td><td>Tỷ trọng</td><td><b>${liq?String(o.tyTrong).replace(".",","):"—"}</b></td></tr></table>
+     <table class="nlt" style="margin-top:-1px"><colgroup><col style="width:4.5%"><col style="width:13%"><col><col style="width:10%"><col style="width:9.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:7%"><col style="width:8.5%"></colgroup>
+      <tr><th rowspan="2" colspan="3">Nguyên liệu</th><th colspan="2">KL SX (kg)</th><th colspan="2">KL ĐK (kg)</th><th rowspan="2">KL CK<br>(kg)</th><th rowspan="2">%w/w</th><th rowspan="2">Hàm lượng<br>(g/l)</th></tr>
+      <tr><th>LT</th><th>TT</th><th>PM</th><th>TT</th></tr>${nl}
+      <tr><td colspan="3"><b>TỔNG CỘNG (KG)</b></td><td class="r"><b>${f2(tong)}</b></td><td></td><td></td><td></td><td></td><td class="r"><b>100</b></td><td></td></tr>
+      ${liq?`<tr><td colspan="3"><b>TỔNG CỘNG (L)</b></td><td class="r"><b>${f1(lit)}</b></td><td colspan="6"></td></tr>`:""}</table>
+     <div class="pb">${HD}
+     <table style="margin-top:-1px"><colgroup><col style="width:8%"><col><col style="width:15%"><col style="width:15%"><col style="width:18%"></colgroup>
+      <tr class="sec"><td colspan="5">III. Phần dành cho Bộ phận Sản xuất: (Thực hiện phối trộn theo quy trình)</td></tr>
+      <tr><th>STT</th><th>Diễn giải thực hiện</th><th>Khối lượng<br>(kg)</th><th>Khối lượng<br>thực tế (kg)</th><th>Ghi chú</th></tr>
+      <tr><td class="c"><b>1</b></td><td colspan="4"><b>${esc(b1||"Kiểm tra thiết bị trước khi phối liệu")}</b></td></tr>
+      <tr><td class="c"><b>2</b></td><td colspan="4"><b>Tên nguyên liệu</b></td></tr>${sx}
+      <tr><td class="c"><b>3</b></td><td colspan="4"><b>Kiểm tra bán thành phẩm, vệ sinh thiết bị</b></td></tr>
+      <tr><td class="c">3.1</td><td colspan="4">Lấy mẫu mang lên phòng LAB kiểm tra trước khi xả liệu</td></tr>
+      <tr><td class="c">3.2</td><td colspan="4">Cân tịnh lại sản phẩm và dán “Phiếu thu hồi BTP”</td></tr>
+      <tr><td colspan="2"><b>Tổng cộng</b></td><td class="r"><b>${f2(tong)}</b></td><td></td><td></td></tr></table>
+     <table class="kq" style="margin-top:10px"><colgroup><col style="width:24%"><col style="width:30%"><col style="width:20%"><col></colgroup>
+      <tr><th colspan="2">KẾT QUẢ</th><th colspan="2">Thông tin date</th></tr>
+      <tr><td>Ngày hoàn thành</td><td>${o.ngayHT?dmy(o.ngayHT):""}</td><td>NSX:</td><td><b>${dmy(g("plNsx"))}</b></td></tr>
+      <tr><td>Ngoại quan</td><td></td><td>Số lô SX:</td><td><b>${esc(g("plLo"))}</b></td></tr>
+      <tr><td>KL thu được (kg)</td><td>${+o.slThucTe>0?f2(o.slThucTe):""}</td><td colspan="2" rowspan="${liq?3:1}"></td></tr>
+      ${liq?`<tr><td>Tỷ trọng thực tế</td><td></td></tr><tr><td>Thể tích thực (L)</td><td></td></tr>`:""}</table>
+     ${sign([["Tổ phối liệu"],["Giám sát phối liệu"],["Thủ kho"],["Phòng R&amp;D"]])}</div></div>`;
+    w.remove();pr(html)}};
 /* ---------- BM.05-QC-QT.03 Biên bản vệ sinh thiết bị khuấy trộn ---------- */
 async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
-  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=withKhacmayDM(D.may&&D.may.length?D.may:MAY_TM);
+  const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=withKhac(mayDM(D.may&&D.may.length?D.may:MAY_TM));
   const tenOf=ma=>{const m=DM.find(x=>x.ma===ma);return m?m.ten:""};
   const now=new Date(),hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
   const tb=p?p.tb.map(t=>Object.assign({},t)):D.tb.map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:1,nuoc:1,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:1,nuoc:0,dm:0}]);
