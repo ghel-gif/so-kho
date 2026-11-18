@@ -513,16 +513,16 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
     const sx=L.map((x,i)=>`<tr><td class="c">2.${i+1}</td><td colspan="4" class="ten"><b>${esc(x.it.ten)}${lotTxt(x)}</b></td><td colspan="2" class="r"><b>${f2(x.lt)}</b></td><td colspan="2"></td><td></td></tr>`).join("")+buoc.map((t,i)=>`<tr><td class="c">2.${L.length+i+1}</td><td colspan="8"><i>${esc(t)}</i></td><td></td></tr>`).join("");
     const html=`<style>
 .p2{font:13pt/1.25 "Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.p2 table{width:calc(100% - 2px);border-collapse:collapse;table-layout:fixed}.p2 td,.p2 th{border:1px solid #000;padding:3px 3px;vertical-align:middle;color:#000;word-wrap:break-word;overflow-wrap:anywhere}
+.p2 table{width:calc(100% - 2px);border-collapse:collapse;table-layout:fixed}.p2 td,.p2 th{border:1px solid #000;padding:3px 3px;vertical-align:middle;color:#000;overflow-wrap:break-word}
 .p2 .h2 td{padding:1px 3px}.p2 .h2 .lg{width:16.3%;text-align:center}.p2 .h2 .lg img{height:15mm;max-width:95%;object-fit:contain}
 .p2 .h2 .tt{text-align:center;font-size:14pt;font-weight:700;background:#f2f2f2}.p2 .h2 .mt{width:23%;font-size:10.5pt;white-space:nowrap;border-top:0;border-bottom:0;height:6mm}
 .p2 .h2 tr:first-child .mt{border-top:1px solid #000}.p2 .h2 tr:last-child .mt{border-bottom:1px solid #000}
 .p2 .st{margin:0;padding:1px 2px;font-size:13pt}.p2 .g{background:#f2f2f2}.p2 .c{text-align:center}.p2 .r{text-align:right;white-space:nowrap}.p2 th{background:#fff;text-align:center;font-weight:700}
 .p2 .i1 td{text-align:center}.p2 .i1 .lb{font-weight:700}.p2 .i1 .kh{font-size:14pt;font-weight:700}.p2 .i1 .sp{font-size:19pt;font-weight:700;padding:4px 3px}.p2 .i1 .hl{font-style:italic}
 .p2 .i2 td{text-align:center;font-weight:700}
-.p2 .nlt{margin-top:5mm}.p2 .nlt th{height:8.5mm}.p2 .nlt td{height:13mm}.p2 .nlt .ma{font-size:10pt;padding:3px 1px;text-align:center}.p2 .nlt .ten{text-align:left}.p2 .nlt tr.bb td{font-weight:700}.p2 .nlt tr.bb .ten{font-weight:400}.p2 .nlt tr.bb .tn{font-weight:700}
+.p2 .nlt{margin-top:5mm}.p2 .nlt th{height:8.5mm}.p2 .nlt td{height:13mm}.p2 .nlt .ma{font-size:9.5pt;padding:3px 1px;text-align:center;overflow-wrap:anywhere}.p2 .nlt .ten{text-align:left;font-size:12pt;line-height:1.2;overflow-wrap:break-word;word-break:normal;hyphens:none}.p2 .nlt th{font-size:12pt;padding:2px 1px}.p2 .nlt .r{font-size:12pt}.p2 .nlt tr.bb td{font-weight:700}.p2 .nlt tr.bb .ten{font-weight:400}.p2 .nlt tr.bb .tn{font-weight:700}
 .p2 .nlt .tg td{height:12mm;font-weight:700}.p2 .nlt .tl td{height:12mm;font-weight:700}.p2 .nlt .nb{border:0}
-.p2 .sxt th{height:11mm}.p2 .sxt td{height:8.2mm}.p2 .sxt .ten{text-align:left}
+.p2 .sxt th{height:11mm}.p2 .sxt td{height:8.2mm}.p2 .sxt .ten{text-align:left;overflow-wrap:break-word;word-break:normal}
 .p2 .kq2{margin-top:4mm;display:flex;justify-content:space-between;align-items:flex-start}.p2 .kq2 td,.p2 .kq2 th{height:8.2mm}
 .p2 .sg2{margin-top:1mm}.p2 .sg2 td{border:0;text-align:center;height:8mm;white-space:nowrap}.p2 .sg2 .dl td{height:13mm;vertical-align:bottom;text-align:left}
 .p2.pb{break-before:page;page-break-before:always}
@@ -530,15 +530,15 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
     <div class="p2">${HD}
      <p class="st"><b>I.Thông tin chung</b></p>
      <table class="i1">${COL}
-      <tr><td>1</td><td colspan="2" class="lb g">Khách hàng</td><td colspan="7" class="kh g">${esc(g("plKH"))}</td></tr>
-      <tr><td>2</td><td colspan="2" class="lb g">Tên sản phẩm</td><td colspan="7" class="sp g">${esc(sp.ten)}</td></tr>
+      <tr><td>1</td><td colspan="2" class="lb">Khách hàng</td><td colspan="7" class="kh">${esc(g("plKH"))}</td></tr>
+      <tr><td>2</td><td colspan="2" class="lb">Tên sản phẩm</td><td colspan="7" class="sp">${esc(sp.ten)}</td></tr>
       <tr><td>3</td><td colspan="2">Hàm lượng đăng ký</td><td colspan="7" class="hl">${esc(g("plHL"))}</td></tr>
       <tr><td>4</td><td colspan="2">Yêu cầu SX</td><td colspan="2" style="border-right:0">${liq?f1(lit):f2(tong)}</td><td colspan="5" style="border-left:0;text-align:left">${liq?"lít":"kg"}</td></tr></table>
      <p class="st"><b>II. Phần dành cho Bộ phận Kế toán kho:</b> (Xuất vật tư, nguyên liệu)</p>
      <table class="i2">${COL}
       <tr><td colspan="3" class="g">Số lô SX</td><td colspan="3">${esc(o.so)}</td><td colspan="2" class="g">Ngày ra lệnh</td><td colspan="2">${dmy(o.ngay)}</td></tr>
       <tr><td colspan="3" class="g">${liq?"Số lượng (lít)":"Số lượng (kg)"}</td><td colspan="3">${liq?f1(lit):f2(tong)}</td><td colspan="2" class="g">Tỷ trọng</td><td colspan="2">${liq?(+o.tyTrong).toFixed(3).replace(".",","):"—"}</td></tr></table>
-     <table class="nlt">${COL}
+     <table class="nlt"><colgroup><col style="width:4.5%"><col style="width:12.5%"><col style="width:27%"><col style="width:8.6%"><col style="width:8%"><col style="width:8.6%"><col style="width:7.4%"><col style="width:7.4%"><col style="width:8%"><col style="width:8%"></colgroup>
       <tr><th rowspan="2">Stt</th><th rowspan="2">Mã NVL/SL</th><th rowspan="2">Tên nguyên liệu</th><th colspan="2">KL SX (kg)</th><th colspan="2">KL ĐK (kg)</th><th rowspan="2">KL CK<br>(kg)</th><th rowspan="2">%w/w</th><th rowspan="2">Hàm lượng<br>(g/l)</th></tr>
       <tr><th>LT</th><th>TT</th><th>PM</th><th>TT</th></tr>${nl}
       <tr class="tg"><td colspan="3" class="g">TỔNG CỘNG (KG)</td><td class="r g">${f2(tong)}</td><td class="g"></td><td class="g"></td><td class="g"></td><td class="g"></td><td class="r g">100,0</td><td class="g"></td></tr>
