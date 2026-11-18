@@ -389,7 +389,7 @@ RC_ = {};
     const vis = items, b = {}, l = {};
     vis.forEach(i => { b[i.ma] = bal[i.ma]; if (lots[i.ma]) l[i.ma] = lots[i.ma]; });
     return { me, items: vis, bal: b, lots: l, nhom: NHOM.filter(n => !me.nhom.length || me.nhom.indexOf(n) >= 0), nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: {},
-      lenh: lenh.map(o => ({ so: o.so, tenSP: (items.find(i => i.ma === o.maSP) || {}).ten || '', ngay: o.ngay, maSP: o.maSP, slDuKien: o.slDuKien, trangThai: o.trangThai, ngayHT: o.ngayHT, slThucTe: o.slThucTe, nguoiLap: o.nguoiLap, nguoiHT: o.nguoiHT, ghiChu: o.ghiChu, khachHang: o.khachHang, nguoiSX: o.nguoiSX, qcSX: o.qcSX, tyTrong: o.tyTrong, loGC: o.loGC, nsxGC: o.nsxGC, loSP: o.loSP, nsxSP: o.nsxSP })),
+      lenh: lenh.map(o => ({ so: o.so, tenSP: (items.find(i => i.ma === o.maSP) || {}).ten || '', ngay: o.ngay, maSP: o.maSP, slDuKien: o.slDuKien, trangThai: o.trangThai, ngayHT: o.ngayHT, slThucTe: o.slThucTe, nguoiLap: o.nguoiLap, nguoiHT: o.nguoiHT, ghiChu: o.ghiChu, khachHang: o.khachHang, nguoiSX: o.nguoiSX, qcSX: o.qcSX, tyTrong: o.tyTrong, loGC: o.loGC, nsxGC: o.nsxGC, loSP: o.loSP, nsxSP: o.nsxSP, tienDo: o.tienDo, tienDoLyDo: o.tienDoLyDo })),
       khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
   }
   return { me, items, bal, lots, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
@@ -909,7 +909,7 @@ function orders_() {
   return rows_(SH.LX).filter(r => str_(r[0])).map(r => ({
     so: str_(r[0]), ngay: str_(r[1]), maSP: str_(r[2]), slDuKien: num_(r[3]), trangThai: str_(r[4]) || 'Đang SX',
     ngayHT: str_(r[5]), slThucTe: num_(r[6]), nguoiLap: str_(r[7]), nguoiHT: str_(r[8]), ghiChu: str_(r[9]),
-    khachHang: str_(r[10]), nguoiSX: str_(r[11]), qcSX: str_(r[12]), tyTrong: num_(r[13]), loGC: str_(r[14]), nsxGC: str_(r[15]), lechOK: lechOf_(r[16])
+    khachHang: str_(r[10]), nguoiSX: str_(r[11]), qcSX: str_(r[12]), tyTrong: num_(r[13]), loGC: str_(r[14]), nsxGC: str_(r[15]), lechOK: lechOf_(r[16]), tienDo: str_(r[17]), tienDoLyDo: str_(r[18])
   }));
 }
 /** Lệnh gia công (số lệnh bắt đầu bằng GC): BTP theo dõi bằng số lô + NSX do người nhập ghi (theo khách), không lấy số lệnh / ngày hoàn thành. */
@@ -942,6 +942,24 @@ function lxInfo_(o, sp) {
   const kh = String(o.khachHang || '').trim().slice(0, 150), nsx = String(o.nguoiSX || '').trim().slice(0, 200), qc = String(o.qcSX || '').trim().slice(0, 80);
   if (sp && sp.nhom === 'Bán thành phẩm' && !kh) throw new Error('Lệnh SX bán thành phẩm: ghi tên khách hàng (tên công ty) để in lên thẻ nhận diện.');
   return [kh, nsx, qc];
+}
+/* Tiến độ lệnh đang SX (giống trạng thái lệnh đóng gói): Chưa sản xuất → Chờ xuất vật tư → Đang sản xuất, có thể Tạm dừng (kèm lý do).
+   Chỉ là nhãn theo dõi — không trừ kho, không khoá gì; trạng thái gốc của lệnh vẫn là Đang SX cho tới khi bấm Hoàn thành. Cột 18–19 trang LenhSX. */
+const LX_TD = ['Chưa sản xuất', 'Chờ xuất vật tư', 'Đang sản xuất', 'Tạm dừng'];
+function setOrderTienDo(a, so, td, lyDo) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
+  td = String(td || '').trim(); lyDo = String(lyDo || '').trim().slice(0, 200);
+  if (LX_TD.indexOf(td) < 0) throw new Error('Trạng thái không hợp lệ.');
+  if (td === 'Tạm dừng' && !lyDo) throw new Error('Ghi lý do tạm dừng (VD: chờ nguyên liệu, hỏng máy).');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const row = orderRow_(so), od = orders_().find(x => x.so === so), lx = sheet_(SH.LX);
+    if (od.trangThai !== 'Đang SX') throw new Error('Lệnh ' + so + ' ' + (od.trangThai === 'Đã huỷ' ? 'đã huỷ' : 'đã hoàn thành') + ' — không đổi được trạng thái sản xuất.');
+    if (!str_(lx.getRange(1, 18).getValue())) lx.getRange(1, 18, 1, 2).setValues([['Tiến độ', 'Lý do tạm dừng']]).setFontWeight('bold');
+    lx.getRange(row, 18, 1, 2).setValues([[td, td === 'Tạm dừng' ? lyDo : '']]);
+    log_(me, 'Trạng thái lệnh SX', so, (od.tienDo || 'Đang sản xuất') + ' → ' + td + (td === 'Tạm dừng' ? ' · ' + lyDo : ''));
+    return { tienDo: td, tienDoLyDo: td === 'Tạm dừng' ? lyDo : '' };
+  } finally { lock.releaseLock(); }
 }
 function updateOrderInfo(a, so, o) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
@@ -1047,7 +1065,7 @@ function createOrder(a, o) {
     }
     const info = lxInfo_(o, spIt), tt = ttIn_(o.tyTrong, spIt, true); lxHead_();
     const gc = isGC_(so) ? gcIn_(o) : ['', ''];
-    sheet_(SH.LX).appendRow([so, o.ngay, o.maSP, sl, 'Đang SX', '', '', me.ten, '', String(o.ghiChu || '').slice(0, 200)].concat(info).concat([tt || '']).concat(gc));
+    sheet_(SH.LX).appendRow([so, o.ngay, o.maSP, sl, 'Đang SX', '', '', me.ten, '', String(o.ghiChu || '').slice(0, 200)].concat(info).concat([tt || '']).concat(gc).concat(['', 'Chưa sản xuất', '']));
     return true;
   } finally { lock.releaseLock(); }
 }

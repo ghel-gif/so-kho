@@ -1541,3 +1541,5 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .tb-top input[type=search]{font-size:15px;padding:10px 12px}
 
 .qa-sv{position:relative;display:inline-flex}.qa-px.sure{width:auto;padding:0 8px;border-radius:12px;background:#c62828;font-weight:700}
+
+.lsx-td{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 2px}.lsx-td .seg{margin:0}.lsx-td #lsxTdLy{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.lsx-td #lsxTdLy[hidden]{display:none}
