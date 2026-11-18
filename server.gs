@@ -945,7 +945,7 @@ function lxInfo_(o, sp) {
 }
 /* Tiến độ lệnh đang SX (giống trạng thái lệnh đóng gói): Chưa sản xuất → Chờ xuất vật tư → Đang sản xuất, có thể Tạm dừng (kèm lý do).
    Chỉ là nhãn theo dõi — không trừ kho, không khoá gì; trạng thái gốc của lệnh vẫn là Đang SX cho tới khi bấm Hoàn thành. Cột 18–19 trang LenhSX. */
-const LX_TD = ['Chưa sản xuất', 'Chờ xuất vật tư', 'Đang sản xuất', 'Tạm dừng'];
+const LX_TD = ['Chờ xuất vật tư', 'Đang sản xuất', 'Tạm dừng'];
 function setOrderTienDo(a, so, td, lyDo) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   td = String(td || '').trim(); lyDo = String(lyDo || '').trim().slice(0, 200);
@@ -1065,7 +1065,7 @@ function createOrder(a, o) {
     }
     const info = lxInfo_(o, spIt), tt = ttIn_(o.tyTrong, spIt, true); lxHead_();
     const gc = isGC_(so) ? gcIn_(o) : ['', ''];
-    sheet_(SH.LX).appendRow([so, o.ngay, o.maSP, sl, 'Đang SX', '', '', me.ten, '', String(o.ghiChu || '').slice(0, 200)].concat(info).concat([tt || '']).concat(gc).concat(['', 'Chưa sản xuất', '']));
+    sheet_(SH.LX).appendRow([so, o.ngay, o.maSP, sl, 'Đang SX', '', '', me.ten, '', String(o.ghiChu || '').slice(0, 200)].concat(info).concat([tt || '']).concat(gc).concat(['', 'Chờ xuất vật tư', '']));
     return true;
   } finally { lock.releaseLock(); }
 }
