@@ -20,11 +20,13 @@
     "Phía Bắc": { ten: "Trung tâm Kiểm định và Khảo nghiệm thuốc BVTV phía Bắc", dc: "7A Phố Lê Văn Hiến, Phường Đông Ngạc, TP. Hà Nội", dt: "0916 993 992 (Anh Nghĩa)", bv: [100, 200], pb: null },
     "SaigonCert": { ten: "Công ty Cổ phần Chứng nhận và Giám định SaigonCert", dc: "69 đường Làng Tăng Phú, Phường Tăng Nhơn Phú, TP. HCM", dt: "0981 977 731 (Kiều Tiên)", bv: null, pb: 500 },
     "Quatest 3": { ten: "Trung tâm Kỹ thuật tiêu chuẩn đo lường chất lượng 3 (QUATEST3)", dc: "1196 đường Ba Tháng Hai, Phường Bình Thới, TP. HCM", dt: "02838 294 274 · 02838 293 012", bv: null, pb: 1000 },
-    "IQC": { ten: "Công ty Cổ phần Chứng nhận và Giám định IQC", dc: "Ô 6 BT 4 Khu đô thị mới Cầu Bươu, Phường Thanh Trì, TP. Hà Nội", dt: "0913 837 110", bv: null, pb: 500 } };
+    "IQC": { ten: "Công ty Cổ phần Chứng nhận và Giám định IQC", dc: "Ô 6 BT 4 Khu đô thị mới Cầu Bươu, Phường Thanh Trì, TP. Hà Nội", dt: "0913 837 110", bv: null, pb: 500 },
+    /* không có trong QC-HD.49 — chỉ có tên đầy đủ do TP. QA/QC cung cấp, chưa có địa chỉ và lượng mẫu */
+    "Vinacontrol": { ten: "Trung tâm phân tích và thử nghiệm 2 - Vinacontrol", dc: "", dt: "", bv: null, pb: null } };
   const MUC = ["cập nhật date mới", "kiểm soát lô", "kiểm tra hàm lượng", "hợp quy", "hợp quy 54°C", "hợp quy 0°C", "độ bền bảo quản 54°C", "nghiên cứu", "điều tra bất thường"];
   /* tên gọi tắt trong sổ cũ (VinaCert, Quatest 3, Phía Nam…) -> đơn vị trong QC-HD.49; sổ, bản in và danh sách chọn hiện tên đầy đủ */
   const labKey = dv => { const f = fold(dv).replace(/[^a-z0-9]+/g, " ").trim(); if (!f) return ""; for (const k in LAB) if (fold(LAB[k].ten) === fold(dv)) return k;
-    return /vinacert/.test(f) ? "VinaCert" : /saigon ?cert/.test(f) ? "SaigonCert" : /quatest ?3|qt ?3/.test(f) ? "Quatest 3" : /\biqc\b/.test(f) ? "IQC" : /phia nam|\bpn\b/.test(f) ? "Phía Nam" : /phia bac|\bpb\b/.test(f) ? "Phía Bắc" : ""; };
+    return /vinacontrol/.test(f) ? "Vinacontrol" : /vinacert/.test(f) ? "VinaCert" : /saigon ?cert/.test(f) ? "SaigonCert" : /quatest ?3|qt ?3/.test(f) ? "Quatest 3" : /\biqc\b/.test(f) ? "IQC" : /phia nam|\bpn\b/.test(f) ? "Phía Nam" : /phia bac|\bpb\b/.test(f) ? "Phía Bắc" : ""; };
   const labOf = dv => LAB[labKey(dv)] || null;
   const dvFull = dv => { const L = labOf(dv); return L ? L.ten : String(dv || ""); };
   const lCua = d => { const L = labOf(d.dv); if (!L) return null; const n = d.loaiMau === "Phân bón" ? L.pb : (L.bv ? L.bv[d.phamVi === "Nhiều chỉ tiêu" ? 1 : 0] : null); if (!n) return ""; const long_ = d.dang === "Lỏng";
@@ -114,7 +116,7 @@
     let slGY = "";
     const cur = () => { const o = {}; w.querySelectorAll("[data-k]").forEach(x => { o[x.dataset.k] = x.value.trim(); }); return o; };
     const up = () => { const o = cur(), L = labOf(o.dv), gy = lCua(o), pb = o.loaiMau === "Phân bón"; w.querySelectorAll("[data-pb]").forEach(x => { x.style.display = pb ? "" : "none"; });
-      const di = w.querySelector("#gmDvI"); di.hidden = !L; if (L) di.innerHTML = `${fold(o.dv) === fold(L.ten) ? "" : "<b>" + E(L.ten) + "</b> · "}${E(L.dc)} · ĐT: ${E(L.dt)}`;
+      const di = w.querySelector("#gmDvI"); di.hidden = !L; di.hidden = !L || (!L.dc && fold(o.dv) === fold(L.ten)); if (L) di.innerHTML = `${fold(o.dv) === fold(L.ten) ? "" : "<b>" + E(L.ten) + "</b> · "}${E([L.dc, L.dt ? "ĐT: " + L.dt : ""].filter(Boolean).join(" · "))}`;
       const si = w.querySelector("#gmSlI"); si.hidden = !L; if (L) si.innerHTML = gy ? `QC-HD.49: gửi ${E(labKey(o.dv))} ${pb ? "phân bón" : "thuốc BVTV, " + o.phamVi.toLowerCase()} — <b>${gy}</b>; mẫu lưu đối chứng chuẩn bị riêng.` : `QC-HD.49 chưa có lượng mẫu ${pb ? "phân bón" : "thuốc BVTV"} cho ${E(labKey(o.dv))} — xác nhận với đơn vị nhận trước khi lấy mẫu.`;
       const sl = g("sl"); if (ed && L && gy != null && (!sl.value.trim() || sl.value.trim() === slGY)) { sl.value = gy; slGY = gy; }
       const t = tenHD(o), tb = w.querySelector("#gmTen"); tb.innerHTML = t ? `<small class="note">Tên mẫu ghi trên nhãn và phiếu yêu cầu (QC-HD.49 mục 5.3):</small><div class="gm-ten-t"><b>${E(t)}</b><button type="button" class="btn small" id="gmCopy">Chép</button></div>` : "";
