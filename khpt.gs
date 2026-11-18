@@ -195,7 +195,8 @@ function webGMDel(a, id) {
 }
 /* bản cứng phiếu kết quả (trung tâm gửi sau bản scan, tối đa 3 bản). v.act:
    nhan {so, ngay}  — tài khoản đang đăng nhập xác nhận đã nhận từ trung tâm
-   giao {cho, so}   — người đang giữ (hoặc Quản lý) ghi giao cho tài khoản khác, chờ người đó xác nhận
+   tuNhan {so}      — người nhận tự chọn số bản và xác nhận đã nhận từ người đang giữ (cách dùng chính); đã xác nhận thì khoá
+   giao {cho, so}   — (giao diện không còn dùng) người đang giữ (hoặc Quản lý) ghi giao cho tài khoản khác, chờ người đó xác nhận
    xn {gid}         — CHỈ người được giao xác nhận đã nhận; đã xác nhận thì khoá
    bo {gid}         — bỏ dòng giao: chưa xác nhận -> người giữ / Quản lý; đã xác nhận -> chỉ Quản lý và không phải chính người nhận
    huy              — huỷ xác nhận nhận từ trung tâm, chỉ khi chưa giao cho ai */
@@ -214,6 +215,10 @@ function webGMBanCung(a, id, v) {
       if (!cho || cho.length > 60) throw new Error('Chọn người nhận là một tài khoản Sổ Kho.'); if (cho === b.nguoi) throw new Error(cho + ' đang giữ bản cứng rồi.');
       if (!(so >= 1 && so <= con)) throw new Error('Chỉ còn ' + con + ' bản để giao.');
       G.push({ id: 'g' + now.getTime().toString(36) + Math.floor(Math.random() * 90 + 10), cho: cho, so: so, ngay: Utilities.formatDate(now, tz_(), 'yyyy-MM-dd'), nguoiGiao: me.ten, luc: khTs_(now), nhan: '' }); b.giao = G; nk = 'Giao ' + so + ' bản cứng cho ' + cho; }
+    else if (act === 'tuNhan') { /* người nhận tự vào chọn số bản và xác nhận đã nhận từ người đang giữ — ghi là đã xác nhận ngay, khoá */
+      const so = Math.floor(Number(v.so)), con = b.so - G.reduce((s, x) => s + (Number(x.so) || 0), 0); if (me.ten === b.nguoi) throw new Error('Bạn là người đang giữ bản cứng.');
+      if (!(so >= 1 && so <= con)) throw new Error(con > 0 ? 'Chỉ còn ' + con + ' bản ở chỗ ' + b.nguoi + '.' : b.nguoi + ' đã giao hết bản cứng.');
+      G.push({ id: 'g' + now.getTime().toString(36) + Math.floor(Math.random() * 90 + 10), cho: me.ten, so: so, ngay: Utilities.formatDate(now, tz_(), 'yyyy-MM-dd'), nguoiGiao: b.nguoi, luc: khTs_(now), nhan: khTs_(now) }); b.giao = G; nk = 'Xác nhận đã nhận ' + so + ' bản cứng từ ' + b.nguoi; }
     else if (act === 'xn' || act === 'bo') { const x = G.filter(y => y.id === String(v.gid || ''))[0]; if (!x) throw new Error('Không tìm thấy dòng giao bản cứng.');
       if (act === 'xn') { if (x.cho !== me.ten) throw new Error('Chỉ ' + x.cho + ' tự xác nhận được.'); if (x.nhan) throw new Error('Đã xác nhận rồi.'); x.nhan = khTs_(now); nk = 'Xác nhận đã nhận ' + x.so + ' bản cứng từ ' + (x.nguoiGiao || b.nguoi); }
       else { if (x.nhan) { if (!ql || x.cho === me.ten) throw new Error(x.cho + ' đã xác nhận nhận bản cứng — không bỏ được.'); } else if (!giu) throw new Error('Chỉ ' + b.nguoi + ' hoặc Quản lý bỏ được.');
