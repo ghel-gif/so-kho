@@ -38,8 +38,8 @@ function dgfGap(D,f){const d=f.d||{},G=[],emp=v=>v===undefined||v===null||String
     if(emp(d.maMay)&&!(d.tb||[]).some(t=>t&&t.ten))G.push("thiết bị đóng gói");
     if(!pos(d.tlThuoc))G.push("TL thuốc chuẩn");if(!pos(d.tMin)||!pos(d.tMax))G.push("dung sai");
     if(!pos(d.klBB))G.push("KL bao bì "+(g?"gói":"chai"));if(!pos(d.dvThung))G.push(g?"số gói/thùng":"số chai/thùng");
-    if(pos(d.dvHop)&&!pos(d.klHop))G.push("KL hộp");if(!pos(d.klThung))G.push("KL thùng carton");
-    if(g?emp(d.nhietEp):emp(d.seal))G.push(g?"nhiệt ép":"công suất seal");return G}
+    if(pos(d.dvHop)&&!pos(d.klHop))G.push("KL hộp");const xo=isXo(D&&D.q); /* đóng xô: không thùng carton, không seal */if(!xo&&!pos(d.klThung))G.push("KL thùng carton");
+    if(!xo&&(g?emp(d.nhietEp):emp(d.seal)))G.push(g?"nhiệt ép":"công suất seal");return G}
   if(/^BM0[46]$/.test(f.loai)){const items=[].concat(...(CR[f.loai]||[]).map(x=>x[1])),n=nsOf(f.loai,d);
     {const M=tbMiss(f.loai,d.tb);if(M.length&&!(!(d.tb||[]).length&&!emp(d.maMay)))G.push(M.join(", ").toLowerCase())}
     (d.rounds||[]).forEach((r,i)=>{if(r.nk)return;const lb=RL[i]||"Lần "+(i+1),m=items.filter(([k,,isV])=>isV?emp((r.v||{})[k]):!(r.c||{})[k]).length,c=(r.kl||[]).filter(v=>!emp(v)).length;
@@ -147,8 +147,8 @@ function f05(D,p,dr){const I=info(D),Q0=I.q,TT0=thU(dr&&dr.thungTT!==undefined?d
   const w=dlg(`<h2>Phiếu thông tin đóng gói thành phẩm (BM.05) · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · mã ${esc(I.maSP)} · BTP ${esc(I.b.lo||"")}${I.liq&&I.tt?" · tỷ trọng "+String(I.tt).replace(".",","):""}. Trọng lượng thuốc chuẩn tự tính từ định lượng ${esc(I.q.luong||"")} ${esc(I.q.dvl||"")}${I.liq?" × tỷ trọng":""}, sửa được.</p>
    <div class="two">${inp("f5Ngay","Ngày lập phiếu",d.ngay,`type="date" ${dis}`)}</div><div class="two">${inp("f5LoB","Số lô BTP",d.loBTP||I.b.lo||"",dis)}${inp("f5NsxB","NSX BTP",String(d.nsxBTP||I.b.nsx||"").slice(0,10),`type="date" ${dis}`)}</div>
    <b style="display:block;margin-top:8px">Thiết bị sản xuất chính</b>${tbHtml(TK,D,d.tb,dis)}
-   <b style="display:block;margin-top:8px">Thông số máy (tham khảo)</b>
-   <div class="two">${TK==="BM05G"?inp("f5Ep","Nhiệt ép (°C)",d.nhietEp,dis):inp("f5Seal","Công suất seal (%)",d.seal,dis)}</div>
+   <b style="display:${KG?"none":"block"};margin-top:8px">Thông số máy (tham khảo)</b>
+   <div class="two"${KG?' style="display:none"':""}>${TK==="BM05G"?inp("f5Ep","Nhiệt ép (°C)",d.nhietEp,dis):inp("f5Seal","Công suất seal (%)",d.seal,dis)}</div>
    <b style="display:block;margin-top:8px">Trọng lượng</b>
    <div class="three" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">${inp("f5Tl",`TL thuốc chuẩn (${uL})`,vU(d.tlThuoc),`type="number" step="any" ${dis}`)}${inp("f5Lo",`Cận dưới (${uL})`,vU(d.tMin!==undefined&&d.tMin!==""?d.tMin:(num(d.ds)>0?Math.round((num(d.tlThuoc)-num(d.ds))*10)/10:"")),`type="number" step="any" ${dis}`)}${inp("f5Hi",`Cận trên (${uL})`,vU(d.tMax!==undefined&&d.tMax!==""?d.tMax:(num(d.ds)>0?Math.round((num(d.tlThuoc)+num(d.ds))*10)/10:"")),`type="number" step="any" ${dis}`)}</div>
    ${I.liq?`<div class="two">${inp("f5Tt","Tỷ trọng BTP (g/ml)",d.tyTrong,`type="number" step="0.001" ${dis}`)}<span></span></div>`:'<input type="hidden" id="f5Tt" value="">' /* hàng rắn (g, kg): không có tỷ trọng */}
@@ -214,7 +214,7 @@ function p05(I,d){const c=c05(d),K=B(),bx=v=>K.box(v),KG=isXo(I.q),u=KG?"XÔ":is
   <table class="t3"><colgroup><col style="width:21%"><col style="width:47%"><col style="width:32%"></colgroup>
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(I.tenSP)}</b></td><td>Mã sản phẩm: <b>${esc(I.maSP)}</b></td></tr>
    <tr><th>THÔNG SỐ MÁY</th><th>${KG?"TRỌNG LƯỢNG XÔ THUỐC (kg)":`TRỌNG LƯỢNG ${u}/GÓI THUỐC (gr)`}</th><th>QUY CÁCH ĐÓNG GÓI</th></tr>
-   <tr><td class="bt b14"><div class="qcd">${(()=>{const U=(v,u)=>v&&!/[°%a-zA-Z]/.test(String(v))?v+" "+u:v,T=isGoi(I.q)?[["Nhiệt ép<sup>(1)</sup>",U(d.nhietEp,"°C")]]:[["Công suất seal<sup>(1)</sup>",U(d.seal,"%")]],F=T.filter(t=>t[1]);return (F.length?F.map(t=>`${t[0]}: <b>${esc(t[1])}</b>`):T.map((t,i)=>`${t[0]}: ……${isGoi(I.q)?" °C":" %"}`)).join("<br>")})()}</div><div class="gc ftn"><i><sup>(1)</sup> Thông số tham khảo, sẽ được điều chỉnh tùy thuộc vào tình hình thực tế</i></div></td>
+   <tr><td class="bt b14"><div class="qcd">${KG?"Đóng xô:<br>không dùng seal":(()=>{const U=(v,u)=>v&&!/[°%a-zA-Z]/.test(String(v))?v+" "+u:v,T=isGoi(I.q)?[["Nhiệt ép<sup>(1)</sup>",U(d.nhietEp,"°C")]]:[["Công suất seal<sup>(1)</sup>",U(d.seal,"%")]],F=T.filter(t=>t[1]);return (F.length?F.map(t=>`${t[0]}: <b>${esc(t[1])}</b>`):T.map((t,i)=>`${t[0]}: ……${isGoi(I.q)?" °C":" %"}`)).join("<br>")})()}</div>${KG?"":`<div class="gc ftn"><i><sup>(1)</sup> Thông số tham khảo, sẽ được điều chỉnh tùy thuộc vào tình hình thực tế</i></div>`}</td>
     <td class="bt b10"><div class="klc">Trọng lượng của thuốc chuẩn: <b>${W(c.t)} ${gr}</b><br>dung sai: <b>${W(c.tMin)}</b><span class="ds">–</span><b>${W(c.tMax)}</b> ${gr}<div class="sep"></div><div class="kl2">Trọng lượng nguyên ${KG?"xô":isGoi(I.q)?"gói thuốc":"chai"} chuẩn<sup>(2)</sup>: <b>${W(c.n)} ${gr}</b><br>dung sai: <b>${W(c.nMin)}</b><span class="ds">–</span><b>${W(c.nMax)}</b> ${gr}</div></div><div class="gc ftn"><i><sup>(2)</sup> Ghi chú:</i><br>${d.loaiBB?`${bx(true)} ${esc(d.loaiBB.toLowerCase())}; KL bao bì: <b>${d.klBB!==""?W(num(d.klBB)):"……"}</b> ${gr}`:BB_LOAI.map(x=>`${bx(false)} ${x.toLowerCase()}; KL bao bì: …… gr`).join("<br>")}</div></td>
     <td>${(()=>{const ul=u.toLowerCase(),tp=num(d.thungPallet),tl=num(d.thungLop),L=num(d.lop),tpx=tp>0?tp:(L>0&&tl>0?L*tl:NaN);
       let xp="……";if(tp>0&&tl>0){const f=Math.floor(tp/tl),r=Math.round((tp-f*tl)*100)/100;xp=`${f} lớp × ${tl} ${KG?"xô":"thùng"}${r>0?`<br>+ 1 lớp lẻ ${r} ${KG?"xô":"thùng"}`:""}`}else if(L>0&&tl>0)xp=`${L} lớp × ${tl} ${KG?"xô":"thùng"}`;
@@ -231,7 +231,7 @@ function p05(I,d){const c=c05(d),K=B(),bx=v=>K.box(v),KG=isXo(I.q),u=KG?"XÔ":is
 /* Thiết bị theo từng dòng (BM.04 / BM.06): máy chính + máy phụ (in date, máy ép / seal, dán nhãn nếu có) */
 /* [khoá, vai trò, lọc máy, bắt buộc, nhãn lựa chọn thủ công] */
 const TBV={BM04:[["chinh","Thiết bị đóng gói chính",m=>m.n==="R"||m.n==="LG",1,TAY],["date","Máy in date",m=>/date/i.test(m._k||m.ten),1],["ep","Máy ép / hàn miệng túi (nếu có)",m=>/hàn miệng|ép|seal/i.test(m._k||m.ten)&&m.n!=="L"]],
-  BM06:[["chinh","Máy chiết rót chính",m=>/chiết/i.test(m._k||m.ten),1,TAY],["seal","Máy seal nắp",m=>/seal/i.test(m._k||m.ten),1],["date","Máy in date",m=>/date/i.test(m._k||m.ten),1],["nhan","Dán nhãn",m=>/dán nhãn/i.test(m._k||m.ten),1,"Dán thủ công"]]};
+  BM06:[["chinh","Máy chiết rót chính",m=>/chiết/i.test(m._k||m.ten),1,TAY],["seal","Máy seal nắp",m=>/seal/i.test(m._k||m.ten),1,"Không dùng seal (đóng xô)"],["date","Máy in date",m=>/date/i.test(m._k||m.ten),1],["nhan","Dán nhãn",m=>/dán nhãn/i.test(m._k||m.ten),1,"Dán thủ công"]]};
 const tbMiss=(loai,tb)=>(TBV[loai]||[]).map((r,i)=>r[3]&&!((tb||[])[i]||{}).ten?r[1]:"").filter(Boolean);
 TBV.BM05G=[TBV.BM04[0]];TBV.BM05C=[TBV.BM06[0]];
 function tbInit(loai,d){if(Array.isArray(d.tb)&&d.tb.length)return d.tb;const codes=String(d.maMay||"").split(/\s*[,;]\s*/).filter(Boolean);
