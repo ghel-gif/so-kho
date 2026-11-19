@@ -1572,7 +1572,14 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .dgbang tr.dgpk td{background:#d9f2e6!important}
 .dgnvh{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.dgnvh>label{flex:0 1 260px;max-width:260px;margin:0}
 /* ô nhập vừa nội dung (fit.js): hàng ô nhập xếp nối nhau, mỗi ô rộng theo nội dung của nó */
-.fitrow{display:flex!important;flex-wrap:wrap;align-items:flex-end;gap:10px 14px}
+.fitrow{display:flex!important;flex-wrap:wrap;align-items:flex-start;gap:10px 14px}
+/* ngắt hàng chủ động giữa các nhóm ô · phần tử đi kèm ô nhập (nút, ô tích, dòng gợi ý) canh theo đáy ô */
+.fitbr{display:none}.fitrow>.fitbr{display:block;flex:0 0 100%;height:0;margin-top:-10px}
+.fitrow>[data-fit="auto"],.fitrow>small[data-fit]{align-self:flex-end}
+.fitrow>label.qa-chk[data-fit],.fitrow>small[data-fit]{padding-bottom:11px;margin:0}
+.fitrow>.btn[data-fit]{margin-bottom:3px}
+.fitrow>small[data-fit]:empty{display:none}
+@media (min-width:601px){.qa-can-g{grid-template-columns:130px 200px auto;justify-content:start}}
 .fitrow>*{min-width:0;box-sizing:border-box}
 .fitrow>label>input,.fitrow>label>select{width:100%}
 input:not(:focus){text-overflow:ellipsis}

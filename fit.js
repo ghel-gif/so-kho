@@ -15,6 +15,7 @@
   function wField(el) {
     const tag = el.tagName, ty = (el.getAttribute("type") || "text").toLowerCase(), p = pad(el);
     if (tag === "TEXTAREA") return null;
+    if (+el.dataset.w > 0) return +el.dataset.w; /* ô đã định sẵn bề rộng (đơn vị, mã ngắn…) */
     if (tag === "SELECT") { let m = 0; for (const o of el.options) m = Math.max(m, tw(el, o.text)); return cl(m + p + 34, 110, 2000); }
     if (ty === "date") return 168; if (ty === "month") return 170; if (ty === "time") return 118; if (ty === "datetime-local") return 220;
     if (ty === "checkbox" || ty === "radio" || ty === "file" || ty === "hidden" || ty === "range") return null;
@@ -33,7 +34,13 @@
     kids.forEach(k => {
       if (getComputedStyle(k).display === "none") return;
       const f = k.tagName === "LABEL" ? k.querySelector("input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea") : null;
-      let w = null; if (f) { w = wField(f); if (w != null) w = Math.max(w, wLabel(k, f) + 2); }
+      /* phần tử tự chọn bề rộng: data-fit="grow" (chiếm phần còn lại của hàng) · "auto" (vừa nội dung) */
+      if (k.dataset.fit === "grow") { k.style.flex = "1 1 300px"; k.style.maxWidth = "100%"; return; }
+      if (k.dataset.fit === "auto") { k.style.flex = "0 0 auto"; k.style.maxWidth = "100%"; return; }
+      if (k.classList.contains("fitbr")) return;
+      let w = null; if (f) { w = wField(f); if (w != null) { w = Math.max(w, wLabel(k, f) + 2);
+        /* dòng gợi ý nhỏ dưới ô: nới ô tới 300px để gợi ý không bị bó thành cột hẹp */
+        const nt = [...k.children].find(c => c.tagName === "SMALL" && c.textContent.trim() && getComputedStyle(c).display !== "none"); if (nt) w = Math.max(w, Math.min(300, tw(nt, nt.textContent.trim()) + 4)); } }
       if (w == null || w >= full - 8) { k.style.flex = "0 0 100%"; k.style.maxWidth = "100%"; k.style.width = ""; }
       else { w = Math.ceil(w); if (k.dataset.fw === String(w)) return; k.dataset.fw = String(w); k.style.flex = "0 0 " + w + "px"; k.style.width = w + "px"; k.style.maxWidth = "100%"; }
     });

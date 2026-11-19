@@ -273,13 +273,14 @@
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}
           ${fld("Nhà cung cấp", inp("ncc", nccFull(d.ncc), 'list="qaNcc"') + dl("qaNcc", NCC_BB.map(x => x[0]).concat(A.map(x => nccFull(x.d.ncc)))), true)}
+          ${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])), true)}<i class="fitbr"></i>
           ${fld(S0.loaiTxt, so !== "CHAI" ? sel("loaiVT", d.loaiVT, S0.loai, { NHAN: "— chọn loại nhãn —", TUI: "— chọn loại bao bì —", THUNG: "— chọn loại thùng / hộp —" }[so]) : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
-          <div class="qa-ma" style="grid-column:1/-1"><label class="qa-mal">Mã bao bì (Danh mục vật tư) * <small class="note">— gõ mã hoặc tên để tìm</small>${inp("ma", d.ma, `autocomplete="off" role="combobox" aria-expanded="false" aria-controls="qaMaS" placeholder="Tìm mã / tên bao bì, VD: alupyr 100 ml · ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}<div class="qa-mas" id="qaMaS" role="listbox" hidden></div></label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<small class="note qa-mah" id="qaMaH"></small></div>
-          ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
-          ${fld(S0.qc, inp("quyCach", d.quyCach, `list="qaQc" autocomplete="off" placeholder="${E(QC_PH[so] || "")}"`) + `<datalist id="qaQc">${qcGoiY(so, d.ma).map(v => `<option value="${E(v)}">`).join("")}</datalist><small class="note" id="qaQcH"></small>`)}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])), true)}
-          ${fld("Số lượng thực tế", inp("sl", d.sl, 'type="number" step="any" min="0"'))}${fld("Đơn vị", inp("dvt", d.dvt, 'list="qaDvt"') + dl("qaDvt", ["cái", "kg", "cuộn", "bó", "thùng"]))}
+          <div class="qa-ma" data-fit="grow" style="grid-column:1/-1"><label class="qa-mal">Mã bao bì (Danh mục vật tư) * <small class="note">— gõ mã hoặc tên để tìm</small>${inp("ma", d.ma, `autocomplete="off" role="combobox" aria-expanded="false" aria-controls="qaMaS" placeholder="Tìm mã / tên bao bì, VD: alupyr 100 ml · ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}<div class="qa-mas" id="qaMaS" role="listbox" hidden></div></label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<small class="note qa-mah" id="qaMaH"></small></div>
+          <i class="fitbr"></i>${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
+          ${fld(S0.qc, inp("quyCach", d.quyCach, `list="qaQc" autocomplete="off" placeholder="${E(QC_PH[so] || "")}"`) + `<datalist id="qaQc">${qcGoiY(so, d.ma).map(v => `<option value="${E(v)}">`).join("")}</datalist><small class="note" id="qaQcH"></small>`)}<i class="fitbr"></i>
+          ${fld("Số lượng thực tế", inp("sl", d.sl, 'type="number" step="any" min="0"'))}${fld("Đơn vị", inp("dvt", d.dvt, 'list="qaDvt" data-w="96"') + dl("qaDvt", ["cái", "kg", "cuộn", "bó", "thùng"]))}
           ${fld("Tình trạng khi nhận", inp("tinhTrangKho", d.tinhTrangKho, 'list="qaTTK"') + dl("qaTTK", ["Bình thường", "Móp / méo", "Ướt", "Thiếu số lượng", "Rách bao gói"]))}
-          <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
+          <label class="qa-chk" data-fit="auto"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
           ${nkHtml()}
         </div></fieldset>
         <div class="qa-anh"><div class="qa-anh-h"><b>📷 Ảnh bao bì</b><small id="qaAnhS"></small></div>
@@ -287,8 +288,8 @@
           ${canEd ? `<div class="qa-anh-b"><label class="btn small"><input type="file" accept="${ACC}" capture="environment" multiple hidden data-anh>📷 Chụp ảnh</label><label class="btn small"><input type="file" accept="${ACC}" multiple hidden data-anh>🖼 Chọn ảnh có sẵn</label><span class="qa-anh-tip">hoặc <b>kéo thả</b> ảnh vào đây · <b>Ctrl+V</b> để dán ảnh đã copy</span></div>` : ""}<small class="note" id="qaAnhN"></small></div>
         <fieldset class="qa-fs" ${ro}><legend>Kiểm tra (${S0.hd})</legend><div class="two qa-g">
           ${canEd ? `<div class="qa-quick" style="grid-column:1/-1"><button type="button" class="btn ok" data-a="all">✓ Đạt hết</button><span class="note">Bấm khi lô không có lỗi: điền tất cả tiêu chí đạt, 0 lỗi, cỡ mẫu theo ${S0.hd}, kết luận Đạt. Có lỗi thì sửa riêng ô đó.</span></div>` : ""}
-          ${fld("Ngày kiểm tra", inp("ngayKT", d.ngayKT, 'type="date"'))}<div class="qa-pkw" style="grid-column:1/-1"><span class="qa-pkl">Người kiểm mẫu</span>${userSel("nguoiKT", d.nguoiKT)}</div>
-          ${fld("Cỡ mẫu kiểm tra", inp("soMau", d.soMau, 'type="number" min="0" step="1"') + `<small class="note" id="qaMauG">${E(MAU[so](+d.sl || 0) ? "Theo " + S0.hd + ": " + MAU[so](+d.sl || 0) : (+d.sl ? "Cỡ lô " + N(d.sl) + ": ngoài bảng lấy mẫu của " + S0.hd : ""))}</small>`, true)}
+          ${fld("Ngày kiểm tra", inp("ngayKT", d.ngayKT, 'type="date"'))}          ${fld("Cỡ mẫu kiểm tra", inp("soMau", d.soMau, 'type="number" min="0" step="1"'))}<small class="note" id="qaMauG" data-fit="grow">${E(MAU[so](+d.sl || 0) ? "Theo " + S0.hd + ": " + MAU[so](+d.sl || 0) : (+d.sl ? "Cỡ lô " + N(d.sl) + ": ngoài bảng lấy mẫu của " + S0.hd : ""))}</small><i class="fitbr"></i>
+          <div class="qa-pkw" style="grid-column:1/-1"><span class="qa-pkl">Người kiểm mẫu</span>${userSel("nguoiKT", d.nguoiKT)}</div>
           ${S0.ct.map(([k, t, o]) => fld(t, sel(k, d[k], o))).join("")}
           ${fld("Số lỗi nặng", inp("loiNang", d.loiNang, 'type="number" min="0" step="1"'))}${fld("Số lỗi nhẹ", inp("loiNhe", d.loiNhe, 'type="number" min="0" step="1"'))}
           <p class="note" style="grid-column:1/-1;margin:0">Lỗi nặng: ${E(S0.nang)}. · Lỗi nhẹ: ${E(S0.nhe)}.</p>
@@ -296,11 +297,11 @@
             <div class="qa-can-g">${fld("Số túi cân", inp("canSo", d.canSo || "10", 'type="number" min="1" step="1" inputmode="numeric"'))}${fld("Tổng khối lượng cân (g)", inp("canKL", d.canKL, 'type="number" min="0" step="any" inputmode="decimal" placeholder="VD 123,5"'))}<div class="qa-can-tb"><span>TB 1 túi</span><b id="qaTlTui">—</b></div></div>
             <small class="note qa-can-ss" id="qaCanSS"></small>
             <small class="note" id="qaCanQC"></small></div>` : ""}
-          ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="5" placeholder="Mô tả lỗi: lỗi gì, ở đâu, bao nhiêu cái, mức độ… — ô tự giãn khi ghi dài">${E(d.ghiChu || "")}</textarea>`, true)}
+          ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="2" placeholder="Mô tả lỗi: lỗi gì, ở đâu, bao nhiêu cái, mức độ… — ô tự giãn khi ghi dài">${E(d.ghiChu || "")}</textarea>`, true)}
           ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}" data-opt`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
           <div style="grid-column:1/-1"><b>Kết luận</b> <span class="qa-kl">${OKV.map(v => `<button type="button" class="btn small${d.ketLuan === v ? (v === "Đạt" ? " ok" : " bad") : ""}" data-kl="${v}" ${ro}>${v}</button>`).join(" ")}</span>
             <small class="note" id="qaGY">${g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý."}</small></div>
-          ${fld(so === "NHAN" ? "Phiếu yêu cầu xử lý SPKPH" : so === "TUI" ? "Yêu cầu xử lý SP KPH" : "Phiếu yêu cầu xử lý SPKPH", inp("ycXuLy", d.ycXuLy, 'placeholder="số phiếu KPH (nếu có)"') + (r && canEd ? ` <button type="button" class="btn small" id="qaMkK">Lập phiếu KPH</button>` : ""), true)}
+          ${fld(so === "NHAN" ? "Phiếu yêu cầu xử lý SPKPH" : so === "TUI" ? "Yêu cầu xử lý SP KPH" : "Phiếu yêu cầu xử lý SPKPH", inp("ycXuLy", d.ycXuLy, 'placeholder="số phiếu KPH (nếu có)"'))}${r && canEd ? `<button type="button" class="btn small" id="qaMkK" data-fit="auto">Lập phiếu KPH</button>` : ""}
         </div></fieldset>
         <fieldset class="qa-fs" ${tp && !(r && r.xoa) ? "" : "disabled"}><legend>Xác nhận</legend><div class="two qa-g">
           ${fld("Xác nhận của quản lý phòng QC (TP. QA/QC)", inp("xnQL", d.xnQL, 'list="qaXN" data-opt') + dl("qaXN", XN))}
