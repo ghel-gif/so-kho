@@ -233,8 +233,11 @@ const sign=L=>`<table class="sg"><tr>${L.map(x=>`<td><b>${x[0]}</b><br><i>(Ký v
 
 /* Nút chung cho BM.06 / BM.08: Đóng · Lưu (phiếu mới) · Cập nhật (phiếu đã lưu) · In (chỉ in bản đã lưu) */
 const btn4=(canW,saved)=>`<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${canW?`<button class="btn" type="button" data-x="save"${saved?" disabled":""}>Lưu</button><button class="btn" type="button" data-x="upd"${saved?"":" disabled"}>Cập nhật</button>`:""}<button class="btn primary" type="button" data-x="in"${canW&&!saved?" disabled":""}>In</button>`;
-function btnState(w,st){const q=x=>w.querySelector('[data-x="'+x+'"]');if(q("save"))q("save").disabled=st.saved;if(q("upd"))q("upd").disabled=!st.saved;if(q("in"))q("in").disabled=st.canW&&!st.saved}
-function btnWire(w,st,save,print){w.addEventListener("input",()=>{st.dirty=true});w.addEventListener("change",()=>{st.dirty=true});
+function btnState(w,st){const q=x=>w.querySelector('[data-x="'+x+'"]');if(q("save"))q("save").disabled=st.saved;/* 19/11/2026 (theo anh Ghel): "Cập nhật" chỉ hiện khi phiếu đã lưu VÀ đang có thay đổi chưa lưu; bấm xong thì ẩn, sửa gì đó mới hiện lại */
+  if(q("upd")){const on=!!(st.saved&&st.dirty);q("upd").disabled=!on;q("upd").hidden=!on;q("upd").classList.toggle("primary",on)}if(q("in"))q("in").disabled=st.canW&&!st.saved}
+function btnWire(w,st,save,print){const dz=()=>{if(!st.dirty){st.dirty=true;btnState(w,st)}};w.addEventListener("input",dz);w.addEventListener("change",dz);
+  /* nút trong phiếu (✓ Đạt hết, chọn thiết bị, thêm / xoá dòng…) đổi dữ liệu mà không phát sự kiện nhập → coi như có sửa */
+  w.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button,[role=button],.pk,.chip");if(b&&!b.hasAttribute("data-x")&&w.contains(b))dz()});btnState(w,st);
   w.querySelectorAll("[data-x]").forEach(b=>b.onclick=async()=>{const x=b.dataset.x;if(x==="close")return w.remove();
     if(x==="in"){if(st.canW&&st.dirty)return toast("Có thay đổi chưa lưu — bấm Cập nhật trước khi in.");return print()}
     b.disabled=true;try{const ok=await save();if(ok!==false){st.saved=true;st.dirty=false;toast(x==="upd"?"Đã cập nhật":"Đã lưu")}}catch(e){handleErr(e)}btnState(w,st)})}
