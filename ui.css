@@ -1571,7 +1571,8 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .dgns2{display:flex;flex-direction:column;gap:8px}.dgpv{border:1px solid var(--line,#d0d7de);border-radius:10px;padding:7px 10px}.dgpv>summary{cursor:pointer}
 .dgbang tr.dgpk td{background:#d9f2e6!important}
 .dgnvh{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.dgnvh>label{flex:0 1 260px;max-width:260px;margin:0}
-/* ô nhập vừa nội dung (fit.js): chữ dài hơn ô thì hiện … khi không gõ; ô ngày / ô số đứng một mình không kéo giãn hết hàng */
+/* ô nhập vừa nội dung (fit.js): hàng ô nhập xếp nối nhau, mỗi ô rộng theo nội dung của nó */
+.fitrow{display:flex!important;flex-wrap:wrap;align-items:flex-end;gap:10px 14px}
+.fitrow>*{min-width:0;box-sizing:border-box}
+.fitrow>label>input,.fitrow>label>select{width:100%}
 input:not(:focus){text-overflow:ellipsis}
-.cfm-box>label>input[type=date],.cfm-box>label>input[type=number],.cfm-box>label>input[type=month],.cfm-box>label>input[type=time]{max-width:240px}
-label[data-fit]{min-width:0}
