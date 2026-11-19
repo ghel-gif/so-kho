@@ -23,7 +23,7 @@ function info(D){const o=D.o,q=D.q||{},sp=itemBy(o.maSP)||{ten:o.maSP},b=D.btp[0
   const B_=[];(D.btp||[]).forEach(x=>{if(x&&x.lo&&!B_.some(y=>y.lo===x.lo&&y.ma===x.ma))B_.push(x)});
   return {B:B_,nhieuLo:B_.length>1,loAll:B_.map(x=>x.lo).join(", "),o,q,sp,b,X,liq,tt,thuoc,tenSP:(q.sp?q.sp+(q.quyCach?" – "+(/xô/i.test((q.loai||"")+" "+q.quyCach)?qcKg(q.quyCach):q.quyCach):""):sp.ten),maSP:q.nhan||o.maSP}}
 /* số lô BTP ghi trên phiếu: phiếu chưa sửa tay (trống hoặc đang là lô đầu) mà lệnh có nhiều lô → ghi đủ các lô */
-const loOf=(I,d)=>I.nhieuLo&&(!d.loBTP||d.loBTP===I.b.lo)?I.loAll:(d.loBTP||I.b.lo||""),loTD=(I,d)=>I.nhieuLo&&loOf(I,d)===I.loAll;
+const loOf=(I,d)=>I.nhieuLo&&(!d.loBTP||I.B.some(x=>x.lo===String(d.loBTP).trim()))?I.loAll:(d.loBTP||I.b.lo||""), /* phiếu đang ghi đúng 1 trong các lô của lệnh (lô đầu hay lô sau) cũng tính là chưa sửa tay */loTD=(I,d)=>I.nhieuLo&&loOf(I,d)===I.loAll;
 const loNote=I=>I.nhieuLo?`<p class="note" style="margin:2px 0 4px">Lệnh dùng <b>${I.B.length} lô BTP</b>: ${I.B.map(x=>`<b>${esc(x.lo)}</b>${x.nsx?" (NSX "+dmy(String(x.nsx).slice(0,10))+(+x.kg>0?", "+f2(+x.kg)+" kg":"")+")":""}`).join(" · ")}. Phiếu in ghi đủ các lô.</p>`:"";
 const b05=D=>(D.forms||[]).filter(f=>f.loai==="BM05").pop()||null;
 
@@ -151,7 +151,7 @@ function f05(D,p,dr){const I=info(D),Q0=I.q,TT0=thU(dr&&dr.thungTT!==undefined?d
   /* phiếu đang để trống KL thùng / hộp rỗng (kể cả phiếu đã lưu trước khi có số cân): điền luôn số cân gần nhất — của mã hàng này, hoặc của mã hàng khác dùng cùng mã thùng / mã hộp */
   if(can.phieu()){[["klThung","klThung"],["klHop","klHop"]].forEach(([k,f])=>{if(!(num(d[f])>0)){const x=cbbLastX(I.q,k);if(x&&x.v>0&&(k!=="klHop"||+I.q.dvHop>0))d[f]=x.v}})}
   d.tb=tbInit(TK,d);
-  const w=dlg(`<h2>Phiếu thông tin đóng gói thành phẩm (BM.05) · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · mã ${esc(I.maSP)} · BTP ${esc(I.nhieuLo?I.loAll:I.b.lo||"")}${I.liq&&I.tt?" · tỷ trọng "+String(I.tt).replace(".",","):""}. Trọng lượng thuốc chuẩn tự tính từ định lượng ${esc(I.q.luong||"")} ${esc(I.q.dvl||"")}${I.liq?" × tỷ trọng":""}, sửa được.</p>
+  const w=dlg(`<h2>Phiếu thông tin đóng gói thành phẩm (BM.05) · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · mã ${esc(I.maSP)} · BTP ${esc(I.nhieuLo?I.loAll:I.b.lo||"")}${I.liq&&I.tt?" · tỷ trọng "+String(I.tt).replace(".",","):""}. Trọng lượng thuốc chuẩn tự tính từ định lượng ${KG&&/^g/i.test(I.q.dvl||"")&&+I.q.luong>=1000?String(+I.q.luong/1000).replace(".",",")+" kg":esc(I.q.luong||"")+" "+esc(I.q.dvl||"")}${I.liq?" × tỷ trọng":""}, sửa được.</p>
    <div class="two">${inp("f5Ngay","Ngày lập phiếu",d.ngay,`type="date" ${dis}`)}</div><div class="two">${inp("f5LoB","Số lô BTP",loOf(I,d),dis)}${inp("f5NsxB","NSX BTP",String(d.nsxBTP||I.b.nsx||"").slice(0,10),`type="date" ${dis}`)}</div>${loNote(I)}
    <b style="display:block;margin-top:8px">Thiết bị sản xuất chính</b>${tbHtml(TK,D,d.tb,dis)}
    <b style="display:${KG?"none":"block"};margin-top:8px">Thông số máy (tham khảo)</b>
