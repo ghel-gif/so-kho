@@ -185,7 +185,7 @@
     /* khớp theo số lô; thêm điều kiện cùng sản phẩm (cùng mã, hoặc tên mẫu có chữ đầu nằm trong tên vật tư) để lô tên chung chung như "Nhập khẩu" không bắt nhầm mẫu của sản phẩm khác */
     const k = key(l.lo), tn = fold(it.ten), cung = r => r.d.ma ? r.d.ma === it.ma : (w => !w || tn.includes(w))((fold(r.d.ten).split(/\s+/).find(x => x.length >= 3) || ""));
     const L = live().filter(r => k && (key(r.d.lo) === k || key(r.d.nguon) === k) && cung(r)).sort((a, c) => String(c.d.ngay).localeCompare(String(a.d.ngay)));
-    el.innerHTML = `<div class="gm-lot"><b>Gửi mẫu KTCL</b>${L.length ? L.map(r => `<div class="gm-lot-r" data-id="${E(r.id)}">${D(r.d.ngay)} · ${E(dvFull(r.d.dv))}${r.d.mucDich ? " · " + E(r.d.mucDich) : ""}${r.d.soHS ? " · " + E(r.d.soHS) : ""} ${kqChip(r)}</div>`).join("") : '<span class="note"> chưa gửi mẫu nào của lô này</span>'}${QC() ? '<button type="button" class="btn small" id="gmLotNew">+ Gửi mẫu lô này</button>' : ""}</div>`;
+    el.innerHTML = `<div class="gm-lot"><b>Gửi mẫu</b>${L.length ? L.map(r => `<div class="gm-lot-r" data-id="${E(r.id)}">${D(r.d.ngay)} · ${E(dvFull(r.d.dv))}${r.d.mucDich ? " · " + E(r.d.mucDich) : ""}${r.d.soHS ? " · " + E(r.d.soHS) : ""} ${kqChip(r)}</div>`).join("") : '<span class="note"> chưa gửi mẫu nào của lô này</span>'}${QC() ? '<button type="button" class="btn small" id="gmLotNew">+ Gửi mẫu lô này</button>' : ""}</div>`;
     el.querySelectorAll("[data-id]").forEach(x => x.onclick = e => { e.stopPropagation(); gmDlg(live().find(r => r.id === x.dataset.id)); });
     const nb = el.querySelector("#gmLotNew"); if (nb) nb.onclick = e => { e.stopPropagation(); gmDlg(null, { ten: it.ten, ma: it.ma, lo: l.lo, nsx: String(l.nsx || "").slice(0, 10), nguon: l.lo }); };
   };
