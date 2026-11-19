@@ -268,11 +268,11 @@
         ${locked ? `<p class="note" style="background:#e8f5e9;padding:6px 8px;border-radius:6px">✓ TP. QA/QC đã xác nhận (${E(d.xnQLNguoi || "")}${d.xnQLLuc ? " · " + E(d.xnQLLuc) : ""}) — chỉ xem.</p>` : ""}
         <fieldset class="qa-fs" ${ro}><legend>Quản lý kho — vật tư về</legend><div class="two qa-g">
           ${fld("Ngày nhập", inp("ngayNhap", d.ngayNhap, 'type="date"'))}
-          ${fld("Nhà cung cấp", inp("ncc", nccFull(d.ncc), 'list="qaNcc"') + dl("qaNcc", NCC_BB.map(x => x[0]).concat(A.map(x => nccFull(x.d.ncc)))))}
+          ${fld("Nhà cung cấp", inp("ncc", nccFull(d.ncc), 'list="qaNcc"') + dl("qaNcc", NCC_BB.map(x => x[0]).concat(A.map(x => nccFull(x.d.ncc)))), true)}
           ${fld(S0.loaiTxt, so !== "CHAI" ? sel("loaiVT", d.loaiVT, S0.loai, { NHAN: "— chọn loại nhãn —", TUI: "— chọn loại bao bì —", THUNG: "— chọn loại thùng / hộp —" }[so]) : inp("loaiVT", d.loaiVT, 'list="qaLoai"') + dl("qaLoai", S0.loai.concat(A.filter(x => x.loai === so).map(x => x.d.loaiVT))))}
           <div class="qa-ma" style="grid-column:1/-1"><label class="qa-mal">Mã bao bì (Danh mục vật tư) * <small class="note">— gõ mã hoặc tên để tìm</small>${inp("ma", d.ma, `autocomplete="off" role="combobox" aria-expanded="false" aria-controls="qaMaS" placeholder="Tìm mã / tên bao bì, VD: alupyr 100 ml · ${E((BB_PRE[so] || ["BB."])[0])}…" data-need`)}<div class="qa-mas" id="qaMaS" role="listbox" hidden></div></label>${canEd ? '<button type="button" class="btn" id="qaMaNew">＋ Ghi mã mới</button>' : ""}<small class="note qa-mah" id="qaMaH"></small></div>
           ${fld(S0.ten, inp("ten", d.ten, 'list="qaTen"') + dl("qaTen", A.filter(x => x.loai === so).map(x => x.d.ten)), true)}
-          ${fld(S0.qc, inp("quyCach", d.quyCach, `list="qaQc" autocomplete="off" placeholder="${E(QC_PH[so] || "")}"`) + `<datalist id="qaQc">${qcGoiY(so, d.ma).map(v => `<option value="${E(v)}">`).join("")}</datalist><small class="note" id="qaQcH"></small>`)}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])))}
+          ${fld(S0.qc, inp("quyCach", d.quyCach, `list="qaQc" autocomplete="off" placeholder="${E(QC_PH[so] || "")}"`) + `<datalist id="qaQc">${qcGoiY(so, d.ma).map(v => `<option value="${E(v)}">`).join("")}</datalist><small class="note" id="qaQcH"></small>`)}${fld("Nhà phân phối", inp("npp", d.npp, 'list="qaNpp" data-opt placeholder="nếu có"') + dl("qaNpp", A.map(x => x.d.npp).concat(S.chuHang || [])), true)}
           ${fld("Số lượng thực tế", inp("sl", d.sl, 'type="number" step="any" min="0"'))}${fld("Đơn vị", inp("dvt", d.dvt, 'list="qaDvt"') + dl("qaDvt", ["cái", "kg", "cuộn", "bó", "thùng"]))}
           ${fld("Tình trạng khi nhận", inp("tinhTrangKho", d.tinhTrangKho, 'list="qaTTK"') + dl("qaTTK", ["Bình thường", "Móp / méo", "Ướt", "Thiếu số lượng", "Rách bao gói"]))}
           <label class="qa-chk"><input type="checkbox" data-k="gap"${d.gap ? " checked" : ""}> Hàng gấp — báo kết quả trong 60 phút</label>
@@ -490,7 +490,7 @@
     const d = r ? Object.assign({}, r.d) : { duKien: ngay5 || today(), dvt: "cái" }, ed = QC() && !(r && r.xoa);
     const w = dlg(r ? "Kế hoạch giao" : "Thêm kế hoạch giao (BM.05)", `${delNote(r)}<fieldset class="qa-fs" ${ed ? "" : "disabled"}><div class="two qa-g">
       ${fld("Ngày dự kiến giao", inp("duKien", d.duKien, 'type="date"'))}${fld("Giờ", inp("gio", d.gio, 'type="time"'))}
-      ${fld("Nhà cung cấp", inp("ncc", nccFull(d.ncc), 'list="qaNcc2"') + dl("qaNcc2", NCC_BB.map(x => x[0]).concat(live(R).map(x => nccFull(x.d.ncc)))))}${fld("Tên hàng", inp("ten", d.ten))}
+      ${fld("Nhà cung cấp", inp("ncc", nccFull(d.ncc), 'list="qaNcc2"') + dl("qaNcc2", NCC_BB.map(x => x[0]).concat(live(R).map(x => nccFull(x.d.ncc)))), true)}${fld("Tên hàng", inp("ten", d.ten))}
       ${fld("Đơn vị", inp("dvt", d.dvt))}${fld("Số lượng", inp("sl", d.sl, 'type="number" step="any" min="0"'))}
       ${fld("Ghi chú", inp("ghiChu", d.ghiChu), true)}</div></fieldset>
       ${acts(r, ed, ed && canRes(r))}`);
