@@ -23,8 +23,8 @@
     "IQC": { ten: "Công ty Cổ phần Chứng nhận và Giám định IQC", dc: "Ô 6 BT 4 Khu đô thị mới Cầu Bươu, Phường Thanh Trì, TP. Hà Nội", dt: "0913 837 110", bv: null, pb: 500 },
     /* không có trong QC-HD.49 — chỉ có tên đầy đủ do TP. QA/QC cung cấp, chưa có địa chỉ và lượng mẫu */
     "Vinacontrol": { ten: "Trung tâm phân tích và thử nghiệm 2 - Vinacontrol", dc: "", dt: "", bv: null, pb: null } };
-  /* 19/11/2026 (theo anh Ghel): mục đích chỉ còn vài lựa chọn cố định (theo QC-HD.49 + "cập nhật date mới" đang dùng nhiều trong sổ); dòng cũ ghi khác thì giữ nguyên chữ cũ */
-  const MUC = ["Kiểm soát lô", "Cập nhật date mới", "Hợp quy", "Độ bền bảo quản", "Nghiên cứu", "Điều tra bất thường"];
+  /* 19/11/2026 (theo anh Ghel): mục đích chỉ còn vài lựa chọn cố định (5 mục theo QC-HD.49; đã bỏ "Cập nhật date mới"); dòng cũ ghi khác thì giữ nguyên chữ cũ */
+  const MUC = ["Kiểm soát lô", "Hợp quy", "Độ bền bảo quản", "Nghiên cứu", "Điều tra bất thường"];
   /* tên gọi tắt trong sổ cũ (VinaCert, Quatest 3, Phía Nam…) -> đơn vị trong QC-HD.49; sổ, bản in và danh sách chọn hiện tên đầy đủ */
   const labKey = dv => { const f = fold(dv).replace(/[^a-z0-9]+/g, " ").trim(); if (!f) return ""; for (const k in LAB) if (fold(LAB[k].ten) === fold(dv)) return k;
     return /vinacontrol/.test(f) ? "Vinacontrol" : /vinacert/.test(f) ? "VinaCert" : /saigon ?cert/.test(f) ? "SaigonCert" : /quatest ?3|qt ?3/.test(f) ? "Quatest 3" : /\biqc\b/.test(f) ? "IQC" : /phia nam|\bpn\b/.test(f) ? "Phía Nam" : /phia bac|\bpb\b/.test(f) ? "Phía Bắc" : ""; };
