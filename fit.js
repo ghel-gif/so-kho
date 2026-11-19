@@ -14,7 +14,7 @@
   function cell(el) { let c = el.closest("label") || el; const p = c.parentElement; if (!p) return null; const cs = getComputedStyle(p); if (cs.display !== "grid" && cs.display !== "inline-grid") return null;
     const cols = cs.gridTemplateColumns.split(" ").filter(x => x && x !== "none").length; return cols >= 2 ? c : null; }
   function fitOne(el) {
-    if (!TXT(el) || el.disabled && !el.value) return; const cw = el.clientWidth; if (!cw) return; /* ô ẩn / chưa vẽ */
+    if (!TXT(el) || el.disabled && !el.value) return; const cw = el.clientWidth; if (cw < 40 || !el.offsetParent) return; /* ô ẩn / chưa vẽ / đang thu nhỏ bất thường */
     const t = textOf(el); if (!t) { if (el.dataset.fitT) { el.removeAttribute("title"); delete el.dataset.fitT; } return; }
     const need = wOf(el, t);
     if (need > cw + 1) { const c = cell(el); if (c && !c.dataset.fit && c.style.gridColumn !== "1 / -1") { c.dataset.fit = "1"; c.style.gridColumn = "1 / -1"; return; } /* đã hết hàng mà vẫn thiếu → gợi ý đủ nội dung */
@@ -22,7 +22,7 @@
     else if (el.dataset.fitT) { el.removeAttribute("title"); delete el.dataset.fitT; }
   }
   let tm = 0;
-  function run() { tm = 0; if (document.hidden) return; const A = document.querySelectorAll("input, select"); for (let i = 0; i < A.length; i++) { try { fitOne(A[i]); } catch (e) {} } }
+  function run() { tm = 0; if (document.hidden || !window.innerWidth || window.innerWidth < 200) return; /* cửa sổ đang ẩn: số đo không tin được */ const A = document.querySelectorAll("input, select"); for (let i = 0; i < A.length; i++) { try { fitOne(A[i]); } catch (e) {} } }
   const later = () => { if (!tm) tm = setTimeout(run, 160); };
   document.addEventListener("input", e => { const el = e.target; if (el && el.matches && el.matches("input, select")) later(); }, true);
   document.addEventListener("change", later, true);
