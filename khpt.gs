@@ -230,6 +230,18 @@ function webGMBanCung(a, id, v) {
     return { id: str_(R[i][0]), d: d, nguoi: str_(R[i][3]), luc: khTs_(R[i][4]), xoa: false, sua: me.ten };
   } finally { lock.releaseLock(); }
 }
+/* đổi hàng loạt mục đích KTCL trong sổ gửi mẫu (chỉ Quản lý): ids = danh sách ID dòng cần đổi, moi = mục đích mới. Chỉ sửa trường mucDich. */
+function webGMMucDoi(a, ids, moi) {
+  const me = auth_(a, [ROLES.QL]); moi = String(moi || '').trim().slice(0, 120); if (!moi) throw new Error('Thiếu mục đích mới.'); const S_ = {}; (ids || []).forEach(x => { S_[String(x)] = 1; });
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_(GM_SH), R = sh ? rows_(GM_SH) : []; let n = 0; const cu = {};
+    R.forEach((r, i) => { if (!S_[str_(r[0])]) return; let d; try { d = JSON.parse(str_(r[2]) || '{}'); } catch (e) { return; } if (String(d.mucDich || '') === moi) return;
+      cu[String(d.mucDich || '')] = (cu[String(d.mucDich || '')] || 0) + 1; d.mucDich = moi; sh.getRange(i + 2, 3).setValue(JSON.stringify(d)); n++; });
+    if (n) log_(me, 'Sổ gửi mẫu KTCL', 'Đổi mục đích hàng loạt', n + ' dòng → ' + moi + ' (từ: ' + Object.keys(cu).map(x => x + ' ' + cu[x]).join('; ').slice(0, 600) + ')');
+    return { n: n, cu: cu };
+  } finally { lock.releaseLock(); }
+}
 /* nhập sổ Excel cũ (1 lần): bỏ qua dòng đã có (trùng ngày + tên + nguồn gốc + đơn vị + mục đích + mã hồ sơ) — chỉ Quản lý */
 function webGMNhap(a, L) {
   const me = auth_(a, [ROLES.QL]); L = L || []; const now = new Date();

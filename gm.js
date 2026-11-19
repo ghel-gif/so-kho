@@ -111,18 +111,23 @@
     const f = (k, lb, at, full) => `<label${full ? ' style="grid-column:1/-1"' : ""}>${lb}<input data-k="${k}" value="${E(d[k] ?? "")}" ${at || ""} ${dis}></label>`;
     w.innerHTML = `<div class="cfm-box kh-dlg"><h2>${moi ? "Ghi gửi mẫu kiểm tra chất lượng" : "Mẫu gửi KTCL · " + E(d.ten)}</h2>${moi ? '<p class="note">Theo QC-HD.49. Khi có kết quả, bấm vào dòng mẫu trong sổ để ghi mã số hồ sơ và kết quả.</p>' : ""}
       ${moi && ed ? `<label>Chọn lô trên sổ kho <small class="note">— gõ tên, mã hoặc số lô; mẫu không thuộc lô nào (mẫu PTN, mẫu mua…) thì bỏ qua</small><input id="gmLot" list="gmLotL" placeholder="VD: 2607.089, us-sinate…" data-opt autocomplete="off"></label>${dl("gmLotL", lots().map(x => x.lo + " · " + x.ten + " · " + x.ma))}` : ""}
-      <div class="two qa-g">${f("ngay", "Ngày gửi mẫu", 'type="date"')}${sel("loaiMau", "Loại mẫu", ["Thuốc BVTV", "Phân bón"])}
+      ${moi ? "" : `<details class="gm-info"><summary><b>Thông tin mẫu và gửi đi</b> <span class="note">— ${E(d.dv)} · gửi ${D(d.ngay)}${d.sl ? " · " + E(d.sl) : ""} · bấm để xem / sửa</span></summary>`}
+      <fieldset class="qa-fs"><legend>Mẫu</legend><div class="two qa-g">
         ${f("ten", "Tên sản phẩm <small class=\"note\">— đúng tên trên TCCS / hồ sơ đăng ký, không viết tắt</small>", "", true)}
         ${f("lo", "Số lô SX", 'data-opt')}${f("nsx", "NSX", 'type="date" data-opt')}
-        <label data-pb>Mã số phân bón<input data-k="maPB" value="${E(d.maPB)}" data-opt ${dis}></label>${f("slLo", "Số lượng cả lô <small class=\"note\">(hàng gia công, nếu bên đặt yêu cầu)</small>", 'placeholder="VD: 14.220 Lít" data-opt')}
-        ${f("nguon", "Nguồn gốc", 'list="gmNgL" placeholder="số lô, Mẫu PTN, Mẫu mua, BTP nhập khẩu…" data-opt')}${f("dv", "Đơn vị KTCL", 'list="gmDvL" placeholder="gõ VinaCert, Quatest, phía Nam… rồi chọn tên đầy đủ"', true)}
+        ${sel("loaiMau", "Loại mẫu", ["Thuốc BVTV", "Phân bón"])}${sel("dang", "Dạng mẫu", ["Rắn", "Lỏng"])}
+        ${f("nguon", "Nguồn gốc", 'list="gmNgL" placeholder="số lô, Mẫu PTN, Mẫu mua, BTP nhập khẩu…" data-opt')}<label data-pb>Mã số phân bón<input data-k="maPB" value="${E(d.maPB)}" data-opt ${dis}></label></div></fieldset>
+      <fieldset class="qa-fs"><legend>Gửi đi</legend><div class="two qa-g">
+        ${f("dv", "Đơn vị KTCL", 'list="gmDvL" placeholder="gõ VinaCert, Quatest, phía Nam… rồi chọn tên đầy đủ"', true)}
         <p class="note" id="gmDvI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
-        <label>Mục đích KTCL<select data-k="mucDich" data-opt ${dis}><option value="">— chọn —</option>${(() => { const cur = String(d.mucDich || "").trim(), hit = MUC.find(x => x.toLowerCase() === cur.toLowerCase()); return (cur && !hit ? [cur] : []).concat(MUC).map(x => `<option${x === (hit || cur) ? " selected" : ""}>${E(x)}</option>`).join(""); })()}</select></label>
-        ${sel("phamVi", "Phạm vi kiểm", ["Chỉ hàm lượng", "Nhiều chỉ tiêu"])}${sel("dang", "Dạng mẫu", ["Rắn", "Lỏng"])}
-        ${f("sl", "Lượng mẫu gửi", 'list="gmSlL" placeholder="theo QC-HD.49"')}${f("vanDon", "Số vận đơn / biên nhận", 'data-opt')}
+        ${f("ngay", "Ngày gửi mẫu", 'type="date"')}<label>Mục đích KTCL<select data-k="mucDich" data-opt ${dis}><option value="">— chọn —</option>${(() => { const cur = String(d.mucDich || "").trim(), hit = MUC.find(x => x.toLowerCase() === cur.toLowerCase()); return (cur && !hit ? [cur] : []).concat(MUC).map(x => `<option${x === (hit || cur) ? " selected" : ""}>${E(x)}</option>`).join(""); })()}</select></label>
+        ${sel("phamVi", "Phạm vi kiểm", ["Chỉ hàm lượng", "Nhiều chỉ tiêu"])}${f("sl", "Lượng mẫu gửi", 'list="gmSlL" placeholder="theo QC-HD.49"')}
         <p class="note" id="gmSlI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
-        <label class="gm-ck"><input type="checkbox" data-c="mauLuu" ${d.mauLuu ? "checked" : ""} ${dis}><span>Đã chia và niêm phong mẫu lưu đối chứng của cùng lần lấy mẫu</span></label>
         <div class="gm-ten" id="gmTen" style="grid-column:1/-1"></div></div>
+        <details class="gm-them"${d.slLo || d.vanDon || d.mauLuu ? " open" : ""}><summary>Thêm: hàng gia công, vận đơn, mẫu lưu đối chứng</summary><div class="two qa-g" style="margin-top:6px">
+          ${f("slLo", "Số lượng cả lô <small class=\"note\">(hàng gia công, nếu bên đặt yêu cầu)</small>", 'placeholder="VD: 14.220 Lít" data-opt')}${f("vanDon", "Số vận đơn / biên nhận", 'data-opt')}
+          <label class="gm-ck"><input type="checkbox" data-c="mauLuu" ${d.mauLuu ? "checked" : ""} ${dis}><span>Đã chia và niêm phong mẫu lưu đối chứng của cùng lần lấy mẫu</span></label></div></details></fieldset>
+      ${moi ? "" : "</details>"}
       <fieldset class="qa-fs" ${dis}${moi ? " hidden" : ""}><legend>Kết quả</legend><div class="two qa-g">${f("soHS", "Mã số hồ sơ / số phiếu kết quả", 'data-opt')}${f("ngayNhan", "Ngày nhận bản scan kết quả", 'type="date" data-opt')}
         <label>Kết quả<select data-k="ketQua" data-opt>${["", "Đạt", "Không đạt"].map(x => `<option value="${x}"${x === (d.ketQua || "") ? " selected" : ""}>${x || "— chưa có —"}</option>`).join("")}</select></label>${f("ghiChu", "Ghi chú", 'data-opt')}
         <label class="gm-ck"><input type="checkbox" data-c="xong" ${d.xong ? "checked" : ""}><span>Đã xong, không cần theo dõi nữa (không ghi kết quả)</span></label>
@@ -153,7 +158,8 @@
     w.querySelector('[data-x="close"]').onclick = () => w.remove();
     const sv = w.querySelector('[data-x="save"]'); const thu = () => { const o = Object.assign({}, d); w.querySelectorAll("[data-k]").forEach(x => { o[x.dataset.k] = x.value.trim(); }); w.querySelectorAll("[data-c]").forEach(x => { o[x.dataset.c] = x.checked; }); o.dv = dvFull(o.dv); if (o.ketQua && !o.ngayNhan) o.ngayNhan = today(); return o; };
     if (sv) sv.onclick = async () => { const o = thu();
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(o.ngay)) { toast("Ghi ngày gửi mẫu."); g("ngay").focus(); return; } if (!o.ten) { toast("Ghi tên mẫu."); g("ten").focus(); return; } o.dv = dvFull(o.dv); if (!o.dv) { toast("Ghi đơn vị KTCL."); g("dv").focus(); return; }
+      const bad = (k, t) => { toast(t); const el = g(k); for (let p = el.parentElement; p; p = p.parentElement) if (p.tagName === "DETAILS") p.open = true; el.focus(); };
+      if (!o.ten) return bad("ten", "Ghi tên sản phẩm."); o.dv = dvFull(o.dv); if (!o.dv) return bad("dv", "Ghi đơn vị KTCL."); if (!/^\d{4}-\d{2}-\d{2}$/.test(o.ngay)) return bad("ngay", "Ghi ngày gửi mẫu.");
       if (o.ketQua && !o.ngayNhan) o.ngayNhan = today();
       sv.disabled = true; try { const x = await api("webGMSave", S.auth, { id: r ? r.id : "", d: o }); const i = R.findIndex(y => y.id === x.id); if (i >= 0) R[i] = x; else R.push(x); w.remove(); toast(moi ? "Đã ghi mẫu gửi " + (labKey(o.dv) || o.dv) : "Đã lưu"); window.renderGM(); if (window.renderQC && S.tab === "qc") renderQC(); gmDlg(x); /* lưu xong giữ cửa sổ mở để ghi tiếp kết quả / bản cứng; đóng bằng nút Đóng */ } catch (e) { toast(e.message); sv.disabled = false; } };
     const bcDo = async (btn, v, msg) => { btn.disabled = true; try { /* đang sửa dở mục Kết quả (ngày nhận bản scan, mã hồ sơ…) thì lưu luôn trước, kẻo mở lại mất chữ vừa gõ */
