@@ -15,7 +15,7 @@
   function wField(el) {
     const tag = el.tagName, ty = (el.getAttribute("type") || "text").toLowerCase(), p = pad(el);
     if (tag === "TEXTAREA") return null;
-    if (tag === "SELECT") { let m = 0; for (const o of el.options) m = Math.max(m, tw(el, o.text)); return cl(m + p + 34, 110, 460); }
+    if (tag === "SELECT") { let m = 0; for (const o of el.options) m = Math.max(m, tw(el, o.text)); return cl(m + p + 34, 110, 2000); }
     if (ty === "date") return 168; if (ty === "month") return 170; if (ty === "time") return 118; if (ty === "datetime-local") return 220;
     if (ty === "checkbox" || ty === "radio" || ty === "file" || ty === "hidden" || ty === "range") return null;
     if (ty === "number") return cl(tw(el, el.value || el.placeholder || "0000000") + p + 30, 104, 190);
