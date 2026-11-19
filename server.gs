@@ -844,6 +844,18 @@ function loDoi_(me, ma, lo, loMoi, quiet) {
 }
 function getAnhPhieu(a, id) { auth_(a); return (anMap_()[String(id)] || []).map(x => ({ fid: x.fid, ten: x.ten, nguoi: x.nguoi, xoay: x.xoay })); }
 
+/* đổi tên hàng loạt trong Danh mục vật tư (chỉ Quản lý): m = { mã: tên mới }. Chỉ sửa cột Tên; mã, tồn, phiếu cũ không đổi. */
+function webVTTenDoi(a, m) {
+  const me = auth_(a, [ROLES.QL]); m = m || {};
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_(SH.VT), R = rows_(SH.VT); let n = 0; const vd = [];
+    R.forEach((r, i) => { const ma = str_(r[0]); if (!ma || !Object.prototype.hasOwnProperty.call(m, ma)) return; const moi = String(m[ma] || '').trim().slice(0, 200), cu = str_(r[1]);
+      if (!moi || moi === cu) return; sh.getRange(i + 2, 2).setValue(moi); n++; if (vd.length < 12) vd.push(cu + ' → ' + moi); });
+    if (n) log_(me, 'Danh mục vật tư', 'Đổi tên hàng loạt', n + ' mã. VD: ' + vd.join('; ').slice(0, 800));
+    return { n: n };
+  } finally { lock.releaseLock(); }
+}
 function saveItem(a, it, isNew) {
   const me = auth_(a, [ROLES.QL, ROLES.KT]);
   const ma = String(it.ma || '').trim(), ten = String(it.ten || '').trim(), dv = String(it.donVi || '').trim();
