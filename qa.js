@@ -596,6 +596,7 @@
     const tp = TP(), out = [];
     vt().forEach(r => { const d = r.d, t = ttOf(r);
       if (t === "Chờ kiểm") { const late = hanT(r) < Date.now(); out.push({ id: r.id, c: late || d.gap ? "#c62828" : "#d97706", t: `${d.gap ? "🚨 <b>GẤP</b> · " : "📦 "}<b>${E(SO[r.loai].bm.slice(0, 5))}</b> · ${E(d.ten)} · ${E(nccFull(d.ncc))} · ${N(d.sl)} ${E(d.dvt || "")} — về ${DM(d.ngayNhap)}${d.gioNhap ? " " + E(d.gioNhap) : ""}, <b>chưa kiểm</b> (${hanTxt(r)})` }); }
+      if (thieu2(r)) out.push({ id: r.id, c: "#c62828", t: `📷 <b>${E(SO[r.loai].bm.slice(0, 5))}</b> · ${E(d.ten)} · ${E(nccFull(d.ncc))} — về ${DM(d.ngayNhap)}, <b style="color:#c62828">${thieu2Txt(r)}</b> (túi ép 3 biên phải chụp đủ 2 mặt)` });
       if (tp && t === "Chờ xác nhận") out.push({ id: r.id, c: d.ketLuan === "Không đạt" ? "#c62828" : "#7c3aed", t: `✍ <b>${E(SO[r.loai].bm.slice(0, 5))}</b> · ${E(d.ten)} — QC ${E(d.nguoiKT || "")} kết luận <b>${E(d.ketLuan)}</b>, chờ anh xác nhận` });
     });
     if (tp) live(R).filter(x => x.loai === "KPH" && !x.d.dong).forEach(k => out.push({ id: k.id, c: "#c62828", t: `⚠ <b>${E(k.d.so)}</b> · ${E(k.d.suKPH)} — chưa xử lý xong (${D(k.d.ngay)})` }));
