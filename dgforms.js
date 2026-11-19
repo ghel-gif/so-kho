@@ -44,8 +44,9 @@ function dgfGap(D,f){const d=f.d||{},G=[],emp=v=>v===undefined||v===null||String
   if(f.loai==="BM05"){const g=isGoi(D.q||{});
     if(emp(d.maMay)&&!(d.tb||[]).some(t=>t&&t.ten))G.push("thiết bị đóng gói");
     if(!pos(d.tlThuoc))G.push("TL thuốc chuẩn");if(!pos(d.tMin)||!pos(d.tMax))G.push("dung sai");
-    if(!pos(d.klBB))G.push("KL bao bì "+(g?"gói":"chai"));if(!pos(d.dvThung))G.push(g?"số gói/thùng":"số chai/thùng");
-    if(pos(d.dvHop)&&!pos(d.klHop))G.push("KL hộp");const xo=isXo(D&&D.q); /* đóng xô: không thùng carton, không seal */if(!xo&&!pos(d.klThung))G.push("KL thùng carton");
+    const xo=isXo(D&&D.q);
+    if(!pos(d.klBB))G.push("KL bao bì "+(xo?"xô":g?"gói":"chai"));if(!xo&&!pos(d.dvThung))G.push(g?"số gói/thùng":"số chai/thùng");
+    if(!xo&&pos(d.dvHop)&&!pos(d.klHop))G.push("KL hộp"); /* đóng xô: không thùng carton, không seal */if(!xo&&!pos(d.klThung))G.push("KL thùng carton");
     if(!xo&&(g?emp(d.nhietEp):emp(d.seal)))G.push(g?"nhiệt ép":"công suất seal");return G}
   if(/^BM0[46]$/.test(f.loai)){const items=[].concat(...(CR[f.loai]||[]).map(x=>x[1])),n=nsOf(f.loai,d);
     {const M=tbMiss(f.loai,d.tb);if(M.length&&!(!(d.tb||[]).length&&!emp(d.maMay)))G.push(M.join(", ").toLowerCase())}
