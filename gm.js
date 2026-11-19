@@ -23,7 +23,8 @@
     "IQC": { ten: "Công ty Cổ phần Chứng nhận và Giám định IQC", dc: "Ô 6 BT 4 Khu đô thị mới Cầu Bươu, Phường Thanh Trì, TP. Hà Nội", dt: "0913 837 110", bv: null, pb: 500 },
     /* không có trong QC-HD.49 — chỉ có tên đầy đủ do TP. QA/QC cung cấp, chưa có địa chỉ và lượng mẫu */
     "Vinacontrol": { ten: "Trung tâm phân tích và thử nghiệm 2 - Vinacontrol", dc: "", dt: "", bv: null, pb: null } };
-  const MUC = ["cập nhật date mới", "kiểm soát lô", "kiểm tra hàm lượng", "hợp quy", "hợp quy 54°C", "hợp quy 0°C", "độ bền bảo quản 54°C", "nghiên cứu", "điều tra bất thường"];
+  /* 19/11/2026 (theo anh Ghel): mục đích chỉ còn vài lựa chọn cố định (theo QC-HD.49 + "cập nhật date mới" đang dùng nhiều trong sổ); dòng cũ ghi khác thì giữ nguyên chữ cũ */
+  const MUC = ["Kiểm soát lô", "Cập nhật date mới", "Hợp quy", "Độ bền bảo quản", "Nghiên cứu", "Điều tra bất thường"];
   /* tên gọi tắt trong sổ cũ (VinaCert, Quatest 3, Phía Nam…) -> đơn vị trong QC-HD.49; sổ, bản in và danh sách chọn hiện tên đầy đủ */
   const labKey = dv => { const f = fold(dv).replace(/[^a-z0-9]+/g, " ").trim(); if (!f) return ""; for (const k in LAB) if (fold(LAB[k].ten) === fold(dv)) return k;
     return /vinacontrol/.test(f) ? "Vinacontrol" : /vinacert/.test(f) ? "VinaCert" : /saigon ?cert/.test(f) ? "SaigonCert" : /quatest ?3|qt ?3/.test(f) ? "Quatest 3" : /\biqc\b/.test(f) ? "IQC" : /phia nam|\bpn\b/.test(f) ? "Phía Nam" : /phia bac|\bpb\b/.test(f) ? "Phía Bắc" : ""; };
@@ -116,7 +117,7 @@
         <label data-pb>Mã số phân bón<input data-k="maPB" value="${E(d.maPB)}" data-opt ${dis}></label>${f("slLo", "Số lượng cả lô <small class=\"note\">(hàng gia công, nếu bên đặt yêu cầu)</small>", 'placeholder="VD: 14.220 Lít" data-opt')}
         ${f("nguon", "Nguồn gốc", 'list="gmNgL" placeholder="số lô, Mẫu PTN, Mẫu mua, BTP nhập khẩu…" data-opt')}${f("dv", "Đơn vị KTCL", 'list="gmDvL" placeholder="gõ VinaCert, Quatest, phía Nam… rồi chọn tên đầy đủ"', true)}
         <p class="note" id="gmDvI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
-        ${f("mucDich", "Mục đích KTCL", 'list="gmMdL" placeholder="cập nhật date mới, hợp quy 54°C…" data-opt')}${f("chiTieu", "Chỉ tiêu yêu cầu", 'placeholder="VD: hàm lượng Glufosinate ammonium" data-opt')}
+        <label>Mục đích KTCL<select data-k="mucDich" data-opt ${dis}><option value="">— chọn —</option>${(() => { const cur = String(d.mucDich || "").trim(), hit = MUC.find(x => x.toLowerCase() === cur.toLowerCase()); return (cur && !hit ? [cur] : []).concat(MUC).map(x => `<option${x === (hit || cur) ? " selected" : ""}>${E(x)}</option>`).join(""); })()}</select></label>
         ${sel("phamVi", "Phạm vi kiểm", ["Chỉ hàm lượng", "Nhiều chỉ tiêu"])}${sel("dang", "Dạng mẫu", ["Rắn", "Lỏng"])}
         ${f("sl", "Lượng mẫu gửi", 'list="gmSlL" placeholder="theo QC-HD.49"')}${f("vanDon", "Số vận đơn / biên nhận", 'data-opt')}
         <p class="note" id="gmSlI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
@@ -127,7 +128,7 @@
         <label class="gm-ck"><input type="checkbox" data-c="xong" ${d.xong ? "checked" : ""}><span>Đã xong, không cần theo dõi nữa (không ghi kết quả)</span></label>
         <label class="gm-ck"><input type="checkbox" data-c="huy" ${d.huy ? "checked" : ""}><span>Huỷ mẫu này</span></label></div></fieldset>
       ${moi ? "" : `<fieldset class="qa-fs gm-bcfs"><legend>Bản cứng phiếu kết quả</legend>${bcHtml(d.bc)}</fieldset>`}
-      ${dl("gmSlL", ["100 g", "100 mL", "200 g", "200 mL", "300 g", "300 mL", "500 g", "500 mL", "1 kg", "1 L"])}${dl("gmDvL", [...new Set(Object.keys(LAB).map(k => LAB[k].ten).concat(uniq("dv").map(dvFull)))])}${dl("gmMdL", [...new Set(MUC.concat(uniq("mucDich")))])}${dl("gmNgL", ["Mẫu PTN", "Mẫu mua", "BTP nhập khẩu", "Mẫu nhập khẩu"])}
+      ${dl("gmSlL", ["100 g", "100 mL", "200 g", "200 mL", "300 g", "300 mL", "500 g", "500 mL", "1 kg", "1 L"])}${dl("gmDvL", [...new Set(Object.keys(LAB).map(k => LAB[k].ten).concat(uniq("dv").map(dvFull)))])}${dl("gmNgL", ["Mẫu PTN", "Mẫu mua", "BTP nhập khẩu", "Mẫu nhập khẩu"])}
       ${r ? `<p class="note">Người lập: ${E(d.nguoiLap || r.nguoi || "")}${r.sua ? " · sửa cuối: " + E(r.sua) : ""}</p>` : ""}
       <div class="actions">${!moi && ed ? '<button class="btn danger" type="button" data-x="del">Xoá</button>' : ""}<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${ed ? '<button class="btn primary noic" type="button" data-x="save">Lưu</button>' : ""}</div></div>`;
     document.body.appendChild(w);
