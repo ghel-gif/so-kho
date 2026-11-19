@@ -114,7 +114,7 @@
         ${f("ten", "Tên sản phẩm <small class=\"note\">— đúng tên trên TCCS / hồ sơ đăng ký, không viết tắt</small>", "", true)}
         ${f("lo", "Số lô SX", 'data-opt')}${f("nsx", "NSX", 'type="date" data-opt')}
         <label data-pb>Mã số phân bón<input data-k="maPB" value="${E(d.maPB)}" data-opt ${dis}></label>${f("slLo", "Số lượng cả lô <small class=\"note\">(hàng gia công, nếu bên đặt yêu cầu)</small>", 'placeholder="VD: 14.220 Lít" data-opt')}
-        ${f("nguon", "Nguồn gốc", 'list="gmNgL" placeholder="số lô, Mẫu PTN, Mẫu mua, BTP nhập khẩu…" data-opt')}${f("dv", "Đơn vị KTCL", 'list="gmDvL" placeholder="gõ VinaCert, Quatest, phía Nam… rồi chọn tên đầy đủ"')}
+        ${f("nguon", "Nguồn gốc", 'list="gmNgL" placeholder="số lô, Mẫu PTN, Mẫu mua, BTP nhập khẩu…" data-opt')}${f("dv", "Đơn vị KTCL", 'list="gmDvL" placeholder="gõ VinaCert, Quatest, phía Nam… rồi chọn tên đầy đủ"', true)}
         <p class="note" id="gmDvI" style="grid-column:1/-1;margin:-4px 0 0" hidden></p>
         ${f("mucDich", "Mục đích KTCL", 'list="gmMdL" placeholder="cập nhật date mới, hợp quy 54°C…" data-opt')}${f("chiTieu", "Chỉ tiêu yêu cầu", 'placeholder="VD: hàm lượng Glufosinate ammonium" data-opt')}
         ${sel("phamVi", "Phạm vi kiểm", ["Chỉ hàm lượng", "Nhiều chỉ tiêu"])}${sel("dang", "Dạng mẫu", ["Rắn", "Lỏng"])}
