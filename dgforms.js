@@ -17,7 +17,9 @@ const today=()=>S.today;
 async function getD(so){return api("webDGFGet",S.auth,so)}
 function info(D){const o=D.o,q=D.q||{},sp=itemBy(o.maSP)||{ten:o.maSP},b=D.btp[0]||{},X=(D.P&&D.P.x)||{};
   const liq=liqOf(q),tt=+b.tt||+(D.P&&D.P.tt)||0,thuoc=toG(q,tt);
-  return {o,q,sp,b,X,liq,tt,thuoc,tenSP:(q.sp?q.sp+(q.quyCach?" – "+q.quyCach:""):sp.ten),maSP:q.nhan||o.maSP}}
+  /* hàng đóng xô: quy cách ghi bằng gam (xô 22000 g) → trên biểu mẫu ghi kg (xô 22 kg); gói, chai giữ nguyên */
+  const qcKg=s=>String(s||"").replace(/(\d+(?:[.,]\d+)?)\s*g(?![a-zà-ỹ])/i,(m,n)=>{const v=+String(n).replace(",",".");return v>=1000?String(Math.round(v)/1000).replace(".",",")+" kg":m});
+  return {o,q,sp,b,X,liq,tt,thuoc,tenSP:(q.sp?q.sp+(q.quyCach?" – "+(/xô/i.test((q.loai||"")+" "+q.quyCach)?qcKg(q.quyCach):q.quyCach):""):sp.ten),maSP:q.nhan||o.maSP}}
 const b05=D=>(D.forms||[]).filter(f=>f.loai==="BM05").pop()||null;
 
 /* ---------- thanh nút trong lệnh đóng gói ---------- */
