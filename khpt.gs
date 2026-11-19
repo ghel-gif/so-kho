@@ -1028,6 +1028,19 @@ function qaPNUnlink_(me, pid) {
   if (bo) sheet_(QA_SH).getRange(q.i + 2, 7, 1, 2).setValues([['Đã xoá', me.ten]]);
   log_(me, bo ? 'Xoá hồ sơ QA/QC' : 'Phòng QA/QC ' + q.so, q.id, (bo ? 'Xoá theo' : 'Bỏ nhập kho theo') + ' phiếu nhập ' + pid + ' đã xoá');
 }
+/* đổi tên nhà cung cấp ghi tắt sang tên đầy đủ trên toàn bộ sổ QA/QC (chỉ sửa trường ncc, không đụng kết quả / xác nhận). m = { "tên cũ": "tên mới" } */
+function webQANccDoi(a, m) {
+  const me = auth_(a, [ROLES.QL]); m = m || {};
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = sheet_(QA_SH), R = sh ? rows_(QA_SH) : []; let n = 0; const dem = {};
+    R.forEach((r, i) => { if (!str_(r[0])) return; let d; try { d = JSON.parse(str_(r[3]) || '{}'); } catch (e) { return; }
+      const cu = String(d.ncc || ''), moi = Object.prototype.hasOwnProperty.call(m, cu) ? String(m[cu] || '').trim().slice(0, 200) : '';
+      if (!cu || !moi || moi === cu) return; d.ncc = moi; sh.getRange(i + 2, 4).setValue(JSON.stringify(d)); n++; dem[cu + ' → ' + moi] = (dem[cu + ' → ' + moi] || 0) + 1; });
+    if (n) log_(me, 'Sổ QA/QC', 'Đổi tên nhà cung cấp', Object.keys(dem).map(x => x + ' (' + dem[x] + ')').join('; ').slice(0, 900));
+    return { n: n, dem: dem };
+  } finally { lock.releaseLock(); }
+}
 function webQADel(a, id, khoiPhuc) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);
   const R = sheet_(QA_SH) ? rows_(QA_SH) : [], i = R.findIndex(r => str_(r[0]) === String(id));
