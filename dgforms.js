@@ -19,7 +19,12 @@ function info(D){const o=D.o,q=D.q||{},sp=itemBy(o.maSP)||{ten:o.maSP},b=D.btp[0
   const liq=liqOf(q),tt=+b.tt||+(D.P&&D.P.tt)||0,thuoc=toG(q,tt);
   /* hàng đóng xô: quy cách ghi bằng gam (xô 22000 g) → trên biểu mẫu ghi kg (xô 22 kg); gói, chai giữ nguyên */
   const qcKg=s=>String(s||"").replace(/(\d+(?:[.,]\d+)?)\s*g(?![a-zà-ỹ])/i,(m,n)=>{const v=+String(n).replace(",",".");return v>=1000?String(Math.round(v)/1000).replace(".",",")+" kg":m});
-  return {o,q,sp,b,X,liq,tt,thuoc,tenSP:(q.sp?q.sp+(q.quyCach?" – "+(/xô/i.test((q.loai||"")+" "+q.quyCach)?qcKg(q.quyCach):q.quyCach):""):sp.ten),maSP:q.nhan||o.maSP}}
+  /* lệnh dùng nhiều lô BTP (19/11/2026): biểu mẫu ghi đủ các lô, không chỉ lô đầu */
+  const B_=[];(D.btp||[]).forEach(x=>{if(x&&x.lo&&!B_.some(y=>y.lo===x.lo&&y.ma===x.ma))B_.push(x)});
+  return {B:B_,nhieuLo:B_.length>1,loAll:B_.map(x=>x.lo).join(", "),o,q,sp,b,X,liq,tt,thuoc,tenSP:(q.sp?q.sp+(q.quyCach?" – "+(/xô/i.test((q.loai||"")+" "+q.quyCach)?qcKg(q.quyCach):q.quyCach):""):sp.ten),maSP:q.nhan||o.maSP}}
+/* số lô BTP ghi trên phiếu: phiếu chưa sửa tay (trống hoặc đang là lô đầu) mà lệnh có nhiều lô → ghi đủ các lô */
+const loOf=(I,d)=>I.nhieuLo&&(!d.loBTP||d.loBTP===I.b.lo)?I.loAll:(d.loBTP||I.b.lo||""),loTD=(I,d)=>I.nhieuLo&&loOf(I,d)===I.loAll;
+const loNote=I=>I.nhieuLo?`<p class="note" style="margin:2px 0 4px">Lệnh dùng <b>${I.B.length} lô BTP</b>: ${I.B.map(x=>`<b>${esc(x.lo)}</b>${x.nsx?" (NSX "+dmy(String(x.nsx).slice(0,10))+(+x.kg>0?", "+f2(+x.kg)+" kg":"")+")":""}`).join(" · ")}. Phiếu in ghi đủ các lô.</p>`:"";
 const b05=D=>(D.forms||[]).filter(f=>f.loai==="BM05").pop()||null;
 
 /* ---------- thanh nút trong lệnh đóng gói ---------- */
@@ -146,8 +151,8 @@ function f05(D,p,dr){const I=info(D),Q0=I.q,TT0=thU(dr&&dr.thungTT!==undefined?d
   /* phiếu đang để trống KL thùng / hộp rỗng (kể cả phiếu đã lưu trước khi có số cân): điền luôn số cân gần nhất — của mã hàng này, hoặc của mã hàng khác dùng cùng mã thùng / mã hộp */
   if(can.phieu()){[["klThung","klThung"],["klHop","klHop"]].forEach(([k,f])=>{if(!(num(d[f])>0)){const x=cbbLastX(I.q,k);if(x&&x.v>0&&(k!=="klHop"||+I.q.dvHop>0))d[f]=x.v}})}
   d.tb=tbInit(TK,d);
-  const w=dlg(`<h2>Phiếu thông tin đóng gói thành phẩm (BM.05) · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · mã ${esc(I.maSP)} · BTP ${esc(I.b.lo||"")}${I.liq&&I.tt?" · tỷ trọng "+String(I.tt).replace(".",","):""}. Trọng lượng thuốc chuẩn tự tính từ định lượng ${esc(I.q.luong||"")} ${esc(I.q.dvl||"")}${I.liq?" × tỷ trọng":""}, sửa được.</p>
-   <div class="two">${inp("f5Ngay","Ngày lập phiếu",d.ngay,`type="date" ${dis}`)}</div><div class="two">${inp("f5LoB","Số lô BTP",d.loBTP||I.b.lo||"",dis)}${inp("f5NsxB","NSX BTP",String(d.nsxBTP||I.b.nsx||"").slice(0,10),`type="date" ${dis}`)}</div>
+  const w=dlg(`<h2>Phiếu thông tin đóng gói thành phẩm (BM.05) · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · mã ${esc(I.maSP)} · BTP ${esc(I.nhieuLo?I.loAll:I.b.lo||"")}${I.liq&&I.tt?" · tỷ trọng "+String(I.tt).replace(".",","):""}. Trọng lượng thuốc chuẩn tự tính từ định lượng ${esc(I.q.luong||"")} ${esc(I.q.dvl||"")}${I.liq?" × tỷ trọng":""}, sửa được.</p>
+   <div class="two">${inp("f5Ngay","Ngày lập phiếu",d.ngay,`type="date" ${dis}`)}</div><div class="two">${inp("f5LoB","Số lô BTP",loOf(I,d),dis)}${inp("f5NsxB","NSX BTP",String(d.nsxBTP||I.b.nsx||"").slice(0,10),`type="date" ${dis}`)}</div>${loNote(I)}
    <b style="display:block;margin-top:8px">Thiết bị sản xuất chính</b>${tbHtml(TK,D,d.tb,dis)}
    <b style="display:${KG?"none":"block"};margin-top:8px">Thông số máy (tham khảo)</b>
    <div class="two"${KG?' style="display:none"':""}>${TK==="BM05G"?inp("f5Ep","Nhiệt ép (°C)",d.nhietEp,dis):inp("f5Seal","Công suất seal (%)",d.seal,dis)}</div>
@@ -225,7 +230,7 @@ function p05(I,d){const c=c05(d),K=B(),bx=v=>K.box(v),KG=isXo(I.q),u=KG?"XÔ":is
       if(!KG)R.push(["Trọng lượng thùng<sup>(3)</sup>",isFinite(c.th)?`${fw2(c.thMin)}<span class="ds">–</span>${fw2(c.thMax)} kg`:`……<span class="ds">–</span>…… kg`]);
       R.push([KG?"Xô / pallet":"Thùng / pallet",isFinite(tpx)?String(tpx):"……"]);R.push(["Xếp pallet dự kiến",xp]);
       const kt=String(d.klThung??"").trim(),kh=String(d.klHop??"").trim();return `<table class="qct">${R.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</table>${KG?"":`<div class="gc" style="margin-top:4px"><i><sup>(3)</sup> Ghi chú:</i> trọng lượng thùng đã bao gồm khối lượng bao bì dưới đây<br>KL bì thùng carton${d.thungTT?" <b>"+esc(d.thungTT)+"</b> (dùng thay thùng "+esc((typeof S!=="undefined"&&S.dgQ&&S.dgQ[I.q.qc]&&S.dgQ[I.q.qc].thung)||"quy cách")+")":""}: <b>${kt!==""?fw2(num(kt)):"……"}</b> kg (gồm tấm lót)${num(d.dvHop)>0?`<br>KL bì hộp: <b>${kh!==""?fw(num(kh)):"……"}</b> g / hộp`:""}</div>`}`})()}</td></tr>
-   <tr><td colspan="3"><b>Thông tin bán thành phẩm</b><br>Tên: ${esc(I.b.ten||"")} &nbsp; NSX: ${(d.nsxBTP||I.b.nsx)?dmy(String(d.nsxBTP||I.b.nsx).slice(0,10)):""} &nbsp; Số lô SX: <b>${esc(d.loBTP||I.b.lo||"")}</b>${I.liq?` &nbsp; Tỷ trọng: ${num(d.tyTrong)>0?(+d.tyTrong).toFixed(3).replace(".",",")+" g/ml":""}`:""}</td></tr>
+   <tr><td colspan="3"><b>Thông tin bán thành phẩm</b><br>${loTD(I,d)?I.B.map(x=>`Tên: ${esc(x.ten||"")} &nbsp; NSX: ${x.nsx?dmy(String(x.nsx).slice(0,10)):""} &nbsp; Số lô SX: <b>${esc(x.lo)}</b>${I.liq?` &nbsp; Tỷ trọng: ${+x.tt>0?(+x.tt).toFixed(3).replace(".",",")+" g/ml":num(d.tyTrong)>0?(+d.tyTrong).toFixed(3).replace(".",",")+" g/ml":""}`:""}`).join("<br>"):`Tên: ${esc(I.b.ten||"")} &nbsp; NSX: ${(d.nsxBTP||I.b.nsx)?dmy(String(d.nsxBTP||I.b.nsx).slice(0,10)):""} &nbsp; Số lô SX: <b>${esc(d.loBTP||I.b.lo||"")}</b>${I.liq?` &nbsp; Tỷ trọng: ${num(d.tyTrong)>0?(+d.tyTrong).toFixed(3).replace(".",",")+" g/ml":""}`:""}`}</td></tr>
    <tr><td colspan="3"><b>Lưu ý</b><table class="lut">${KG?"":`<tr><td>Băng keo dán thùng carton</td><td>${["logo Asata","logo khách","băng keo trong"].map(x=>`<span class="op">${bx((d.bangKeo==="không thông tin"?"băng keo trong":d.bangKeo)===x)} ${x}</span>`).join("")}</td></tr>`}<tr><td>Pallet quấn màng co</td><td>${["Có","Không"].map(x=>`<span class="op">${bx(d.mangCo===x)} ${x}</span>`).join("")}</td></tr>${d.ghiChu?`<tr><td>Ghi chú</td><td>${esc(d.ghiChu)}</td></tr>`:""}</table></td></tr></table>
   ${K.sign([["Người lập phiếu",""],["Phòng QC",""]])}</div>`,true)}
 
@@ -264,7 +269,7 @@ function fKT(D,loai,p){const I=info(D),f5=b05(D),c5=f5?c05(f5.d):{},canW=can.phi
      ${Array.from({length:n},(_,j)=>`<tr><td>Mẫu ${j+1}${mLb(loai,d,j)?" <small class=\"note\">("+mLb(loai,d,j)+")</small>":""}</td>${R.map((r,i)=>{if(r.nk)return '<td class="note" style="text-align:center">—</td>';const v=num(r.kl[j]),bad=isFinite(v)&&isFinite(lo)&&isFinite(hi)&&(v<lo||v>hi);return `<td><input data-r="${i}" data-s="${j}" type="text" inputmode="decimal" autocomplete="off" value="${esc(r.kl[j]??"")}" ${dis} class="${bad?"in-bad":isFinite(v)&&isFinite(lo)&&isFinite(hi)?"in-ok":""}"></td>`}).join("")}</tr>`).join("")}
      </tbody></table></div>`};
   const w=dlg(`<h2>${loai==="BM04"?"Phiếu kiểm tra quá trình đóng gói (BM.04)":"Phiếu kiểm tra quá trình đóng chai (BM.06)"} · ${esc(I.o.so)}</h2><p class="note">${esc(I.tenSP)} · lô BTP ${esc(I.b.lo||"")}. Tần suất: ${n} mẫu/lần — đầu ca, định kỳ sau mỗi 2 h. ${f5?"Trọng lượng cho phép lấy từ phiếu BM.05.":"Chưa có phiếu BM.05 — nhập trọng lượng cho phép bên dưới."}</p>
-   <div class="two">${inp("fkLoB","Số lô BTP",d.loBTP||I.b.lo||"",dis)}${inp("fkNsxB","NSX BTP",String(d.nsxBTP||I.b.nsx||"").slice(0,10),`type="date" ${dis}`)}</div><div class="two">${inp("fkNgay","Ngày đóng gói",d.ngay,`type="date" ${dis}`)}<label>Ca làm việc<select id="fkCa" ${dis}>${(["Hành chính","Tăng ca"].concat(d.ca&&!["Hành chính","Tăng ca"].includes(d.ca)?[d.ca]:[])).map(x=>`<option${x===d.ca?" selected":""}>${esc(x)}</option>`).join("")}</select></label></div>
+   <div class="two">${inp("fkLoB","Số lô BTP",loOf(I,d),dis)}${inp("fkNsxB","NSX BTP",String(d.nsxBTP||I.b.nsx||"").slice(0,10),`type="date" ${dis}`)}</div><div class="two">${inp("fkNgay","Ngày đóng gói",d.ngay,`type="date" ${dis}`)}<label>Ca làm việc<select id="fkCa" ${dis}>${(["Hành chính","Tăng ca"].concat(d.ca&&!["Hành chính","Tăng ca"].includes(d.ca)?[d.ca]:[])).map(x=>`<option${x===d.ca?" selected":""}>${esc(x)}</option>`).join("")}</select></label></div>
    <b style="display:block;margin-top:8px">Thiết bị sử dụng</b>${tbHtml(loai,D,d.tb,dis)}
    <label>Cách cân mẫu<select id="fkCach" ${dis}><option value="tong"${d.cach!=="thuoc"?" selected":""}>Cân tổng (gồm bao bì)</option><option value="thuoc"${d.cach==="thuoc"?" selected":""}>Chỉ cân trọng lượng thuốc (đã trừ bì)</option></select></label>
    <div class="two">${inp("fkTmin","TL thuốc cho phép từ (g)",d.tMin,`type="number" step="any" ${dis}`)}${inp("fkTmax","đến (g)",d.tMax,`type="number" step="any" ${dis}`)}</div>
@@ -305,7 +310,7 @@ function pKT(I,loai,d,kl){const K=B(),R=d.rounds,n=nsOf(loai,d),th=d.cach==="thu
   <table style="margin-top:4px"><colgroup><col style="width:50%"><col style="width:50%"></colgroup>
    <tr><td colspan="2">Tên sản phẩm: <b>${esc(I.tenSP)}</b></td></tr>
    <tr><td>Ngày đóng gói: <b>${dmy(d.ngay)}</b>${d.ca?" · Ca: <b>"+esc(d.ca)+"</b>":""}</td><td>Số LĐG: <b>${esc(I.o.so)}</b></td></tr>
-   <tr><td>Số lô BTP: <b>${esc(d.loBTP||I.b.lo||"")}</b></td><td>Ngày sản xuất: <b>${(d.nsxBTP||I.b.nsx)?dmy(String(d.nsxBTP||I.b.nsx).slice(0,10)):""}</b></td></tr>
+   <tr><td>Số lô BTP: <b>${esc(loOf(I,d))}</b></td><td>Ngày sản xuất: <b>${loTD(I,d)?I.B.map(x=>x.nsx?dmy(String(x.nsx).slice(0,10)):"…").join(", "):(d.nsxBTP||I.b.nsx)?dmy(String(d.nsxBTP||I.b.nsx).slice(0,10)):""}</b></td></tr>
    <tr><td>Trọng lượng thuốc cho phép (g): <b>${isFinite(tlo)?f1k(tlo):""}${isFinite(thi)?" – "+f1k(thi):""}</b></td><td>Tổng TL (gồm bao bì) (g): <b>${isFinite(nlo)?f1k(nlo):""}${isFinite(nhi)?" – "+f1k(nhi):""}</b></td></tr>
    ${tbInit(loai,d).filter((t,i)=>i===0||t.ten).map(t=>`<tr><td>${esc(t.vai.replace(/ \(nếu có\)/,""))}: <b>${esc(t.ten)}</b></td><td>Mã thiết bị: <b>${esc(t.ma||(t.ten===TAY?"—":""))}</b></td></tr>`).join("")}
    <tr><td colspan="2" style="white-space:nowrap">Tần suất kiểm tra: ${n} mẫu/lần — đầu ca, định kỳ sau mỗi 2 h</td></tr></table>
