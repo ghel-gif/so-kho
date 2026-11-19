@@ -1576,3 +1576,6 @@ label.need-lb:not(.need-nxl){color:inherit!important}
 .fitrow>*{min-width:0;box-sizing:border-box}
 .fitrow>label>input,.fitrow>label>select{width:100%}
 input:not(:focus){text-overflow:ellipsis}
+/* các khung nền sáng phải có màu chữ riêng — giao diện tối chữ mặc định màu sáng, đè lên nền sáng không đọc được */
+.qa-canh,.qa-canh b,.qa-canh .note{color:#7f1d1d}.gm-toi,.gm-toi b{color:#7c2d12}
+.dgbang tr.dgpk td{color:#0b3d2e!important}

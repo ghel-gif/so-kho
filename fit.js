@@ -8,7 +8,7 @@
 "use strict";
 (function () {
   const cv = document.createElement("canvas").getContext("2d");
-  const tw = (el, txt) => { const cs = getComputedStyle(el); cv.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; return cv.measureText(String(txt || "")).width; };
+  const tw = (el, txt) => { const cs = getComputedStyle(el); cv.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; return cv.measureText(String(txt || "")).width * 1.1 + (parseFloat(cs.letterSpacing) || 0) * String(txt || "").length; }; /* ×1,1: phông chữ web đo bằng canvas hay hụt một chút */
   const pad = el => { const cs = getComputedStyle(el); return (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0); };
   const cl = (v, a, b) => Math.max(a, Math.min(b, v));
   /* bề rộng cần cho 1 ô nhập (px), null = để nguyên / hết hàng */
