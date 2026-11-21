@@ -1610,3 +1610,4 @@ input:not(:focus){text-overflow:ellipsis}
 .bd-tip b{display:block;font-size:13px}.bd-tip span{display:block}
 .bd-none{margin:6px 0}
 @media print{.bcbd .bd-hit{display:none}}
+.dgnv.dgt th,.dgnv.dgt td{padding:6px 9px}.dgnv.dgt td.n{min-width:0}.dgnv.dgt td:first-child{min-width:0}
