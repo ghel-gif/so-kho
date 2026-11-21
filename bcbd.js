@@ -18,24 +18,25 @@
   /* ---------- 1) % hao hụt từng lệnh ---------- */
   function lenh(pts, o) {
     if (!pts.length) return none(o.empty || "Chưa có lệnh nào đủ số liệu để tính hao hụt trong khoảng ngày này.");
-    const ngs = o.ng ? [...new Set(pts.map(p => p.ng))].sort((a, b) => a - b) : [], ngMax = ngs.length ? ngs[ngs.length - 1] : 0;
+    const ngs = o.ng && !o.lines ? [...new Set(pts.map(p => p.ng))].sort((a, b) => a - b) : [], ngMax = o.lines ? Math.max(...o.lines.map(l => l[0])) : ngs.length ? ngs[ngs.length - 1] : 0, AX = o.ax || (v => N(v, 1) + "%"), FM = o.fmt || P;
     const ab = pts.map(p => Math.abs(p.p)).sort((a, b) => a - b), q75 = ab[Math.floor((ab.length - 1) * 0.75)] || 0;
     const cap = Math.max(o.ng ? ngMax * 3 : 6, q75 * 4), cl = v => Math.max(-cap, Math.min(cap, v));
-    let hi = Math.max(ngMax, ...pts.map(p => cl(p.p)), 0.5), lo = Math.min(-ngMax, ...pts.map(p => cl(p.p)), 0);
+    let hi = Math.max(ngMax, ...pts.map(p => cl(p.p)), 0.5), lo = Math.min(o.lines ? 0 : -ngMax, ...pts.map(p => cl(p.p)), 0);
     const st = step(hi - lo); hi = Math.ceil(hi * 1.12 / st) * st; lo = lo < 0 ? Math.floor(lo * 1.12 / st) * st : 0;
     const n = pts.length, L = 46, R = 74, T = 16, B = 30, bw = Math.max(15, Math.min(48, 800 / n)), W = Math.max(920, L + R + n * bw), H = 270, ih = H - T - B;
     const y = v => T + ih - (v - lo) / (hi - lo) * ih, x = i => L + bw * i + bw / 2;
     let g = "";
-    for (let v = lo; v <= hi + 1e-9; v += st) { const yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" ${GRID}/><text x="${L - 6}" y="${yy + 4}" text-anchor="end" font-size="11" ${INK} fill-opacity=".7">${N(v, 1)}%</text>`; }
+    for (let v = lo; v <= hi + 1e-9; v += st) { const yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" ${GRID}/><text x="${L - 6}" y="${yy + 4}" text-anchor="end" font-size="11" ${INK} fill-opacity=".7">${AX(v)}</text>`; }
     g += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="currentColor" stroke-opacity=".45"/>`;
     ngs.forEach(ng => [ng, -ng].forEach(v => { if (v < lo || v > hi) return; const yy = y(v), nm = o.ngTen ? o.ngTen(ng) : "";
       g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--bd-crit)" stroke-width="1.2" stroke-dasharray="5 4" stroke-opacity=".85"/><text x="${W - R + 5}" y="${yy + 4}" font-size="10.5" ${INK} fill-opacity=".8">${v > 0 ? "+" : "−"}${N(ng, 1)}%${nm ? " " + E(nm) : ""}</text>`; }));
+    (o.lines || []).forEach(([v, lb]) => { if (v < lo || v > hi) return; const yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--bd-crit)" stroke-width="1.2" stroke-dasharray="5 4" stroke-opacity=".85"/><text x="${W - R + 5}" y="${yy + 4}" font-size="10.5" ${INK} fill-opacity=".8">${E(lb)}</text>`; });
     let last = "", lastX = -99;
     pts.forEach((p, i) => { const X = x(i), v = cl(p.p), Y = y(v), pin = v !== p.p, c = o.ng ? (p.vuot ? "var(--bd-crit)" : "var(--bd-good)") : "var(--bd-s1)";
       if (p.d !== last) { last = p.d; if (X - lastX > 34) { g += `<text x="${X}" y="${H - 10}" text-anchor="middle" font-size="11" ${INK} fill-opacity=".75">${dm(p.d)}</text>`; lastX = X; } g += `<line x1="${X - bw / 2}" x2="${X - bw / 2}" y1="${H - B}" y2="${H - B + 5}" stroke="currentColor" stroke-opacity=".3"/>`; }
       g += `<line x1="${X}" x2="${X}" y1="${y(0)}" y2="${Y}" stroke="${c}" stroke-width="2" stroke-opacity=".55"/>`;
       g += p.vuot && o.ng ? `<path d="M${X} ${Y - 6.5}L${X + 6} ${Y + 4.5}L${X - 6} ${Y + 4.5}Z" fill="${c}" stroke="var(--surface,#fff)" stroke-width="1.5"/>` : `<circle cx="${X}" cy="${Y}" r="4.5" fill="${c}" stroke="var(--surface,#fff)" stroke-width="1.5"/>`;
-      if (pin) g += `<text x="${X}" y="${v > 0 ? Y - 10 : Y + 17}" text-anchor="middle" font-size="10.5" font-weight="700" ${INK}>${P(p.p)}</text>`;
+      if (pin) g += `<text x="${X}" y="${v > 0 ? Y - 10 : Y + 17}" text-anchor="middle" font-size="10.5" font-weight="700" ${INK}>${FM(p.p)}</text>`;
       g += `<rect class="bd-hit" x="${X - bw / 2}" y="${T}" width="${bw}" height="${ih}" fill="transparent" data-so="${E(p.so)}" data-tip="${tip(p.tip)}"/>`; });
     return `<div class="bd-sc"><svg viewBox="0 0 ${W} ${H}" style="min-width:${W > 920 ? W : 0}px" role="img" aria-label="${E(o.aria || "Phần trăm hao hụt từng lệnh")}">${g}</svg></div>`;
   }
@@ -99,6 +100,43 @@
   }
   const C1 = "var(--bd-s1)", C2 = "var(--bd-s2)";
 
+  /* ---------- LƯỢNG THIẾU CHO PHÉP T — Phụ lục IV Thông tư 21/2014/TT-BKHCN (Qn tính bằng g hoặc mL) ---------- */
+  function TQ(q) { if (!(q > 5)) return null; const t = q <= 50 ? q * 0.09 : q <= 100 ? 4.5 : q <= 200 ? q * 0.045 : q <= 300 ? 9 : q <= 500 ? q * 0.03 : q <= 1000 ? 15 : q <= 10000 ? q * 0.015 : q <= 15000 ? 150 : q * 0.01;
+    return q <= 1000 ? Math.ceil(t * 10 - 1e-9) / 10 : Math.ceil(t - 1e-9); } /* làm tròn lên: 0,1 khi Qn ≤ 1000; số nguyên khi Qn > 1000 */
+  const nm = v => { const t = String(v == null ? "" : v).trim().replace(",", "."); return t === "" ? NaN : +t; };
+  function thieuCalc(R, o) {
+    const F = o.forms || [], f5 = {}, kt = {}; F.forEach(f => { if (f.loai === "BM05") { if (!f5[f.so] || String(f.ngay) >= String(f5[f.so].ngay)) f5[f.so] = f; } else if (/^BM0[46]$/.test(f.loai) && f.can && f.can.length) (kt[f.so] = kt[f.so] || []).push(f); });
+    const cbb = qc => { const L = (o.cbb || []).filter(x => x.qc === qc && x.loai === "klBB" && +x.v > 0).sort((a, b) => String(a.ngay).localeCompare(String(b.ngay))); return L.length ? +L[L.length - 1].v : NaN; };
+    const out = [], thieu = [];
+    R.forEach(r => { const K = kt[r.so]; if (!K) return; const u = String(r.dvt || "").toLowerCase(), Qn = (+r.qc || 0) * (u === "kg" || u === "l" ? 1000 : 1), b5 = f5[r.so] || {};
+      const why = !(Qn > 0) ? "chưa có định lượng" : o.gom && o.gom(r.so) ? "lệnh gộp nhiều sản phẩm" : ""; if (why) return thieu.push([r.so, why]);
+      const d = r.lg ? (nm(b5.tt) || +r.tt || NaN) : 1; let bb = nm(b5.bb); if (!(bb > 0)) bb = cbb(o.qcOf ? o.qcOf(r.so) : "");
+      const V = []; let miss = ""; K.forEach(f => f.can.forEach(s => { const v = nm(s); if (!isFinite(v)) return; let g = f.cach === "thuoc" ? v : (bb > 0 ? v - bb : NaN); if (!isFinite(g)) { miss = "chưa có KL bao bì"; return; } if (r.lg && !(d > 0)) { miss = "chưa có tỷ trọng"; return; } V.push(r.lg ? g / d : g); }));
+      if (!V.length) return thieu.push([r.so, miss || "chưa có số cân"]);
+      const T = TQ(Qn), n1 = T == null ? 0 : V.filter(v => Qn - v > T + 1e-6).length, n2 = T == null ? 0 : V.filter(v => Qn - v > 2 * T + 1e-6).length, mn = Math.min(...V), tb = V.reduce((s, v) => s + v, 0) / V.length;
+      out.push({ so: r.so, sp: r.sp, ma: r.ma, bd: r.bd, nvh: r.nvh || "(chưa ghi)", u: r.lg ? "mL" : "g", Qn, T, n: V.length, n1, n2, mn, tb, kT: T ? (Qn - mn) / T : null }); });
+    return { L: out, thieu };
+  }
+  function thieuHtml(R, o) {
+    if (!o.forms) return head("Lượng thiếu so với T <small>đang tải số cân mẫu BM.04 / BM.06…</small>");
+    const C = thieuCalc(R, o), L = C.L, f = (v, d) => N(v, d == null ? 1 : d), nv = {};
+    L.forEach(x => { const a = nv[x.nvh] = nv[x.nvh] || { ten: x.nvh, so: 0, n: 0, n1: 0, n2: 0 }; a.so++; a.n += x.n; a.n1 += x.n1; a.n2 += x.n2; });
+    const NV = Object.values(nv).sort((a, b) => b.n - a.n), A = { so: L.length, n: L.reduce((s, x) => s + x.n, 0), n1: L.reduce((s, x) => s + x.n1, 0), n2: L.reduce((s, x) => s + x.n2, 0) };
+    const xau = L.filter(x => x.n1 > 0 || x.tb < x.Qn - 1e-6).sort((a, b) => b.n2 - a.n2 || b.n1 - a.n1 || (b.kT || 0) - (a.kT || 0));
+    const c1 = (n, tot) => n ? `<td class="n hhv"><b>⚠ ${n}</b>${tot ? ` <small>(${N(n / tot * 100, 1)}%)</small>` : ""}</td>` : `<td class="n hhok"><b>0</b></td>`;
+    const pts = L.filter(x => x.kT != null).map(x => ({ so: x.so, d: String(x.bd || "").slice(0, 10), p: x.kT, vuot: x.n1 > 0, tip: [x.so + (x.ma ? " · " + x.ma : ""), x.sp, "Ghi nhãn Qn = " + f(x.Qn) + " " + x.u + " · T = " + f(x.T) + " " + x.u + " · tối thiểu " + f(x.Qn - x.T) + " " + x.u, "Mẫu thấp nhất: " + f(x.mn, 2) + " " + x.u + " (" + (x.Qn - x.mn > 0 ? "thiếu " + f(x.Qn - x.mn, 2) : "dư " + f(x.mn - x.Qn, 2)) + " " + x.u + ")", "Trung bình " + x.n + " mẫu: " + f(x.tb, 2) + " " + x.u, x.n1 ? x.n1 + " mẫu thiếu quá T" + (x.n2 ? ", " + x.n2 + " mẫu quá 2T" : "") : "Không mẫu nào thiếu quá T", "Vận hành: " + x.nvh, "Bấm để mở lệnh"] }));
+    return head("Lượng thiếu so với T — Thông tư 21/2014/TT-BKHCN", `tính từ số cân mẫu QC ghi ở BM.04 / BM.06 · lượng thực = số cân − khối lượng bao bì (BM.05), dạng lỏng quy ra mL theo tỷ trọng · T = lượng thiếu cho phép theo lượng ghi nhãn Qn (Phụ lục IV)`) +
+      (!L.length ? none("Chưa có lệnh nào trong khoảng ngày này có số cân mẫu đủ để tính." + (C.thieu.length ? " " + C.thieu.length + " lệnh có cân mẫu nhưng chưa tính được: " + E(C.thieu.slice(0, 6).map(t => t[0] + " (" + t[1] + ")").join("; ")) + "." : "")) :
+      `<div class="dgx dgnv"><table><thead><tr><th>Người vận hành chính</th><th>Số lệnh có cân mẫu</th><th>Số mẫu cân</th><th>Mẫu thiếu quá T</th><th>Mẫu thiếu quá 2T</th></tr></thead><tbody>${NV.map(a => `<tr><td>${E(a.ten)}</td><td class="n">${a.so}</td><td class="n">${a.n}</td>${c1(a.n1, a.n)}${c1(a.n2, 0)}</tr>`).join("")}<tr class="tot"><td><b>Tổng cộng</b></td><td class="n"><b>${A.so}</b></td><td class="n"><b>${A.n}</b></td>${c1(A.n1, A.n)}${c1(A.n2, 0)}</tr></tbody></table></div>` +
+      (xau.length ? `<p class="note" style="margin:8px 0 2px"><b>${xau.length} lệnh cần xem</b> — có mẫu thiếu quá T, hoặc trung bình các mẫu thấp hơn lượng ghi nhãn (bấm vào dòng để mở lệnh):</p><div class="dgx dgnv"><table><thead><tr><th>Lệnh</th><th>Sản phẩm</th><th>Ghi nhãn Qn</th><th>T</th><th>Tối thiểu (Qn − T)</th><th>Số mẫu</th><th>Thiếu quá T</th><th>Thiếu quá 2T</th><th>Mẫu thấp nhất</th><th>Trung bình</th></tr></thead><tbody>${xau.map(x => `<tr class="click" data-so="${E(x.so)}" style="cursor:pointer"><td>${E(x.so)}</td><td style="white-space:normal;min-width:180px">${E(x.sp)}<small style="display:block;color:var(--muted)">${E(x.ma || "")} · ${E(x.nvh)}</small></td><td class="n">${f(x.Qn)} ${x.u}</td><td class="n">${x.T == null ? "—" : f(x.T) + " " + x.u}</td><td class="n">${x.T == null ? "—" : f(x.Qn - x.T) + " " + x.u}</td><td class="n">${x.n}</td>${c1(x.n1, x.n)}${c1(x.n2, 0)}<td class="n">${f(x.mn, 2)}</td><td class="n${x.tb < x.Qn - 1e-6 ? " hhv" : ""}">${x.tb < x.Qn - 1e-6 ? "<b>⚠ " + f(x.tb, 2) + "</b>" : f(x.tb, 2)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="note" style="margin:8px 0 2px">Không lệnh nào có mẫu thiếu quá T, và trung bình các mẫu của mọi lệnh đều đạt lượng ghi nhãn.</p>`) +
+      head("Biểu đồ: mẫu thiếu nhiều nhất của từng lệnh, tính theo số lần T", "mỗi điểm là 1 lệnh · trên vạch 0 = thiếu so với lượng ghi nhãn, dưới vạch 0 = dư · quá vạch 1T là mẫu không phù hợp, quá 2T là không được phép có") +
+      legend([["var(--bd-good)", "Không mẫu nào thiếu quá T", "dot"], ["var(--bd-crit)", "Có mẫu thiếu quá T", "tri"], ["var(--bd-crit)", "Vạch 1T và 2T", "dash"]]) +
+      lenh(pts, { ng: true, lines: [[1, "1T"], [2, "2T"]], ax: v => N(v, 1) + "T", fmt: v => N(v, 1) + "T", aria: "Mẫu thiếu nhiều nhất của từng lệnh theo số lần T" }) +
+      (C.thieu.length ? `<p class="note" style="margin:0">${C.thieu.length} lệnh có cân mẫu nhưng chưa tính được: ${E(C.thieu.slice(0, 8).map(t => t[0] + " (" + t[1] + ")").join("; "))}${C.thieu.length > 8 ? "…" : ""}.</p>` : "")) +
+      `<p class="note" style="margin:4px 0 0">Theo Điều 5 Thông tư 21/2014/TT-BKHCN: đơn vị thiếu quá T là đơn vị không phù hợp; số đơn vị không phù hợp được phép tuỳ cỡ mẫu (10 mẫu: 0 · 13 mẫu: 1 · 50 mẫu: 3 · 80 mẫu: 5 · 125 mẫu: 7); không đơn vị nào được thiếu quá 2T; trung bình phải ≥ Qn − k·s. Bảng này là số theo dõi nội bộ từ mẫu QC cân trong ca, dùng khối lượng bao bì trung bình — không thay cho việc đánh giá lô theo Thông tư.</p>`;
+  }
+
+
   /* ---------- ĐÓNG GÓI ---------- */
   function dg(box, B, o) {
     if (!box) return; const R = B.R || [], has = r => r.pct != null;
@@ -108,7 +146,7 @@
     const rows = (B.nv || []).map(x => ({ ten: x.ten, bars: [{ p: x.dk ? (x.tk - x.dk) / x.dk * 100 : null, ng: o.ngR, c: C1, tip: [x.ten + " · dạng rắn", "Hao hụt: " + (x.dk ? P((x.tk - x.dk) / x.dk * 100) : ""), "Định mức " + N(x.dk, 3) + " kg · thực tế " + N(x.tk, 3) + " kg", "Ngưỡng ±" + N(o.ngR, 1) + "%"] },
       { p: x.dl ? (x.tl - x.dl) / x.dl * 100 : null, ng: o.ngL, c: C2, tip: [x.ten + " · dạng lỏng", "Hao hụt: " + (x.dl ? P((x.tl - x.dl) / x.dl * 100) : ""), "Định mức " + N(x.dl, 3) + " L · thực tế " + N(x.tl, 3) + " L", "Ngưỡng ±" + N(o.ngL, 1) + "%"] }] }));
     const items = R.filter(r => r.kTx > 0).map(r => ({ d: String(r.bd || "").slice(0, 10), v: +r.kTx, s: r.lg ? 1 : 0 }));
-    box.className = "bcbd"; box.innerHTML =
+    box.className = "bcbd"; box.innerHTML = thieuHtml(R, o) +
       head("Biểu đồ: % hao hụt từng lệnh", `mỗi điểm là 1 lệnh, xếp theo ngày bắt đầu đóng gói · ${pts.length} lệnh có số hao hụt${nV ? `, <b>${nV} lệnh vượt ngưỡng</b>` : ", không lệnh nào vượt ngưỡng"} · rê chuột để xem, bấm để mở lệnh`) +
       (pts.length ? legend([["var(--bd-good)", "Trong ngưỡng", "dot"], ["var(--bd-crit)", "Vượt ngưỡng", "tri"], ["var(--bd-crit)", "Vạch ngưỡng cho phép", "dash"]]) : "") +
       lenh(pts, { ng: true, ngTen: ng => ng === o.ngR && ng !== o.ngL ? "rắn" : ng === o.ngL && ng !== o.ngR ? "lỏng" : "", aria: "Phần trăm hao hụt từng lệnh đóng gói" }) +

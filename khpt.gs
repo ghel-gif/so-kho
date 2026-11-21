@@ -398,7 +398,11 @@ function webDGFGet(a, so) {
 }
 function webDGFAll(a, tu, den) {
   auth_(a); // biểu mẫu đóng gói: ai đăng nhập cũng xem được
-  return dgfAll_().filter(x => (!tu || x.ngay >= tu) && (!den || x.ngay <= den)).map(x => ({ id: x.id, loai: x.loai, so: x.so, ngay: x.ngay, kl: x.kl, may: (x.d && (x.d.mayTen || x.d.may)) || '', maMay: (x.d && x.d.maMay) || '', dlSrc: (x.d && x.d.dlSrc) || '' }));
+  return dgfAll_().filter(x => (!tu || x.ngay >= tu) && (!den || x.ngay <= den)).map(x => { const d = x.d || {}, o = { id: x.id, loai: x.loai, so: x.so, ngay: x.ngay, kl: x.kl, may: d.mayTen || d.may || '', maMay: d.maMay || '', dlSrc: d.dlSrc || '' };
+    /* số liệu gọn cho báo cáo lượng thiếu so với T (TT 21/2014/TT-BKHCN): BM.05 → KL bao bì, tỷ trọng; BM.04/06 → các số cân mẫu (g) */
+    if (x.loai === 'BM05') { o.bb = d.klBB || ''; o.tt = d.tyTrong || ''; }
+    if (x.loai === 'BM04' || x.loai === 'BM06') { o.cach = d.cach || 'tong'; o.can = [].concat.apply([], (d.rounds || []).filter(r => r && !r.nk).map(r => (r.kl || []).filter(v => v !== '' && v != null).map(String))); }
+    return o; });
 }
 function webDGFSave(a, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
