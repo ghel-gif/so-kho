@@ -1611,3 +1611,11 @@ input:not(:focus){text-overflow:ellipsis}
 .bd-none{margin:6px 0}
 @media print{.bcbd .bd-hit{display:none}}
 .dgnv.dgt th,.dgnv.dgt td{padding:6px 9px}.dgnv.dgt td.n{min-width:0}.dgnv.dgt td:first-child{min-width:0}
+/* bảng lượng thiếu so với T: gọn 1 dòng/lệnh, khung cuộn, lọc cần xem / đạt */
+.dgnv.dgt{max-height:372px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.dgnv.dgt thead th{position:sticky;top:0;z-index:2;background:var(--surface)}
+.dgnv.dgt th,.dgnv.dgt td{padding:4px 9px;font-size:13px}
+.dgnv.dgt td.tsp{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}.dgnv.dgt td.tsp small{color:var(--muted)}
+.dgnv.dgt[data-tf=bad] tr.tok,.dgnv.dgt[data-tf=ok] tr.tbad{display:none}
+.bd-flt{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bd-flt .btn[aria-pressed=true]{background:var(--accent,#14897c);color:var(--accent-ink,#fff);border-color:transparent}
+@media print{.dgnv.dgt{max-height:none;overflow:visible}}
