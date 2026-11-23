@@ -48,7 +48,10 @@
       const P = ((S.dg && S.dg.lenh) || {})[o.so] || {}, X = P.x || {};
       const done = [];
       if (!String(X.nvh || "").trim()) done.push("người vận hành");
-      if (!(X.cuoi || []).some(v => v !== "" && v != null)) done.push("cân KL tồn cuối BTP");
+      /* lệnh lấy từ 2 lô BTP trở lên: phải cân tồn cuối ĐỦ từng lô mới hết nhắc (trước đây cân 1 lô là hết nhắc) */
+      { const B = P.btp || [], C = X.cuoi || [], th = B.filter((b, i) => C[i] === "" || C[i] == null);
+        if (!B.length) { if (!C.some(v => v !== "" && v != null)) done.push("cân KL tồn cuối BTP"); }
+        else if (th.length) done.push(B.length > 1 && th.length < B.length ? "cân KL tồn cuối lô " + th.map(b => b.lo || b.ma).join(", ") : "cân KL tồn cuối BTP"); }
       if (done.length) miss.push({ t: "Khi đóng xong: " + done.join(", "), f: "" });
       if (miss.length) rows.push({ o, miss });
     }

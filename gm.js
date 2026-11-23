@@ -50,7 +50,11 @@
   const ttOf = r => r.d.huy ? "Huỷ" : (r.d.ketQua || r.d.xong) ? "Đã có kết quả" : "Chờ kết quả";
   let R = [], loaded = false, q = "", fNam = "", fThang = "", fDV = "", fTT = "";
   const live = () => R.filter(x => !x.xoa);
-  async function load() { R = await api("webGMAll", S.auth); loaded = true; try { badge(); } catch (e) {} try { if (!USERS.length) USERS = await api("getUserNames"); } catch (e) {} }
+  /* sổ gửi mẫu trước đây chỉ tải 1 lần khi mở trang → người khác xác nhận bản cứng / ghi kết quả ở máy khác thì máy này không thấy.
+     Nay nhớ phiên bản trang GuiMau lúc tải; phiên bản đổi thì tải lại. */
+  let gmV = "";
+  const gmVer = () => { try { const s = SOKHO_WEB.db.sheets.GuiMau; return String((s && s.ver) || 0); } catch (e) { return ""; } };
+  async function load() { R = await api("webGMAll", S.auth); loaded = true; gmV = gmVer(); try { badge(); } catch (e) {} try { if (!USERS.length) USERS = await api("getUserNames"); } catch (e) {} }
   const uniq = k => [...new Set(live().map(r => String(r.d[k] || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
   const dl = (id, L) => `<datalist id="${id}">${L.map(x => `<option value="${E(x)}">`).join("")}</datalist>`;
   const kqChip = r => { const t = ttOf(r), k = r.d.ketQua; if (t === "Huỷ") return '<span class="st cancel">Huỷ</span>';
@@ -61,6 +65,7 @@
   window.renderGM = async function () {
     const b = document.getElementById("gmBox"); if (!b) return;
     if (!loaded) { b.innerHTML = '<p class="note"><span class="ldg">Đang tải sổ gửi mẫu</span></p>'; try { await load(); } catch (e) { b.innerHTML = `<div class="empty"><b>Không tải được sổ gửi mẫu</b>${E(e.message)}</div>`; return; } }
+    else if (gmV !== gmVer()) { try { await load(); } catch (e) {} }
     const A = live(), nams = [...new Set(A.map(r => String(r.d.ngay).slice(0, 4)).concat([today().slice(0, 4)]))].sort().reverse(); if (!fNam || !nams.includes(fNam)) fNam = nams[0];
     const W = fold(q).split(/\s+/).filter(Boolean);
     const Y = A.filter(r => String(r.d.ngay).slice(0, 4) === fNam).sort((a, c) => String(a.d.ngay).localeCompare(String(c.d.ngay)) || String(a.luc || "").localeCompare(String(c.luc || "")) || String(a.id).localeCompare(String(c.id)));
@@ -199,4 +204,6 @@
   /* nhắc người được giao bản cứng ngay khi mở Sổ Kho (chấm số trên tab Gửi mẫu KTCL) */
   setTimeout(async () => { try { if (!loaded && typeof S !== "undefined" && S.auth && S.me) { await load(); } } catch (e) {} }, 6000);
   window.gmReload = async function () { loaded = false; if (S.tab === "gm") await window.renderGM(); };
+  /* dữ liệu mới về khi đang ở mục khác: tải lại ngầm để chấm số "chờ nhận bản cứng" trên tab đúng */
+  window.gmFresh = async function () { if (!loaded || gmV === gmVer()) return; try { await load(); } catch (e) {} };
 })();
