@@ -299,14 +299,14 @@
             <small class="note" id="qaCanQC"></small></div>` : ""}
           ${fld("Ghi chú (mô tả lỗi)", `<textarea data-k="ghiChu" rows="2" placeholder="Mô tả lỗi: lỗi gì, ở đâu, bao nhiêu cái, mức độ… — ô tự giãn khi ghi dài">${E(d.ghiChu || "")}</textarea>`, true)}
           ${so === "NHAN" ? fld("Kết quả", inp("ketQua", d.ketQua, `placeholder="${E(kqTxt(d))}" data-opt`)) + fld("Tình trạng", sel("tinhTrangQC", d.tinhTrangQC || "Bình thường", TTQC, false)) : ""}
-          <div style="grid-column:1/-1"><b>Kết luận</b> <span class="qa-kl">${OKV.map(v => `<button type="button" class="btn small${d.ketLuan === v ? (v === "Đạt" ? " ok" : " bad") : ""}" data-kl="${v}" ${ro}>${v}</button>`).join(" ")}</span>
+          <div style="grid-column:1/-1" class="qa-klr${d.ketLuan ? "" : " trong"}"><b>Kết luận</b> <span class="qa-kl">${OKV.map(v => `<button type="button" class="btn${d.ketLuan === v ? (v === "Đạt" ? " ok" : " bad") : ""}" data-kl="${v}" ${ro}>${v}</button>`).join(" ")}</span>${d.ketLuan ? "" : ' <span class="qa-klt">Chưa chọn kết luận</span>'}
             <small class="note" id="qaGY">${g ? `Gợi ý theo ${S0.hd}: <b style="color:${g[0] === "Đạt" ? "#2e7d32" : "#c62828"}">${g[0]}</b> (${E(g[1])})` : "Ghi số mẫu, số lỗi để có gợi ý."}</small></div>
           ${fld(so === "NHAN" ? "Phiếu yêu cầu xử lý SPKPH" : so === "TUI" ? "Yêu cầu xử lý SP KPH" : "Phiếu yêu cầu xử lý SPKPH", inp("ycXuLy", d.ycXuLy, 'placeholder="số phiếu KPH (nếu có)"'))}${r && canEd ? `<button type="button" class="btn small" id="qaMkK" data-fit="auto">Lập phiếu KPH</button>` : ""}
         </div></fieldset>
         <fieldset class="qa-fs" ${tp && !(r && r.xoa) ? "" : "disabled"}><legend>Xác nhận</legend><div class="two qa-g">
           ${fld("Xác nhận của quản lý phòng QC (TP. QA/QC)", inp("xnQL", d.xnQL, 'list="qaXN" data-opt') + dl("qaXN", XN))}
           ${fld("Kết quả xử lý", inp("kqXuLy", d.kqXuLy, "data-opt"))}
-          <p class="note" style="grid-column:1/-1;margin:0">${d.xnQL ? "Đã xác nhận: " + E(d.xnQLNguoi || "") + (d.xnQLLuc ? " · " + E(d.xnQLLuc) : "") + ". " : ""}${tp ? "Xoá ô xác nhận rồi bấm Cập nhật để mở lại cho QC sửa." : "Chỉ TP. QA/QC (Nguyễn Ô Ghel) xác nhận."} Xác nhận của bộ phận thu mua: ký tay trên bản in.</p>
+          <p class="note" style="grid-column:1/-1;margin:0">${d.xnQL ? "Đã xác nhận: " + E(d.xnQLNguoi || "") + (d.xnQLLuc ? " · " + E(D(d.xnQLLuc) + String(d.xnQLLuc).slice(10)) : "") + ". " : ""}${tp ? "Xoá ô xác nhận rồi bấm Cập nhật để mở lại cho QC sửa." : "Chỉ TP. QA/QC (Nguyễn Ô Ghel) xác nhận."} Xác nhận của bộ phận thu mua: ký tay trên bản in.</p>
         </div></fieldset>
         ${acts(r, canEd || (tp && !(r && r.xoa)), r && (tp || (canEd && (r.nguoi === me || !!r.d.tuPN))))}`;
     };
@@ -472,6 +472,10 @@
         if (so === "TUI") { const L = canLech(d, r && r.id); /* cân túi rỗng lệch quá ngưỡng: hỏi lại trước khi lưu (không hỏi lại nếu số cân này đã lưu kèm cảnh báo) */
           if (L && L.vuot && !(r && r.d && r.d.canLech && +r.d.tlTui === +d.tlTui) && typeof askConfirm === "function" && !await askConfirm([`Khối lượng trung bình 1 túi: ${N(d.tlTui)} g — lệch ${L.p > 0 ? "+" : ""}${N(L.p)} % so với lần cân trước (${N(L.tb)} g, ngày ${D(L.ngay)}${L.ncc ? ", " + L.ncc : ""}).`, `Ngưỡng cho phép: ${N(L.ng)} %. Số này sẽ thành khối lượng bao bì ở BM.05 của các mã hàng dùng túi này.`],
             { t: "Cân túi rỗng lệch nhiều so với lần trước", n: "Kiểm lại <b>số túi cân</b> và <b>tổng khối lượng</b>. Nếu cân đúng (đổi nhà cung cấp, đổi độ dày màng…) thì ghi lý do ở ô Ghi chú rồi bấm <b>Vẫn lưu</b>.", no: "Quay lại sửa", ok: "Vẫn lưu" })) return; }
+        /* TP xác nhận mà QC chưa ghi kết luận → hỏi ghi kết luận theo xác nhận (sổ BM.02 cần cột kết luận) */
+        if (d.xnQL && !d.ketLuan && typeof askConfirm === "function") { const kl = /^Không đạt/i.test(d.xnQL) ? "Không đạt" : "Đạt";
+          if (!await askConfirm([`Lô này chưa có kết luận kiểm tra của QC (ô Kết luận đang trống).`, `Ghi kết luận “${kl}” theo xác nhận “${d.xnQL}” rồi lưu?`], { t: "Chưa có kết luận kiểm tra", n: "Muốn để QC tự kết luận thì bấm <b>Quay lại</b> và xoá ô xác nhận.", no: "Quay lại", ok: "Ghi “" + kl + "” và lưu" })) return;
+          d.ketLuan = kl; }
         btn.disabled = true; const moi = !r;
         const m0 = d.xnQL && tp ? (moi ? "Đã lưu và xác nhận" : "Đã cập nhật và xác nhận") : d.ketLuan ? (moi ? "Đã lưu" : "Đã cập nhật") + " kết quả kiểm tra — chờ TP. QA/QC xác nhận" : moi ? "Đã lưu: vật tư về — chờ kiểm (hạn 48 giờ)" : "Đã cập nhật lô bao bì";
         try { const o = await save({ id: r && r.id, loai: so, d }, false);

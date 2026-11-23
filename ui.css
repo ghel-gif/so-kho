@@ -354,6 +354,11 @@ html body button.dl-open svg{width:20px;height:20px;fill:none;stroke:#fff;stroke
 .qa-can-ss{display:block}.qa-can-ss:empty{display:none}.qa-can-ss.bad{color:#c62828;padding:6px 10px;border-radius:8px;background:rgba(198,40,40,.08);border:1.5px solid rgba(198,40,40,.45)}
 .qa-lech{color:#c62828;white-space:nowrap}:root[data-theme="dark"] .qa-can-ss.bad,:root[data-theme="dark"] .qa-lech{color:#fca5a5}
 :root[data-theme="dark"] .qa-nk-c b,:root[data-theme="dark"] .qa-pn{color:#86efac}:root[data-theme="dark"] .qa-nk-dup{color:#fbbf24}
+.qa-dlg .qa-klr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 8px;border-radius:8px;border:1px solid transparent}
+.qa-dlg .qa-klr.trong{border-color:#f59e0b;background:#fffbeb}
+.qa-dlg .qa-klt{color:#b45309;font-weight:600;font-size:.9em}
+:root[data-theme=dark] .qa-dlg .qa-klr.trong{background:#3a2a0a}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .qa-dlg .qa-klr.trong{background:#3a2a0a}}
 .qa-dlg .qa-kl .btn.ok{background:#2e7d32;color:#fff;border-color:#2e7d32}
 .qa-dlg .qa-kl .btn.bad{background:#c62828;color:#fff;border-color:#c62828}
 /* Thiết bị nhà xưởng + kiểm tra cân (QC-QT.01) */
