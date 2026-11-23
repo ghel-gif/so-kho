@@ -23,4 +23,5 @@ begin
   update nguoi_dung set auth_uid = v_uid where ten = p_ten;
   return p_ten || ': đã đặt mật khẩu';
 end $$;
-grant execute on function public.dat_mat_khau(text, text) to authenticated;
+-- 23/11/2026: KHÔNG cấp cho ai (anon gọi được qua quyền mặc định PUBLIC). Chỉ chạy trong SQL editor.
+revoke all on function public.dat_mat_khau(text, text) from public, anon, authenticated;

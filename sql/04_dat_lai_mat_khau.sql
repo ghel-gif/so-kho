@@ -11,7 +11,8 @@ begin
   if uid is not null then delete from auth.users where id = uid; end if;
   delete from auth.users u where lower(u.email) = (select lower(email) from nguoi_dung where ten = p_ten);
 end $$;
-grant execute on function public.dat_lai_mat_khau(text) to authenticated;
+-- 23/11/2026: KHÔNG cấp cho ai (anon gọi được qua quyền mặc định PUBLIC). Chỉ chạy trong SQL editor.
+revoke all on function public.dat_lai_mat_khau(text) from public, anon, authenticated;
 
 -- Đặt lại ngay cho anh Ghel:
 select dat_lai_mat_khau('Nguyễn Ô Ghel');
