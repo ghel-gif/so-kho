@@ -85,8 +85,8 @@
     /* cảnh báo cho QC (19/11/2026): mọi lô túi ép 3 biên chưa được TP xác nhận mà chưa đủ ảnh mặt trước + mặt sau — kể cả lô chưa kết luận */
     thieu2 = r => anhCan(r.d, r.loai) && !r.d.xnQL && !(r.mt && r.ms), thieu2Txt = r => !r.mt && !r.ms ? "chưa có ảnh mặt trước và mặt sau" : !r.mt ? "thiếu ảnh mặt trước" : "thiếu ảnh mặt sau";
   const ttOf = r => r.d.tt || (r.d.xnQL ? "Đã xác nhận" : r.d.ketLuan ? "Chờ xác nhận" : "Chờ kiểm");
-  const chip = r => { const t = ttOf(r), kl = r.d.ketLuan, c = t === "Chờ kiểm" ? "#d97706" : t === "Chờ xác nhận" ? "#7c3aed" : kl === "Không đạt" ? "#c62828" : "#2e7d32";
-    return `<span class="st" style="background:${c};color:#fff;border-color:${c}">${E(t === "Đã xác nhận" ? (kl || "Đã xác nhận") + " · đã xác nhận" : t === "Chờ xác nhận" ? (kl || "") + " · chờ xác nhận" : "Chờ kiểm")}</span>`; };
+  const chip = r => { const t = ttOf(r), x = String(r.d.xnQL || ""), kl = r.d.ketLuan || (/^Không đạt/i.test(x) ? "Không đạt" : x ? "Đạt" : "") /* QC chưa ghi kết luận mà TP đã xác nhận: lấy theo xác nhận, khỏi hiện "Đã xác nhận · đã xác nhận" */, c = t === "Chờ kiểm" ? "#d97706" : t === "Chờ xác nhận" ? "#7c3aed" : kl === "Không đạt" ? "#c62828" : "#2e7d32";
+    return `<span class="st" style="background:${c};color:#fff;border-color:${c}">${E(t === "Đã xác nhận" ? kl + " · đã xác nhận" : t === "Chờ xác nhận" ? (kl || "") + " · chờ xác nhận" : "Chờ kiểm")}</span>`; };
   const soLoi = d => { const a = parseFloat(d.loiNang), b = parseFloat(d.loiNhe); return isFinite(a) || isFinite(b) ? (isFinite(a) ? a : 0) + (isFinite(b) ? b : 0) : (d.soLoi ?? ""); };
   const kqTxt = d => { const a = +d.loiNang || 0, b = +d.loiNhe || 0; if (!a && !b) return "Không phát hiện lỗi"; return [b ? "Phát hiện " + b + " lỗi nhỏ" : "", a ? (b ? "" : "Phát hiện ") + a + " lỗi nặng" : ""].filter(Boolean).join(", "); };
   /* gợi ý kết luận theo QC-HD: có lỗi nặng hoặc tiêu chí không đạt → Không đạt; lỗi nhẹ vượt ngưỡng (5 %, thùng/hộp 2 %) → Không đạt */
