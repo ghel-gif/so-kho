@@ -72,7 +72,7 @@ function dayBlock(d,L){const chua=L.filter(r=>!r.bdTT&&["Tạo mới","Sửa sau
     <td><span class="kh-uu ${UUC[r.uuTien]||""}">${esc(r.uuTien)}</span></td><td>${esc([r.pc1,r.pc2].filter(Boolean).join(", "))||"—"}<br><small class="note">QC: ${esc(r.qc)||"—"}</small></td>
     <td><span class="kh-tt ${TTC[r.tt]}">${esc(r.tt)}</span>${r.gui&&r.tt!=="Tạo mới"?`<br><small class="note">gửi ${esc(dmy(r.gui.slice(0,10)).slice(0,5))} ${esc(r.gui.slice(11))}</small>`:""}</td>
     <td class="kh-act">${actBtns(r)}</td></tr>`).join("")}</tbody></table></div></div>`}
-function actBtns(r){const vs=(r.tt==="Hoàn thành"||r.tt==="Xong phối trộn")?`<button class="btn small" type="button" data-vsl="${esc(r.so)}" title="Biên bản vệ sinh thiết bị (BM.05)">Vệ sinh</button>`:"";
+function actBtns(r){const vs=(r.tt==="Hoàn thành"||r.tt==="Xong phối trộn")?`<button class="btn small" type="button" data-vsl="${esc(r.so)}" title="Biên bản vệ sinh thiết bị (BM.04 Jet Mill / BM.05 khuấy trộn)">Vệ sinh</button>`:"";
   if(!canKH()||r.tt==="Hoàn thành"||r.tt==="Đã huỷ")return r.tt==="Hoàn thành"?`<button class="btn small" type="button" data-lenh="${esc(r.so)}">Xem lệnh</button>`+vs:"";
   if(r.tt==="Xong phối trộn")return `<button class="btn small primary" type="button" data-lenh="${esc(r.so)}">Hoàn thành lệnh</button>`+vs;
   if(r.tt==="Đang SX")return `<button class="btn small primary" type="button" data-act="kt" data-k="${esc(r.id)}">Kết thúc</button>`;
@@ -264,7 +264,7 @@ window.lsxBmTab=async function(box){if(!box)return;const day=S.lsxBmDay||S.today
   const L=(S.lenh||[]).filter(o=>{const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm"||o.trangThai==="Đã huỷ")return false;const a=String(o.ngay||"").slice(0,10),h=String(o.ngayHT||"").slice(0,10);
     return a===day||h===day||(a<=day&&(o.trangThai==="Đang SX"||(h&&h>day)))}).sort((x,y)=>(x.trangThai==="Đang SX"?0:1)-(y.trangThai==="Đang SX"?0:1)||String(y.so).localeCompare(String(x.so),"vi",{numeric:true}));
   box.innerHTML=`<div class="tools" style="align-items:center"><label class="bm-day">Ngày <input type="date" id="lsxBmDay" value="${esc(day)}" max="${esc(S.today)}"></label><span class="note">${L.length} lệnh</span></div>
-    <p class="note" style="margin:0">Lệnh phối trộn đang sản xuất, ra lệnh hoặc hoàn thành trong ngày. Mọi lệnh lập <b>BM.06</b> biên bản sản xuất BTP và <b>BM.05</b> biên bản vệ sinh thiết bị khuấy trộn; lô AHK lập thêm <b>BM.08</b> phiếu kiểm nghiệm hoá lý. Thẻ BTP (BM.07) in trong lệnh đã hoàn thành.</p>
+    <p class="note" style="margin:0">Lệnh phối trộn đang sản xuất, ra lệnh hoặc hoàn thành trong ngày. Mọi lệnh lập <b>BM.06</b> biên bản sản xuất BTP và <b>BM.04/BM.05</b> biên bản vệ sinh thiết bị (Jet Mill / khuấy trộn); lô AHK lập thêm <b>BM.08</b> phiếu kiểm nghiệm hoá lý. Thẻ BTP (BM.07) in trong lệnh đã hoàn thành.</p>
     <div id="lsxBmList">${L.length?'<p class="note">Đang tải tình trạng biểu mẫu…</p>':'<div class="empty">Không có lệnh SX BTP nào trong ngày này.</div>'}</div>`;
   $("lsxBmDay").onchange=e=>{S.lsxBmDay=e.target.value||S.today;lsxBmTab(box)};
   if(!L.length)return;
@@ -286,7 +286,7 @@ window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thàn
     if(String(o.ngay||"")<"2026-11-05")d.classList.add("old"); /* lệnh trước ngày áp dụng biểu mẫu: không báo đỏ */
     ins(d);return}
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
-  d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button>${ahk?'<button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button>':""}<button class="btn" type="button" data-vs>Vệ sinh thiết bị (BM.05)</button>`;
+  d.innerHTML=`<button class="btn" type="button" data-bb>Biên bản SX (BM.06)</button>${ahk?'<button class="btn" type="button" data-hl>Phiếu hoá lý (BM.08)</button>':""}<button class="btn" type="button" data-vs>Vệ sinh thiết bị (BM.04/05)</button>`;
   ins(d);d.querySelector("[data-bb]").onclick=()=>bbDlg(o.so);if(ahk)d.querySelector("[data-hl]").onclick=()=>hlForm(o.maSP,o.so);d.querySelector("[data-vs]").onclick=()=>vsDlg(o.so)};
 
 /* ---------- BM.06 ---------- */
@@ -346,10 +346,10 @@ function bbPrint(D,d){
   const mayP=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v)}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};const may=mayP(d.may||(kh&&kh.may));
   /* 26/11/2026 (anh Ghel): lệnh chưa có phiếu xuất NL → mục 2 ghi tech theo định mức (công thức × KL kế hoạch), số lô để trống, có ghi chú "theo định mức" */
   /* ưu tiên: phiếu xuất NL → số liệu "Lưu tạm" ở form hoàn thành lệnh (có số lô) → định mức */
-  const Nh=D.nhap&&!D.nl.length&&(D.nhap.lines||[]).length?D.nhap:null,hs=ma=>+((itemBy(ma)||{}).heSo)||1;
+  const Nh=!done&&!(+D.nlTong>0)&&D.nhap&&!D.nl.length&&(D.nhap.lines||[]).length?D.nhap:null,hs=ma=>+((itemBy(ma)||{}).heSo)||1;
   const ctDM=(S.congThuc&&S.congThuc[o.maSP])||[];
   /* lưu tạm mới ghi vài vật tư (VD chỉ tech) → các vật tư còn lại trong công thức tính theo định mức, kẻo tổng NL thiếu, hao hụt ra +16 % */
-  const nhThieu=Nh&&+o.slDuKien>0?ctDM.filter(c=>!Nh.lines.some(l=>l.ma===c.ma)):[];const nlDM=!D.nl.length&&!Nh&&ctDM.length&&+o.slDuKien>0;
+  const nhThieu=Nh&&+o.slDuKien>0?ctDM.filter(c=>!Nh.lines.some(l=>l.ma===c.ma)):[];const nlDM=!done&&!(+D.nlTong>0)&&!D.nl.length&&!Nh&&ctDM.length&&+o.slDuKien>0; /* lệnh đã hoàn thành / đã có phiếu xuất: chỉ in theo phiếu xuất thật */
   const nl=(()=>{const g={};(Nh?Nh.lines.filter(l=>(itemBy(l.ma)||{}).nhom==="Nguyên liệu").map(l=>({ma:l.ma,ten:(itemBy(l.ma)||{}).ten||"",lo:l.lo||"",kg:Math.round(l.sl*hs(l.ma)*1000)/1000})):nlDM?ctDM.filter(c=>(itemBy(c.ma)||{}).nhom==="Nguyên liệu").map(c=>({ma:c.ma,ten:(itemBy(c.ma)||{}).ten||"",lo:"",kg:Math.round(c.dm*o.slDuKien*1000)/1000})):D.nl).forEach(n=>{const k=n.ma+"|"+(n.lo||"");if(g[k])g[k].kg+=n.kg;else g[k]=Object.assign({},n)});const a=Object.values(g);return a.length?a:[null]})();if(!may.length)may.push(null);const me=(d.me||[]).filter(m=>m&&(m.ngay||m.nguoi||m.kg));if(!me.length)me.push(null);
   const tg=d.tg||{},te=bbTG(tg,bbKH(o,kh)),bd=te.bdN,ht=te.htN,KHN='<br><i style="font-size:10.5pt">(theo kế hoạch)</i>';
   /* 12/11/2026 (theo anh Ghel): hao hụt (%) = (KL thu được − tổng KL nguyên liệu cân thực tế) / KL thu được × 100.
@@ -452,7 +452,7 @@ async function hlForm(ma,lo,soPhieu){let D;try{D=await api("webHLGet",S.auth,ma,
    <p class="note">Phiếu <b>Đạt</b> tự vào hồ sơ lô (Phiếu kiểm hoá lý: ĐÃ CÓ). Tỷ trọng ghi ở đây cũng cập nhật vào lô. Chỉ tiêu bỏ trống (không kiểm) sẽ không in.${p?" Lưu lần cuối: "+esc(p.nguoi)+" · "+esc(p.luc):""}</p>
    <div class="actions">${ro&&!p?'<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>':btn4(!ro,!!p)}</div></div>`;
   document.body.appendChild(w);
-  const pdSync=()=>w.querySelectorAll("#hlRows .hl-pd").forEach(d=>{const a=d.querySelector('[data-pd="p"]').value.trim(),b=d.querySelector('[data-pd="u"]').value.trim(),t=d.querySelector(".hl-kq");t.value=a&&b?a+" % hạt < "+b+" µm":a?a+" %":b?"< "+b+" µm":""});
+  const pdSync=()=>w.querySelectorAll("#hlRows .hl-pd").forEach(d=>{const a=d.querySelector('[data-pd="p"]').value.trim(),b=d.querySelector('[data-pd="u"]').value.trim(),t=d.querySelector(".hl-kq");if(!a&&!b&&t.value&&!pdParse(t.value)[0])return;t.value=a&&b?a+" % hạt < "+b+" µm":a?a+" %":b?"< "+b+" µm":""});
   const keep=()=>{pdSync();w.querySelectorAll("#hlRows .hl-kq").forEach(x=>{kq[x.dataset.k]=x.value});
     w.querySelectorAll("#hlRows .hl-pp").forEach(x=>{const k=x.dataset.p,v=x.value.trim();kq["@"+k]=v&&v!==(PP[k]||"")?v:(v?"":"-")});
     w.querySelectorAll("#hlRows .hl-mu").forEach(x=>{const k=x.dataset.m,c=CT.find(y=>y[0]===k),v=x.value.trim();kq["#"+k]=v&&v!==(c[4]||"")?v:""});w.querySelectorAll("#hlRows .hl-dg").forEach(x=>{kq["~"+x.dataset.g]=x.value});HLI.forEach(x=>{kq[x[0]]=$("hl"+x[0]).value.trim()})};
@@ -673,7 +673,7 @@ function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?(
   ${sign([["Nhân viên pha chế",o.nguoiSX||""],["NV QC",(D.p&&D.p.nguoi)||o.qcSX||""]])}</div>`)}
 /* Cảnh báo trước khi bắt đầu lệnh: máy vừa chạy BTP khác mà chưa có biên bản vệ sinh Đạt */
 window.vsWarn=function(miss,onGo){const w=document.createElement("div");w.className="cfm";
-  w.innerHTML=`<div class="cfm-box"><h2>Chưa có biên bản vệ sinh thiết bị</h2><p>Các máy sau vừa chạy BTP khác nhưng chưa có biên bản vệ sinh (BM.05) kết quả <b>Đạt</b>:</p><ul>${miss.map(m=>`<li><b>${esc(m.code)}</b> — sau lệnh ${esc(m.so)} (${esc((itemBy(m.maSP)||{ten:m.maSP}).ten)})</li>`).join("")}</ul>
+  w.innerHTML=`<div class="cfm-box"><h2>Chưa có biên bản vệ sinh thiết bị</h2><p>Các máy sau vừa chạy BTP khác nhưng chưa có biên bản vệ sinh (BM.04/BM.05) kết quả <b>Đạt</b>:</p><ul>${miss.map(m=>`<li><b>${esc(m.code)}</b> — sau lệnh ${esc(m.so)} (${esc((itemBy(m.maSP)||{ten:m.maSP}).ten)})</li>`).join("")}</ul>
    <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x="huy">Huỷ</button><button class="btn" type="button" data-x="go">Vẫn bắt đầu</button><button class="btn primary" type="button" data-x="vs">Lập biên bản vệ sinh</button></div></div>`;
   document.body.appendChild(w);w.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{w.remove();if(b.dataset.x==="go")onGo();else if(b.dataset.x==="vs")vsDlg(miss[0].so)})};
 /* ---------- mở phiếu từ hồ sơ lô (#hl:số phiếu) + nút lập phiếu trên thẻ lô ---------- */

@@ -89,8 +89,8 @@
     const L = (S.lenh || []).filter(o => o.trangThai === "Hoàn thành" && String(o.ngay || "") >= "2026-11-05" && typeof itemBy === "function" && (itemBy(o.maSP) || {}).nhom === "Bán thành phẩm" && !V[o.so])
       .sort((a, b) => String(b.ngayHT || b.ngay).localeCompare(String(a.ngayHT || a.ngay)));
     if (!L.length) { el.innerHTML = ""; return; }
-    el.innerHTML = `<div class="blv-card lv-bad" style="--c:#7c3aed"><div class="blv-h"><span class="blv-i">🧽</span><b>Phối trộn — chưa lập biên bản vệ sinh thiết bị (BM.05)</b><span class="blv-n">${L.length}</span></div><div class="blv-l">${L.slice(0, 12).map((o, i) => { const it = itemBy(o.maSP);
-      return `<button type="button" class="blv-r r-bad" data-vs="${i}"><span><b>${E(o.so)}</b> · ${E(it ? it.ten : o.maSP)} — xong ${D(o.ngayHT || o.ngay)}, <b style="color:#c62828">chưa lập BM.05</b></span></button>`; }).join("")}${L.length > 12 ? `<div class="note" style="padding:6px 10px">… và ${L.length - 12} lệnh khác — xem ở Phối trộn</div>` : ""}</div></div>`;
+    el.innerHTML = `<div class="blv-card lv-bad" style="--c:#7c3aed"><div class="blv-h"><span class="blv-i">🧽</span><b>Phối trộn — chưa lập biên bản vệ sinh thiết bị (BM.04/05)</b><span class="blv-n">${L.length}</span></div><div class="blv-l">${L.slice(0, 12).map((o, i) => { const it = itemBy(o.maSP);
+      return `<button type="button" class="blv-r r-bad" data-vs="${i}"><span><b>${E(o.so)}</b> · ${E(it ? it.ten : o.maSP)} — xong ${D(o.ngayHT || o.ngay)}, <b style="color:#c62828">chưa lập BM.04/05</b></span></button>`; }).join("")}${L.length > 12 ? `<div class="note" style="padding:6px 10px">… và ${L.length - 12} lệnh khác — xem ở Phối trộn</div>` : ""}</div></div>`;
     el.querySelectorAll("[data-vs]").forEach(b => b.onclick = () => { const o = L[+b.dataset.vs]; if (window.vsDlg) vsDlg(o.so); });
     bump(box, L.length);
   }
