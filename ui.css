@@ -1642,7 +1642,7 @@ input:not(:focus){text-overflow:ellipsis}
 .kh-dlg.vs4{max-width:860px!important}
 .kh-dlg.vs4 table.vs-t{table-layout:fixed;width:100%;min-width:0}.kh-dlg.vs4 table.vs-t th,.kh-dlg.vs4 table.vs-t td{padding:4px;text-align:center}
 .kh-dlg.vs4 table.vs-t th:first-child,.kh-dlg.vs4 table.vs-t td:first-child{text-align:left}
-.kh-dlg.vs4 table.vs-t th:nth-child(2){width:110px}.kh-dlg.vs4 table.vs-t th:nth-child(n+3){width:78px}.kh-dlg.vs4 table.vs-t th:last-child{width:44px}
+.kh-dlg.vs4 table.vs-t th:nth-child(n+2){width:84px}.kh-dlg.vs4 table.vs-t.kd th:nth-child(2){width:110px}.kh-dlg.vs4 table.vs-t th:last-child{width:44px}
 .kh-dlg.vs4 table.vs-t input:not([type=checkbox]){width:100%;min-width:0;box-sizing:border-box}
 .kh-dlg.vs4 #vsAddM{width:auto;max-width:100%}.kh-dlg.vs4 #vsKQ{display:block;width:auto;min-width:220px}.kh-dlg.vs4 #vsSo{max-width:160px}
 .kh-dlg.hl8 .hl-pd{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.kh-dlg.hl8 .hl-pd input{width:64px!important;flex:0 0 64px;text-align:right}
