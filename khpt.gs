@@ -387,7 +387,7 @@ function webVSSave(a, d) {
   const gio = String(d.gio || '').trim(); if (gio && !/^([01]\d|2[0-3]):[0-5]\d$/.test(gio)) throw new Error('Giờ ghi dạng HH:mm.');
   const kq = ['Đạt', 'Không đạt'].indexOf(d.kq) >= 0 ? d.kq : '';
   if (kq && !me.qc) throw new Error('Chỉ QC được kết luận kết quả vệ sinh.');
-  const b = v => v ? 1 : 0, tb = (d.tb || []).slice(0, 30).map(t => ({ ma: String(t.ma || '').trim().slice(0, 30), ten: String(t.ten || '').trim().slice(0, 120), quet: b(t.quet), nuoc: b(t.nuoc), dm: b(t.dm) })).filter(t => t.ma || t.ten);
+  const b = v => v ? 1 : 0, tb = (d.tb || []).slice(0, 30).map(t => ({ ma: String(t.ma || '').trim().slice(0, 30), ten: String(t.ten || '').trim().slice(0, 120), quet: b(t.quet), nuoc: b(t.nuoc), dm: b(t.dm), ...(t.jm ? { jm: 1, lau: b(t.lau), thoi: b(t.thoi), kaolin: b(t.kaolin) } : {}) })).filter(t => t.ma || t.ten); /* jm: mẫu BM.04 vệ sinh Jet Mill */
   if (!tb.length) throw new Error('Chưa có vị trí / thiết bị vệ sinh.');
   const sau = d.lenhSau ? orders_().find(x => x.so === d.lenhSau) : null;
   const sh = shX_(VS_SH, VS_HEAD), R = sheet_(VS_SH) ? rows_(VS_SH) : [], i = R.findIndex(r => str_(r[0]) === so && str_(r[13]) !== 'Đã xoá');
