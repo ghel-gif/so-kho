@@ -401,7 +401,7 @@ const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất
   ["5d","Phân bố kích thước hạt (D90 / D50)","µm",["SC","FS","WP","WG"],"SC, FS: D90 ≤ 2,5 µm; D50 ≤ 2 µm · WP, WG: D90 ≤ 5 µm; D50 ≤ 2,5 µm (hoạt chất dễ phân huỷ / nóng chảy thấp: D90 ≤ 10 µm; D50 ≤ 5 µm)"],
   ["11","Quan sát kích thước hạt (kính hiển vi)","-",["SC","FS","WP","WG","OD"],"Theo QC-HD.45: dạng hạt, mức kết tụ, khoảng kích thước quan sát"],
   ["6","Độ thấm ướt","s",["WP","WG"],"Thấm ướt hoàn toàn trong 1 phút"],
-  ["12","Tỷ suất lơ lửng","%",["SC","FS","WP","WG"],"≥ 60 %"],
+  ["12","Tỷ suất lơ lửng","%",[] /* 26/11/2026 (anh Ghel): tạm thời chưa làm tỷ suất lơ lửng cho mọi sản phẩm — trả lại ["SC","FS","WP","WG"] khi làm lại */,"≥ 60 %"],
   ["7","Độ bền nhũ tương — độ tự nhũ ban đầu","-",["EC","EW","ME"],"Hoàn toàn"],
   ["7.1","Độ bền nhũ tương sau 0,5 h — lớp kem","mL",["EC","EW","ME"],"≤ 2 mL"],
   ["7.2","Độ bền nhũ tương sau 2 h — lớp kem (khi nghi ngờ)","mL",["EC","EW","ME"],"≤ 4 mL"],
