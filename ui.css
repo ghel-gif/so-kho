@@ -1636,4 +1636,4 @@ input:not(:focus){text-overflow:ellipsis}
 /* BM.08 phiếu hoá lý: hộp thoại rộng hơn, bảng chỉ tiêu không tràn ngang, ô vừa nội dung (26/11/2026) */
 .kh-dlg.hl8{max-width:920px!important}
 .kh-dlg.hl8 .hl-tb table{table-layout:fixed;width:100%;min-width:0}.kh-dlg.hl8 .hl-tb td{padding:5px}.kh-dlg.hl8 .hl-tb input,.kh-dlg.hl8 .hl-tb select,.kh-dlg.hl8 .hl-tb textarea{width:100%;min-width:0;box-sizing:border-box}
-.kh-dlg.hl8 #hlDang{max-width:160px}.kh-dlg.hl8 #hlKL{display:block;width:auto;min-width:280px;max-width:100%}
+.kh-dlg.hl8 textarea{font-family:inherit}.kh-dlg.hl8 #hlDang{max-width:160px}.kh-dlg.hl8 #hlKL{display:block;width:auto;min-width:280px;max-width:100%}
