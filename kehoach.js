@@ -340,7 +340,9 @@ function bbPrint(D,d){
   /* 12/11/2026 (theo anh Ghel): hao hụt (%) = (KL thu được − tổng KL nguyên liệu cân thực tế) / KL thu được × 100.
      Tổng NL cân thực tế = tổng các phiếu xuất nguyên liệu của lệnh (tech + phụ gia + dung môi…), VD (1031 − 1021) × 100 / 1031.
      Chưa có phiếu xuất NL thì để trống. (Trước: so với KL kế hoạch → thu nhiều hơn kế hoạch ra số âm.) */
-  const khKg=+o.slDuKien||0,tu=done?+o.slThucTe:0,nlT=+D.nlTong||0,hh=tu&&nlT?(tu-nlT)/tu*100:null,L=v=>tt&&v?k1(v/tt)+" L":"";
+  /* 26/11/2026 (theo anh Ghel): lệnh chưa bấm Hoàn thành mà đã ghi KL từng mẻ ở mục 4 → "Khối lượng thu được" và hao hụt lấy tổng các mẻ (trước để trống) */
+  const meT=me.reduce((s,m)=>s+(m&&m.kg!==""&&m.kg!=null?+m.kg||0:0),0);
+  const khKg=+o.slDuKien||0,tu=done&&+o.slThucTe?+o.slThucTe:meT,nlT=+D.nlTong||0,hh=tu&&nlT?(tu-nlT)/tu*100:null,L=v=>tt&&v?k1(v/tt)+" L":"";
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`,n=(i,a)=>a.length>1?" ("+(i+1)+")":"";
   const qc=o.qcSX||(kh&&kh.qc)||"",nv=o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", ");
   const KL=[["Đạt - Chuyển lưu kho BTP","Dán giấy trắng"],["Đạt - Chờ phối trộn","Dán giấy vàng"],["Phối lại","Dán giấy vàng"],["Chưa đạt - Chờ xử lý","Dán giấy đỏ"]];
