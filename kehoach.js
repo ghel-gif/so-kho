@@ -255,10 +255,11 @@ async function bmStat(o){const emp=x=>x===undefined||x===null||String(x).trim()=
   const [B,H,V]=await Promise.all([api("webBBGet",S.auth,o.so).catch(()=>null),isAHK(o.so)?api("webHLGet",S.auth,o.maSP,o.so,"").catch(()=>null):null,api("webVSGet",S.auth,o.so,"").catch(()=>null)]);const R={};
   const b=B&&B.bb;R.bb={n:b?1:0,gaps:b?[emp(b.ketLuan)&&"kết luận",emp(b.may)&&"thiết bị",!b.tg&&"thời gian sản xuất"].filter(Boolean):[]};
   const h=H&&H.p,kq=(h&&h.kq)||{};if(isAHK(o.so))R.hl={n:h?1:0,gaps:h?[!Object.keys(kq).some(k=>!/^[#_]/.test(k)&&!emp(kq[k]))&&"kết quả kiểm",emp(h.ketLuan)&&"kết luận"].filter(Boolean):[]};
-  const x=V&&V.p&&V.p.lenh===o.so?V.p:null;R.vs={n:x?1:0,gaps:x?[!(x.tb||[]).length&&"thiết bị",emp(x.kq)&&"kết quả vệ sinh"].filter(Boolean):[]};return R}
+  /* nhiều phiếu vệ sinh / lệnh (như biểu mẫu đóng gói): đếm số phiếu, phiếu nào chưa có kết quả thì báo */
+  const ds=(V&&V.ds)||[],ck=ds.filter(x=>emp(x.kq)).map(x=>x.so);R.vs={n:ds.length,gaps:ck.length?["kết quả vệ sinh ("+ck.join(", ")+")"]:[]};return R}
 /* tab "Biểu mẫu QC" ở Phối trộn (giống bên Đóng gói): các lệnh SX BTP (lô AHK) có trong ngày — đang SX, ra lệnh hoặc hoàn thành ngày đó —
    kèm tình trạng BM.06 biên bản SX, BM.08 phiếu kiểm hoá lý, BM.05 vệ sinh thiết bị khuấy trộn; bấm để lập / mở phiếu, in thẻ BTP (BM.07) */
-const BM_FS=[["bb","BM.06","Biên bản SX"],["hl","BM.08","Phiếu hoá lý"],["vs","BM.05","Vệ sinh thiết bị"]];
+const BM_FS=[["bb","BM.06","Biên bản SX"],["hl","BM.08","Phiếu hoá lý"],["vs","BM.04/05","Vệ sinh thiết bị"]];
 window.lsxBmTab=async function(box){if(!box)return;const day=S.lsxBmDay||S.today,mine=++lsxBmN;
   const L=(S.lenh||[]).filter(o=>{const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm"||o.trangThai==="Đã huỷ")return false;const a=String(o.ngay||"").slice(0,10),h=String(o.ngayHT||"").slice(0,10);
     return a===day||h===day||(a<=day&&(o.trangThai==="Đang SX"||(h&&h>day)))}).sort((x,y)=>(x.trangThai==="Đang SX"?0:1)-(y.trangThai==="Đang SX"?0:1)||String(y.so).localeCompare(String(x.so),"vi",{numeric:true}));
@@ -281,7 +282,7 @@ let lsxBmN=0;
 window.bbBtn=function(o,v){const sp=itemBy(o.maSP);if(!sp||sp.nhom!=="Bán thành phẩm")return;const ahk=isAHK(o.so);
   const h2=v.querySelector("h2"),ins=d=>{if(h2)h2.after(d);else v.prepend(d)};
   if(window.qcTiles){const IC=window.QC_IC,d=document.createElement("div"),emp=x=>x===undefined||x===null||String(x).trim()==="";
-    qcTiles(d,[{f:"bb",code:"BM.06",name:"Biên bản sản xuất BTP",icon:IC.doc,open:()=>bbDlg(o.so)}].concat(ahk?[{f:"hl",code:"BM.08",name:"Phiếu kiểm nghiệm hoá lý",icon:IC.flask,open:()=>hlForm(o.maSP,o.so)}]:[]).concat([{f:"vs",code:"BM.05",name:"Vệ sinh thiết bị khuấy trộn",icon:IC.home,open:()=>vsDlg(o.so)}]),()=>bmStat(o));
+    qcTiles(d,[{f:"bb",code:"BM.06",name:"Biên bản sản xuất BTP",icon:IC.doc,open:()=>bbDlg(o.so)}].concat(ahk?[{f:"hl",code:"BM.08",name:"Phiếu kiểm nghiệm hoá lý",icon:IC.flask,open:()=>hlForm(o.maSP,o.so)}]:[]).concat([{f:"vs",code:"BM.04/05",name:"Vệ sinh thiết bị (Jet Mill / khuấy trộn)",icon:IC.home,open:()=>vsDlg(o.so)}]),()=>bmStat(o));
     if(String(o.ngay||"")<"2026-11-05")d.classList.add("old"); /* lệnh trước ngày áp dụng biểu mẫu: không báo đỏ */
     ins(d);return}
   const d=document.createElement("div");d.className="actions";d.style.marginTop="6px";
