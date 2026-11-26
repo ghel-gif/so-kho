@@ -608,12 +608,12 @@ async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api(
   const ck=(i,f)=>`<input type="checkbox" data-i="${i}" data-f="${f}" ${tb[i][f]?"checked":""} ${dis}>`;
   const rows=()=>tb.map((t,i)=>`<tr><td><input data-i="${i}" data-f="ten" value="${esc(t.ten)}" ${dis}></td><td><input data-i="${i}" data-f="ma" value="${esc(t.ma)}" ${dis} data-opt placeholder="nếu có"></td>${COLS().map(([f])=>`<td class="c">${ck(i,f)}</td>`).join("")}<td>${canW?`<button class="btn small danger" type="button" data-del="${i}">×</button>`:""}</td></tr>`).join("");
   const head0=()=>`<tr><th>Vị trí vệ sinh</th><th>Mã thiết bị</th>${COLS().map(c=>`<th>${c[1]}</th>`).join("")}<th></th></tr>`;
-  const sau=D.sau||[],ls=p?p.lenhSau:(sau[0]?sau[0].so:"");
+  const sau=D.sau||[],ls=p?(p.lenhSau||p.spSau||""):(sau[0]?sau[0].so:""); /* 26/11/2026: BTP sẽ chạy gõ tự do (tên BTP hoặc số lệnh) — trước chỉ chọn được lệnh trong kế hoạch */
   const w=document.createElement("div");w.className="cfm";
   w.innerHTML=`<div class="cfm-box kh-dlg vs4"><h2><span id="vsTit">${jm?"Biên bản vệ sinh hệ thống nghiền Jet Mill (BM.04)":"Biên bản vệ sinh thiết bị khuấy trộn (BM.05)"}</span>${p?" · "+esc(p.so):""}</h2>
    <div class="seg seg2" style="margin:4px 0 6px"><button type="button" data-mau="kd" aria-pressed="${!jm}" ${dis}>BM.05 · Thiết bị khuấy trộn</button><button type="button" data-mau="jm" aria-pressed="${jm}" ${dis}>BM.04 · Hệ thống nghiền Jet Mill</button></div>
    <p class="note">Sau lệnh <b>${esc(o.so)}</b> · ${esc(sp.ten)}. Thiết bị lấy từ biên bản SX / kế hoạch phối trộn của lệnh, sửa được.</p>
-   <div class="two"><label>Số phiếu<input id="vsSo" value="${esc(p?p.so:D.soMoi)}" ${p||!canW?"disabled":""}></label><label>BTP sẽ chạy (nếu có)<select id="vsSau" ${dis}><option value="">— không có / chưa biết —</option>${sau.map(x=>`<option value="${esc(x.so)}"${x.so===ls?" selected":""}>${esc(x.so)} · ${esc((itemBy(x.maSP)||{ten:x.maSP}).ten)} · ${esc(dmy(x.ngay))}</option>`).join("")}${ls&&!sau.some(x=>x.so===ls)?`<option value="${esc(ls)}" selected>${esc(ls)}</option>`:""}</select></label></div>
+   <div class="two"><label>Số phiếu<input id="vsSo" value="${esc(p?p.so:D.soMoi)}" ${p||!canW?"disabled":""}></label><label>BTP sẽ chạy (nếu có)<input id="vsSau" list="vsSauL" value="${esc(ls)}" ${dis} data-opt placeholder="Gõ tên BTP hoặc số lệnh, bỏ trống nếu chưa biết" autocomplete="off"><datalist id="vsSauL">${sau.map(x=>`<option value="${esc(x.so)}">${esc((itemBy(x.maSP)||{ten:x.maSP}).ten)} · ${esc(dmy(x.ngay))}</option>`).join("")}${(S.items||[]).filter(i=>i.nhom==="Bán thành phẩm").map(i=>`<option value="${esc(i.ten)}"></option>`).join("")}</datalist></label></div>
    <div class="two"><label>Ngày thực hiện<input type="date" id="vsNgay" value="${esc(p?p.ngay:S.today)}" ${dis}></label><label>Giờ thực hiện<input type="time" id="vsGio" value="${esc(p?p.gio:hm)}" ${dis}></label></div>
    <b style="display:block;margin-top:8px">Thao tác thực hiện</b> <small class="note">(đánh dấu = đã thực hiện; bỏ trống = không thực hiện)</small>
    <div class="dgx"><table class="vs-t"><thead id="vsH">${head0()}</thead><tbody id="vsT">${rows()}</tbody></table></div>
@@ -633,7 +633,7 @@ async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api(
       w.querySelectorAll("[data-mau]").forEach(x=>x.setAttribute("aria-pressed",String((x.dataset.mau==="jm")===jm)));$("vsTit").textContent=jm?"Biên bản vệ sinh hệ thống nghiền Jet Mill (BM.04)":"Biên bản vệ sinh thiết bị khuấy trộn (BM.05)";
       $("vsDMw").hidden=jm;$("vsH").innerHTML=head0();$("vsT").innerHTML=rows();bind()})}
   w.onclick=e=>{if(e.target===w)w.remove()};
-  const getD=()=>({so:$("vsSo").value.trim(),lenh:o.so,lenhSau:$("vsSau").value,ngay:$("vsNgay").value,gio:$("vsGio").value,tb,dm:$("vsDM").value.trim(),ghiChu:$("vsGC").value.trim(),kq:$("vsKQ").value});
+  const getD=()=>({so:$("vsSo").value.trim(),lenh:o.so,lenhSau:$("vsSau").value.trim(),ngay:$("vsNgay").value,gio:$("vsGio").value,tb,dm:$("vsDM").value.trim(),ghiChu:$("vsGC").value.trim(),kq:$("vsKQ").value});
   btnWire(w,{canW,saved:!!p,dirty:false},async()=>{await api("webVSSave",S.auth,getD());$("vsSo").disabled=true;if(window.khReload)window.khReload()},()=>vsPrint(D,getD()))}
 function vsChon(L){const o=L.o,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),w=document.createElement("div");w.className="cfm";
   w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Biên bản vệ sinh · ${esc(o.so)}</h2><p class="note">${esc(sp.ten)}. Lệnh làm nhiều ngày (VD đùn WG) hoặc chạy nhiều loại máy thì lập mỗi lần vệ sinh 1 phiếu.</p>
@@ -642,14 +642,14 @@ function vsChon(L){const o=L.o,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),
   document.body.appendChild(w);w.querySelector("[data-x]").onclick=()=>w.remove();w.onclick=e=>{if(e.target===w)w.remove()};
   w.querySelectorAll("[data-so]").forEach(r=>r.onclick=()=>{w.remove();vsDlg(o.so,r.dataset.so)});
   w.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{w.remove();vsDlg(o.so,"*",b.dataset.m)})}
-function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?((D.sau||[]).find(x=>x.so===d.lenhSau)||{so:d.lenhSau,maSP:""}):null,spS=ss?(itemBy(ss.maSP)||{ten:ss.maSP}):null;
+function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?((D.sau||[]).find(x=>x.so===d.lenhSau)||(S.lenh||[]).find(x=>x.so===d.lenhSau)||{so:"",maSP:"",txt:d.lenhSau}):null,spS=ss?(ss.txt?{ten:ss.txt}:(itemBy(ss.maSP)||{ten:ss.maSP})):null;
   const tb=(d.tb||[]).filter(t=>t.ma||t.ten),mk=v=>v?"✓":"X" /* đúng chú thích của mẫu: ✓ đã thực hiện, X không thực hiện */,may=tb.filter(t=>t.ma),jm=tb.some(t=>t.jm);
   pr(`${PCSS}<style>.pq .vs td,.pq .vs th{padding:5px 6px}.pq .vs .c{font-size:13pt}.pq .tin .lb{background:#fafafa}</style><div class="pq">${jm?head("BIÊN BẢN VỆ SINH<br>HỆ THỐNG NGHIỀN JET MILL","Mã hiệu: BM.04-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1"):head("BIÊN BẢN VỆ SINH<br>THIẾT BỊ KHUẤY TRỘN","Mã hiệu: BM.05-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
   <p style="text-align:right;margin:4px 0">Số phiếu: <b>${esc(d.so)}</b></p>
   <table class="tin"><colgroup><col style="width:19%"><col style="width:31%"><col style="width:19%"><col style="width:31%"></colgroup>
    <tr><td class="lb">Tên máy</td><td><b>${esc(may.map(t=>t.ten).join("; "))}</b></td><td class="lb">Mã thiết bị</td><td><b>${esc(may.map(t=>t.ma).join(", "))}</b></td></tr>
    <tr><td class="lb">Ngày thực hiện</td><td><b>${dmy(d.ngay)}</b></td><td class="lb">Thời gian thực hiện</td><td><b>${esc(d.gio||"")}</b></td></tr>
-   <tr><td class="lb">Tên BTP vừa chạy</td><td><b>${esc(sp.ten)}</b><br>Lô: ${esc(o.so)}</td><td class="lb">Tên BTP sẽ chạy (nếu có)</td><td>${ss?`<b>${esc(spS.ten)}</b><br>Lô: ${esc(ss.so)}`:""}</td></tr>
+   <tr><td class="lb">Tên BTP vừa chạy</td><td><b>${esc(sp.ten)}</b><br>Lô: ${esc(o.so)}</td><td class="lb">Tên BTP sẽ chạy (nếu có)</td><td>${ss?`<b>${esc(spS.ten)}</b>${ss.so?`<br>Lô: ${esc(ss.so)}`:""}`:""}</td></tr>
   </table>
   <p style="margin:10px 0 4px"><b>Thao tác thực hiện:</b></p>
   ${jm?`<table class="vs"><colgroup><col style="width:8%"><col style="width:36%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:14%"></colgroup>

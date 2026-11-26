@@ -394,7 +394,7 @@ function webVSSave(a, d) {
   const sau = d.lenhSau ? orders_().find(x => x.so === d.lenhSau) : null;
   const sh = shX_(VS_SH, VS_HEAD), R = sheet_(VS_SH) ? rows_(VS_SH) : [], i = R.findIndex(r => str_(r[0]) === so && str_(r[13]) !== 'Đã xoá');
   if (i >= 0 && str_(R[i][1]) !== od.so) throw new Error('Số phiếu ' + so + ' đã dùng cho lệnh khác.');
-  const row = [so, od.so, od.maSP, sau ? sau.so : '', sau ? sau.maSP : '', d.ngay, gio, JSON.stringify(tb), String(d.dm || '').trim().slice(0, 100), String(d.ghiChu || '').trim().slice(0, 300), kq, me.ten, new Date(), ''];
+  const row = [so, od.so, od.maSP, sau ? sau.so : '', sau ? sau.maSP : String(d.lenhSau || '').trim().slice(0, 120) /* BTP sẽ chạy gõ tay (không phải số lệnh) */, d.ngay, gio, JSON.stringify(tb), String(d.dm || '').trim().slice(0, 100), String(d.ghiChu || '').trim().slice(0, 300), kq, me.ten, new Date(), ''];
   if (i >= 0) sh.getRange(i + 2, 1, 1, VS_HEAD.length).setValues([row]); else sh.appendRow(row);
   log_(me, 'Biên bản vệ sinh thiết bị', od.so + ' · ' + so, kq || 'chưa kết luận');
   return so;
