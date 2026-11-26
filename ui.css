@@ -1631,5 +1631,5 @@ input:not(:focus){text-overflow:ellipsis}
 .kh-dlg.bb6{max-width:800px!important}
 .kh-dlg.bb6 .two{grid-template-columns:180px 140px;justify-content:start}
 .kh-dlg.bb6 #bbMayT input[data-g="ma"]{width:110px}.kh-dlg.bb6 #bbMayT td:first-child{width:100%}.kh-dlg.bb6 #bbMayT input[data-g="ten"]{width:100%;min-width:320px}
-.kh-dlg.bb6 #bbKL{width:auto;min-width:260px;max-width:100%}
+.kh-dlg.bb6 #bbKL{display:block;width:auto;min-width:260px;max-width:100%}
 @media (max-width:600px){.kh-dlg.bb6 .two{grid-template-columns:1fr 1fr}.kh-dlg.bb6 #bbMayT input[data-g="ten"]{min-width:0}}
