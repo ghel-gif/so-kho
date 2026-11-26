@@ -49,7 +49,7 @@ const vUpd=e=>{if(!e||e.tagName!=="SELECT")return;const o=e.options[e.selectedIn
 const fieldLb=e=>{const p=e&&e.parentElement;return p&&p.tagName==="LABEL"?p:null};
 const lbSync=e=>{const l=fieldLb(e);if(l)l.classList.toggle("need-lb",!!l.querySelector(":scope>.need-in"))};
 const needUpd=e=>{vUpd(e);if(e&&e.classList&&/v-(ok|bad|na)/.test(e.className)){e.classList.remove("need-in");lbSync(e);return}if(!needOk(e)){if(e.classList){e.classList.remove("need-in","need-nx");lbSync(e)}return}const v=e.tagName==="SELECT"?((e.value||"").trim()||(/không dùng|không có|chưa có|nếu có/i.test((e.options[e.selectedIndex]||{}).text||"")?"x":"")):String(e.value||"").trim();e.classList.toggle("need-in",v==="");if(v!=="")e.classList.remove("need-nx");lbSync(e)};
-const needScan=r=>{try{(r.querySelectorAll?r:document).querySelectorAll("input,select,textarea.rd-kqv").forEach(needUpd)}catch(_){}needFocus()};
+const needScan=r=>{try{(r.querySelectorAll?r:document).querySelectorAll("input,select,textarea.rd-kqv,textarea[data-need]").forEach(needUpd)}catch(_){}needFocus()};
 
 /* ---------- Chỉ chỗ cần điền: ô kế tiếp nhấp nháy + "Còn n ô cần điền" cạnh nút Lưu (bấm để tới ô) ---------- */
 const NSC=".cfm-box,details,form,.card,.box";
@@ -63,7 +63,7 @@ function needJump(sc){const L=(sc&&sc._needs||[]).filter(shown),e=L[0];if(!e)ret
 let nfT=0;function needFocus(){clearTimeout(nfT);nfT=setTimeout(needFocus0,90)}
 function needFocus0(){try{
   const M=new Map();
-  document.querySelectorAll("input,select,textarea.rd-kqv").forEach(e=>{if(!needOk(e)||!shown(e))return;const sc=e.closest(NSC);if(!sc||sc.matches(".login")||sc.closest(".login"))return;
+  document.querySelectorAll("input,select,textarea.rd-kqv,textarea[data-need]").forEach(e=>{if(!needOk(e)||!shown(e))return;const sc=e.closest(NSC);if(!sc||sc.matches(".login")||sc.closest(".login"))return;
     let r=M.get(sc);if(!r)M.set(sc,r={need:[]});if(e.classList.contains("need-in"))r.need.push(e)});
   /* ô kế tiếp: trong hộp thoại đang mở (trên cùng) → khung đang gõ → khung đầu tiên còn ô trống */
   const dl=[...document.querySelectorAll(".cfm")].filter(shown).pop(),ae=document.activeElement;
