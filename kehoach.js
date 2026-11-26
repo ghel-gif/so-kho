@@ -604,10 +604,10 @@ async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api(
      (vị trí: Jet Mill, Cyclon, túi lọc tay áo, túi hút, bồn trộn 1–2, sàn; thao tác: lau chùi, thổi bụi, quét dọn, tráng kaolin) — máy khác dùng BM.05 thiết bị khuấy trộn */
   const isJM=t=>/jet\s*mill/i.test((t&&t.ten)||"")||/jet\s*mill/i.test(tenOf(t&&t.ma));
   let jm=p?(p.tb||[]).some(t=>t.jm):D.mau?D.mau==="jm":D.tb.some(isJM);
-  const jmDef=()=>{const m=D.tb.find(isJM)||{ma:"",ten:"Jet Mill"};return [["Jet Mill",m.ma],["Cyclon",""],["Túi lọc tay áo",""],["Túi hút",""],["Bồn trộn 1",""],["Bồn trộn 2",""],["Sàn khu vực làm việc",""]].map(([ten,ma])=>({jm:1,ma,ten,lau:1,thoi:1,quet:1,kaolin:0}))};
-  const kdDef=()=>D.tb.filter(t=>!isJM(t)).map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:1,nuoc:1,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:1,nuoc:0,dm:0}]);
+  const jmDef=()=>{const m=D.tb.find(isJM)||{ma:"",ten:"Jet Mill"};return [["Jet Mill",m.ma],["Cyclon",""],["Túi lọc tay áo",""],["Túi hút",""],["Bồn trộn 1",""],["Bồn trộn 2",""],["Sàn khu vực làm việc",""]].map(([ten,ma])=>({jm:1,ma,ten,lau:0,thoi:0,quet:0,kaolin:0}))}; /* 26/11/2026 (anh Ghel): phiếu mới để trống, người làm tự đánh dấu thao tác đã làm */
+  const kdDef=()=>D.tb.filter(t=>!isJM(t)).map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:0,nuoc:0,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:0,nuoc:0,dm:0}]);
   let tb=p?p.tb.map(t=>Object.assign({},t)):jm?jmDef():kdDef();
-  if(!tb.length)tb.push({ma:"",ten:"",quet:1,nuoc:1,dm:0});
+  if(!tb.length)tb.push({ma:"",ten:"",quet:0,nuoc:0,dm:0});
   const COLS=()=>jm?[["lau","Lau chùi"],["thoi","Thổi bụi"],["quet","Quét dọn"],["kaolin","Tráng kaolin"]]:[["quet","Quét"],["nuoc","Tráng nước"],["dm","Tráng dung môi"]];
   const ck=(i,f)=>`<input type="checkbox" data-i="${i}" data-f="${f}" ${tb[i][f]?"checked":""} ${dis}>`;
   const rows=()=>tb.map((t,i)=>`<tr><td><input data-i="${i}" data-f="ten" value="${esc(t.ten)}" ${dis}></td>${jm?"":`<td><input data-i="${i}" data-f="ma" value="${esc(t.ma)}" ${dis} data-opt placeholder="nếu có"></td>`}${COLS().map(([f])=>`<td class="c">${ck(i,f)}</td>`).join("")}<td>${canW?`<button class="btn small danger" type="button" data-del="${i}">×</button>`:""}</td></tr>`).join("");
@@ -631,7 +631,7 @@ async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api(
   document.body.appendChild(w);
   const bind=()=>{w.querySelectorAll("#vsT input").forEach(x=>{const f=x.dataset.f,i=+x.dataset.i;x.oninput=x.onchange=()=>{tb[i][f]=x.type==="checkbox"?(x.checked?1:0):x.value}});
     w.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{tb.splice(+b.dataset.del,1);$("vsT").innerHTML=rows();bind()})};bind();
-  const blank=(ma,ten)=>jm?{jm:1,ma,ten,lau:1,thoi:1,quet:1,kaolin:0}:{ma,ten,quet:1,nuoc:1,dm:0};
+  const blank=(ma,ten)=>jm?{jm:1,ma,ten,lau:0,thoi:0,quet:0,kaolin:0}:{ma,ten,quet:0,nuoc:0,dm:0};
   if(canW){$("vsAdd").onclick=()=>{tb.push(blank("",""));$("vsT").innerHTML=rows();bind()};
     $("vsAddM").onchange=e=>{const ma=e.target.value;if(!ma)return;tb.splice(Math.max(0,tb.length-1),0,blank(ma,tenOf(ma)));e.target.value="";$("vsT").innerHTML=rows();bind()};
     w.querySelectorAll("[data-mau]").forEach(b=>b.onclick=()=>{const v=b.dataset.mau==="jm";if(v===jm)return;jm=v;tb=jm?jmDef():kdDef();
