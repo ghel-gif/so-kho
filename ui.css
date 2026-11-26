@@ -1627,3 +1627,9 @@ input:not(:focus){text-overflow:ellipsis}
 
 /* BM.06 mục 4 (bán thành phẩm từng mẻ): vừa khung hộp thoại, không tràn ngang che cột Số lượng */
 .kh-dlg table.bb-me{table-layout:fixed;width:100%;min-width:0}.kh-dlg table.bb-me td,.kh-dlg table.bb-me th{padding:4px}.kh-dlg table.bb-me input{width:100%;min-width:0;box-sizing:border-box}
+/* BM.06: hộp thoại rộng hơn, ô vừa nội dung (26/11/2026) */
+.kh-dlg.bb6{max-width:800px!important}
+.kh-dlg.bb6 .two{grid-template-columns:180px 140px;justify-content:start}
+.kh-dlg.bb6 #bbMayT input[data-g="ma"]{width:110px}.kh-dlg.bb6 #bbMayT td:first-child{width:100%}.kh-dlg.bb6 #bbMayT input[data-g="ten"]{width:100%;min-width:320px}
+.kh-dlg.bb6 #bbKL{width:auto;min-width:260px;max-width:100%}
+@media (max-width:600px){.kh-dlg.bb6 .two{grid-template-columns:1fr 1fr}.kh-dlg.bb6 #bbMayT input[data-g="ten"]{min-width:0}}
