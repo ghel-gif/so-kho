@@ -310,7 +310,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
    <div class="two"><label>Thực tế – ngày hoàn thành<input type="date" id="bbHtN" value="${esc(tg.htN||"")}"></label><label>Giờ hoàn thành<input type="time" id="bbHtG" value="${esc(tg.htG||"")}"></label></div>
    <b style="display:block;margin-top:10px">3. Máy móc, thiết bị</b>${kh&&kh.may?' <small class="note">(lấy từ kế hoạch phối trộn, sửa được)</small>':""}<div class="dgx"><table><thead><tr><th>Tên thiết bị</th><th>Mã số</th><th></th></tr></thead><tbody id="bbMayT">${rowsMay()}</tbody></table></div>
    <div class="kh-bar" style="margin-top:6px"><input type="search" id="bbMayQ" placeholder="🔍 Tìm nhanh máy theo mã hoặc tên (VD: AHK-12, nghiền bi, khuấy)…" autocomplete="off"><button class="btn small" type="button" id="bbMayAdd">+ Dòng trống</button></div><div class="kh-pick" id="bbMayL"></div>
-   <b style="display:block;margin-top:10px">4. Bán thành phẩm từng mẻ</b><div class="dgx"><table><thead><tr><th>Ngày SX</th><th>Từ giờ</th><th>Đến giờ</th><th>Thực hiện</th><th>Số lượng (kg)</th><th></th></tr></thead><tbody id="bbMe">${rowsMe()}</tbody></table></div>
+   <b style="display:block;margin-top:10px">4. Bán thành phẩm từng mẻ</b><div class="dgx"><table class="bb-me"><colgroup><col style="width:21%"><col style="width:15%"><col style="width:15%"><col><col style="width:17%"><col style="width:44px"></colgroup><thead><tr><th>Ngày SX</th><th>Từ giờ</th><th>Đến giờ</th><th>Thực hiện</th><th>Số lượng (kg)</th><th></th></tr></thead><tbody id="bbMe">${rowsMe()}</tbody></table></div>
    <button class="btn small" type="button" id="bbAdd" style="margin-top:6px">+ Thêm mẻ</button>
 
 

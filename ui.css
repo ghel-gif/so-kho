@@ -1624,3 +1624,6 @@ input:not(:focus){text-overflow:ellipsis}
 .dgnv.dgt[data-tf=bad] tr.tok,.dgnv.dgt[data-tf=ok] tr.tbad{display:none}
 .bd-flt{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.bd-flt .btn[aria-pressed=true]{background:var(--accent,#14897c);color:var(--accent-ink,#fff);border-color:transparent}
 @media print{.dgnv.dgt{max-height:none;overflow:visible}}
+
+/* BM.06 mục 4 (bán thành phẩm từng mẻ): vừa khung hộp thoại, không tràn ngang che cột Số lượng */
+.kh-dlg table.bb-me{table-layout:fixed;width:100%;min-width:0}.kh-dlg table.bb-me td,.kh-dlg table.bb-me th{padding:4px}.kh-dlg table.bb-me input{width:100%;min-width:0;box-sizing:border-box}
