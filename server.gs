@@ -941,6 +941,17 @@ function ttIn_(v, sp, batBuoc) {
   if (!t && batBuoc && isLiq_(sp)) throw new Error(sp.ten + ' là dạng lỏng: ghi tỷ trọng (g/ml) để quy ra lít.');
   return t;
 }
+/** Sửa danh sách người sản xuất (phối trộn) — hiện thành ô chọn ở lệnh SX. Nhân viên lập lệnh cũng sửa được (26/11/2026, theo anh Ghel). */
+function webDsNsx(a, ds) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  const L = [...new Set((ds || []).map(x => String(x || '').replace(/,/g, ' ').trim().slice(0, 60)).filter(String))].slice(0, 40);
+  if (!L.length) throw new Error('Danh sách người sản xuất đang trống.');
+  const k = 'Danh sách người sản xuất';
+  CD_C = null; const sh = sheet_(SH.CD), rows = rows_(SH.CD), i = rows.findIndex(r => str_(r[0]) === k);
+  if (i >= 0) sh.getRange(i + 2, 2).setValue(L.join(', ')); else sh.appendRow([k, L.join(', '), 'Tên người phối trộn hiện thành ô chọn ở lệnh sản xuất (cách nhau dấu phẩy)']);
+  CD_C = null; log_(me, 'Sửa danh sách người sản xuất', '', L.join(', '));
+  return L;
+}
 function lxGoiY_(lenh) {
   const uq = a => [...new Set(a.map(x => String(x || '').trim()).filter(String))];
   const ds = k => str_(settings_raw_(k)).split(',').map(x => x.trim()).filter(String);
