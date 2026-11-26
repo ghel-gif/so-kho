@@ -229,7 +229,7 @@ const PCSS=`<style>
 </style>`;
 const head=(title,meta)=>`<table class="hd"><tr><td class="lg"><img src="${LOGO()}"></td><td class="tt">${title}</td><td class="mt">${meta}</td></tr></table>`;
 const box=c=>`<span style="font-size:14pt;vertical-align:-1px">${c?"☑":"☐"}</span>`;
-const sign=L=>`<table class="sg"><tr>${L.map(x=>`<td><b>${x[0]}</b><br><i>(Ký và ghi rõ họ tên)</i></td>`).join("")}</tr><tr>${L.map(x=>`<td class="nm"></td>`).join("")}</tr></table>`;
+const sign=L=>`<table class="sg"><tr>${L.map(x=>`<td><b>${x[0]}</b><br><i>(Ký và ghi rõ họ tên)</i></td>`).join("")}</tr><tr>${L.map(x=>`<td class="nm">${x[1]?`<b>${esc(x[1])}</b>`:""}</td>`).join("")}</tr></table>`;
 
 /* Nút chung cho BM.06 / BM.08: Đóng · Lưu (phiếu mới) · Cập nhật (phiếu đã lưu) · In (chỉ in bản đã lưu) */
 const btn4=(canW,saved)=>`<span style="flex:1"></span><button class="btn" type="button" data-x="close">Đóng</button>${canW?`<button class="btn" type="button" data-x="save"${saved?" disabled":""}>Lưu</button><button class="btn" type="button" data-x="upd"${saved?"":" disabled"}>Cập nhật</button>`:""}<button class="btn primary" type="button" data-x="in"${canW&&!saved?" disabled":""}>In</button>`;
@@ -311,7 +311,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
    <b style="display:block;margin-top:10px">3. Máy móc, thiết bị</b>${kh&&kh.may?' <small class="note">(lấy từ kế hoạch phối trộn, sửa được)</small>':""}<div class="dgx"><table><thead><tr><th>Tên thiết bị</th><th>Mã số</th><th></th></tr></thead><tbody id="bbMayT">${rowsMay()}</tbody></table></div>
    <div class="kh-bar" style="margin-top:6px"><input type="search" id="bbMayQ" placeholder="🔍 Tìm nhanh máy theo mã hoặc tên (VD: AHK-12, nghiền bi, khuấy)…" autocomplete="off"><button class="btn small" type="button" id="bbMayAdd">+ Dòng trống</button></div><div class="kh-pick" id="bbMayL"></div>
    <b style="display:block;margin-top:10px">4. Bán thành phẩm từng mẻ</b><div class="dgx"><table class="bb-me"><colgroup><col style="width:21%"><col style="width:15%"><col style="width:15%"><col><col style="width:17%"><col style="width:44px"></colgroup><thead><tr><th>Ngày SX</th><th>Từ giờ</th><th>Đến giờ</th><th>Thực hiện</th><th>Số lượng (kg)</th><th></th></tr></thead><tbody id="bbMe">${rowsMe()}</tbody></table></div>
-   <button class="btn small" type="button" id="bbAdd" style="margin-top:6px">+ Thêm mẻ</button>
+   <div class="kh-bar" style="margin-top:6px;flex-wrap:wrap;gap:6px"><button class="btn small" type="button" id="bbAdd">+ Thêm mẻ</button><span class="note">Chọn người thực hiện (bấm để thêm / bỏ ở mẻ đang chọn):</span><span id="bbNg"></span></div>
 
 
    <label>Kết luận<select id="bbKL"><option value="">— chưa kết luận —</option>${D.ketLuan.map(k=>`<option${D.bb&&D.bb.ketLuan===k?" selected":""}>${esc(k)}</option>`).join("")}</select></label>
@@ -327,6 +327,14 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
     $("bbMayL").innerHTML=L.map(m=>`<button type="button" class="kh-pk" data-ma="${esc(m.ma)}"><b>${esc(m.ma)}</b> ${esc(m.ten)}</button>`).join("")||'<span class="note">Không thấy máy phù hợp — gõ tay ở dòng trống.</span>';
     $("bbMayL").querySelectorAll("[data-ma]").forEach(b=>b.onclick=()=>{const m=DM.find(x=>x.ma===b.dataset.ma);const i=mayL.findIndex(x=>!x.ten&&!x.ma);const o={ten:m.ten,ma:m.ma};if(i>=0)mayL[i]=o;else mayL.push(o);$("bbMayT").innerHTML=rowsMay();bindMay();$("bbMayQ").value="";pick()})};
   $("bbMayQ").oninput=pick;pick();
+  /* 26/11/2026: chọn nhanh người thực hiện theo danh sách người sản xuất (trước phải gõ tay) */
+  let meCur=0;const ngL=()=>[...new Set(((S.goiY&&S.goiY.nsx)||[]).concat(String(o.nguoiSX||"").split(",").map(x=>x.trim())).filter(Boolean))];
+  const ngSplit=v=>String(v||"").split(/\s*[+,]\s*/).map(x=>x.trim()).filter(Boolean);
+  const ngDraw=()=>{if(meCur>=me.length)meCur=Math.max(0,me.length-1);const cur=ngSplit(me[meCur]&&me[meCur].nguoi);$("bbNg").innerHTML=ngL().map(n=>`<button type="button" class="btn small${cur.includes(n)?" primary":""}" data-ng="${esc(n)}">${esc(n)}</button>`).join(" ")+(me.length>1?` <small class="note">· mẻ ${meCur+1}</small>`:"");
+    $("bbNg").querySelectorAll("[data-ng]").forEach(b=>b.onclick=()=>{if(!me[meCur])return;const a=ngSplit(me[meCur].nguoi),n=b.dataset.ng,i=a.indexOf(n);if(i>=0)a.splice(i,1);else a.push(n);me[meCur].nguoi=a.join(" + ");
+      const inp=w.querySelector(`#bbMe input[data-i="${meCur}"][data-f="nguoi"]`);if(inp)inp.value=me[meCur].nguoi;ngDraw()})};
+  w.querySelector("#bbMe").addEventListener("focusin",e=>{const i=e.target&&e.target.dataset&&e.target.dataset.i;if(i!=null){meCur=+i;ngDraw()}});
+  w.querySelector("#bbMe").addEventListener("input",e=>{if(e.target.dataset.f==="nguoi")ngDraw()});ngDraw();
   $("bbAdd").onclick=()=>{me.push({ngay:me.length?me[me.length-1].ngay:o.ngay,tu:"07:30",den:"16:30",nguoi:me.length?me[me.length-1].nguoi:"",kg:""});$("bbMe").innerHTML=rowsMe();bind()};
   w.onclick=e=>{if(e.target===w)w.remove()};
   const getD=()=>({me,tg:{bdN:$("bbBdN").value,bdG:$("bbBdG").value,htN:$("bbHtN").value,htG:$("bbHtG").value},ketLuan:$("bbKL").value,ghiChu:$("bbGC").value,may:JSON.stringify(mayL.map(m=>({ten:String(m.ten||"").trim(),ma:String(m.ma||"").trim()})).filter(m=>m.ten||m.ma))});
@@ -369,7 +377,7 @@ function bbPrint(D,d){
    <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
    <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl klb"><tr>${KL.slice(0,2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
-  ${sign([["Nhân viên phối trộn",""],["Thủ kho",""],["Nhân viên QC",""]])}</div>`)}
+  ${sign([["Nhân viên phối trộn",nv],["Thủ kho",""],["Nhân viên QC",qc]])}</div>`)}
 
 /* ---------- BM.08 ---------- */
 /* Chỉ tiêu BTP theo QC-QĐ.03 "Quy định chất lượng bán thành phẩm" (cốt lõi QCVN 01-188:2018/BNNPTNT) + mẫu BM.08.
@@ -625,7 +633,7 @@ function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?(
   ${d.dm?`<p style="margin:4px 0"><b>Dung môi tráng:</b> ${esc(d.dm)}</p>`:""}
   <p><b>Ghi chú:</b> ${esc(d.ghiChu||"")}</p>
   <table style="margin-top:6px"><colgroup><col style="width:30%"><col style="width:70%"></colgroup><tr><td><b>Kết quả vệ sinh</b></td><td>${box(d.kq==="Đạt")} ĐẠT &nbsp;&nbsp;&nbsp;&nbsp; ${box(d.kq==="Không đạt")} KHÔNG ĐẠT</td></tr></table>
-  ${sign([["Nhân viên pha chế",""],["NV QC",""]])}</div>`)}
+  ${sign([["Nhân viên pha chế",o.nguoiSX||""],["NV QC",(D.p&&D.p.nguoi)||o.qcSX||""]])}</div>`)}
 /* Cảnh báo trước khi bắt đầu lệnh: máy vừa chạy BTP khác mà chưa có biên bản vệ sinh Đạt */
 window.vsWarn=function(miss,onGo){const w=document.createElement("div");w.className="cfm";
   w.innerHTML=`<div class="cfm-box"><h2>Chưa có biên bản vệ sinh thiết bị</h2><p>Các máy sau vừa chạy BTP khác nhưng chưa có biên bản vệ sinh (BM.05) kết quả <b>Đạt</b>:</p><ul>${miss.map(m=>`<li><b>${esc(m.code)}</b> — sau lệnh ${esc(m.so)} (${esc((itemBy(m.maSP)||{ten:m.maSP}).ten)})</li>`).join("")}</ul>
