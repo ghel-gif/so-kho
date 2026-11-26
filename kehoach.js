@@ -622,7 +622,7 @@ async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api(
    <label id="vsJMw" style="max-width:240px"${jm?"":" hidden"}>Mã thiết bị (cả hệ thống Jet Mill)<input id="vsJM" value="${esc(((tb.find(t=>t.ma)||{}).ma)||"")}" ${dis} placeholder="VD: AHK-09"></label>
    <b style="display:block;margin-top:8px">Thao tác thực hiện</b> <small class="note">(đánh dấu = đã thực hiện; bỏ trống = không thực hiện)</small>
    <div class="dgx"><table class="vs-t${jm?"":" kd"}" id="vsTbl"><thead id="vsH">${head0()}</thead><tbody id="vsT">${rows()}</tbody></table></div>
-   ${canW?`<div class="kh-bar" style="margin-top:6px"><select id="vsAddM" data-opt><option value="">+ Thêm thiết bị từ danh mục…</option>${DM.filter(m=>!m.ngung).map(m=>`<option value="${esc(m.ma)}">${esc(m.ma)} · ${esc(m.ten)}</option>`).join("")}</select><button class="btn small" type="button" id="vsAdd">+ Dòng trống</button></div>`:""}
+   ${canW?`<div class="kh-bar" style="margin-top:6px"><select id="vsAddM" data-opt${jm?" hidden":""}><option value="">+ Thêm thiết bị từ danh mục…</option>${DM.filter(m=>!m.ngung).map(m=>`<option value="${esc(m.ma)}">${esc(m.ma)} · ${esc(m.ten)}</option>`).join("")}</select><button class="btn small" type="button" id="vsAdd">+ Dòng trống</button></div>`:""}
    <label id="vsDMw"${jm?" hidden":""}>Dung môi tráng<input id="vsDM" value="${esc(p?p.dm:"")}" ${dis} placeholder="VD: nước, Solvesso 150, NMP… (khi có tráng dung môi)"></label>
    <label>Ghi chú<input id="vsGC" value="${esc(p?p.ghiChu:"")}" ${dis}></label>
    <label>Kết quả vệ sinh <small class="note">(QC kết luận)</small><select id="vsKQ" ${canW&&S.me.qc?"":"disabled"}><option value="">— chưa kết luận —</option>${["Đạt","Không đạt"].map(x=>`<option${p&&p.kq===x?" selected":""}>${x}</option>`).join("")}</select></label>
@@ -636,7 +636,7 @@ async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api(
     $("vsAddM").onchange=e=>{const ma=e.target.value;if(!ma)return;tb.splice(Math.max(0,tb.length-1),0,blank(ma,tenOf(ma)));e.target.value="";$("vsT").innerHTML=rows();bind()};
     w.querySelectorAll("[data-mau]").forEach(b=>b.onclick=()=>{const v=b.dataset.mau==="jm";if(v===jm)return;jm=v;tb=jm?jmDef():kdDef();
       w.querySelectorAll("[data-mau]").forEach(x=>x.setAttribute("aria-pressed",String((x.dataset.mau==="jm")===jm)));$("vsTit").textContent=jm?"Biên bản vệ sinh hệ thống nghiền Jet Mill (BM.04)":"Biên bản vệ sinh thiết bị khuấy trộn (BM.05)";
-      $("vsDMw").hidden=jm;$("vsJMw").hidden=!jm;$("vsTbl").classList.toggle("kd",!jm);if(jm)$("vsJM").value=((tb.find(t=>t.ma)||{}).ma)||"";$("vsH").innerHTML=head0();$("vsT").innerHTML=rows();bind()})}
+      $("vsDMw").hidden=jm;$("vsJMw").hidden=!jm;$("vsTbl").classList.toggle("kd",!jm);$("vsAddM").hidden=jm;if(jm)$("vsJM").value=((tb.find(t=>t.ma)||{}).ma)||"";$("vsH").innerHTML=head0();$("vsT").innerHTML=rows();bind()})}
   w.onclick=e=>{if(e.target===w)w.remove()};
   const getD=()=>{if(jm){const m=$("vsJM").value.trim();tb.forEach((t,i)=>t.ma=i?"":m)}return {so:$("vsSo").value.trim(),lenh:o.so,lenhSau:$("vsSau").value.trim(),ngay:$("vsNgay").value,gio:$("vsGio").value,tb,dm:$("vsDM").value.trim(),ghiChu:$("vsGC").value.trim(),kq:$("vsKQ").value}};
   btnWire(w,{canW,saved:!!p,dirty:false},async()=>{await api("webVSSave",S.auth,getD());$("vsSo").disabled=true;if(window.khReload)window.khReload()},()=>vsPrint(D,getD()))}
