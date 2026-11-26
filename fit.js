@@ -17,7 +17,7 @@
     if (tag === "TEXTAREA") return null;
     if (+el.dataset.w > 0) return +el.dataset.w; /* ô đã định sẵn bề rộng (đơn vị, mã ngắn…) */
     if (tag === "SELECT") { let m = 0; for (const o of el.options) m = Math.max(m, tw(el, o.text)); return cl(m + p + 34, 110, 2000); }
-    if (ty === "date") return 168; if (ty === "month") return 170; if (ty === "time") return 118; if (ty === "datetime-local") return 220;
+    if (ty === "date") return 172; if (ty === "month") return 170; if (ty === "time") return 142; /* 26/11/2026: đủ chỗ "07:30 SA" / "04:00 CH" (trước 118 bị cắt chữ) */ if (ty === "datetime-local") return 220;
     if (ty === "checkbox" || ty === "radio" || ty === "file" || ty === "hidden" || ty === "range") return null;
     if (ty === "number") return cl(tw(el, el.value || el.placeholder || "0000000") + p + 30, 104, 190);
     /* ô chữ: theo nội dung đang có; trống thì theo gợi ý trong ô (cắt bớt), ô có danh sách gợi ý (tên, đơn vị…) rộng hơn */
