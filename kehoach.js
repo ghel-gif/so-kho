@@ -600,7 +600,7 @@ async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh|
   if(!tb.length)tb.push({ma:"",ten:"",quet:1,nuoc:1,dm:0});
   const COLS=()=>jm?[["lau","Lau chùi"],["thoi","Thổi bụi"],["quet","Quét dọn"],["kaolin","Tráng kaolin"]]:[["quet","Quét"],["nuoc","Tráng nước"],["dm","Tráng dung môi"]];
   const ck=(i,f)=>`<input type="checkbox" data-i="${i}" data-f="${f}" ${tb[i][f]?"checked":""} ${dis}>`;
-  const rows=()=>tb.map((t,i)=>`<tr><td><input data-i="${i}" data-f="ten" value="${esc(t.ten)}" ${dis}></td><td><input data-i="${i}" data-f="ma" value="${esc(t.ma)}" ${dis} style="width:90px"></td>${COLS().map(([f])=>`<td class="c">${ck(i,f)}</td>`).join("")}<td>${canW?`<button class="btn small danger" type="button" data-del="${i}">×</button>`:""}</td></tr>`).join("");
+  const rows=()=>tb.map((t,i)=>`<tr><td><input data-i="${i}" data-f="ten" value="${esc(t.ten)}" ${dis} style="min-width:210px"></td><td><input data-i="${i}" data-f="ma" value="${esc(t.ma)}" ${dis} data-opt placeholder="nếu có" style="width:90px"></td>${COLS().map(([f])=>`<td class="c">${ck(i,f)}</td>`).join("")}<td>${canW?`<button class="btn small danger" type="button" data-del="${i}">×</button>`:""}</td></tr>`).join("");
   const head0=()=>`<tr><th>Vị trí vệ sinh</th><th>Mã thiết bị</th>${COLS().map(c=>`<th>${c[1]}</th>`).join("")}<th></th></tr>`;
   const sau=D.sau||[],ls=p?p.lenhSau:(sau[0]?sau[0].so:"");
   const w=document.createElement("div");w.className="cfm";
