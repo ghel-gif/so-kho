@@ -103,7 +103,7 @@ function webMaySave(a, list) {
 
 /* ================= BIÊN BẢN SẢN XUẤT BTP (BM.06-QC-QT.03) =================
  * Trang BienBanSX: Số lệnh | Mẻ (JSON [{ngay, nguoi, kg}]) | Kết luận | Ghi chú | Người cập nhật | Lúc cập nhật */
-const BB_SH = 'BienBanSX', BB_HEAD = ['Số lệnh', 'Mẻ (JSON)', 'Kết luận', 'Ghi chú', 'Người cập nhật', 'Lúc cập nhật', 'Máy', 'Thời gian (JSON)'];
+const BB_SH = 'BienBanSX', BB_HEAD = ['Số lệnh', 'Mẻ (JSON)', 'Kết luận', 'Ghi chú', 'Người cập nhật', 'Lúc cập nhật', 'Máy', 'Thời gian (JSON)', 'Số liệu hoàn thành tạm (JSON)'];
 const BB_KL = ['Đạt - Chuyển lưu kho BTP', 'Đạt - Chờ phối trộn', 'Phối lại', 'Chưa đạt - Chờ xử lý'];
 function webBBGet(a, so) {
   needCT_(auth_(a));
@@ -117,8 +117,10 @@ function webBBGet(a, so) {
   let me = []; try { me = r ? JSON.parse(str_(r[1]) || '[]') : []; } catch (e) { me = []; }
   const q = qcMap_()[lotKey_(od.maSP, lo)] || null, tt = ttMap_()[lotKey_(od.maSP, lo)] || od.tyTrong || 0;
   const nlTong = Math.round(mv.filter(m => m.loai === 'Xuất').reduce((t, m) => t + (+m.kg || 0), 0) * 1000) / 1000; /* tổng mọi nguyên liệu xuất cho lệnh (tech + phụ gia + dung môi…) — gốc tính hao hụt, giống báo cáo Phối trộn */
-  return { o: od, lo, nsx: nh ? nh.nsx : '', nl, nlTong, kh: k, may: mayList_(), qc: q, tt,
-    bb: r ? { me, ketLuan: str_(r[2]), ghiChu: str_(r[3]), nguoi: str_(r[4]), luc: khTs_(r[5]), may: str_(r[6]), tg: (() => { try { return JSON.parse(str_(r[7]) || 'null'); } catch (e) { return null; } })() } : null, ketLuan: BB_KL };
+  /* số liệu hoàn thành lưu tạm (chưa trừ kho): KL BTP thực tế, vật tư từng lô, người SX, QC */
+  let nhap = null; try { nhap = r ? JSON.parse(str_(r[8]) || 'null') : null; } catch (e) { nhap = null; }
+  return { o: od, lo, nsx: nh ? nh.nsx : '', nl, nlTong, kh: k, may: mayList_(), qc: q, tt, nhap,
+    bb: r && str_(r[4]) ? { me, ketLuan: str_(r[2]), ghiChu: str_(r[3]), nguoi: str_(r[4]), luc: khTs_(r[5]), may: str_(r[6]), tg: (() => { try { return JSON.parse(str_(r[7]) || 'null'); } catch (e) { return null; } })() } : null, ketLuan: BB_KL };
 }
 function webBBSave(a, so, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
@@ -131,6 +133,22 @@ function webBBSave(a, so, d) {
   if (i >= 0) sh.getRange(i + 2, 1, 1, 8).setValues([row]); else sh.appendRow(row);
   log_(me, 'Biên bản SX BTP', so, mes.length + ' mẻ · ' + (kl || 'chưa kết luận'));
   return true;
+}
+
+/** Lưu tạm số liệu hoàn thành lệnh phối trộn (KL BTP thực tế, vật tư đã dùng từng lô, người SX, QC) — KHÔNG trừ kho, không nhập kho.
+ *  Biên bản SX BM.06 dùng số này khi lệnh chưa có phiếu xuất; bấm Hoàn thành lệnh thì phần mềm mới ghi phiếu kho. */
+function webHtNhap(a, so, d) {
+  const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]); needCT_(me);
+  const od = orders_().find(x => x.so === so); if (!od) throw new Error('Không tìm thấy lệnh ' + so);
+  if (od.trangThai !== 'Đang SX') throw new Error('Lệnh ' + so + ' không còn đang sản xuất.');
+  d = d || {}; const n = v => { const x = num_(v); return x > 0 ? Math.round(x * 1000) / 1000 : 0; };
+  const v = { sl: n(d.sl), ngay: isYmd_(d.ngay) ? d.ngay : '', tt: n(d.tt), nguoiSX: String(d.nguoiSX || '').trim().slice(0, 200), qcSX: String(d.qcSX || '').trim().slice(0, 80),
+    lines: (d.lines || []).map(l => ({ ma: String(l.ma || '').trim().slice(0, 60), lo: String(l.lo || '').trim().slice(0, 60), sl: n(l.sl) })).filter(l => l.ma && l.sl > 0).slice(0, 80),
+    nguoi: me.ten, luc: khTs_(new Date()) };
+  const sh = shX_(BB_SH, BB_HEAD), R = rows_(BB_SH), i = R.findIndex(x => str_(x[0]) === so);
+  if (i >= 0) sh.getRange(i + 2, 9).setValue(JSON.stringify(v)); else sh.appendRow([so, '[]', '', '', '', '', '', '', JSON.stringify(v)]);
+  log_(me, 'Lưu tạm số liệu hoàn thành', so, (v.sl ? v.sl + ' kg BTP · ' : '') + v.lines.length + ' vật tư (chưa trừ kho)');
+  return v;
 }
 
 /* ================= THẺ NHẬN DIỆN BTP (BM.07-QC-QT.03): lưu danh sách phuy / tank theo lệnh ================= */
