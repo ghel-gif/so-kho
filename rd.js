@@ -81,17 +81,17 @@
   ];
   /* chỉ tiêu theo QCVN 01-188 cho từng dạng (+ nội bộ hay dùng) */
   const QCVN = {
-    SC: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ tự phân tán", "Tỷ suất lơ lửng (30 phút)", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)", "+Kích thước hạt (kính hiển vi)"],
+    SC: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ tự phân tán", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)", "+Kích thước hạt (kính hiển vi)"],
     EC: ["Ngoại quan", "Thể tích tách lớp ở 0 °C", "Hàm lượng hoạt chất", "Độ bền nhũ tương", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
-    WP: ["Ngoại quan", "Hàm lượng hoạt chất", "Tỷ suất lơ lửng (30 phút)", "Độ thấm ướt", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)"],
-    WG: ["Ngoại quan", "Hàm lượng hoạt chất", "Tỷ suất lơ lửng (30 phút)", "Độ tự phân tán", "Độ thấm ướt", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)"],
+    WP: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ thấm ướt", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)"],
+    WG: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ tự phân tán", "Độ thấm ướt", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)"],
     SL: ["Ngoại quan", "Thể tích tách lớp ở 0 °C", "Hàm lượng hoạt chất", "Độ bền pha loãng", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
     OD: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ bền phân tán", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+Tỷ trọng (g/ml)", "+Kích thước hạt (kính hiển vi)", "+Tách lớp / tách dầu khi lưu mẫu"],
     EW: ["Ngoại quan", "Thể tích tách lớp ở 0 °C", "Hàm lượng hoạt chất", "Độ bền nhũ tương", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
     ME: ["Ngoại quan", "Thể tích tách lớp ở 0 °C", "Hàm lượng hoạt chất", "Độ bền nhũ tương", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
     GR: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ bụi (qua rây 50 µm)", "Kích thước hạt (GR)"],
-    CS: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ tự phân tán", "Tỷ suất lơ lửng (30 phút)", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
-    FS: ["Ngoại quan", "Hàm lượng hoạt chất", "Tỷ suất lơ lửng (30 phút)", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
+    CS: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ tự phân tán", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
+    FS: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
     SE: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ bền phân tán", "Độ mịn rây ướt (cặn trên rây 75 µm)", "Độ bọt (sau 1 phút)", "+pH (5%w/w)", "+Tỷ trọng (g/ml)"],
     DC: ["Ngoại quan", "Thể tích tách lớp ở 0 °C", "Hàm lượng hoạt chất", "Độ bền phân tán", "Độ bọt (sau 1 phút)", "+Tỷ trọng (g/ml)"],
     DP: ["Ngoại quan", "Hàm lượng hoạt chất", "Độ mịn rây khô (cặn trên rây 75 µm)"],

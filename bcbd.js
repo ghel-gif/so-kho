@@ -164,13 +164,13 @@
   function pt(box, B, o) {
     if (!box) return; const R = B.R || [];
     const pts = R.filter(r => r.pct != null).map(r => ({ so: r.so, d: r.ngay.slice(0, 10), p: r.pct * 100,
-      tip: [r.so, r.sp, "Ngày ra lệnh: " + dm(r.ngay), "Hao hụt: " + P(r.pct * 100) + " (" + N(r.hh, 3) + " kg)", "Nguyên liệu xuất " + N(r.nl, 3) + " kg · nhập kho " + N(r.tt, 3) + " kg", r.nsxN ? "Người sản xuất: " + r.nsxN : "", "Bấm để mở lệnh"] }));
-    const nv = {}; R.filter(r => r.st === "Hoàn thành" && r.nl != null).forEach(r => (r.nsxN ? r.nsxN.split(/\s*[,;]\s*/).filter(Boolean) : ["(chưa ghi)"]).forEach(n => { const x = nv[n] = nv[n] || { ten: n, nl: 0, tt: 0, so: 0 }; x.nl += r.nl; x.tt += r.tt || 0; x.so++; }));
-    const rows = Object.values(nv).sort((a, b) => b.so - a.so).map(x => ({ ten: x.ten, bars: [{ p: x.nl ? (x.nl - x.tt) / x.nl * 100 : null, c: C1, tip: [x.ten, "Hao hụt: " + (x.nl ? P((x.nl - x.tt) / x.nl * 100) : ""), "Nguyên liệu xuất " + N(x.nl, 3) + " kg · nhập kho " + N(x.tt, 3) + " kg", x.so + " lệnh hoàn thành có số nguyên liệu"] }] }));
+      tip: [r.so, r.sp, "Ngày ra lệnh: " + dm(r.ngay), "Hao hụt: " + P(r.pct * 100) + " (" + N(r.hh, 3) + " kg)", "Kế hoạch " + N(r.dk, 3) + " kg · nhập kho " + N(r.tt, 3) + " kg", r.nsxN ? "Người sản xuất: " + r.nsxN : "", "Bấm để mở lệnh"] }));
+    const nv = {}; R.filter(r => r.st === "Hoàn thành" && r.pct != null).forEach(r => (r.nsxN ? r.nsxN.split(/\s*[,;]\s*/).filter(Boolean) : ["(chưa ghi)"]).forEach(n => { const x = nv[n] = nv[n] || { ten: n, nl: 0, tt: 0, so: 0 }; x.nl += r.dk; x.tt += r.tt || 0; x.so++; })); /* nl ở đây = KL kế hoạch (26/11/2026: hao hụt tính theo kế hoạch) */
+    const rows = Object.values(nv).sort((a, b) => b.so - a.so).map(x => ({ ten: x.ten, bars: [{ p: x.nl ? (x.tt - x.nl) / x.nl * 100 : null, c: C1, tip: [x.ten, "Hao hụt: " + (x.nl ? P((x.tt - x.nl) / x.nl * 100) : ""), "Kế hoạch " + N(x.nl, 3) + " kg · nhập kho " + N(x.tt, 3) + " kg", x.so + " lệnh hoàn thành"] }] }));
     const items = R.filter(r => r.st === "Hoàn thành" && r.tt > 0).map(r => ({ d: r.ngay.slice(0, 10), v: +r.tt, s: r.gc ? 1 : 0 }));
     box.className = "bcbd"; box.innerHTML =
-      head("Biểu đồ: % hao hụt từng lệnh", `mỗi điểm là 1 lệnh đã hoàn thành, xếp theo ngày ra lệnh · ${pts.length} lệnh có số · trên vạch 0 = hao hụt, dưới vạch 0 = nhập kho nhiều hơn nguyên liệu xuất · rê chuột để xem, bấm để mở lệnh`) +
-      lenh(pts, { ng: false, aria: "Phần trăm hao hụt từng lệnh phối trộn", empty: "Chưa có lệnh hoàn thành nào có số nguyên liệu thực xuất trong khoảng ngày này." }) +
+      head("Biểu đồ: % hao hụt từng lệnh", `mỗi điểm là 1 lệnh đã hoàn thành, xếp theo ngày ra lệnh · ${pts.length} lệnh có số · dưới vạch 0 (số âm) = hụt so với kế hoạch, trên vạch 0 = thu nhiều hơn kế hoạch · rê chuột để xem, bấm để mở lệnh`) +
+      lenh(pts, { ng: false, aria: "Phần trăm hao hụt từng lệnh phối trộn", empty: "Chưa có lệnh hoàn thành nào trong khoảng ngày này." }) +
       head("Biểu đồ: % hao hụt theo người sản xuất", "cộng dồn các lệnh đã hoàn thành · lệnh có nhiều người thì tính cho từng người") + nguoi(rows, {}) +
       head("Biểu đồ: sản lượng nhập kho theo ngày (kg)", "theo ngày ra lệnh · chỉ tính lệnh đã hoàn thành") +
       ngay(B.a, B.b, items, [[C1, "Hàng công ty"], [C2, "Hàng gia công"]], "kg");
