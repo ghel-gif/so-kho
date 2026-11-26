@@ -609,7 +609,7 @@ async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh|
   const getD=()=>({so:$("vsSo").value.trim(),lenh:o.so,lenhSau:$("vsSau").value,ngay:$("vsNgay").value,gio:$("vsGio").value,tb,dm:$("vsDM").value.trim(),ghiChu:$("vsGC").value.trim(),kq:$("vsKQ").value});
   btnWire(w,{canW,saved:!!p,dirty:false},async()=>{await api("webVSSave",S.auth,getD());$("vsSo").disabled=true;if(window.khReload)window.khReload()},()=>vsPrint(D,getD()))}
 function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?((D.sau||[]).find(x=>x.so===d.lenhSau)||{so:d.lenhSau,maSP:""}):null,spS=ss?(itemBy(ss.maSP)||{ten:ss.maSP}):null;
-  const tb=(d.tb||[]).filter(t=>t.ma||t.ten),mk=v=>v?"✓":"X",may=tb.filter(t=>t.ma);
+  const tb=(d.tb||[]).filter(t=>t.ma||t.ten),mk=v=>v?"✓":"–" /* 26/11/2026: không làm thì in "–" (trước in X — dễ đọc nhầm là đã tráng) */,may=tb.filter(t=>t.ma);
   pr(`${PCSS}<style>.pq .vs td,.pq .vs th{padding:5px 6px}.pq .vs .c{font-size:13pt}.pq .tin .lb{background:#fafafa}</style><div class="pq">${head("BIÊN BẢN VỆ SINH<br>THIẾT BỊ KHUẤY TRỘN","Mã hiệu: BM.05-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
   <p style="text-align:right;margin:4px 0">Số phiếu: <b>${esc(d.so)}</b></p>
   <table class="tin"><colgroup><col style="width:19%"><col style="width:31%"><col style="width:19%"><col style="width:31%"></colgroup>
