@@ -376,7 +376,9 @@ function webVSGet(a, lenh, so) {
     .sort((x, y) => khKey_(x) < khKey_(y) ? -1 : 1).slice(0, 8).map(x => ({ so: x.so, maSP: OD[x.so].maSP, ngay: x.ngay, bd: x.bd }));
   const nam = Utilities.formatDate(new Date(), tz_(), 'yyyy'); let mx = 0;
   V.forEach(x => { const m = new RegExp('^VS-' + nam + '-(\\d+)$').exec(x.so); if (m) mx = Math.max(mx, +m[1]); });
-  return { o: od, kh: k, tb, sau, p: p || V.filter(x => x.lenh === lenh).pop() || null, soMoi: 'VS-' + nam + '-' + String(mx + 1).padStart(3, '0'), may: mayList_() };
+  /* 26/11/2026: 1 lệnh có thể nhiều biên bản vệ sinh (đùn WG làm nhiều ngày; máy Jet Mill BM.04 + máy khác BM.05) — so = '*' : lập phiếu mới */
+  const ds = V.filter(x => x.lenh === lenh).map(x => ({ so: x.so, ngay: x.ngay, gio: x.gio, kq: x.kq, nguoi: x.nguoi, jm: (x.tb || []).some(t => t.jm) ? 1 : 0 }));
+  return { o: od, kh: k, tb, sau, ds, p: so === '*' ? null : (p || V.filter(x => x.lenh === lenh).pop() || null), soMoi: 'VS-' + nam + '-' + String(mx + 1).padStart(3, '0'), may: mayList_() };
 }
 function webVSSave(a, d) {
   const me = auth_(a, [ROLES.QL, ROLES.KT, ROLES.TK, ROLES.NV, ROLES.KTK]);

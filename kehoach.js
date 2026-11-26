@@ -586,14 +586,19 @@ window.pl02Dlg=async function(o){const sp=itemBy(o.maSP)||{ten:o.tenSP||o.maSP},
       <tr class="dl"><td>2/&nbsp;&nbsp;………………</td><td style="text-align:center">…………………….</td><td style="text-align:center">……………………..</td><td style="text-align:center">………………………</td></tr></table></div>`;
     w.remove();pr(html)}};
 /* ---------- BM.05-QC-QT.03 Biên bản vệ sinh thiết bị khuấy trộn ---------- */
-async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
+/* 26/11/2026 (anh Ghel): 1 lệnh nhiều biên bản vệ sinh — đùn WG làm nhiều ngày (mỗi ngày 1 phiếu), lệnh chạy cả Jet Mill (BM.04) lẫn máy khác (BM.05).
+   Mở từ lệnh: lệnh đã có phiếu → hiện danh sách phiếu + nút lập phiếu mới; chưa có → lập phiếu mới luôn. */
+async function vsDlg(lenh,soPhieu,mau){if(!soPhieu&&lenh){let L;try{L=await api("webVSGet",S.auth,lenh,"*")}catch(e){return handleErr(e)}
+    if((L.ds||[]).length)return vsChon(L);soPhieu="*"}
+  let D;try{D=await api("webVSGet",S.auth,lenh||"",soPhieu||"")}catch(e){return handleErr(e)}
+  if(mau)D.mau=mau;
   const o=D.o,p=D.p,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),dis=canW?"":"disabled",DM=withKhac(mayDM(D.may&&D.may.length?D.may:MAY_TM));
   const tenOf=ma=>{const m=DM.find(x=>x.ma===ma);return m?m.ten:""};
   const now=new Date(),hm=String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
   /* 26/11/2026 (anh Ghel): máy nghiền Jet Mill dùng mẫu riêng BM.04-QC-QT.03 "Biên bản vệ sinh hệ thống nghiền Jet Mill"
      (vị trí: Jet Mill, Cyclon, túi lọc tay áo, túi hút, bồn trộn 1–2, sàn; thao tác: lau chùi, thổi bụi, quét dọn, tráng kaolin) — máy khác dùng BM.05 thiết bị khuấy trộn */
   const isJM=t=>/jet\s*mill/i.test((t&&t.ten)||"")||/jet\s*mill/i.test(tenOf(t&&t.ma));
-  let jm=p?(p.tb||[]).some(t=>t.jm):D.tb.some(isJM);
+  let jm=p?(p.tb||[]).some(t=>t.jm):D.mau?D.mau==="jm":D.tb.some(isJM);
   const jmDef=()=>{const m=D.tb.find(isJM)||{ma:"",ten:"Jet Mill"};return [["Jet Mill",m.ma],["Cyclon",""],["Túi lọc tay áo",""],["Túi hút",""],["Bồn trộn 1",""],["Bồn trộn 2",""],["Sàn khu vực làm việc",""]].map(([ten,ma])=>({jm:1,ma,ten,lau:1,thoi:1,quet:1,kaolin:0}))};
   const kdDef=()=>D.tb.filter(t=>!isJM(t)).map(t=>({ma:t.ma,ten:t.ten||tenOf(t.ma),quet:1,nuoc:1,dm:0})).concat([{ma:"",ten:"Sàn khu vực làm việc",quet:1,nuoc:0,dm:0}]);
   let tb=p?p.tb.map(t=>Object.assign({},t)):jm?jmDef():kdDef();
@@ -629,6 +634,13 @@ async function vsDlg(lenh,soPhieu){let D;try{D=await api("webVSGet",S.auth,lenh|
   w.onclick=e=>{if(e.target===w)w.remove()};
   const getD=()=>({so:$("vsSo").value.trim(),lenh:o.so,lenhSau:$("vsSau").value,ngay:$("vsNgay").value,gio:$("vsGio").value,tb,dm:$("vsDM").value.trim(),ghiChu:$("vsGC").value.trim(),kq:$("vsKQ").value});
   btnWire(w,{canW,saved:!!p,dirty:false},async()=>{await api("webVSSave",S.auth,getD());$("vsSo").disabled=true;if(window.khReload)window.khReload()},()=>vsPrint(D,getD()))}
+function vsChon(L){const o=L.o,sp=itemBy(o.maSP)||{ten:o.maSP},canW=can.phieu(),w=document.createElement("div");w.className="cfm";
+  w.innerHTML=`<div class="cfm-box kh-dlg"><h2>Biên bản vệ sinh · ${esc(o.so)}</h2><p class="note">${esc(sp.ten)}. Lệnh làm nhiều ngày (VD đùn WG) hoặc chạy nhiều loại máy thì lập mỗi lần vệ sinh 1 phiếu.</p>
+   <div class="dgx"><table><thead><tr><th>Số phiếu</th><th>Mẫu</th><th>Ngày</th><th>Kết quả</th><th>Người lập</th></tr></thead><tbody>${L.ds.map(x=>`<tr class="click" data-so="${esc(x.so)}" style="cursor:pointer"><td><b>${esc(x.so)}</b></td><td>${x.jm?"BM.04 · Jet Mill":"BM.05 · Khuấy trộn"}</td><td>${dmy(x.ngay)}${x.gio?" "+esc(x.gio):""}</td><td>${x.kq?esc(x.kq):'<span class="note">chưa kết luận</span>'}</td><td>${esc(x.nguoi||"")}</td></tr>`).join("")}</tbody></table></div>
+   <div class="actions"><span style="flex:1"></span><button class="btn" type="button" data-x>Đóng</button>${canW?`<button class="btn" type="button" data-m="kd">+ Phiếu mới BM.05 · khuấy trộn</button><button class="btn" type="button" data-m="jm">+ Phiếu mới BM.04 · Jet Mill</button>`:""}</div></div>`;
+  document.body.appendChild(w);w.querySelector("[data-x]").onclick=()=>w.remove();w.onclick=e=>{if(e.target===w)w.remove()};
+  w.querySelectorAll("[data-so]").forEach(r=>r.onclick=()=>{w.remove();vsDlg(o.so,r.dataset.so)});
+  w.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{w.remove();vsDlg(o.so,"*",b.dataset.m)})}
 function vsPrint(D,d){const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},ss=d.lenhSau?((D.sau||[]).find(x=>x.so===d.lenhSau)||{so:d.lenhSau,maSP:""}):null,spS=ss?(itemBy(ss.maSP)||{ten:ss.maSP}):null;
   const tb=(d.tb||[]).filter(t=>t.ma||t.ten),mk=v=>v?"✓":"X" /* đúng chú thích của mẫu: ✓ đã thực hiện, X không thực hiện */,may=tb.filter(t=>t.ma),jm=tb.some(t=>t.jm);
   pr(`${PCSS}<style>.pq .vs td,.pq .vs th{padding:5px 6px}.pq .vs .c{font-size:13pt}.pq .tin .lb{background:#fafafa}</style><div class="pq">${jm?head("BIÊN BẢN VỆ SINH<br>HỆ THỐNG NGHIỀN JET MILL","Mã hiệu: BM.04-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1"):head("BIÊN BẢN VỆ SINH<br>THIẾT BỊ KHUẤY TRỘN","Mã hiệu: BM.05-QC-QT.03<br>Lần ban hành: 02<br>Ngày ban hành: 02/01/2026<br>Trang: 1/1")}
