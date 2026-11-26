@@ -400,7 +400,7 @@ const CT=[["1","Ngoại quan","-",null,"Đồng nhất, không phân lớp bất
   ["4","Độ bọt (sau 1 phút)","mL",["EC","EW","ME","SC","FS","OD","SE","SL","WP","WG"],"≤ 60 mL"],
   ["5","Độ mịn thử rây ướt (cặn trên rây 75 µm)","%",["SC","FS","WP","WG"],"≤ 2 %"],
   ["5d","Phân bố kích thước hạt (% hạt nhỏ hơn … µm)","-",["SC","FS","WP","WG"],"Theo dõi, VD: 90 % hạt < 2,5 µm; 95 % hạt < 2,5 µm"],
-  ["11","Quan sát kích thước hạt (kính hiển vi)","-",["SC","FS","WP","WG","OD"],"Theo QC-HD.45: dạng hạt, mức kết tụ, khoảng kích thước quan sát"],
+  ["11","Quan sát kích thước hạt (kính hiển vi)","-",[] /* 26/11/2026 (anh Ghel): bỏ khỏi phiếu — trả lại ["SC","FS","WP","WG","OD"] nếu cần */,"Theo QC-HD.45: dạng hạt, mức kết tụ, khoảng kích thước quan sát"],
   ["6","Độ thấm ướt","s",["WP","WG"],"Thấm ướt hoàn toàn trong 1 phút"],
   ["12","Tỷ suất lơ lửng","%",[] /* 26/11/2026 (anh Ghel): tạm thời chưa làm tỷ suất lơ lửng cho mọi sản phẩm — trả lại ["SC","FS","WP","WG"] khi làm lại */,"≥ 60 %"],
   ["7","Độ bền nhũ tương — độ tự nhũ ban đầu","-",["EC","EW","ME"],"Hoàn toàn"],
