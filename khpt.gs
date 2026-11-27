@@ -143,11 +143,11 @@ function webHtNhap(a, so, d) {
   if (od.trangThai !== 'Đang SX') throw new Error('Lệnh ' + so + ' không còn đang sản xuất.');
   d = d || {}; const n = v => { const x = num_(v); return x > 0 ? Math.round(x * 1000) / 1000 : 0; };
   const v = { sl: n(d.sl), ngay: isYmd_(d.ngay) ? d.ngay : '', tt: n(d.tt), nguoiSX: String(d.nguoiSX || '').trim().slice(0, 200), qcSX: String(d.qcSX || '').trim().slice(0, 80),
-    lines: (d.lines || []).map(l => ({ ma: String(l.ma || '').trim().slice(0, 60), lo: String(l.lo || '').trim().slice(0, 60), sl: n(l.sl) })).filter(l => l.ma && l.sl > 0).slice(0, 80),
+    lines: (d.lines || []).map(l => ({ ma: String(l.ma || '').trim().slice(0, 60), lo: String(l.lo || '').trim().slice(0, 60), sl: n(l.sl) })).filter(l => l.ma && (l.sl > 0 || l.lo)).slice(0, 80), /* giữ cả dòng mới chọn lô, chưa ghi số */
     nguoi: me.ten, luc: khTs_(new Date()) };
   const sh = shX_(BB_SH, BB_HEAD), R = rows_(BB_SH), i = R.findIndex(x => str_(x[0]) === so);
   if (i >= 0) sh.getRange(i + 2, 9).setValue(JSON.stringify(v)); else sh.appendRow([so, '[]', '', '', '', '', '', '', JSON.stringify(v)]);
-  log_(me, 'Lưu tạm số liệu hoàn thành', so, (v.sl ? v.sl + ' kg BTP · ' : '') + v.lines.length + ' vật tư (chưa trừ kho)');
+  log_(me, 'Lưu tạm số liệu hoàn thành', so, (v.sl ? v.sl + ' kg BTP · ' : '') + v.lines.filter(l => l.sl > 0).length + ' vật tư (chưa trừ kho)');
   return v;
 }
 
