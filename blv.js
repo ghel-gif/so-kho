@@ -97,7 +97,7 @@
   /* 27/11/2026 (anh Ghel): lô BTP QC đã duyệt Đạt (đóng gói được) nhưng phiếu hoá lý / hàm lượng gửi sau — nhắc người có quyền QC tải phiếu */
   function hsCard(box) {
     const el = box.querySelector("#blvHs"); if (!el || !S.me || !S.me.qc || typeof hsThieu !== "function") return;
-    const L = []; Object.keys(S.lots || {}).forEach(ma => (S.lots[ma] || []).forEach(l => { if (hsThieu(l)) L.push({ ma, l }); }));
+    const L = typeof hsLots === "function" ? hsLots() : [];
     if (!L.length) { el.innerHTML = ""; return; }
     el.innerHTML = `<div class="blv-card lv-warn" style="--c:#b45309"><div class="blv-h"><span class="blv-i">📎</span><b>QC lô — đã duyệt Đạt, còn chờ bổ sung phiếu</b><span class="blv-n">${L.length}</span></div><div class="blv-l">${L.slice(0, 12).map((x, i) => { const it = itemBy(x.ma);
       return `<button type="button" class="blv-r" data-hs="${i}"><span><b>${E(x.l.lo)}</b> · ${E(it ? it.ten : x.ma)} — thiếu <b style="color:#b45309">${[x.l.hoaLy ? "" : "phiếu kiểm hoá lý", x.l.hamLuong ? "" : "phiếu kết quả hàm lượng"].filter(Boolean).join(", ")}</b></span><span class="blv-go">Tải ›</span></button>`; }).join("")}</div></div>`;

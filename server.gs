@@ -384,15 +384,22 @@ RC_ = {};
         hoaLy: bh ? !!(hs['Phiếu kiểm hoá lý'] || hs['Phiếu test hoá lý']) : undefined, hamLuong: bh ? !!hs['Phiếu kết quả hàm lượng'] : undefined, hlXn: bh ? (HLX[k] || '') : undefined }; })
       .sort((p, q) => (p.hsd || '9999').localeCompare(q.hsd || '9999') || p.lo.localeCompare(q.lo));
   });
+  /* 27/11/2026 (anh Ghel): lô BTP (AHK) QC đã Đạt, đóng gói hết (tồn 0) mà còn thiếu phiếu hoá lý / hàm lượng → vẫn gửi về để hiện ở QC lô cho QC tải phiếu */
+  const lotsHet = {};
+  Object.keys(L).forEach(ma => { if ((IMx[ma] || {}).nhom !== 'Bán thành phẩm') return;
+    const z = Object.values(L[ma]).filter(x => Math.abs(x.ton) <= 1e-6 && needHoaLy_(x.lo) && x.qc === 'Đạt' && String(x.nsx || '') >= '2026-11-20').map(x => { const hs = HSL[lotKey_(ma, x.lo)] || {};
+      return { lo: x.lo, nsx: x.nsx, hsd: x.hsd, hsdGoc: x.hsdGoc || '', ton: 0, het: 1, qc: x.qc, qcNgay: x.qcNgay || '', qcNguoi: x.qcNguoi || '', qcGhiChu: x.qcGhiChu || '', tyTrong: x.tyTrong || 0,
+        hoaLy: !!(hs['Phiếu kiểm hoá lý'] || hs['Phiếu test hoá lý']), hamLuong: !!hs['Phiếu kết quả hàm lượng'], hlXn: HLX[lotKey_(ma, x.lo)] || '' }; }).filter(x => !x.hoaLy || !x.hamLuong);
+    if (z.length) lotsHet[ma] = z; });
   const bal = balances_(items, moves);
   if (!me.ct) {
     const vis = items, b = {}, l = {};
     vis.forEach(i => { b[i.ma] = bal[i.ma]; if (lots[i.ma]) l[i.ma] = lots[i.ma]; });
-    return { me, items: vis, bal: b, lots: l, nhom: NHOM.filter(n => !me.nhom.length || me.nhom.indexOf(n) >= 0), nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: {},
+    return { me, items: vis, bal: b, lots: l, lotsHet, nhom: NHOM.filter(n => !me.nhom.length || me.nhom.indexOf(n) >= 0), nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: {},
       lenh: lenh.map(o => ({ so: o.so, tenSP: (items.find(i => i.ma === o.maSP) || {}).ten || '', ngay: o.ngay, maSP: o.maSP, slDuKien: o.slDuKien, trangThai: o.trangThai, ngayHT: o.ngayHT, slThucTe: o.slThucTe, nguoiLap: o.nguoiLap, nguoiHT: o.nguoiHT, ghiChu: o.ghiChu, khachHang: o.khachHang, nguoiSX: o.nguoiSX, qcSX: o.qcSX, tyTrong: o.tyTrong, loGC: o.loGC, nsxGC: o.nsxGC, loSP: o.loSP, nsxSP: o.nsxSP, tienDo: o.tienDo, tienDoLyDo: o.tienDoLyDo })),
       khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
   }
-  return { me, items, bal, lots, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
+  return { me, items, bal, lots, lotsHet, nhom: NHOM, nhomQC: cfg.nhomQC, hetHan: cfg.hetHan, nguong: nguong_(cfg), congThuc: recipes_(), lenh, khoaSo: lockMonth_(), chuHang: chuList_(items), chuDay: CHU_DAY, hoSo: hoSoCount_(), ncc: nccList_(moves), nccMa: nccMa_(moves), goiY: lxGoiY_(lenh), qpCho: qpCho_(items, moves), diaChi: str_(settings_raw_('Địa chỉ công ty')), moi: moiNhap_(moves, me, items), today: Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd') };
 }
 
 /** Phiếu nhập 14 ngày gần nhất (Trang chủ: Hàng mới nhập; Tồn kho: đưa mã mới nhập lên đầu). */
