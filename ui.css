@@ -1649,3 +1649,5 @@ input:not(:focus){text-overflow:ellipsis}
 /* điện thoại: bảng trong BM.06 / BM.08 / vệ sinh giữ bề rộng tối thiểu rồi cuộn ngang trong khung bảng (trước cột tên bị bóp còn 0) */
 .kh-dlg table.bb-me{min-width:820px}.kh-dlg.vs4 table.vs-t{min-width:620px}.kh-dlg.vs4 table.vs-t.kd{min-width:680px}.kh-dlg.hl8 .hl-tb table{min-width:800px}
 .kh-dlg.bb6 #bbMayT input[data-g="ten"]{min-width:300px}
+/* lập lệnh SX: nút chọn nhanh khách hàng */
+.pick.lnkh{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 8px}.pick.lnkh .btn{font-weight:500}
