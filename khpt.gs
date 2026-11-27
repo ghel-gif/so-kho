@@ -165,7 +165,7 @@ function webTNDSave(a, so, d) {
   d = d || {}; const t = v => String(v == null ? '' : v).trim().slice(0, 60), n = v => (v === '' || v == null) ? '' : (num_(v) || 0);
   const L = (d.list || []).slice(0, 300).map(c => ({ me: t(c.me), loai: t(c.loai), bi: n(c.bi), net: n(c.net), le: c.le ? 1 : 0 }));
   if (!L.length) throw new Error('Chưa có thẻ nào.');
-  const o = { list: L, tm: t(d.tm), nc: Math.min(3, Math.max(1, Math.round(num_(d.nc) || 1))), hl: String(d.hl || '').trim().slice(0, 300),
+  const o = { list: L, tm: t(d.tm), nc: Math.min(3, Math.max(1, Math.round(num_(d.nc) || 1))), hl: String(d.hl || '').trim().slice(0, 300), tt: (t => t >= 0.3 && t <= 3 ? Math.round(t * 1000) / 1000 : 0)(num_(d.tt)) /* tỷ trọng thực tế in trên thẻ */,
     dang: d.dang === 'ran' || d.dang === 'long' ? d.dang : '', kho: d.kho === 'a5r' || d.kho === 'a6' ? d.kho : '' }; /* dạng rắn / lỏng · khổ thẻ A6 (bao) / A5 (rum) */
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try { const sh = shX_(TND_SH, TND_HEAD), R = rows_(TND_SH), i = R.findIndex(x => str_(x[0]) === so), row = [so, JSON.stringify(o), me.ten, new Date()];
