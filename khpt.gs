@@ -119,7 +119,7 @@ function webBBGet(a, so) {
   const nlTong = Math.round(mv.filter(m => m.loai === 'Xuất').reduce((t, m) => t + (+m.kg || 0), 0) * 1000) / 1000; /* tổng mọi nguyên liệu xuất cho lệnh (tech + phụ gia + dung môi…) — gốc tính hao hụt, giống báo cáo Phối trộn */
   /* số liệu hoàn thành lưu tạm (chưa trừ kho): KL BTP thực tế, vật tư từng lô, người SX, QC */
   let nhap = null; try { nhap = r ? JSON.parse(str_(r[8]) || 'null') : null; } catch (e) { nhap = null; }
-  return { o: od, lo, nsx: nh ? nh.nsx : '', nl, nlTong, kh: k, may: mayList_(), qc: q, tt, nhap,
+  return { o: od, lo, nsx: nh ? nh.nsx : '', nl, nlTong, kh: k, may: mayList_(), qc: q, tt, ttLo: ttMap_()[lotKey_(od.maSP, lo)] || 0, nhap,
     bb: r && str_(r[4]) ? { me, ketLuan: str_(r[2]), ghiChu: str_(r[3]), nguoi: str_(r[4]), luc: khTs_(r[5]), may: str_(r[6]), tg: (() => { try { return JSON.parse(str_(r[7]) || 'null'); } catch (e) { return null; } })() } : null, ketLuan: BB_KL };
 }
 function webBBSave(a, so, d) {

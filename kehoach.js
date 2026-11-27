@@ -342,7 +342,7 @@ async function bbDlg(so){let D;try{D=await api("webBBGet",S.auth,so)}catch(e){re
   btnWire(w,{canW:can.phieu(),saved:!!D.bb,dirty:false},()=>api("webBBSave",S.auth,so,getD()),()=>bbPrint(D,getD()))}
 function bbPrint(D,d){
   /* 18/11/2026 (theo anh Ghel): BM.06 thống nhất 1 số lẻ thập phân (kg, lít, % hao hụt); phiếu cho xưởng nên không tách hàng nghìn, dấu phẩy thập phân; số nhỏ hơn 0,1 giữ 2 số lẻ (0,05); tỷ trọng vẫn 3 số lẻ */
-  const k1=v=>{v=+v||0;const a=Math.abs(v);return(a>0&&a<0.095?v.toFixed(2):(Math.round(v*10)/10).toFixed(1)).replace(".",",")};const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,tt=+D.tt||0,done=o.trangThai==="Hoàn thành";
+  const k1=v=>{v=+v||0;const a=Math.abs(v);return(a>0&&a<0.095?v.toFixed(2):(Math.round(v*10)/10).toFixed(1)).replace(".",",")};const o=D.o,sp=itemBy(o.maSP)||{ten:o.maSP},kh=D.kh,done=o.trangThai==="Hoàn thành",ttKH=+o.tyTrong||+D.tt||0,tt=done?(+D.tt||0):(+D.ttLo||(D.nhap&&+D.nhap.tt)||0); /* 27/11/2026 (anh Ghel): tt = tỷ trọng THỰC TẾ (tỷ trọng lô QC đo → số ghi ở phần hoàn thành lệnh "Lưu tạm"); lệnh chưa xong mà chưa đo thì để trống, không lấy tỷ trọng dự kiến. ttKH (dự kiến) chỉ dùng quy đổi thể tích theo kế hoạch */
   const mayP=v=>{v=String(v||"").trim();if(!v)return[];if(v[0]==="["){try{return JSON.parse(v)}catch(e){}}return v.split(",").map(x=>x.trim()).filter(String).map(ma=>{const m=(D.may||[]).find(x=>x.ma===ma);return{ma,ten:m?m.ten:""}})};const may=mayP(d.may||(kh&&kh.may));
   /* 26/11/2026 (anh Ghel): lệnh chưa có phiếu xuất NL → mục 2 ghi tech theo định mức (công thức × KL kế hoạch), số lô để trống, có ghi chú "theo định mức" */
   /* ưu tiên: phiếu xuất NL → số liệu "Lưu tạm" ở form hoàn thành lệnh (có số lô) → định mức */
@@ -357,7 +357,7 @@ function bbPrint(D,d){
      Chưa có phiếu xuất NL thì để trống. (Trước: so với KL kế hoạch → thu nhiều hơn kế hoạch ra số âm.) */
   /* 26/11/2026 (theo anh Ghel): lệnh chưa bấm Hoàn thành mà đã ghi KL từng mẻ ở mục 4 → "Khối lượng thu được" và hao hụt lấy tổng các mẻ (trước để trống) */
   const meT=(d.me||[]).reduce((s,m)=>s+(m&&m.kg!==""&&m.kg!=null?+m.kg||0:0),0);
-  const khKg=+o.slDuKien||0,tu=done&&+o.slThucTe?+o.slThucTe:meT||(D.nhap&&+D.nhap.sl)||0,nlT=+D.nlTong||(Nh?Math.round((Nh.lines.reduce((a,l)=>a+l.sl*hs(l.ma),0)+nhThieu.reduce((a,c)=>a+c.dm*o.slDuKien,0))*1000)/1000:nlDM?Math.round(ctDM.reduce((a,c)=>a+(+c.dm||0),0)*o.slDuKien*1000)/1000:0),hh=tu&&khKg?tu*100/khKg-100:null /* 26/11/2026 (anh Ghel): hao hụt chỉ tính theo KL kế hoạch: KL thu được × 100 / KL kế hoạch − 100 (hụt ra số âm), VD 1002 / 1005 → −0,3 % */,L=v=>tt&&v?k1(v/tt)+" L":"";
+  const khKg=+o.slDuKien||0,tu=done&&+o.slThucTe?+o.slThucTe:meT||(D.nhap&&+D.nhap.sl)||0,nlT=+D.nlTong||(Nh?Math.round((Nh.lines.reduce((a,l)=>a+l.sl*hs(l.ma),0)+nhThieu.reduce((a,c)=>a+c.dm*o.slDuKien,0))*1000)/1000:nlDM?Math.round(ctDM.reduce((a,c)=>a+(+c.dm||0),0)*o.slDuKien*1000)/1000:0),hh=tu&&khKg?tu*100/khKg-100:null /* 26/11/2026 (anh Ghel): hao hụt chỉ tính theo KL kế hoạch: KL thu được × 100 / KL kế hoạch − 100 (hụt ra số âm), VD 1002 / 1005 → −0,3 % */,L=v=>tt&&v?k1(v/tt)+" L":"",LK=v=>ttKH&&v?k1(v/ttKH)+" L":"";
   const sec=t=>`<tr class="sec"><td colspan="4">${t}</td></tr>`,n=(i,a)=>a.length>1?" ("+(i+1)+")":"";
   const qc=o.qcSX||(kh&&kh.qc)||"",nv=o.nguoiSX||[kh&&kh.pc1,kh&&kh.pc2].filter(Boolean).join(", ");
   const KL=[["Đạt - Chuyển lưu kho BTP","Dán giấy trắng"],["Đạt - Chờ phối trộn","Dán giấy vàng"],["Phối lại","Dán giấy vàng"],["Chưa đạt - Chờ xử lý","Dán giấy đỏ"]];
@@ -373,9 +373,9 @@ function bbPrint(D,d){
    ${sec('4. BÁN THÀNH PHẨM <i style="font-weight:400">(ghi nhận lại chi tiết nếu lệnh SX có nhiều mẻ)</i>')}
    ${me.map(m=>`<tr><td>Ngày SX: <b>${m&&m.ngay?dmy(m.ngay):""}</b>${m&&(m.tu||m.den)?`<br>${esc(m.tu||"")} – ${esc(m.den||"")}`:""}</td><td colspan="2">Thực hiện: ${m?esc(m.nguoi||""):""}</td><td>Số lượng: <b>${m&&m.kg!==""&&m.kg!=null?k1(m.kg)+" kg":""}</b></td></tr>`).join("")}
    ${sec("5. KẾT QUẢ")}
-   <tr><td>*Khối lượng theo KH:</td><td class="r"><b>${k1(khKg)}</b> kg</td><td>Thể tích: <b>${L(khKg)}</b></td><td rowspan="2" class="c">Hao hụt (%)<br><b style="font-size:14pt">${hh===null?"":(hh>0?"+":"")+k1(hh)+" %"}</b></td></tr>
+   <tr><td>*Khối lượng theo KH:</td><td class="r"><b>${k1(khKg)}</b> kg</td><td>Thể tích: <b>${LK(khKg)}</b></td><td rowspan="2" class="c">Hao hụt (%)<br><b style="font-size:14pt">${hh===null?"":(hh>0?"+":"")+k1(hh)+" %"}</b></td></tr>
    <tr><td>*Khối lượng thu được:</td><td class="r"><b>${tu?k1(tu):""}</b> kg</td><td>Thể tích: <b>${L(tu)}</b></td></tr>
-   <tr><td>Tỷ trọng (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
+   <tr><td>Tỷ trọng thực tế (nếu có):</td><td class="r"><b>${tt?f3(tt):""}</b>${tt?" g/mL":""}</td><td colspan="2"></td></tr>
    <tr><td><b>*Kết luận:</b></td><td colspan="3"><table class="kl klb"><tr>${KL.slice(0,2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr><tr>${KL.slice(2).map(k=>`<td><span class="kx">${box(d.ketLuan===k[0])}</span><b>${k[0]}</b><br><i class="kd">(${k[1]})</i></td>`).join("")}</tr></table>${d.ghiChu?`<div style="margin-top:4px">Ghi chú: ${esc(d.ghiChu)}</div>`:""}</td></tr>
   </table>
   ${sign([["Nhân viên phối trộn",nv],["Thủ kho",""],["Nhân viên QC",qc]])}</div>`)}
