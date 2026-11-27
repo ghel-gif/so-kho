@@ -1158,7 +1158,7 @@ function completeOrder(a, so, d) {
     lx.getRange(row, 5, 1, 3).setValues([['Hoàn thành', d.ngay, slTT]]);
     if (d.nguoiSX !== undefined || d.qcSX !== undefined) { lxHead_(); lx.getRange(row, 12, 1, 2).setValues([[String(d.nguoiSX || '').trim().slice(0, 200), String(d.qcSX || '').trim().slice(0, 80)]]); }
     lx.getRange(row, 9).setValue(me.ten);
-    const ttHT = String(d.tyTrong == null ? '' : d.tyTrong).trim() !== '' ? ttIn_(d.tyTrong, sp, false) : o.tyTrong;
+    const ttHT = String(d.tyTrong == null ? '' : d.tyTrong).trim() !== '' ? ttIn_(d.tyTrong, sp, false) : 0; /* 27/11/2026 (anh Ghel): tỷ trọng DỰ KIẾN (ghi lúc lập lệnh) và tỷ trọng THỰC TẾ (QC đo khi làm xong) là 2 số khác nhau — không ghi thực tế thì KHÔNG lấy dự kiến ghi vào tỷ trọng lô */
     if (ttHT && sp.theoLo && ttMap_()[lotKey_(sp.ma, spLot[0])] !== ttHT) sheet_(SH.TT).appendRow([sp.ma, spLot[0], ttHT, d.ngay, me.ten, new Date()]);
     let cho = false;
     if (needQC_(sp, cfg) && !(L[sp.ma] && L[sp.ma][spLot[0]]) && !qcMap_()[lotKey_(sp.ma, spLot[0])]) {
