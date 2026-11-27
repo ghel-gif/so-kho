@@ -94,6 +94,16 @@
     el.querySelectorAll("[data-vs]").forEach(b => b.onclick = () => { const o = L[+b.dataset.vs]; if (window.vsDlg) vsDlg(o.so); });
     bump(box, L.length);
   }
+  /* 27/11/2026 (anh Ghel): lô BTP QC đã duyệt Đạt (đóng gói được) nhưng phiếu hoá lý / hàm lượng gửi sau — nhắc người có quyền QC tải phiếu */
+  function hsCard(box) {
+    const el = box.querySelector("#blvHs"); if (!el || !S.me || !S.me.qc || typeof hsThieu !== "function") return;
+    const L = []; Object.keys(S.lots || {}).forEach(ma => (S.lots[ma] || []).forEach(l => { if (hsThieu(l)) L.push({ ma, l }); }));
+    if (!L.length) { el.innerHTML = ""; return; }
+    el.innerHTML = `<div class="blv-card lv-warn" style="--c:#b45309"><div class="blv-h"><span class="blv-i">📎</span><b>QC lô — đã duyệt Đạt, còn chờ bổ sung phiếu</b><span class="blv-n">${L.length}</span></div><div class="blv-l">${L.slice(0, 12).map((x, i) => { const it = itemBy(x.ma);
+      return `<button type="button" class="blv-r" data-hs="${i}"><span><b>${E(x.l.lo)}</b> · ${E(it ? it.ten : x.ma)} — thiếu <b style="color:#b45309">${[x.l.hoaLy ? "" : "phiếu kiểm hoá lý", x.l.hamLuong ? "" : "phiếu kết quả hàm lượng"].filter(Boolean).join(", ")}</b></span><span class="blv-go">Tải ›</span></button>`; }).join("")}</div></div>`;
+    el.querySelectorAll("[data-hs]").forEach(b => b.onclick = () => { const x = L[+b.dataset.hs]; setTab("qc"); qcShow("duyet"); $("qcFilter").value = "Chờ kiểm"; $("qcQ").value = ""; S.qcNhom = "Bán thành phẩm"; S.qcOpen = JSON.stringify([x.ma, x.l.lo]); renderQC(); });
+    bump(box, L.length);
+  }
   async function tbCard(box) {
     const el = box.querySelector("#blvTb"); if (!el || !window.tbTasks) return;
     const T = await tbTasks(); if (!T.length) { el.innerHTML = ""; return; }
@@ -123,7 +133,7 @@
         <div class="blv-l">${L.map((x, i) => { const ln = M.line(x); return `<button type="button" class="blv-r${/#c62828/.test(ln) ? " r-bad" : ""}" data-k="${s.k}" data-i="${i}"><span>${ln}</span><span class="blv-go">Mở ›</span></button>`; }).join("")}${s.rows.length > 30 ? `<div class="note" style="padding:6px 10px">… và ${s.rows.length - 30} dòng nữa.</div>` : ""}</div></div>`; };
     box.innerHTML = `<div class="blv-top"><div><h2 class="blv-hi">${chao}, ${E(S.me.ten)}</h2><p class="note" style="margin:2px 0 0">${E(S.me.vaiTro)}${S.me.qc && S.me.vaiTro !== "Quản lý" ? " · QC" : ""} · ${D(R.today)}${window.skyLine ? " · " + skyLine() : ""} — chỉ hiện việc thuộc phần của bạn.</p></div>
         <div class="blv-sum ${R.n ? "bad" : "ok"}" data-n="${R.n}">${R.n ? `<b>${R.n}</b> việc cần chú ý` : "✓ Không có việc tồn"}</div></div>
-      <div class="blv-grid"><div id="blvDg"></div><div id="blvVs"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
+      <div class="blv-grid"><div id="blvDg"></div><div id="blvVs"></div><div id="blvHs"></div><div id="blvTb"></div><div id="blvRd"></div><div id="blvQa"></div>${urgent.length ? urgent.map(card).join("") : `<div class="blv-card" style="--c:#2e7d32"><div class="blv-h"><span class="blv-i">✅</span><b>Phần việc của bạn đang ổn</b></div><p class="note" style="padding:4px 12px 10px;margin:0">Không có lô chờ QC, biểu mẫu thiếu, lệnh thiếu tồn hay hàng sắp hết hạn trong phần việc của bạn.</p></div>`}
       ${mine && mine.rows.length ? card(mine) : ""}</div>
       <p class="note" style="margin-top:10px">Bàn làm việc tự cập nhật khi dữ liệu thay đổi. Bấm một dòng để mở đúng lệnh / lô.</p>`;
     navCnt(R.n);
@@ -132,6 +142,6 @@
     rdCard(box);
     qaCard(box);
     tbCard(box);
-    vsCard(box);
+    vsCard(box); hsCard(box);
   };
 })();
