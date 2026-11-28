@@ -1651,3 +1651,5 @@ input:not(:focus){text-overflow:ellipsis}
 .kh-dlg.bb6 #bbMayT input[data-g="ten"]{min-width:300px}
 /* lập lệnh SX: nút chọn nhanh khách hàng */
 .pick.lnkh{display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 8px}.pick.lnkh .btn{font-weight:500}
+/* Gửi mẫu: danh sách kết quả tìm lô */
+.gm-lotr{display:flex;flex-direction:column;gap:4px;margin:-2px 0 10px;max-height:230px;overflow:auto}.gm-lotb{text-align:left;padding:6px 10px;border:1px solid var(--line,#d6dde1);border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit}.gm-lotb:hover{border-color:#0f6f64;background:rgba(15,111,100,.08)}.gm-lotb small{opacity:.7;margin-left:6px}

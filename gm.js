@@ -115,7 +115,7 @@
     const w = document.createElement("div"); w.className = "cfm";
     const f = (k, lb, at, full) => `<label${full ? ' style="grid-column:1/-1"' : ""}>${lb}<input data-k="${k}" value="${E(d[k] ?? "")}" ${at || ""} ${dis}></label>`;
     w.innerHTML = `<div class="cfm-box kh-dlg"><h2>${moi ? "Ghi gửi mẫu kiểm tra chất lượng" : "Mẫu gửi KTCL · " + E(d.ten)}</h2>${moi ? '<p class="note">Theo QC-HD.49. Khi có kết quả, bấm vào dòng mẫu trong sổ để ghi mã số hồ sơ và kết quả.</p>' : ""}
-      ${moi && ed ? `<label>Chọn lô trên sổ kho <small class="note">— gõ tên, mã hoặc số lô; mẫu không thuộc lô nào (mẫu PTN, mẫu mua…) thì bỏ qua</small><input id="gmLot" list="gmLotL" placeholder="VD: 2607.089, us-sinate…" data-opt autocomplete="off"></label>${dl("gmLotL", lots().map(x => x.lo + " · " + x.ten + " · " + x.ma))}` : ""}
+      ${moi && ed ? `<label>Chọn lô trên sổ kho <small class="note">— gõ tên, mã hoặc số lô; mẫu không thuộc lô nào (mẫu PTN, mẫu mua…) thì bỏ qua</small><input id="gmLot" type="search" placeholder="🔍 Tìm lô: gõ tên, mã hoặc số lô (VD: 2607.089, us-sinate…)" data-opt autocomplete="off"></label><div id="gmLotR" class="gm-lotr"></div>` : ""}
       ${moi ? "" : `<details class="gm-info"><summary><b>Thông tin mẫu và gửi đi</b> <span class="note">— ${E(d.dv)} · gửi ${D(d.ngay)}${d.sl ? " · " + E(d.sl) : ""} · bấm để xem / sửa</span></summary>`}
       <fieldset class="qa-fs"><legend>Mẫu</legend><div class="two qa-g">
         ${f("ten", "Tên sản phẩm <small class=\"note\">— đúng tên trên TCCS / hồ sơ đăng ký, không viết tắt</small>", "", true)}
@@ -153,7 +153,14 @@
       const t = tenHD(o), tb = w.querySelector("#gmTen"); tb.innerHTML = t ? `<small class="note">Tên mẫu ghi trên nhãn và phiếu yêu cầu (QC-HD.49 mục 5.3):</small><div class="gm-ten-t"><b>${E(t)}</b><button type="button" class="btn small" id="gmCopy">Chép</button></div>` : "";
       const cb = w.querySelector("#gmCopy"); if (cb) cb.onclick = async () => { try { await navigator.clipboard.writeText(t); toast("Đã chép tên mẫu"); } catch (e) { toast("Không chép được — bôi đen rồi Ctrl+C"); } }; };
     w.querySelectorAll("[data-k]").forEach(x => { x.addEventListener("input", up); x.addEventListener("change", up); });
-    const lot = w.querySelector("#gmLot"); if (lot) lot.onchange = () => { const v = lot.value, x = lots().find(y => y.lo + " · " + y.ten + " · " + y.ma === v); if (!x) return; set("ten", String(x.ten).replace(/^BTP\s+/i, "")); set("lo", x.lo); set("nsx", x.nsx); set("nguon", x.lo); d.ma = x.ma; set("dang", longOf(x.ten)); if (/Phân bón/i.test(x.nhom || "")) set("loaiMau", "Phân bón"); up(); };
+    /* 28/11/2026 (anh Ghel): ô tìm lô có danh sách kết quả hiện ngay bên dưới (trước là ô gợi ý của trình duyệt, không ai nhận ra là ô tìm) */
+    const lot = w.querySelector("#gmLot"); if (lot) { const LL = lots(), box = w.querySelector("#gmLotR");
+      const draw = () => { const W = fold(lot.value).split(/\s+/).filter(Boolean), M = LL.filter(x => { const t = fold(x.lo + " " + x.ten + " " + x.ma); return W.every(k => t.includes(k)); });
+        box.innerHTML = (M.length ? M.slice(0, 8).map(x => `<button type="button" class="gm-lotb" data-i="${LL.indexOf(x)}"><b>${E(x.lo)}</b> · ${E(x.ten)} <small>${E(x.ma)}${x.nsx ? " · NSX " + D(x.nsx) : ""}</small></button>`).join("") : '<span class="note">Không có lô nào khớp — mẫu ngoài sổ kho thì ghi tay bên dưới.</span>') + (M.length > 8 ? `<span class="note">… còn ${M.length - 8} lô nữa, gõ thêm chữ để lọc</span>` : "");
+        box.querySelectorAll("[data-i]").forEach(b => b.onclick = () => pick(LL[+b.dataset.i])); };
+      const pick = x => { lot.value = x.lo + " · " + x.ten; box.innerHTML = `<span class="note">✓ Đã chọn lô <b>${E(x.lo)}</b> — tên mẫu, số lô, NSX đã điền bên dưới.</span>`; chon(x); };
+      lot.addEventListener("input", e => { e.stopPropagation(); draw(); }); lot.addEventListener("focus", draw); draw(); }
+    const chon = x => { if (!x) return; set("ten", String(x.ten).replace(/^BTP\s+/i, "")); set("lo", x.lo); set("nsx", x.nsx); set("nguon", x.lo); d.ma = x.ma; set("dang", longOf(x.ten)); if (/Phân bón/i.test(x.nhom || "")) set("loaiMau", "Phân bón"); up(); };
     g("dv").addEventListener("change", () => { const x = g("dv"), f = dvFull(x.value.trim()); if (f && f !== x.value) { x.value = f; up(); } });
     if (!moi && d.sl) slGY = "\u0000"; up();
     /* người không ghi sổ (chỉ vào nhận bản cứng): chỉ hiện tóm tắt mẫu + phần bản cứng của họ, ẩn hết ô nhập liệu */
