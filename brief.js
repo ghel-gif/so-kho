@@ -95,13 +95,16 @@
       if (!F2.some(x => x.loai === "BM07") && !tay) miss.push("BM.07");
       if (miss.length) formMiss.push({ so: o.so, nguoi: o.nguoiLap, xong: o.trangThai === "Hoàn thành", miss, sp: (IM[o.maSP] || {}).ten || o.maSP });
     });
+    /* 28/11/2026 (anh Ghel): thiết bị đến hạn kiểm định / hiệu chuẩn — nhắc từ 60 ngày trước hạn (như mục Thiết bị), ≤ 15 ngày hoặc quá hạn ghi đỏ */
+    let hc = []; try { hc = (F.tbRows_ ? F.tbRows_() : []).filter(t => t.loai === "TB" && !t.xoa && t.d && t.d.hcLoai && t.d.tinhTrang !== "Ngừng sử dụng" && /^\d{4}-\d{2}-\d{2}$/.test(t.d.denHan || ""))
+      .map(t => ({ ma: t.d.ma || "", ten: t.d.ten || "", loai: t.d.hcLoai, han: t.d.denHan, con: days(t.d.denHan, today) })).filter(x => x.con <= 60).sort((a, b) => a.con - b.con); } catch (err) { hc = []; }
     const exp30 = A.exp.filter(x => x.con <= 30);
     const open = orders.filter(o => o.trangThai === "Đang SX" && recent(o)).sort(byDate).map(o => ({ so: o.so, ngay: o.ngay, nguoi: o.nguoiLap, sx: o.nguoiSX || "", qcSX: o.qcSX || "", dg: isTP(o), sp: (IM[o.maSP] || {}).ten || o.maSP, sl: o.slDuKien }));
     const xl = new Set(items.filter(i => i.kho === "Kho hàng xử lý" || i.kho === "Kho BTP xử lý").map(i => i.ma)); /* Kho hàng xử lý: chỉ anh Ghel thấy */
     const qcHan = Math.max(1, +cfg.qcHan || 3); /* hạn QC duyệt lô (ngày): lô chờ quá hạn ghi đỏ, xếp trước */
     A.cho.forEach(x => { x.cho = /^\d{4}-\d{2}-\d{2}/.test(x.ngay || "") ? Math.max(0, days(today, String(x.ngay).slice(0, 10))) : null; x.tre = x.cho != null && x.cho > qcHan ? x.cho - qcHan : 0; });
     A.cho.sort((p, q) => (q.cho || 0) - (p.cho || 0));
-    return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, orders, isTP, xl };
+    return { open, today, cho: A.cho, exp: A.exp, exp30, low: A.low.filter(x => x.am || x.min), am: A.low.filter(x => x.am), treo: A.treo, dgShort, lsxShort, formMiss, hc, orders, isTP, xl };
   }
 
   /* ---------- bản tin riêng từng người ---------- */
@@ -112,24 +115,25 @@
     dgShort: { t: "Lệnh đóng gói thiếu tồn BTP", h: ["Lệnh", "BTP", "Lô đã chọn", "Cần (kg)", "Thiếu (kg)"], row: x => [e(x.so), e(x.ma), e(x.lots.join(", ")), f(x.need), "<b style='color:#c62828'>" + f(x.short) + "</b>"] },
     lsxShort: { t: "Lệnh SX thiếu nguyên liệu", h: ["Lệnh", "Thiếu"], row: x => [e(x.so), x.sh.map(s => e(s.ma) + " " + f(s.short) + " kg").join("; ")] },
     low: { t: "Âm kho / dưới mức tối thiểu", h: ["Mã", "Tên", "Tồn (kg)", "Tối thiểu (kg)"], row: x => [e(x.ma), e(x.ten), x.am ? "<b style='color:#c62828'>" + f(x.ton) + "</b>" : f(x.ton), x.min ? f(x.min) : ""] },
+    hc: { t: "Thiết bị đến hạn kiểm định / hiệu chuẩn", h: ["Mã", "Thiết bị", "Loại", "Đến hạn", "Còn"], row: x => [e(x.ma || "—"), e(x.ten), e(x.loai), dmy(x.han), x.con < 0 ? "<b style='color:#c62828'>quá hạn " + (-x.con) + " ngày</b>" : x.con <= 15 ? "<b style='color:#c62828'>" + x.con + " ngày — lập đề xuất HCKĐ ngay</b>" : x.con + " ngày"] },
     mine: { t: "Lệnh đang làm của tôi", h: ["Lệnh", "Loại", "Sản phẩm", "Ra lệnh"], row: x => [e(x.so), x.dg ? "Đóng gói" : "SX BTP", e(x.sp), dmy(x.ngay)] },
     treo: { t: "Lệnh SX chưa hoàn thành (treo lâu)", h: ["Lệnh", "Sản phẩm", "Ngày ra lệnh", "Đã treo"], row: x => [e(x.so), e(x.maSP), dmy(x.ngay), x.ngayTreo + " ngày"] }
   };
-  const SHORT = { mine: n => n + " lệnh đang làm", cho: n => n + " lô chờ QC", formMiss: n => n + " lệnh thiếu biểu mẫu QC", exp: n => n + " lô sắp/quá hạn", dgShort: n => n + " lệnh đóng gói thiếu BTP", lsxShort: n => n + " lệnh SX thiếu NL", low: n => n + " mã âm/dưới tối thiểu", treo: n => n + " lệnh SX treo" };
+  const SHORT = { hc: n => n + " thiết bị đến hạn kiểm định/hiệu chuẩn", mine: n => n + " lệnh đang làm", cho: n => n + " lô chờ QC", formMiss: n => n + " lệnh thiếu biểu mẫu QC", exp: n => n + " lô sắp/quá hạn", dgShort: n => n + " lệnh đóng gói thiếu BTP", lsxShort: n => n + " lệnh SX thiếu NL", low: n => n + " mã âm/dưới tối thiểu", treo: n => n + " lệnh SX treo" };
   function forUser(u, X) {
     const role = u.vai_tro || "", ql = role === "Quản lý", qc = ql || !!u.quyen_qc, kho = ["Thủ kho", "Kế toán kho", "Kế toán"].includes(role), mine = x => x.nguoi === u.ten;
     /* Quản lý: thấy tất cả. Người khác: chỉ việc của mình (QC thêm lô chờ QC và biểu mẫu QC còn thiếu). */
     const S = {}, inc = (s, t) => String(s || "").split(",").map(x => x.trim()).includes(t);
-    if (ql) Object.assign(S, { cho: X.cho, formMiss: X.formMiss, dgShort: X.dgShort, lsxShort: X.lsxShort, low: X.low, exp: X.exp, treo: X.treo });
+    if (ql) Object.assign(S, { hc: X.hc, cho: X.cho, formMiss: X.formMiss, dgShort: X.dgShort, lsxShort: X.lsxShort, low: X.low, exp: X.exp, treo: X.treo });
     else {
       const myOrd = new Set(X.open.filter(o => o.nguoi === u.ten || inc(o.sx, u.ten) || inc(o.qcSX, u.ten)).map(o => o.so)), mine = x => x.nguoi === u.ten || myOrd.has(x.so);
-      if (qc) { S.cho = X.cho; S.formMiss = X.formMiss; } else S.formMiss = X.formMiss.filter(mine);
+      if (qc) { S.cho = X.cho; S.formMiss = X.formMiss; S.hc = X.hc; } else S.formMiss = X.formMiss.filter(mine);
       S.dgShort = X.dgShort.filter(mine); S.lsxShort = X.lsxShort.filter(mine);
       S.mine = X.open.filter(o => myOrd.has(o.so));
     }
     if (u.ten !== "Nguyễn Ô Ghel" && X.xl && X.xl.size) ["cho", "low", "exp"].forEach(k => { if (S[k]) S[k] = S[k].filter(x => !X.xl.has(x.ma)); });
     Object.keys(S).forEach(k => { if (!S[k] || !S[k].length) delete S[k]; });
-    const keys = ["formMiss", "cho", "dgShort", "lsxShort", "low", "exp", "treo", "mine"].filter(k => S[k]);
+    const keys = ["formMiss", "cho", "hc", "dgShort", "lsxShort", "low", "exp", "treo", "mine"].filter(k => S[k]);
     const n = keys.filter(k => k !== "mine").reduce((s, k) => s + S[k].length, 0);
     const tbl = k => { const D = SEC[k], R = S[k].slice(0, 40); return `<h3 style="margin:18px 0 6px;font-size:15px;color:#0f5f56">${D.t} (${S[k].length})</h3><table style="border-collapse:collapse;font-size:13px;width:100%">` +
       `<tr>${D.h.map(h => `<th style="text-align:left;border-bottom:2px solid #cfd8dc;padding:5px 10px 5px 0">${h}</th>`).join("")}</tr>` +
