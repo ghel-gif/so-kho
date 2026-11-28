@@ -110,14 +110,14 @@
       ${!giaoL(b).length && giu ? '<div class="acts" style="margin-top:6px"><button type="button" class="btn small" data-x="bcHuy">Huỷ xác nhận nhận từ trung tâm</button></div>' : ""}`;
   }
   function gmDlg(r, pre) {
-    const moi = !r, ed = QC(), d0 = r ? r.d : (pre || {}), d = Object.assign({ ngay: today(), ten: "", ma: "", lo: "", nsx: "", nguon: "", sl: "", dv: "", mucDich: "", loaiMau: "Thuốc BVTV", dang: "", phamVi: "Chỉ hàm lượng", chiTieu: "", maPB: "", slLo: "", vanDon: "", mauLuu: false, soHS: "", ketQua: "", ngayNhan: "", ghiChu: "", huy: false, xong: false, nguoiLap: (S.me && S.me.ten) || "" }, d0), dis = ed ? "" : "disabled"; d.dv = dvFull(d.dv);
+    const moi = !r, ed = QC(), d0 = r ? r.d : (pre || {}), d = Object.assign({ ngay: today(), ten: "", ma: "", lo: "", nsx: "", nguon: "", sl: "", dv: "", mucDich: "", loaiMau: "Thuốc BVTV", dang: "", phamVi: "Chỉ hàm lượng", chiTieu: "", maPB: "", slLo: "", vanDon: "", mauLuu: false, soHS: "", ketQua: "", ngayNhan: "", ghiChu: "", huy: false, xong: false, nguoiLap: (S.me && S.me.ten) || "" }, d0), dis = ed ? "" : "disabled"; d.dv = dvFull(d.dv); d.ten = tenM(d.ten); /* ô sửa cũng hiện tên đã bỏ "BTP", "XANH" */
     if (!d.dang) d.dang = longOf(d.ten); if (!d0.loaiMau && /phân bón|fertili|asata combi|chelate|hữu cơ/i.test(d.ten)) d.loaiMau = "Phân bón";
     const sel = (k, lb, L) => `<label>${lb}<select data-k="${k}" data-opt ${dis}>${L.map(x => `<option${x === d[k] ? " selected" : ""}>${x}</option>`).join("")}</select></label>`;
     const w = document.createElement("div"); w.className = "cfm";
     const f = (k, lb, at, full) => `<label${full ? ' style="grid-column:1/-1"' : ""}>${lb}<input data-k="${k}" value="${E(d[k] ?? "")}" ${at || ""} ${dis}></label>`;
     w.innerHTML = `<div class="cfm-box kh-dlg"><h2>${moi ? "Ghi gửi mẫu kiểm tra chất lượng" : "Mẫu gửi KTCL · " + E(tenM(d.ten))}</h2>${moi ? '<p class="note">Theo QC-HD.49. Khi có kết quả, bấm vào dòng mẫu trong sổ để ghi mã số hồ sơ và kết quả.</p>' : ""}
       ${moi && ed ? `<label>Chọn lô trên sổ kho <small class="note">— gõ tên, mã hoặc số lô; mẫu không thuộc lô nào (mẫu PTN, mẫu mua…) thì bỏ qua</small><input id="gmLot" type="search" placeholder="🔍 Tìm lô: gõ tên, mã hoặc số lô (VD: 2607.089, us-sinate…)" data-opt autocomplete="off"></label><div id="gmLotR" class="gm-lotr"></div>` : ""}
-      ${moi ? "" : `<details class="gm-info"><summary><b>Thông tin mẫu và gửi đi</b> <span class="note">— ${E(d.dv)} · gửi ${D(d.ngay)}${d.sl ? " · " + E(d.sl) : ""} · bấm để xem / sửa</span></summary>`}
+      ${moi ? "" : `<details class="gm-info"${ed && !d.soHS && !d.ketQua ? " open" : ""}><summary><b>${ed ? "✎ Sửa thông tin mẫu và gửi đi" : "Thông tin mẫu và gửi đi"}</b> <span class="note">— ${E(d.dv)} · gửi ${D(d.ngay)}${d.sl ? " · " + E(d.sl) : ""}${ed ? " · bấm vào dòng này để mở / thu gọn; sửa xong bấm <b>Lưu</b> ở cuối" : " · bấm để xem"}</span></summary>`} <!-- 28/11/2026: mẫu chưa có kết quả thì mở sẵn phần sửa (trước thu gọn, người dùng không biết sửa ở đâu) -->
       <fieldset class="qa-fs"><legend>Mẫu</legend><div class="two qa-g">
         ${f("ten", "Tên sản phẩm <small class=\"note\">— đúng tên trên TCCS / hồ sơ đăng ký, không viết tắt</small>", "", true)}
         ${f("lo", "Số lô SX", 'data-opt')}${f("nsx", "NSX", 'type="date" data-opt')}
